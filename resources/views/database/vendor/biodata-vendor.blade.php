@@ -83,8 +83,12 @@
                 <tr class="text-center align-middle text-pdf">
                     <th class="table-pdf">No</th>
                     <th class="table-pdf">Uraian</th>
-                    @foreach ($data->vendor_bayar as $c)
-                    <th class="table-pdf">Harga Kesepakatan {{$c->customer->singkatan}}</th>
+                    @foreach ($customer as $c)
+                    @if ($data->vendor_bayar->where('id', $c->id)->first()->id == 1)
+                    <th class="table-pdf">{{$c->singkatan}}</th>
+                    @elseif ($data->vendor_bayar->where('id', $c->id)->first()->id == 2)
+                    <th class="table-pdf">{{$c->singkatan}}</th>
+                    @endif
                     @endforeach
                 </tr>
             </thead>
@@ -93,28 +97,36 @@
                     <td class="table-pdf text-center">1</td>
                     <td class="table-pdf"><strong>OPNAME</strong></td>
                     @foreach ($data->vendor_bayar as $c)
+                    @if ($c->customer->where('id', $c->customer_id)->first()->id == 1)
                     <td class="table-pdf"></td>
+                    @endif
                     @endforeach
                 </tr>
                 <tr class="table-pdf text-pdf">
                     <td class="table-pdf text-center"></td>
                     <td class="table-pdf">* Harga :</td>
                     @foreach ($data->vendor_bayar as $c)
-                    <td class="table-pdf">Rp. {{number_format($c->hk_opname, 0, ',', '.')}}</td>
+                    @if ($c->customer->where('id', $c->customer_id)->first()->id == 1)
+                    <td class="table-pdf">Rp. {{number_format($c->harga_kesepakatan, 0, ',', '.')}}</td>
+                    @endif
                     @endforeach
                 </tr>
                 <tr class="table-pdf text-pdf">
                     <td class="table-pdf text-center">2</td>
                     <td class="table-pdf"><strong>TITIPAN</strong></td>
                     @foreach ($data->vendor_bayar as $c)
+                    @if ($c->customer->where('id', $c->customer_id)->first()->id == 2)
                     <td class="table-pdf"></td>
+                    @endif
                     @endforeach
                 </tr>
                 <tr class="table-pdf text-pdf">
                     <td class="table-pdf text-center"></td>
                     <td class="table-pdf">* Harga :</td>
                     @foreach ($data->vendor_bayar as $c)
-                    <td class="table-pdf">Rp. {{number_format($c->hk_titipan, 0, ',', '.')}}</td>
+                    @if ($c->customer->where('id', $c->customer_id)->first()->id == 2)
+                    <td class="table-pdf">Rp. {{number_format($c->harga_kesepakatan, 0, ',', '.')}}</td>
+                    @endif
                     @endforeach
                 </tr>
             </tbody>
@@ -130,13 +142,13 @@
                     <th class="table-pdf">Rute</th>
                     <th class="table-pdf">Jarak (Km)</th>
                     <th class="table-pdf">
-                        @foreach ($data->vendor_bayar as $c)
-                        {{$c->customer->singkatan}} @if (!$loop->last) / @endif
+                        @foreach ($customer as $c)
+                        {{$c->singkatan}} @if (!$loop->last) / @endif
                         @endforeach
                     </th>
                     <th class="table-pdf">Harga Kesepakatan (
-                    @foreach ($data->vendor_bayar as $c)
-                     {{$c->customer->singkatan}} @if (!$loop->last) & @endif
+                    @foreach ($customer as $c)
+                     {{$c->singkatan}} @if (!$loop->last) & @endif
                     @endforeach
                     )
                     </th>

@@ -35,6 +35,11 @@ class Vendor extends Model
         return $this->hasMany(VendorBayar::class);
     }
 
+    public function scopeVendorBayarDistinct($query, $vendor_id, $customer_id)
+    {
+        return $query->where('vendor_id', $vendor_id)->where('customer_id', $customer_id);
+    }
+
     public function vendor_uang_jalan()
     {
         return $this->hasMany(VendorUangJalan::class);

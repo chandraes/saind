@@ -291,11 +291,15 @@ class VendorController extends Controller
     public function biodata_vendor(string $id)
     {
         $data = Vendor::find($id);
+        $customer = Customer::all();
 
         // make $data->tanggal into local value id with Carbon
         $data->tanggal = Carbon::parse($data->tanggal)->locale('id')->isoFormat('LL');
 
-        $pdf = Pdf::loadview('database.vendor.biodata-vendor', compact('data'));
+        $pdf = Pdf::loadview('database.vendor.biodata-vendor', [
+            'data' => $data,
+            'customer' => $customer,
+        ]);
         // put file temporary in public folder
         // $pdf->save(public_path('files/template/sph_template1.pdf'));
 
