@@ -37,8 +37,12 @@ Route::get('/database', [App\Http\Controllers\DatabaseController::class, 'index'
 Route::resource('vendor', App\Http\Controllers\VendorController::class)->middleware('role:admin,user');
 Route::get('/vendor/{id}/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran'])->name('vendor.pembayaran')->middleware('role:admin,user');
 Route::post('/vendor/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran_update'])->name('vendor.pembayaran.store')->middleware('role:admin,user');
+
+
 Route::get('/vendor/{id}/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan'])->name('vendor.uang-jalan')->middleware('role:admin,user');
 Route::post('/vendor/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan_store'])->name('vendor.uang-jalan.store')->middleware('role:admin,user');
+Route::get('/vendor/uang-jalan/{id}/edit', [App\Http\Controllers\VendorController::class, 'uang_jalan_edit'])->name('vendor.uang-jalan.edit')->middleware('role:admin,user');
+
 Route::get('/vendor/biodata-vendor/{id}', [App\Http\Controllers\VendorController::class, 'biodata_vendor'])->name('vendor.biodata-vendor')->middleware('role:admin,user');
 
 

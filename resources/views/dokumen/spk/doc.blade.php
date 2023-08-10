@@ -192,8 +192,8 @@
         <td class="table-pdf"></td>
         <td class="table-pdf">* Harga :</td>
         @foreach ($data->vendor->vendor_bayar as $v)
-        <td class="table-pdf">Rp. @if ($v->pembayaran == $data->pembayaran)
-            {{$v->harga_kesepakatan}}</td>
+        @if ($v->pembayaran == $data->pembayaran)
+        <td class="table-pdf">Rp. {{$v->harga_kesepakatan}}</td>
         @endif
         @endforeach
     </tr>

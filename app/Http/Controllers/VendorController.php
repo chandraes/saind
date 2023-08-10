@@ -242,6 +242,17 @@ class VendorController extends Controller
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil ditambahkan');
     }
 
+    public function uang_jalan_edit(string $id)
+    {
+        $data = VendorUangJalan::findOrFail($id);
+        $rutes = Rute::all();
+
+        return view('database.vendor.edit-uangjalan', [
+            'data' => $data,
+            'rutes' => $rutes,
+        ]);
+    }
+
     public function biodata_vendor(string $id)
     {
         $data = Vendor::find($id);
