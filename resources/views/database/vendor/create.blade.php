@@ -54,7 +54,7 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="perusahaan" class="form-label">Nama Perusahaan</label>
-                    <input type="text" class="form-control {{$errors->has('perusahaan') ? 'is-invalid' : ''}}" name="perusahaan" id="perusahaan" placeholder="" value="{{old('perusahaan') ? old('perusahaan') : ''}}" required>
+                    <input type="text" class="form-control {{$errors->has('perusahaan') ? 'is-invalid' : ''}}" name="perusahaan" id="perusahaan" placeholder="" value="{{old('perusahaan') ? old('perusahaan') : ''}}" >
                     @if ($errors->has('perusahaan'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('perusahaan') }}</strong>

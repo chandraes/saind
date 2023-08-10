@@ -38,8 +38,6 @@ class UserController extends Controller
             "role" => "required",
         ]);
 
-
-
         $data['password'] = bcrypt($data['password']);
 
         User::create($data);
@@ -69,7 +67,33 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $data = $request->validate([
+            "name" => "required|min:3",
+            "username" => "required|unique:users,username,$id",
+            "email" => "nullable",
+            "password" => "nullable",
+            "role" => "required",
+        ]);
+
+        if ($request->password) {
+            $data['password'] = bcrypt($data['password']);
+            User::findOrFail($id)->update([
+                "name" => $data['name'],
+                "username" => $data['username'],
+                "email" => $data['email'],
+                "password" => $data['password'],
+                "role" => $data['role'],
+            ]);
+        } else {
+            User::findOrFail($id)->update([
+                "name" => $data['name'],
+                "username" => $data['username'],
+                "email" => $data['email'],
+                "role" => $data['role'],
+            ]);
+        }
+
+        return redirect()->route('pengguna.index')->with('success', 'Data berhasil diubah');
     }
 
     /**
@@ -77,6 +101,14 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        // check if user admin atleast 1, if yes, return error
+        $admin = User::where('role', 'admin')->count();
+        if ($admin == 1) {
+            return redirect()->route('pengguna.index')->with('success', 'Tidak dapat menghapus data admin');
+        } else {
+            User::findOrFail($id)->delete();
+        }
+
+        return redirect()->route('pengguna.index')->with('success', 'Data berhasil dihapus');
     }
 }

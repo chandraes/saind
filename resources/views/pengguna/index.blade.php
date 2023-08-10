@@ -109,11 +109,76 @@
                     <td class="text-center align-middle">{{$d->name}}</td>
                     <td class="text-center align-middle">{{$d->role}}</td>
                     <td class="text-center align-middle">
-                        <a href="{{route('pengguna.edit', $d->id)}}" class="btn btn-warning btn-sm">Edit</a>
+                        {{-- <a href="{{route('pengguna.edit', $d->id)}}" class="btn btn-warning btn-sm">Edit</a> --}}
+                        <!-- Modal trigger button -->
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-edit-{{$d->id}}">
+                          Edit
+                        </button>
+
+                        <!-- Modal Body -->
+                        <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+                        <div class="modal fade" id="modal-edit-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalTitleId">Ubah Pengguna</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+
+                                        <form action="{{route('pengguna.update', $d->id)}}" method="post">
+                                            @csrf
+                                            @method('PUT')
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="name" class="form-label">Nama</label>
+                                                        <input type="text" class="form-control" name="name" id="name" aria-describedby="name"
+                                                            placeholder="" value="{{$d->name}}">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="username" class="form-label">Username</label>
+                                                        <input type="text" class="form-control" name="username" id="username" required
+                                                            aria-describedby="username" placeholder="" value="{{$d->username}}">
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-md-12">
+                                                        <label for="role" class="form-label">Role</label>
+                                                        <select class="form-select" name="role" id="role">
+                                                            <option value="admin" {{$d->role == 'admin' ? 'selected' : ''}}>Admin</option>
+                                                            <option value="vendor" {{$d->role == 'vendor' ? 'selected' : ''}}>Vendor</option>
+                                                            <option value="user" {{$d->role == 'user' ? 'selected' : ''}}>User</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-12 mt-2">
+                                                        <label for="email" class="form-label">E-Mail</label>
+                                                        <input type="email" class="form-control" name="email" id="email"
+                                                            aria-describedby="email" placeholder="boleh kosong">
+                                                        <div class="form-group mt-2">
+                                                            <label for="passwordInput">Password</label>
+                                                            <div class="input-group">
+                                                                <input type="password" name="password" class="form-control" id="passwordInput" placeholder="Kosongkan Jika Tidak Mengganti">
+                                                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                                                    <i class="fa fa-eye"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Save</button>
+                                            </div>
+                                        </form>
+                                </div>
+                            </div>
+                        </div>
+
                         <form action="{{route('pengguna.destroy', $d->id)}}" method="post" class="d-inline">
                             @csrf
                             @method('delete')
-                            <button type="submit" class="btn btn-danger btn-sm"
+                            <button type="submit" class="btn btn-danger"
                                 onclick="return confirm('Yakin ingin menghapus data?')">Delete</button>
                         </form>
                     </td>

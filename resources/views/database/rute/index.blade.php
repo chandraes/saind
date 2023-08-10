@@ -35,17 +35,12 @@
                     <td><a href="" data-bs-toggle="modal" data-bs-target="#modalId"><img
                                 src="{{asset('images/rute.svg')}}" alt="add-rute" width="30"> Tambah Rute</a>
                     </td>
-                    {{-- <td><a href="{{route('dokumen.sph_doc')}}" target="_blank"><img
-                                src="{{asset('images/document-add.svg')}}" alt="add-document" width="30"> Tambah SPH</a>
-                    </td> --}}
                 </tr>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Modal Body -->
-<!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
 <div class="modal fade" id="modalId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog"
     aria-labelledby="modalTitleId" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document">
