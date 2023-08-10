@@ -119,13 +119,13 @@
                 <tr class="table-pdf text-pdf">
                     <td class="table-pdf text-center"></td>
                     <td class="table-pdf">* Harga :</td>
-                    @if ($data->vendor_bayar->where('pembayaran', 'titipan'))
-                    @foreach ($data->vendor_bayar->where('pembayaran', 'titipan') as $c)
-                        <td class="table-pdf">Rp. {{number_format($c->harga_kesepakatan, 0, ',', '.')}}</td>
-                    @endforeach
+                    @foreach ($customer as $c)
+                    @if ($data->vendor_bayar->where('pembayaran', 'titipan')->where('customer_id', $c->id)->first())
+                    <td class="table-pdf">Rp. {{number_format($data->vendor_bayar->where('pembayaran', 'titipan')->where('customer_id', $c->id)->first()->harga_kesepakatan, 0, ',', '.')}}</td>
                     @else
                     <td class="table-pdf"></td>
                     @endif
+                    @endforeach
                 </tr>
             </tbody>
         </table>
