@@ -4,7 +4,7 @@
 <hr style="border-bottom: 1.4px solid;">
 <div class="container-fluid justify-content-center">
     <center>
-        <h2>Biodata Vendor {{$data->perusahaan}}</h1< /center>
+        <h2>Biodata Vendor {{$data->tipe == 'perusahaan' ? $data->perusahaan : $data->nama}}</h2></center>
 </div>
 <div class="container-fluid">
     <div class="row col-12 mt-3">
