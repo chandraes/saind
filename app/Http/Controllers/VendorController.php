@@ -292,7 +292,7 @@ class VendorController extends Controller
     {
         $data = Vendor::find($id);
         $customer = Customer::all();
-
+        $array_vb = $data->vendor_bayar->pluck('customer_id')->toArray();
         // make $data->tanggal into local value id with Carbon
         $data->tanggal = Carbon::parse($data->tanggal)->locale('id')->isoFormat('LL');
 
