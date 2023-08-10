@@ -18,7 +18,7 @@ class SpkController extends Controller
     public function index()
     {
         $data = Spk::all();
-        $vendors = Vendor::all();
+        $vendors = Vendor::where('status', 'aktif')->get();
         return view('dokumen.spk.index', [
             'data' => $data,
             'vendors' => $vendors,

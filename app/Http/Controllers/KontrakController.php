@@ -19,7 +19,7 @@ class KontrakController extends Controller
     public function index()
     {
         $kontraks = Kontrak::all();
-        $vendors = Vendor::all();
+        $vendors = Vendor::where('status', 'aktif')->get();
         return view('dokumen.kontrak.index', [
             'vendors' => $vendors,
             'kontraks' => $kontraks,
@@ -74,7 +74,7 @@ class KontrakController extends Controller
      */
     public function update(Request $request, Kontrak $kontrak)
     {
-        
+
     }
 
     /**
