@@ -42,6 +42,7 @@ Route::post('/vendor/pembayaran', [App\Http\Controllers\VendorController::class,
 Route::get('/vendor/{id}/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan'])->name('vendor.uang-jalan')->middleware('role:admin,user');
 Route::post('/vendor/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan_store'])->name('vendor.uang-jalan.store')->middleware('role:admin,user');
 Route::get('/vendor/uang-jalan/{id}/edit', [App\Http\Controllers\VendorController::class, 'uang_jalan_edit'])->name('vendor.uang-jalan.edit')->middleware('role:admin,user');
+Route::post('/vendor/uang-jalan/{id}/update', [App\Http\Controllers\VendorController::class, 'uang_jalan_update'])->name('vendor.uang-jalan.update')->middleware('role:admin,user');
 
 Route::get('/vendor/biodata-vendor/{id}', [App\Http\Controllers\VendorController::class, 'biodata_vendor'])->name('vendor.biodata-vendor')->middleware('role:admin,user');
 

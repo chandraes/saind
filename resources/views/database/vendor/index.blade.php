@@ -114,7 +114,7 @@
                                   </div>
                                   <div class="modal-footer">
                                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                      <button type="button" class="btn btn-primary">Edit Uang Jalan</button>
+                                      <button type="button" class="btn btn-primary">Edit Pembayaran</button>
                                   </div>
                               </div>
                           </div>
@@ -152,7 +152,7 @@
                                   </div>
                                   <div class="modal-footer">
                                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                      <button type="button" class="btn btn-primary">Edit Uang Jalan</button>
+                                      <a href="{{route('vendor.uang-jalan.edit', $d->id)}}" class="btn btn-primary">Edit Uang Jalan</a>
                                   </div>
                               </div>
                           </div>

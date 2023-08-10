@@ -253,6 +253,41 @@ class VendorController extends Controller
         ]);
     }
 
+    public function uang_jalan_update(Request $request, string $id)
+    {
+        $data = $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
+            'rute_id' => 'required',
+            'rute_id.*' => 'required|exists:rutes,id',
+            'uang_jalan' => 'required',
+            'uang_jalan.*' => 'required',
+        ]);
+
+        $id = $data['vendor_id'];
+        $checkRole = auth()->user()->role;
+
+        if ($checkRole !== 'admin') {
+           for ($i=0; $i < count($data['hk_opname']); $i++) {
+                if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
+                    return redirect()->back()->with('error', 'Harga opname tidak sesuai');
+                }
+                if ($data['hk_titipan'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
+                    return redirect()->back()->with('error', 'Harga titipan tidak sesuai');
+                }
+           }
+        }
+
+        DB::transaction(function () use ($data, $id) {
+            for ($i=0; $i < count($data['rute_id']); $i++) {
+                VendorUangJalan::where('vendor_id', $data['vendor_id'])->where('rute_id', $data['rute_id'][$i],)->update([
+                    'hk_uang_jalan' => $data['uang_jalan'][$i],
+                ]);
+            }
+        });
+
+        return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');
+    }
+
     public function biodata_vendor(string $id)
     {
         $data = Vendor::find($id);

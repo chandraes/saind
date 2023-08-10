@@ -16,7 +16,7 @@
         </div>
     </div>
     @endif
-    <form action="{{route('vendor.uang-jalan.update' $data->id)}}" method="post">
+    <form action="{{route('vendor.uang-jalan.update', $data->id)}}" method="post">
         @csrf
         <div class="row mt-3 mb-3">
             <div class="row justify-content-center">
@@ -35,7 +35,7 @@
                             <td class="text-center align-middle">{{$loop->iteration}}</td>
                             <td>{{$v->nama}}</td>
                             <td>
-                                <input type="hidden" name="vendor_id" value="{{$id}}">
+                                <input type="hidden" name="vendor_id" value="{{$data->vendor->id}}">
                                 <input type="hidden" name="rute_id[]" value="{{$v->id}}">
                                 <input type="number" class="form-control" name="uang_jalan[]" required id="uang_jalan"
                                     required aria-describedby="helpId" placeholder="" value="{{$v->uang_jalan}}" @if(auth()->user()->role !== 'admin')
