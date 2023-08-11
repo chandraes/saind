@@ -968,8 +968,8 @@
     <div class="row-pdf">
         <div class="column-4">
             <strong>Saksi PIHAK 1</strong><br><br>
-            1. SEPRIZAL HAIDIL <br><br>
-            2. DESY PRATIWI
+            1. <br><br>
+            2. 
         </div>
         <div class="column-4">
             <strong>Tanda Tangan</strong>

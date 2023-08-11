@@ -52,11 +52,12 @@ class VendorController extends Controller
      */
     public function store(Request $request)
     {
+
         $data = $request->validate([
             'nama' => 'required|min:3',
             'nickname' => 'required|min:3',
-            'tipe' => 'required',
-            'jabatan' => 'required',
+            'tipe' => 'required|in:perusahaan,perorangan',
+            'jabatan' => 'required|in:Direktur Utama,Direktur, Pemilik Unit',
             'perusahaan' => 'nullable',
             'npwp' => 'required',
             'alamat' => 'required',
@@ -67,6 +68,8 @@ class VendorController extends Controller
             'nama_rekening' => 'required',
             'status' => 'required',
         ]);
+
+        // dd($data);
 
         $data['user_id'] = auth()->user()->id;
 
@@ -105,8 +108,8 @@ class VendorController extends Controller
         $data = $request->validate([
             'nama' => 'required|min:3',
             'nickname' => 'required|min:3',
-            'tipe' => 'required',
-            'jabatan' => 'required',
+            'tipe' => 'required|in:perusahaan,perorangan',
+            'jabatan' => 'required|in:Direktur Utama,Direktur, Pemilik Unit',
             'perusahaan' => 'nullable',
             'npwp' => 'required',
             'alamat' => 'required',

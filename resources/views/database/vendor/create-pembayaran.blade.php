@@ -39,7 +39,7 @@
                         <span class="input-group-text">Rp.</span>
                         <input type="number" class="form-control" name="hk_opname[]"
                             id="hk_opname" required aria-describedby="helpId" placeholder="" value="{{$v->harga_opname}}" @if (auth()->user()->role !== 'admin')
-                            disabled
+                            readonly
                         @endif >
                     </div>
                 </div>
@@ -49,7 +49,7 @@
                         <span class="input-group-text">Rp.</span>
                         <input type="number" class="form-control" name="hk_titipan[]"
                             id="hk_titipan" required aria-describedby="helpId" placeholder="" value="{{$v->harga_titipan}}" @if (auth()->user()->role !== 'admin')
-                            disabled
+                            readonly
                         @endif>
                     </div>
                 </div>

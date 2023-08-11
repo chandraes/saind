@@ -40,7 +40,7 @@
                         <span class="input-group-text">Rp.</span>
                         <input type="number" class="form-control" name="hk_opname[]"
                             id="hk_opname" {{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first() ? 'required' : ''}} aria-describedby="helpId" placeholder="" value="{{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first() ? $data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first()->harga_kesepakatan : ''}}" @if (auth()->user()->role !== 'admin')
-                            disabled
+                            readonly
                         @endif>
                     </div>
                 </div>
@@ -50,7 +50,7 @@
                         <span class="input-group-text">Rp.</span>
                         <input type="number" class="form-control" name="hk_titipan[]"
                             id="hk_titipan" {{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first() ? 'titipan' : ''}} aria-describedby="helpId" placeholder="" value="{{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'titipan')->first() ? $data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'titipan')->first()->harga_kesepakatan : ''}}" @if (auth()->user()->role !== 'admin')
-                            disabled
+                            readonly
                         @endif>
                     </div>
                 </div>
@@ -82,7 +82,7 @@
             $('#pembayaran').select2();
 
         });
-        
+
         $('#pembayaran').on('select2:select', function(e) {
                 var data = e.params.data.id;
                 var customer = {!! $customers !!};

@@ -11,6 +11,16 @@
         <div class="row mt-3 mb-3">
             <div class="row">
                 <div class="col-md-6 mb-3">
+                    <div class="mb-3">
+                        <label for="tipe" class="form-label">Perusahaan / Perseorangan</label>
+                        <select class="form-select" name="tipe" id="tipe-vendor" onchange="changeTipe()" required>
+                            <option value=""> - Pilih -</option>
+                            <option value="perusahaan">Perusahaan</option>
+                            <option value="perorangan">Perorangan</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
                     <label for="nama" class="form-label">Nama</label>
                     <input type="text" class="form-control @if ($errors->has('nama'))
                         is-invalid
@@ -22,10 +32,9 @@
                     @endif
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="jabatan" class="form-label">Jabatan</label>
-                    <input type="text" class="form-control @if ($errors->has('jabatan'))
-                        is-invalid
-                        @endif" value="{{old('jabatan') ? old('jabatan') : ''}}" name="jabatan" id="jabatan" placeholder="" required>
+                        <label for="jabatan" class="form-label">Jabatan</label>
+                        <select class="form-select" name="jabatan" id="jabatan" required>
+                        </select>
                         @if ($errors->has('jabatan'))
                         <span class="text-danger">
                             <strong>{{ $errors->first('jabatan') }}</strong>
@@ -41,18 +50,9 @@
                     </span>
                     @endif
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="mb-3">
-                        <label for="tipe" class="form-label">Perusahaan / Perseorangan</label>
-                        <select class="form-select" name="tipe" id="tipe">
-                            <option value="perusahaan">Perusahaan</option>
-                            <option value="perorangan">Perorangan</option>
-                        </select>
-                    </div>
-                </div>
             </div>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-6 mb-3" id="perusahaan-row" hidden>
                     <label for="perusahaan" class="form-label">Nama Perusahaan</label>
                     <input type="text" class="form-control {{$errors->has('perusahaan') ? 'is-invalid' : ''}}" name="perusahaan" id="perusahaan" placeholder="" value="{{old('perusahaan') ? old('perusahaan') : ''}}" >
                     @if ($errors->has('perusahaan'))
@@ -114,7 +114,7 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank" class="form-label">Nama Bank</label>
-                    <input type="text" class="form-control {{$errors->has('bank') ? 'is-invalid' : ''}}" name="bank" id="bank" placeholder="" value="{{old('bank') ? old('bank') : ''}}" required>
+                    <input type="text" class="form-control {{$errors->has('bank') ? 'is-invalid' : ''}}" name="bank" id="bank" placeholder="" value="BCA" readonly required>
                     @if ($errors->has('bank'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('bank') }}</strong>
@@ -162,17 +162,35 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+    function changeTipe() {
+        var type = $('#tipe-vendor').val();
+
+        if (type === 'perusahaan') {
+            // remove option #jabatan
+            // add option "Direktur Utama" and "Direktur" to select with id="jabatan"
+            $('#jabatan').html('<option value="Direktur Utama">Direktur Utama</option><option value="Direktur">Direktur</option>');
+            // show #perusahaan-row
+            $('#perusahaan-row').show();
+            $('#perusahaan-row').removeAttr('hidden');
+            $('#perusahaan').attr('required', true);
+
+        } else if (type === 'perorangan') {
+            // hide #perusahaan-row
+            // set #perusahaan value to null
+            $('#perusahaan').val('');
+            $('#perusahaan-row').hide();
+            // add option "Pemilik" to select with id="jabatan"
+            $('#jabatan').html('<option value="Pemilik Unit" selected>Pemilik Unit</option>');
+        } else {
+
+        }
+    }
+
     $(document).ready(function () {
-
-        $('#customer').select2({
-            theme: 'bootstrap-5',
-
-            placeholder: '-- Pilih Customer --',
-            allowClear: true,
-        });
-        // for every selected customer, append a hidden input to the form
-
+        // Jalankan fungsi changeTipe saat halaman dimuat
+        changeTipe();
     });
+
 
 
 </script>

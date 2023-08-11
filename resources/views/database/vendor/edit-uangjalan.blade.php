@@ -39,7 +39,7 @@
                                 <input type="hidden" name="rute_id[]" value="{{$v->id}}">
                                 <input type="number" class="form-control" name="uang_jalan[]" required id="uang_jalan"
                                     required aria-describedby="helpId" placeholder="" value="{{$v->uang_jalan}}" @if(auth()->user()->role !== 'admin')
-                                    disabled
+                                    readonly
                                 @endif >
                             </td>
                         </tr>

@@ -107,7 +107,8 @@ class KontrakController extends Controller
         // buat penyebutan angka hari dari tanggal
         $data->hari = Carbon::parse($data->tanggal)->locale('id')->isoFormat('dddd');
 
-        $data->hari_angka = Carbon::parse($data->tanggal)->locale('id')->isoFormat('d');
+        $data->hari_angka = Carbon::parse($data->tanggal)->locale('id')->isoFormat('D');
+
 
         // buat penyebutan angka bulan dari tanggal
         $data->bulan = Carbon::parse($data->tanggal)->locale('id')->isoFormat('MMMM');
