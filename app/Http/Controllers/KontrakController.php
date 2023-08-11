@@ -82,6 +82,9 @@ class KontrakController extends Controller
      */
     public function destroy(Kontrak $kontrak)
     {
+        if (auth()->user()->role !== 'admin') {
+            return redirect()->route('kontrak.index')->with('error', 'Anda tidak memiliki akses untuk menghapus kontrak');
+        }
         // delete kontrak
         $kontrak->delete();
 

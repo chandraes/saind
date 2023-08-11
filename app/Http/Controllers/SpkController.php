@@ -84,6 +84,10 @@ class SpkController extends Controller
      */
     public function destroy(Spk $spk)
     {
+        if (auth()->user()->role !== 'admin') {
+            return redirect()->route('spk.index')->with('error', 'Anda tidak memiliki akses untuk menghapus SPK');
+        }
+
         $spk->delete();
         return redirect()->route('spk.index')->with('success', 'SPK berhasil dihapus');
     }
