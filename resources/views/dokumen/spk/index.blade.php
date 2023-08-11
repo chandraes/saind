@@ -127,12 +127,12 @@
                       SPK Asli
                     </button>
                     <a href="{{route('spk.doc', $k->id)}}" target="_blank" class="btn btn-success me-2">PDF</a>
-                    <a href="{{route('spk.edit', $k->id)}}" class="btn btn-warning me-2">Edit</a>
+                    {{-- <a href="{{route('spk.edit', $k->id)}}" class="btn btn-warning me-2">Edit</a> --}}
                     <form action="{{route('spk.destroy', $k->id)}}" method="post" class="d-inline me-2">
                         @csrf
                         @method('delete')
                         <button type="submit" class="btn btn-danger me-2"
-                            onclick="return confirm('Yakin ingin menghapus data?')">Delete</button>
+                            onclick="return confirm('Yakin ingin menghapus data?')">Hapus</button>
                     </form>
                 </td>
             </tr>
