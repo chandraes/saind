@@ -294,7 +294,7 @@ class VendorController extends Controller
         $customer = Customer::all();
         $array_vb = $data->vendor_bayar->pluck('customer_id')->toArray();
         // make $data->tanggal into local value id with Carbon
-        $data->tanggal = Carbon::parse($data->tanggal)->locale('id')->isoFormat('LL');
+        $data->tanggal = Carbon::parse($data->created_at)->locale('id')->isoFormat('LL');
 
         $pdf = Pdf::loadview('database.vendor.biodata-vendor', [
             'data' => $data,
