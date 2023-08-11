@@ -36,7 +36,9 @@ Route::view('/dokumen/sph', 'dokumen.template.index')->name('dokumen.template');
 Route::get('/database', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
 Route::resource('vendor', App\Http\Controllers\VendorController::class)->middleware('role:admin,user');
 Route::get('/vendor/{id}/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran'])->name('vendor.pembayaran')->middleware('role:admin,user');
-Route::post('/vendor/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran_update'])->name('vendor.pembayaran.store')->middleware('role:admin,user');
+Route::post('/vendor/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran_store'])->name('vendor.pembayaran.store')->middleware('role:admin,user');
+Route::get('/vendor/pembayaran/{id}/edit', [App\Http\Controllers\VendorController::class, 'pembayaran_edit'])->name('vendor.pembayaran.edit')->middleware('role:admin,user');
+Route::post('/vendor/pembayaran/{id}/update', [App\Http\Controllers\VendorController::class, 'pembayaran_update'])->name('vendor.pembayaran.update')->middleware('role:admin,user');
 
 
 Route::get('/vendor/{id}/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan'])->name('vendor.uang-jalan')->middleware('role:admin,user');
