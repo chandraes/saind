@@ -88,6 +88,12 @@ class SpkController extends Controller
             return redirect()->route('spk.index')->with('error', 'Anda tidak memiliki akses untuk menghapus SPK');
         }
 
+        // delete file
+        if ($spk->dokumen_asli) {
+            $path = storage_path('app/'.$spk->dokumen_asli);
+            unlink($path);
+        }
+
         $spk->delete();
         return redirect()->route('spk.index')->with('success', 'SPK berhasil dihapus');
     }
@@ -107,7 +113,41 @@ class SpkController extends Controller
             'data' => $data,
             'customer' => $customer,
         ]);
-        return $pdf->stream('spk.pdf');
+        return $pdf->stream($data->nomor.' - SPK '.$data->vendor->perusahaan.' - '.$data->vendor->nama.'.pdf');
+    }
+
+    // upload SPK
+    public function upload(Request $request, Spk $spk)
+    {
+        $data = $request->validate([
+            'dokumen_asli' => 'required|mimes:pdf|max:10000',
+        ]);
+
+        $filename = $spk->nomor.' - '.$spk->vendor->nama.' - '.Uuid::uuid4().'.'.$request->file('dokumen_asli')->extension();
+
+        $data['dokumen_asli'] = $request->file('dokumen_asli')->storeAs('public/spk', $filename);
+
+        $spk->update($data);
+
+        return redirect()->route('spk.index')->with('success', 'SPK berhasil diupload');
+    }
+
+    public function view_file(Spk $spk)
+    {
+        $path = storage_path('app/'.$spk->dokumen_asli);
+        return response()->file($path);
+    }
+
+    public function delete_file(Spk $spk)
+    {
+
+        $path = storage_path('app/'.$spk->dokumen_asli);
+        unlink($path);
+
+        $spk->dokumen_asli = null;
+        $spk->save();
+
+        return redirect()->route('spk.index')->with('success', 'SPK Asli berhasil dihapus');
     }
 
 }

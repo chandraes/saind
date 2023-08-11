@@ -122,6 +122,27 @@ class KontrakController extends Controller
         // }
 
 
-        return $pdf->stream('Kontrak '.$data->vendor->perusahaan.'.pdf');
+        return $pdf->stream($data->nomor.' - Kontrak '.$data->vendor->perusahaan.' - '.$data->vendor->nama.'.pdf');
+    }
+
+    public function upload(Request $request, Kontrak $kontrak)
+    {
+        $data = $request->validate([
+            'dokumen_asli' => 'required|mimes:pdf|max:10000',
+        ]);
+
+        $filename = $kontrak->nomor.' - '.$kontrak->vendor->nama.' - '.Uuid::uuid4().'.'.$request->file('dokumen_asli')->extension();
+        
+        $data['dokumen_asli'] = $request->file('dokumen_asli')->storeAs('public/kontrak', $filename);
+
+        $kontrak->update($data);
+
+        return redirect()->route('kontrak.index')->with('success', 'Kontrak berhasil diupload');
+    }
+
+    public function view_file(Kontrak $kontrak)
+    {
+        $path = storage_path('app/'.$kontrak->dokumen_asli);
+        return response()->file($path);
     }
 }
