@@ -10,7 +10,7 @@
     {{-- if has message, trigger sweetalert --}}
     @if (session('success'))
     <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 
             <strong>{{session('success')}}</strong>
@@ -109,10 +109,11 @@
                 <td class="text-center align-middle">{{$date}}</td>
                 <td class="text-center align-middle">{{$k->createdBy['name']}}</td>
                 <td class="text-center align-middle">
-                    @if ($k->dokumen_asli)
-                    @else
-                    <a href="" class="btn btn-primary me-2">Upload Kontrak</a>
-                    @endif
+                   <!-- Modal trigger button -->
+                   <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#kontra-asli-{{$k->id}}">
+                     Kontrak Asli
+                   </button>
+
                     <a href="{{route('kontrak.doc', $k->id)}}" target="_blank" class="btn btn-success me-2">PDF</a>
                     <a href="{{route('kontrak.edit', $k->id)}}" class="btn btn-warning me-2">Edit</a>
                     <form action="{{route('kontrak.destroy', $k->id)}}" method="post" class="d-inline me-2">
@@ -123,6 +124,42 @@
                     </form>
                 </td>
             </tr>
+              <!-- Modal Body -->
+                   <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+                   <div class="modal fade" id="kontra-asli-{{$k->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="kontrak-asli{{$k->id}}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="kontrak-asli{{$k->id}}">Kontrak Asli</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            @if ($k->dokumen_asli)
+                                <div class="modal-body text-center">
+                                    <div class="mb-3">
+                                        <a href="{{route('kontrak.view', $k->id)}}" target="_blank" class="btn btn-primary me-2">Lihat Kontrak Asli</a>
+                                        {{-- hapus file button --}}
+                                        <a href="{{route('kontrak.hapus-file', $k->id)}}" class="btn btn-danger me-2" onclick="return confirm('Yakin ingin menghapus file?')">Hapus File Asli</a>
+                                    </div>
+                                </div>
+                                @else
+                                <form action="{{route('kontrak.upload', $k->id)}}" method="post" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                        <label for="dokumen_asli" class="form-label">Pilih File</label>
+                                        <input type="file" class="form-control" name="dokumen_asli" id="dokumen_asli" placeholder="" aria-describedby="fileHelpId">
+                                        <div id="fileHelpId" class="form-text">Tipe file PDF</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                        <button type="submit" class="btn btn-primary">Simpan</button>
+                                    </div>
+                                </form>
+                                @endif
+                        </div>
+                    </div>
+                   </div>
             @endforeach
         </tbody>
     </table>
@@ -148,6 +185,10 @@
         });
     }
     setInterval(clock, 1000);
+
+    setTimeout(function() {
+        $('#alert').fadeOut('slow');
+    }, 5000);
 
     $(document).ready(function() {
         $('#sph').DataTable();

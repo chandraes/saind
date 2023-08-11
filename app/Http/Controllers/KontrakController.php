@@ -85,6 +85,11 @@ class KontrakController extends Controller
         if (auth()->user()->role !== 'admin') {
             return redirect()->route('kontrak.index')->with('error', 'Anda tidak memiliki akses untuk menghapus kontrak');
         }
+
+        // delete dokumen kontrak
+        if ($kontrak->dokumen_asli) {
+            unlink(storage_path('app/' . $kontrak->dokumen_asli));
+        }
         // delete kontrak
         $kontrak->delete();
 
@@ -132,7 +137,7 @@ class KontrakController extends Controller
         ]);
 
         $filename = $kontrak->nomor.' - '.$kontrak->vendor->nama.' - '.Uuid::uuid4().'.'.$request->file('dokumen_asli')->extension();
-        
+
         $data['dokumen_asli'] = $request->file('dokumen_asli')->storeAs('public/kontrak', $filename);
 
         $kontrak->update($data);
@@ -144,5 +149,16 @@ class KontrakController extends Controller
     {
         $path = storage_path('app/'.$kontrak->dokumen_asli);
         return response()->file($path);
+    }
+
+    public function delete_file(Kontrak $kontrak)
+    {
+        $path = storage_path('app/'.$kontrak->dokumen_asli);
+        unlink($path);
+
+        $kontrak->dokumen_asli = null;
+        $kontrak->save();
+
+        return redirect()->route('kontrak.index')->with('success', 'File kontrak berhasil dihapus');
     }
 }
