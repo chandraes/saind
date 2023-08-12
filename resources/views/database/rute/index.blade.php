@@ -89,8 +89,8 @@
         </div>
     </div>
 </div>
-<div class="container mt-5">
-    <table class="table table-responsive table-bordered table-hover" id="data">
+<div class="container mt-5 table-responsive">
+    <table class="table table-bordered table-hover table-responsive" id="data">
         <thead class="table-success">
             <tr>
                 <th class="text-center">No</th>

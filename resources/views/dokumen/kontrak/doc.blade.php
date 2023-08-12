@@ -42,7 +42,7 @@
 <br>
 <div class="row text-pdf">
     <p class="text-pdf">
-        Pada hari ini, {{$data->hari}} tanggal {{$data->hari_angka}} bulan {{$data->bulan}} tahun {{$data->tahun}} ({{$data->hari_angka}} - {{$data->bulan}} - {{$data->tahun}}),
+        Pada hari ini, {{$data->hari}} tanggal {{$data->hari_angka}} bulan {{$data->bulan}} tahun {{$data->tahun}},
         telah disepakati sebuah Perjanjian Kontrak Jasa Angkutan Batubara oleh Para Pihak diantaranya, sebagai berikut :
         <br><br>
         <strong>PT. SUMATERA ALAM INDOPRIMA</strong> suatu Perseroan Terbatas yang didirikan dan tunduk pada Hukum Negara
@@ -969,7 +969,7 @@
         <div class="column-4">
             <strong>Saksi PIHAK 1</strong><br><br>
             1. <br><br>
-            2. 
+            2.
         </div>
         <div class="column-4">
             <strong>Tanda Tangan</strong>

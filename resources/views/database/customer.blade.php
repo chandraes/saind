@@ -113,8 +113,8 @@
         </div>
     </div>
 </div>
-<div class="container-fluid mt-5">
-    <table class="table table-responsive table-bordered table-hover" id="data">
+<div class="container-fluid mt-5 table-responsive">
+    <table class="table table-bordered table-hover" id="data">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>

@@ -82,8 +82,8 @@
 </div>
 
 
-<div class="container-fluid mt-5">
-    <table id="sph" class="table table-responsive table-bordered table-hover">
+<div class="container-fluid mt-5 table-responsive">
+    <table id="sph" class="table table-bordered table-hover">
         <thead class="table-success">
             <tr>
                 <th class="text-center">No</th>
@@ -99,7 +99,7 @@
             @foreach ($kontraks as $k)
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
-                <td class="align-middle">{{$k->vendor->nama}} ({{$k->vendor->perusahaan}})</td>
+                <td class="align-middle">{{$k->vendor->nama}} {{$k->vendor->perusahaan ? '('.$k->vendor->perusahaan.')' : ''}}</td>
                 <td class="text-center align-middle">{{$k->nama_singkatan}}</td>
                 <td class="text-center align-middle">{{$k->nomor}}</td>
                 @php
@@ -110,16 +110,16 @@
                 <td class="text-center align-middle">{{$k->createdBy['name']}}</td>
                 <td class="text-center align-middle">
                    <!-- Modal trigger button -->
-                   <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#kontra-asli-{{$k->id}}">
+                   <button type="button" class="btn btn-primary me-2 mb-2" data-bs-toggle="modal" data-bs-target="#kontra-asli-{{$k->id}}">
                      Kontrak Asli
                    </button>
 
-                    <a href="{{route('kontrak.doc', $k->id)}}" target="_blank" class="btn btn-success me-2">PDF</a>
+                    <a href="{{route('kontrak.doc', $k->id)}}" target="_blank" class="btn btn-success me-2 mb-2">PDF</a>
                     {{-- <a href="{{route('kontrak.edit', $k->id)}}" class="btn btn-warning me-2">Edit</a> --}}
                     <form action="{{route('kontrak.destroy', $k->id)}}" method="post" class="d-inline me-2">
                         @csrf
                         @method('delete')
-                        <button type="submit" class="btn btn-danger me-2"
+                        <button type="submit" class="btn btn-danger me-2 mb-2"
                             onclick="return confirm('Yakin ingin menghapus data?')">Hapus</button>
                     </form>
                 </td>

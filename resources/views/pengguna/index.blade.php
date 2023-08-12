@@ -91,7 +91,7 @@
         </div>
     </div>
     <div class="row justify-content-center mt-3">
-        <table class="table table-bordered table-hover table-striped" id="user">
+        <table class="table table-bordered table-hover table-striped table-responsive" id="user">
             <thead class="table-success">
                 <tr>
                     <th class="text-center">No</th>
