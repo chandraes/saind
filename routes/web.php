@@ -73,7 +73,9 @@ Route::group(['middleware' => ['auth']], function() {
         Route::delete('customer/document-delete/{document}', [App\Http\Controllers\CustomerController::class, 'document_destroy'])->name('customer.document-destroy');
         Route::get('customer/document-download/{document}', [App\Http\Controllers\CustomerController::class, 'document_download'])->name('customer.document-download');
 
-        Route::resource('pengguna', App\Http\Controllers\UserController::class)->middleware('role:admin');
+        Route::resource('pengguna', App\Http\Controllers\UserController::class);
+
+        Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
     });
 
 
