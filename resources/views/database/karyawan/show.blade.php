@@ -19,13 +19,13 @@ Biodata {{ $karyawan->nama }}
 @section('content')
 <div class="container-fluid">
     <div class="row-pdf text-pdf">
-        <div class="column-pdf text-center align-middle">
+        <div class="column-pdf ">
             <div class="row-2">
-                <div class="column-2">
-                    <img src="{{storage_path('app/'.$karyawan->foto_diri)}}" alt="foto" style="max-width:90%; border: 1px solid">
+                <div class="column-2 text-center align-middle">
+                    <img src="{{storage_path('app/'.$karyawan->foto_diri)}}" alt="foto" style="img-thumbnail img-fluid" height="200">
                 </div>
-                <div class="column-2">
-                    <img src="{{storage_path('app/'.$karyawan->foto_ktp)}}" alt="foto" style="max-width:90%; max-height: 100%; border: 1px solid">
+                <div class="column-2 text-center align-middle">
+                    <img src="{{storage_path('app/'.$karyawan->foto_ktp)}}" alt="foto" style="img-thumbnail img-fluid" height="200">
                 </div>
             </div>
         </div>
