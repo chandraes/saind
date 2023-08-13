@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class KaryawanController extends Controller
 {
@@ -90,9 +91,15 @@ class KaryawanController extends Controller
      */
     public function show(Karyawan $karyawan)
     {
+        // make $karyawan->mulai_bekerja to Carbon ID
+        $karyawan->mulai_bekerja = Carbon::parse($karyawan->mulai_bekerja)->locale('id')->isoFormat('D MMMM YYYY');
+        $karyawan->tanggal_lahir = Carbon::parse($karyawan->tanggal_lahir)->locale('id')->isoFormat('D MMMM YYYY');
+
+        
+
         $pdf = PDF::loadview('database.karyawan.show', [
             'karyawan' => $karyawan,
-        ]);
+        ])->setPaper('a4', 'landscape');
 
         return $pdf->stream();
     }

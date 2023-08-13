@@ -136,6 +136,8 @@
                     @endif
                 </td>
                 <td class="text-center align-middle">
+                    {{-- show button --}}
+                    <a href="{{route('karyawan.show', $k->id)}}" class="btn btn-primary m-2"><i class="fa fa-eye"></i></a>
                     {{-- edit button --}}
                     <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning m-2"><i class="fa fa-edit"></i></a>
                     {{-- delete button --}}
