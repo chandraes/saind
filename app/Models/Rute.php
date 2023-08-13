@@ -27,5 +27,9 @@ class Rute extends Model
         return $this->belongsTo(User::class, 'edited_by');
     }
 
-    
+    // has many customer through CustomerRute
+    public function customer()
+    {
+        return $this->belongsToMany(Customer::class, 'customer_rute', 'rute_id', 'customer_id');
+    }
 }

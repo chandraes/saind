@@ -34,6 +34,12 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
+            <a href="{{route('vendor.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/dumptruckempty.svg')}}" alt="" width="100">
+                <h2>Vehicle</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="100">
                 <h2>Dashboard</h2>

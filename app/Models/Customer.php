@@ -8,10 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class Customer extends Model
 {
     use HasFactory;
+    
     protected $fillable = [
+        'kode_customer',
         'nama',
         'singkatan',
+        'npwp',
+        'alamat',
         'contact_person',
+        'jabatan',
+        'no_hp',
+        'no_wa',
+        'email',
         'harga_opname',
         'harga_titipan',
         'created_by',
@@ -28,4 +36,14 @@ class Customer extends Model
         return $this->belongsTo(User::class, 'edited_by');
     }
 
+    // has many rute through CustomerRute
+    public function rute()
+    {
+        return $this->belongsToMany(Rute::class, 'customer_rute', 'customer_id', 'rute_id');
+    }
+
+    public function document()
+    {
+        return $this->hasMany(CustomerDocument::class);
+    }
 }

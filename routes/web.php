@@ -48,8 +48,7 @@ Route::group(['middleware' => ['auth']], function() {
         'index', 'store', 'update', 'destroy'
     ])->middleware('role:admin');
 
-    Route::resource('customer', App\Http\Controllers\CustomerController::class)->middleware('role:admin');
-    Route::resource('pengguna', App\Http\Controllers\UserController::class)->middleware('role:admin');
+
 
     Route::resource('kontrak', App\Http\Controllers\KontrakController::class)->middleware('role:admin,user');
     Route::get('kontrak-doc/{kontrak}', [App\Http\Controllers\KontrakController::class, 'kontrak_doc'])->name('kontrak.doc')->middleware('role:admin,user');
@@ -68,6 +67,13 @@ Route::group(['middleware' => ['auth']], function() {
         Route::post('karyawan/jabatan-store', [App\Http\Controllers\KaryawanController::class, 'jabatan_store'])->name('karyawan.jabatan-store');
         Route::patch('karyawan/jabatan-update/{jabatan}', [App\Http\Controllers\KaryawanController::class, 'jabatan_update'])->name('karyawan.jabatan-update');
         Route::delete('karyawan/jabatan-delete/{jabatan}', [App\Http\Controllers\KaryawanController::class, 'jabatan_destroy'])->name('karyawan.jabatan-destroy');
+
+        Route::resource('customer', App\Http\Controllers\CustomerController::class);
+        Route::post('customer/{customer}/document-store', [App\Http\Controllers\CustomerController::class, 'document_store'])->name('customer.document-store');
+        Route::delete('customer/document-delete/{document}', [App\Http\Controllers\CustomerController::class, 'document_destroy'])->name('customer.document-destroy');
+        Route::get('customer/document-download/{document}', [App\Http\Controllers\CustomerController::class, 'document_download'])->name('customer.document-download');
+
+        Route::resource('pengguna', App\Http\Controllers\UserController::class)->middleware('role:admin');
     });
 
 

@@ -8,7 +8,7 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 
 		<!-- FAVICON -->
-		<link rel="shortcut icon" type="image/x-icon" href="{{asset('unsri_icon.png')}}" />
+		<link rel="shortcut icon" type="image/x-icon" href="{{asset('saind.ico')}}" />
 
          <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">

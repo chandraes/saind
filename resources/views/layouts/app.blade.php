@@ -7,6 +7,8 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {{-- change favicon to saind.ico --}}
+    <link rel="shortcut icon" href="{{asset('saind.ico')}}" type="image/x-icon">
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
