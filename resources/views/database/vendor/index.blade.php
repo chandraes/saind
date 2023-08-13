@@ -48,8 +48,8 @@
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
-                <th class="text-center align-middle">Nama Perusahaan</th>
                 <th class="text-center align-middle">Nama CP</th>
+                <th class="text-center align-middle">Nama Perusahaan</th>
                 <th class="text-center align-middle">Nickname</th>
                 <th class="text-center align-middle">Pembayaran</th>
                 <th class="text-center align-middle">Uang Jalan</th>
@@ -61,8 +61,8 @@
             @foreach ($vendors as $d)
             <tr>
                 <td class="align-middle">{{$loop->iteration}}</td>
+                <td class="align-middle"><a href="{{route('vendor.show', $d->id)}}"><strong>{{$d->nama}}</strong></a></td>
                 <td class="align-middle">{{$d->perusahaan}}</td>
-                <td class="align-middle">{{$d->nama}}</td>
                 <td class="align-middle">{{$d->nickname}}</td>
                 <td class="text-center align-middle">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-pembayaran{{$d->id}}">

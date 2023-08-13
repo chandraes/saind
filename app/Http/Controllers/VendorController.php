@@ -83,9 +83,11 @@ class VendorController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Vendor $vendor)
     {
-        //
+        return view('database.vendor.show', [
+            'vendor' => $vendor,
+        ]);
     }
 
     /**
