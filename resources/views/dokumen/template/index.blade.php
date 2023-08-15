@@ -9,13 +9,13 @@
     </div>
     <div class="row justify-content-left mt-5">
         <div class="col-md-4 text-center mb-5">
-            <a href="{{route('dokumen.kontrak')}}" class="text-decoration-none">
+            <a href="" class="text-decoration-none">
                 <img src="{{asset('images/kontrak.svg')}}" alt="" width="100">
                 <h2>Template Kontrak</h2>
             </a>
         </div>
         <div class="col-md-4 text-center mb-5">
-            <a href="{{route('dokumen.spk')}}" class="text-decoration-none">
+            <a href="{{route('template-spk.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/spk.svg')}}" alt="" width="100">
                 <h2>Template SPK</h2>
             </a>

@@ -76,6 +76,11 @@ Route::group(['middleware' => ['auth']], function() {
         Route::resource('pengguna', App\Http\Controllers\UserController::class);
 
         Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
+
+        Route::view('template', 'template.index')->name('template');
+        Route::resource('template-spk', App\Http\Controllers\TemplateSpkController::class);
+
+        Route::get('spk-template/preview', [App\Http\Controllers\TemplateSpkController::class, 'preview'])->name('spk-template.preview');
     });
 
 

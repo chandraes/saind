@@ -9,13 +9,13 @@
     <style>
         header {
             position: fixed;
+            display: block !important;
             float: right;
             top: -20px;
-            width: 100%;
+            width: 100% !important;
             left: 0px;
             height: 50px;
             text-align: right;
-            line-height: 35px;
         }
         .table-pdf {
             border: 1px solid;
