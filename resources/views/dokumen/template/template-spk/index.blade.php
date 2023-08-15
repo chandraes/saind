@@ -35,7 +35,8 @@
                                 src="{{asset('images/spk.svg')}}" alt="add-document" width="30"> Tambah Halaman SPK</a>
                     </td>
                     <td>
-                        <a href="{{route('spk-template.preview')}}" target="_blank">Print Preview</a>
+                        <a href="{{route('spk-template.preview')}}" target="_blank"><img
+                            src="{{asset('images/printpreview.svg')}}" alt="add-document" width="30"> Print Preview</a>
                     </td>
                 </tr>
             </table>
