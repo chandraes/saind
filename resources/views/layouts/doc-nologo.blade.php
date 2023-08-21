@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <link rel="stylesheet" href="{{public_path('assets/plugins/bootstrap/css/bootstrap.rtl.min.css')}}">
+    <link rel="stylesheet" href="{{public_path('assets/plugins/bootstrap/css/bootstrap.min.css')}}">
     <title>@yield('title', 'Document')</title>
     <style>
         header {
@@ -23,7 +23,7 @@
             padding-right: 5px;
         }
         .text-pdf {
-            font-size: 9pt;
+            font-size: 12pt;
         }
         .text-10 {
             font-size: 10pt;
@@ -40,14 +40,13 @@
             display: table;
             clear: both;
         }
+        .column-4 {
+            float: left;
+            width: 25%;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <img src="{{public_path('images/saind.png')}}" alt="saind" width="100">
-        <br>
-        <img src="{{public_path('images/saind-2.jpg')}}" alt="saind" width="170">
-    </header>
     <br><br><br>
 <div class="container-fluid">@yield('content')</div>
 </body>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Kontrak;
 use App\Models\Vendor;
 use App\Models\Customer;
+use App\Models\TemplateKontrak;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -99,7 +100,7 @@ class KontrakController extends Controller
     public function kontrak_doc(Kontrak $kontrak)
     {
         $data = $kontrak;
-
+        $template = TemplateKontrak::orderBy('urutan', 'asc')->get();
         $customer = Customer::select('nama', 'singkatan', 'harga_opname', 'harga_titipan')->get();
         // take year from tanggal
         $data->tahun = Carbon::parse($data->tanggal)->locale('id')->isoFormat('YYYY');
@@ -109,16 +110,39 @@ class KontrakController extends Controller
 
         $data->hari_angka = Carbon::parse($data->tanggal)->locale('id')->isoFormat('D');
 
-
         // buat penyebutan angka bulan dari tanggal
         $data->bulan = Carbon::parse($data->tanggal)->locale('id')->isoFormat('MMMM');
 
         $data->tanggal_string = Carbon::parse($data->tanggal)->locale('id')->isoFormat('D MMMM YYYY');
 
-        $pdf = Pdf::loadview('dokumen.kontrak.doc', [
-            'data' => $data,
-            'customer' => $customer,
-        ]);
+        $kalimat_perusahaan = "<strong>".strtoupper($data->vendor->perusahaan)."</strong> suatu ".ucfirst($data->vendor->tipe)." dengan NPWP ".$data->vendor->npwp
+                                ." yang selanjutnya diwakilkan oleh <strong>".$data->vendor->nama." </strong> selaku ".$data->vendor->jabatan." ";
+
+        $kalimat_perseorangan = "<strong>".$data->vendor->nama."</strong> selaku ".ucfirst($data->vendor->jabatan)." dengan NIK ".$data->vendor->npwp." ";
+        foreach ($template as $t) {
+            $t->content = str_replace('{{$hari}}', $data->hari, $t->content);
+            $t->content = str_replace('{{$tanggal}}', $data->tanggal_string, $t->content);
+            $t->content = str_replace('{{$nomor}}', sprintf("%03d", $data->nomor), $t->content);
+            $t->content = str_replace('{{$tahun}}', $data->tahun, $t->content);
+            $t->content = str_replace('{{$nama_singkatan}}', $data->nama_singkatan, $t->content);
+            $t->content = str_replace('{{$nama_vendor}}', $data->vendor->tipe == 'perusahaan' ? $data->vendor->perusahaan : $data->vendor->nama, $t->content);
+            $t->content = str_replace('{{$tipe_vendor}}', ucfirst($data->vendor->tipe), $t->content);
+            $t->content = str_replace('{{$hari_angka}}', $data->hari_angka, $t->content);
+            $t->content = str_replace('{{$bulan}}', $data->bulan, $t->content);
+            $t->content = str_replace('{{$kalimat_pribadi_perusahaan}}', $data->vendor->tipe == 'perusahaan' ? $kalimat_perusahaan : $kalimat_perseorangan, $t->content);
+            $t->content = str_replace('{{$tipe}}', $data->vendor->tipe == 'perusahaan' ? "perusahaan" : "pribadi", $t->content);
+            $t->content = str_replace('{{$alamat}}', $data->vendor->alamat, $t->content);
+            $t->content = str_replace('{{ $vendor_nama }}', $data->vendor->nama, $t->content);
+            $t->content = str_replace('{{ $jabatan_vendor }}', $data->vendor->jabatan, $t->content);
+            $t->content = str_replace('{{$vendor_bank}}', $data->vendor->bank, $t->content);
+            $t->content = str_replace('{{$vendor_no_rekening}}', $data->vendor->no_rekening, $t->content);
+            $t->content = str_replace('{{$vendor_nama_rekening}}', $data->vendor->nama_rekening, $t->content);
+        }
+
+        $pdf = Pdf::loadView('dokumen.template.template-kontrak.preview', [
+            // 'data' => $data,
+            'template' => $template,
+        ])->setPaper('a4', 'portrait');
 
         // if $data->dokumen_kontrak is null, then create new one then save pdf and put into storage and add uuid to suffix name
         // if ($data->dokumen_kontrak == null) {

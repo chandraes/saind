@@ -9,7 +9,7 @@
     </div>
     <div class="row justify-content-left mt-5">
         <div class="col-md-4 text-center mb-5">
-            <a href="{{route('dokumen.template')}}" class="text-decoration-none">
+            <a href="{{route('template')}}" class="text-decoration-none">
                 <img src="{{asset('images/sph.svg')}}" alt="" width="100">
                 <h2>Template</h2>
             </a>

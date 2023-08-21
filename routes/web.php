@@ -26,7 +26,7 @@ Auth::routes([
 Route::group(['middleware' => ['auth']], function() {
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/dokumen', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
-    Route::view('/dokumen/sph', 'dokumen.template.index')->name('dokumen.template');
+    // Route::view('/dokumen/sph', 'dokumen.template.index')->name('dokumen.template');
 
     Route::get('/database', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
     Route::resource('vendor', App\Http\Controllers\VendorController::class)->middleware('role:admin,user');
@@ -77,10 +77,13 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
 
-        Route::view('template', 'template.index')->name('template');
+        Route::view('template', 'dokumen.template.index')->name('template');
         Route::resource('template-spk', App\Http\Controllers\TemplateSpkController::class);
-
         Route::get('spk-template/preview', [App\Http\Controllers\TemplateSpkController::class, 'preview'])->name('spk-template.preview');
+
+        Route::resource('template-kontrak', App\Http\Controllers\TemplateKontrakController::class);
+
+        Route::get('kontrak-template/preview', [App\Http\Controllers\TemplateKontrakController::class, 'preview'])->name('kontrak-template.preview');
     });
 
 
