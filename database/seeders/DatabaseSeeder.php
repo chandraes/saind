@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
             RuteSeeder::class,
             CustomerSeeder::class,
             JabatanSeeder::class,
+            JenisTransaksiSeeder::class,
+            TipeTransaksiSeeder::class,
+            RekeningSeeder::class,
         ]);
     }
 }

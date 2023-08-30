@@ -26,6 +26,12 @@
                 <h2>Customer</h2>
             </a>
         </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{route('rekening.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/akun-bank.svg')}}" alt="" width="100">
+                <h2>Rekening</h2>
+            </a>
+        </div>
         @endif
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('vendor.index')}}" class="text-decoration-none">

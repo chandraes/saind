@@ -84,7 +84,24 @@ Route::group(['middleware' => ['auth']], function() {
         Route::resource('template-kontrak', App\Http\Controllers\TemplateKontrakController::class);
 
         Route::get('kontrak-template/preview', [App\Http\Controllers\TemplateKontrakController::class, 'preview'])->name('kontrak-template.preview');
+
+        Route::get('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
+        Route::post('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
+        Route::get('kas-besar/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar'])->name('kas-besar.keluar');
+        Route::post('kas-besar/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar_store'])->name('kas-besar.keluar.store');
+
+        Route::resource('kas-besar', App\Http\Controllers\KasBesarController::class);
+
+        Route::resource('rekening', App\Http\Controllers\RekeningController::class)->only([
+            'index','edit','update'
+        ]);
     });
+
+
+    // billing route
+    Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index');
+
+    Route::get('kas-besar', [App\Http\Controllers\KasBesarController::class, 'index'])->name('kas-besar.index');
 
 
 });

@@ -1,0 +1,136 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\KasBesar;
+use App\Models\Rekening;
+use Illuminate\Http\Request;
+use App\Services\StarSender;
+
+class FormKasBesarController extends Controller
+{
+    public function masuk()
+    {
+        $nomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+
+        if($nomor == null){
+            $nomor = 1;
+        }else{
+            $nomor = $nomor->nomor_kode_deposit + 1;
+        }
+
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        return view('billing.kas-besar.masuk', [
+            'nomor' => $nomor,
+            'rekening' => $rekening,
+        ]);
+    }
+
+    public function masuk_store(Request $request)
+    {
+        $data = $request->validate([
+            'nominal_transaksi' => 'required',
+        ]);
+
+        $data['uraian'] = 'Deposit';
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+        $data['transfer_ke'] = $rekening->nama_rekening;
+        $data['no_rekening'] = $rekening->nomor_rekening;
+        $data['bank'] = $rekening->nama_bank;
+
+        $last = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+
+        $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
+        $data['tipe_transaksi_id'] = 1;
+        $data['jenis_transaksi_id'] = 1;
+        $data['tanggal'] = date('Y-m-d');
+        $data['modal_investor']= -$data['nominal_transaksi'];
+
+
+        if($last == null){
+            $data['nomor_kode_deposit'] = 1;
+            $data['modal_investor_terakhir']= -$data['nominal_transaksi'];
+            $data['saldo'] = $data['nominal_transaksi'];
+        }else{
+            $data['nomor_kode_deposit'] = $last->nomor_kode_deposit + 1;
+            $data['saldo'] = $last->saldo + $data['nominal_transaksi'];
+            $data['modal_investor_terakhir']= $last->modal_investor_terakhir - $data['nominal_transaksi'];
+        }
+
+        $store = KasBesar::create($data);
+
+        // check if store success
+        if(!$store){
+            return redirect()->back()->with('error', 'Data gagal disimpan');
+        }
+
+        $send = new StarSender('Testing Group', 'Ada transaksi masuk sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
+        $res = $send->sendGroup();
+
+        return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
+    }
+
+    public function keluar()
+    {
+        $nomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+
+        if($nomor == null){
+            $nomor = 1;
+        }else{
+            $nomor = $nomor->nomor_kode_deposit + 1;
+        }
+
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        return view('billing.kas-besar.keluar', [
+            'nomor' => $nomor,
+        ]);
+    }
+
+    public function keluar_store(Request $request)
+    {
+        $data = $request->validate([
+            'transfer_ke' => 'required',
+            'bank' => 'required',
+            'no_rekening' => 'required',
+            'nominal_transaksi' => 'required',
+        ]);
+
+        $data['uraian'] = 'Cicilan';
+        $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
+        $data['tipe_transaksi_id'] = 1;
+        $data['jenis_transaksi_id'] = 2;
+        $data['tanggal'] = date('Y-m-d');
+
+        $last = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+
+        if($last == null){
+            $data['nomor_kode_deposit'] = 1;
+            $data['saldo'] = 0 - $data['nominal_transaksi'];
+            $data['modal_investor'] = $data['nominal_transaksi'];
+            $data['modal_investor_terakhir']= $data['nominal_transaksi'];
+
+        }else{
+            $data['nomor_kode_deposit'] = $last->nomor_kode_deposit + 1;
+            $data['saldo'] = $last->saldo - $data['nominal_transaksi'];
+            $data['modal_investor'] = $data['nominal_transaksi'];
+            $data['modal_investor_terakhir']= $last->modal_investor_terakhir + $data['nominal_transaksi'];
+        }
+
+        $store = KasBesar::create($data);
+
+        // check if store success
+        if(!$store){
+            return redirect()->back()->with('error', 'Data gagal disimpan');
+        }
+
+        $send = new StarSender('Testing Group', 'Ada transaksi keluar sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
+        $res = $send->sendGroup();
+
+        return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
+
+    }
+
+
+}

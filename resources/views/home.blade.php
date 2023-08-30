@@ -22,6 +22,12 @@
             </a>
         </div>
         <div class="col-md-3 text-center mb-5">
+            <a href="{{route('billing.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/billing.svg')}}" alt="" width="100">
+                <h2>Billing</h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5">
             <a href="{{route('dokumen')}}" class="text-decoration-none">
                 <img src="{{asset('images/document.svg')}}" alt="" width="100">
                 <h2>Dokumen</h2>
