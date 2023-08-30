@@ -6,6 +6,15 @@
             <h1><u>Kas Besar Keluar</u></h1>
         </div>
     </div>
+    @if (session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: '{{session('error')}}',
+        })
+    </script>
+    @endif
     <form action="{{route('kas-besar.keluar.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
@@ -86,7 +95,7 @@
 @endsection
 @push('js')
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-    
+
     <script>
         $(function() {
              $('#nominal_transaksi').maskMoney();

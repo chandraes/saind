@@ -116,6 +116,10 @@ class FormKasBesarController extends Controller
             $data['saldo'] = $last->saldo - $data['nominal_transaksi'];
             $data['modal_investor'] = $data['nominal_transaksi'];
             $data['modal_investor_terakhir']= $last->modal_investor_terakhir + $data['nominal_transaksi'];
+
+            if ($last->saldo < $data['nominal_transaksi']) {
+                return redirect()->back()->with('error', 'Saldo tidak cukup');
+            }
         }
 
         $store = KasBesar::create($data);

@@ -17,6 +17,7 @@
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
     <link id="style" href="{{asset('assets/font-awesome/css/font-awesome.min.css')}}" rel="stylesheet" />
     {{-- sweetalert --}}
+    <script src="{{asset('assets/js/jquery.min.js')}}"></script>
     <script src="{{asset('assets/js/sweetalert.js')}}"></script>
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     {{-- bootstrap 5 --}}
@@ -92,7 +93,7 @@
             @yield('content')
         </main>
     </div>
-    <script src="{{asset('assets/js/jquery.min.js')}}"></script>
+
     <script>
         $(document).ready(function(){
             var clockElement = document.getElementById('clock');
