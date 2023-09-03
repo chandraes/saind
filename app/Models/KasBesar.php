@@ -33,11 +33,6 @@ class KasBesar extends Model
         return $this->belongsTo(JenisTransaksi::class);
     }
 
-    public function tipe_transaksi()
-    {
-        return $this->belongsTo(TipeTransaksi::class);
-    }
-
     public function getTanggalAttribute($value)
     {
         return date('d-m-Y', strtotime($value));

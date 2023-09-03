@@ -28,7 +28,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('nominal_transaksi'))
                     is-invalid
-                @endif" name="nominal_transaksi" id="nominal_transaksi" required data-thousands="." value="{{old('nominal_transaksi')}}">
+                @endif" name="nominal_transaksi" id="nominal_transaksi" required data-thousands="." >
                   </div>
                 @if ($errors->has('nominal_transaksi'))
                 <div class="invalid-feedback">
@@ -89,8 +89,8 @@
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
-        $(function() {
-             $('#nominal_transaksi').maskMoney();
+        $(document).ready(function(){
+            $('#nominal_transaksi').maskMoney();
         });
 
         // masukForm on submit, sweetalert confirm

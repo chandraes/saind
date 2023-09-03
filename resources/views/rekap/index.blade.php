@@ -15,7 +15,7 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="{{route('rute.index')}}" class="text-decoration-none">
+            <a href="{{route('rekap.kas-kecil')}}" class="text-decoration-none">
                 <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="100">
                 <h2>Kas Kecil</h2>
             </a>

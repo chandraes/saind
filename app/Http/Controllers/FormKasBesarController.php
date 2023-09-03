@@ -35,25 +35,32 @@ class FormKasBesarController extends Controller
 
         $data['uraian'] = 'Deposit';
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
-        $data['transfer_ke'] = $rekening->nama_rekening;
+
+        $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
         $data['no_rekening'] = $rekening->nomor_rekening;
         $data['bank'] = $rekening->nama_bank;
 
-        $last = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+        // Nomor Kode Kas Besar Terakhir
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+
+        if($lastNomor == null)
+        {
+            $data['nomor_kode_deposit'] = 1;
+        } else {
+            $data['nomor_kode_deposit'] = $lastNomor->nomor_kode_deposit + 1;
+        }
 
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
-        $data['tipe_transaksi_id'] = 1;
         $data['jenis_transaksi_id'] = 1;
         $data['tanggal'] = date('Y-m-d');
         $data['modal_investor']= -$data['nominal_transaksi'];
 
-
+        // Saldo terakhir
+        $last = KasBesar::latest()->first();
         if($last == null){
-            $data['nomor_kode_deposit'] = 1;
             $data['modal_investor_terakhir']= -$data['nominal_transaksi'];
             $data['saldo'] = $data['nominal_transaksi'];
         }else{
-            $data['nomor_kode_deposit'] = $last->nomor_kode_deposit + 1;
             $data['saldo'] = $last->saldo + $data['nominal_transaksi'];
             $data['modal_investor_terakhir']= $last->modal_investor_terakhir - $data['nominal_transaksi'];
         }
@@ -99,20 +106,24 @@ class FormKasBesarController extends Controller
 
         $data['uraian'] = 'Cicilan';
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
-        $data['tipe_transaksi_id'] = 1;
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
+        $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
 
-        $last = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
-
-        if($last == null){
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+        if($lastNomor == null){
             $data['nomor_kode_deposit'] = 1;
+        }else{
+            $data['nomor_kode_deposit'] = $lastNomor->nomor_kode_deposit + 1;
+        }
+
+        $last = KasBesar::latest()->first();
+        if($last == null){
             $data['saldo'] = 0 - $data['nominal_transaksi'];
             $data['modal_investor'] = $data['nominal_transaksi'];
             $data['modal_investor_terakhir']= $data['nominal_transaksi'];
 
         }else{
-            $data['nomor_kode_deposit'] = $last->nomor_kode_deposit + 1;
             $data['saldo'] = $last->saldo - $data['nominal_transaksi'];
             $data['modal_investor'] = $data['nominal_transaksi'];
             $data['modal_investor_terakhir']= $last->modal_investor_terakhir + $data['nominal_transaksi'];

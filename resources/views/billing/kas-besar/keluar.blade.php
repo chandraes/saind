@@ -97,8 +97,8 @@
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
 
     <script>
-        $(function() {
-             $('#nominal_transaksi').maskMoney();
+       $(document).ready(function(){
+            $('#nominal_transaksi').maskMoney();
         });
 
         // masukForm on submit, sweetalert confirm
