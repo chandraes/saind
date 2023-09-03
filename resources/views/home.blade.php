@@ -6,7 +6,7 @@
          <h1><u>DASHBOARD</u></h1>
         </div>
     </div>
-    <div class="row justify-content-center mt-5">
+    <div class="row justify-content-left mt-5">
         @if (auth()->user()->role === 'admin')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('pengguna.index')}}" class="text-decoration-none">
@@ -25,6 +25,12 @@
             <a href="{{route('billing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/billing.svg')}}" alt="" width="100">
                 <h2>Billing</h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5">
+            <a href="{{route('rekap.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/rekap.svg')}}" alt="" width="100">
+                <h2>Rekap</h2>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5">

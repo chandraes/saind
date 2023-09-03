@@ -46,7 +46,7 @@
         </div>
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-success" type="submit">Simpan</button>
-            <a href="{{route('karyawan.index')}}" class="btn btn-secondary" type="button">Batal</a>
+            <a href="{{route('rekening.index')}}" class="btn btn-secondary" type="button">Batal</a>
           </div>
     </form>
 </div>
