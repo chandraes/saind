@@ -127,6 +127,16 @@ class VendorController extends Controller
 
         $vendor->update($data);
 
+        if($data['status'] == 'nonaktif'){
+            $vendor->vehicle()->update([
+                'status' => 'nonaktif',
+            ]);
+        } elseif($data['status'] == 'aktif'){
+            $vendor->vehicle()->update([
+                'status' => 'aktif',
+            ]);
+        }
+
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');
     }
 

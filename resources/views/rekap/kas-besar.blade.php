@@ -154,7 +154,7 @@
                     <td></td>
                     <td class="text-center align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
                             1)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
-                    <td class="text-center align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
+                    <td class="text-center align-middle text-danger"><strong>{{number_format($data->where('jenis_transaksi_id',
                             2)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
                     {{-- latest saldo --}}
                     <td class="text-center align-middle">

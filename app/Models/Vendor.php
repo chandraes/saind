@@ -49,4 +49,9 @@ class Vendor extends Model
     {
         return $this->belongsToMany(Rute::class, 'vendor_uang_jalans');
     }
+
+    public function vehicle()
+    {
+        return $this->hasMany(Vehicle::class);
+    }
 }
