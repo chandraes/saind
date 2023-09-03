@@ -41,7 +41,6 @@
 <div class="container-fluid mt-5">
     <form action="{{route('rekap.kas-besar')}}" method="get">
         <div class="row">
-
             <div class="col-md-3 mb-3">
                 <label for="bulan" class="form-label">Bulan</label>
                 <select class="form-select" name="bulan" id="bulan">
@@ -70,6 +69,10 @@
             <div class="col-md-3 mb-3">
                 <label for="tahun" class="form-label">&nbsp;</label>
                 <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="showPrint" class="form-label">&nbsp;</label>
+                <a href="{{route('rekap.kas-besar.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank" class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
             </div>
         </div>
     </form>

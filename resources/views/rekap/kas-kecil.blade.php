@@ -71,6 +71,10 @@
                 <label for="tahun" class="form-label">&nbsp;</label>
                 <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
             </div>
+            <div class="col-md-3 mb-3">
+                <label for="showPrint" class="form-label">&nbsp;</label>
+                <a href="{{route('rekap.kas-kecil.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank" class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
+            </div>
         </div>
     </form>
 </div>
