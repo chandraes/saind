@@ -47,6 +47,9 @@ class VehicleController extends Controller
             'tahun' => 'required',
             'no_kartu_gps' => 'required',
             'status' => 'required',
+            'transfer_ke' => 'required',
+            'bank' => 'required',
+            'no_rekening' => 'required',
         ]);
 
         $data['nomor_lambung'] = Vehicle::nextNomorLambung();
@@ -93,6 +96,9 @@ class VehicleController extends Controller
             'tahun' => 'required',
             'no_kartu_gps' => 'required',
             'status' => 'required',
+            'transfer_ke' => 'required',
+            'bank' => 'required',
+            'no_rekening' => 'required',
         ]);
 
         $data['updated_by'] = auth()->user()->id;

@@ -20,6 +20,9 @@ class Vehicle extends Model
         'tahun',
         'no_kartu_gps',
         'status',
+        'transfer_ke',
+        'bank',
+        'no_rekening',
     ];
 
     public function vendor()

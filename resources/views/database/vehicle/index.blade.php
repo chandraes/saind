@@ -7,20 +7,22 @@
         </div>
     </div>
     @if (session('success'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>{{session('success')}}</strong>
-        </div>
-    </div>
+    <script>
+        Swal.fire(
+                'Berhasil!',
+                '{{session('success')}}',
+                'success'
+            )
+    </script>
     @endif
     @if (session('error'))
-    <div class="row">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>{{session('error')}}</strong>
-        </div>
-    </div>
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: '{{session('error')}}',
+        })
+    </script>
     @endif
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
@@ -97,6 +99,31 @@
                             <div class="col-6 mb-3">
                                 <label for="tahun" class="form-label">Tahun</label>
                                 <input type="number" class="form-control" name="tahun" id="tahun" required>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <h4>Rekening Uang Jalan</h4>
+                            <div class="col-4 mt-2">
+                                <div class="mb-3">
+                                  <label for="transfer_ke" class="form-label">Nama Rekening</label>
+                                  <input type="text"
+                                    class="form-control" name="transfer_ke" id="transfer_ke" required>
+                                </div>
+                            </div>
+                            <div class="col-4 mt-2">
+                                <div class="mb-3">
+                                  <label for="bank" class="form-label">Bank</label>
+                                  <input type="text"
+                                    class="form-control" name="bank" id="bank" required>
+                                </div>
+                            </div>
+                            <div class="col-4 mt-2">
+                                <div class="mb-3">
+                                  <label for="no_rekening" class="form-label">Nomor Rekening</label>
+                                  <input type="text"
+                                    class="form-control" name="no_rekening" id="no_rekening" required>
+                                </div>
                             </div>
                         </div>
                         <hr>
@@ -226,6 +253,31 @@
                             </div>
                             <hr>
                             <div class="row">
+                                <h4>Rekening Uang Jalan</h4>
+                                <div class="col-4 mt-2">
+                                    <div class="mb-3">
+                                      <label for="transfer_ke" class="form-label">Nama Rekening</label>
+                                      <input type="text"
+                                        class="form-control" name="transfer_ke" id="transfer_ke" value="{{$d->transfer_ke}}" required>
+                                    </div>
+                                </div>
+                                <div class="col-4 mt-2">
+                                    <div class="mb-3">
+                                      <label for="bank" class="form-label">Bank</label>
+                                      <input type="text"
+                                        class="form-control" name="bank" id="bank" value="{{$d->bank}}" required>
+                                    </div>
+                                </div>
+                                <div class="col-4 mt-2">
+                                    <div class="mb-3">
+                                      <label for="no_rekening" class="form-label">Nomor Rekening</label>
+                                      <input type="text"
+                                        class="form-control" name="no_rekening" id="no_rekening" value="{{$d->no_rekening}}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="no_kartu_gps" class="form-label">Nomor Kartu GPS</label>
                                     <input type="text" class="form-control" name="no_kartu_gps" id="no_kartu_gps" value="{{$d->no_kartu_gps}}">
@@ -301,6 +353,31 @@
                                 <div class="col-6 mb-3">
                                     <label for="tahun" class="form-label">Tahun</label>
                                     <input type="number" class="form-control" name="tahun" id="tahun" readonly disabled value="{{$d->tahun}}">
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <h4>Rekening Uang Jalan</h4>
+                                <div class="col-4 mt-2">
+                                    <div class="mb-3">
+                                      <label for="transfer_ke" class="form-label">Nama Rekening</label>
+                                      <input type="text"
+                                        class="form-control" name="transfer_ke" id="transfer_ke" value="{{$d->transfer_ke}}" readonly disabled>
+                                    </div>
+                                </div>
+                                <div class="col-4 mt-2">
+                                    <div class="mb-3">
+                                      <label for="bank" class="form-label">Bank</label>
+                                      <input type="text"
+                                        class="form-control" name="bank" id="bank" value="{{$d->bank}}" readonly disabled>
+                                    </div>
+                                </div>
+                                <div class="col-4 mt-2">
+                                    <div class="mb-3">
+                                      <label for="no_rekening" class="form-label">Nomor Rekening</label>
+                                      <input type="text"
+                                        class="form-control" name="no_rekening" id="no_rekening" value="{{$d->no_rekening}}" readonly disabled>
+                                    </div>
                                 </div>
                             </div>
                             <hr>

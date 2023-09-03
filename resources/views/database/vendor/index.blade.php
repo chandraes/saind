@@ -8,14 +8,13 @@
         </div>
     </div>
     @if (session('success'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('success')}}
-            </strong>
-        </div>
-    </div>
+    <script>
+        Swal.fire(
+                'Berhasil!',
+                '{{session('success')}}',
+                'success'
+            )
+    </script>
     @endif
     <div class="row float-end">
         <div class="col-md-12">
