@@ -25,4 +25,14 @@ class KasUangJalan extends Model
         'bank',
         'no_rekening',
     ];
+
+    public function jenis_transaksi()
+    {
+        return $this->belongsTo(JenisTransaksi::class);
+    }
+
+    public function getTanggalAttribute($value)
+    {
+        return date('d-m-Y', strtotime($value));
+    }
 }

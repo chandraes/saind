@@ -20,6 +20,12 @@
                 <h2>Kas Kecil</h2>
             </a>
         </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{route('rekap.kas-kecil')}}" class="text-decoration-none">
+                <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="100">
+                <h2>Uang Jalan</h2>
+            </a>
+        </div>
         @endif
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">

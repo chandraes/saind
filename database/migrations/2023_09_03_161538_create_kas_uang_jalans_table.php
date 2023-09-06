@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('kas_uang_jalans', function (Blueprint $table) {
             $table->id();
             $table->date('tanggal');
-            $table->string('nama_vendor');
-            $table->integer('nomor_lambung');
+            $table->string('nama_vendor')->nullable();
+            $table->integer('nomor_lambung')->nullable();
             $table->string('kode_kas_uang_jalan', 3)->default('KUJ');
-            $table->integer('nomor_kas_uang_jalan')->nullable();
+            $table->integer('nomor_kode_kas_uang_jalan')->nullable();
             $table->string('kode_uang_jalan', 2)->default('UJ');
             $table->integer('nomor_uang_jalan')->nullable();
             $table->foreignId('jenis_transaksi_id')->constrained('jenis_transaksis');

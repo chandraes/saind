@@ -8,12 +8,7 @@
     </div>
     <div class="row justify-content-left mt-5">
         @if (auth()->user()->role === 'admin')
-        <div class="col-md-3 text-center mb-5">
-            <a href="{{route('pengguna.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/worker.svg')}}" alt="" width="100">
-                <h2>Pengguna</h2>
-            </a>
-        </div>
+        
         @endif
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('database')}}" class="text-decoration-none">
@@ -37,6 +32,12 @@
             <a href="{{route('dokumen')}}" class="text-decoration-none">
                 <img src="{{asset('images/document.svg')}}" alt="" width="100">
                 <h2>Dokumen</h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5">
+            <a href="{{route('pengaturan')}}" class="text-decoration-none">
+                <img src="{{asset('images/pengaturan.svg')}}" alt="" width="100">
+                <h2>Pengaturan</h2>
             </a>
         </div>
     </div>

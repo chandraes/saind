@@ -63,6 +63,10 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('spk/hapus-file/{spk}', [App\Http\Controllers\SpkController::class, 'delete_file'])->name('spk.hapus-file')->middleware('role:admin,user');
 
     Route::group(['middleware' => 'role:admin'], function() {
+
+        Route::view('pengaturan', 'pengaturan.index')->name('pengaturan');
+
+        Route::get('pengaturan/wa', [App\Http\Controllers\WaController::class, 'wa'])->name('pengaturan.wa');
         Route::resource('karyawan', App\Http\Controllers\KaryawanController::class);
         Route::post('karyawan/jabatan-store', [App\Http\Controllers\KaryawanController::class, 'jabatan_store'])->name('karyawan.jabatan-store');
         Route::patch('karyawan/jabatan-update/{jabatan}', [App\Http\Controllers\KaryawanController::class, 'jabatan_update'])->name('karyawan.jabatan-update');
@@ -74,6 +78,10 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('customer/document-download/{document}', [App\Http\Controllers\CustomerController::class, 'document_download'])->name('customer.document-download');
 
         Route::resource('pengguna', App\Http\Controllers\UserController::class);
+
+        Route::resource('sponsor', App\Http\Controllers\SponsorController::class)->only([
+            'index','store','update','destroy'
+        ]);
 
         Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
 
@@ -100,6 +108,11 @@ Route::group(['middleware' => ['auth']], function() {
         Route::post('kas-kecil/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk_store'])->name('kas-kecil.masuk.store');
         Route::get('kas-kecil/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar'])->name('kas-kecil.keluar');
         Route::post('kas-kecil/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar_store'])->name('kas-kecil.keluar.store');
+
+        Route::get('kas-uang-jalan/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk'])->name('kas-uang-jalan.masuk');
+        Route::post('kas-uang-jalan/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk_store'])->name('kas-uang-jalan.masuk.store');
+        Route::get('kas-uang-jalan/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar'])->name('kas-uang-jalan.keluar');
+        Route::post('kas-uang-jalan/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar_store'])->name('kas-uang-jalan.keluar.store');
     });
 
 

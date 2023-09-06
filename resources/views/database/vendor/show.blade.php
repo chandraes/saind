@@ -83,7 +83,7 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="no_hp" class="form-label">No. HP</label>
                     <input type="text" class="form-control {{$errors->has('no_hp') ? 'is-invalid' : ''}}" name="no_hp" id="no_hp" placeholder="" value="{{$vendor->no_hp}}" disabled>
                     @if ($errors->has('no_hp'))
@@ -92,12 +92,26 @@
                     </span>
                     @endif
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="email" class="form-label">Email</label>
                     <input type="text" class="form-control {{$errors->has('email') ? 'is-invalid' : ''}}" name="email" id="email" placeholder="" value="{{$vendor->email}}" disabled>
                     @if ($errors->has('email'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('email') }}</strong>
+                    </span>
+                    @endif
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="sponsor_select" class="form-label">Sponsor</label>
+                    <select class="form-select {{$errors->has('sponsor_id') ? 'is-invalid' : ''}}" name="sponsor_id" id="sponsor_select" disabled>
+                        <option value="">-- Pilih Sponsor --</option>
+                        @foreach ($sponsor as $s)
+                        <option value="{{$s->id}}" {{$vendor->sponsor_id == $s->id ? 'selected' : ''}}>{{$s->nama}}</option>
+                        @endforeach
+                    </select>
+                    @if ($errors->has('sponsor_id'))
+                    <span class="text-danger">
+                        <strong>{{ $errors->first('sponsor_id') }}</strong>
                     </span>
                     @endif
                 </div>

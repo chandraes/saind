@@ -22,6 +22,7 @@ class Vendor extends Model
         'no_rekening',
         'nama_rekening',
         'status',
+        'sponsor_id',
         'user_id'
     ];
 
@@ -53,5 +54,10 @@ class Vendor extends Model
     public function vehicle()
     {
         return $this->hasMany(Vehicle::class);
+    }
+
+    public function sponsor()
+    {
+        return $this->belongsTo(Sponsor::class);
     }
 }

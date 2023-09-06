@@ -2,9 +2,9 @@
 
 @section('content')
 <div class="container">
-    <div class="row justify-content-center">
+    <div class="row ">
         <div class="col-md-12 text-center">
-            <h1><u>REKENING</u></h1>
+            <h1><u>SPONSOR</u></h1>
         </div>
     </div>
     @if (session('success'))
@@ -18,21 +18,24 @@
     @endif
     @if (session('error'))
     <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: '{{session('error')}}',
-        })
+        Swal.fire(
+                'Gagal!',
+                '{{session('error')}}',
+                'error'
+            )
     </script>
     @endif
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
-                <tr class="text-center">
+                <tr class="">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen"
                                 width="30"> Database</a></td>
+                    <td>
+                        @include('database.sponsor.create')
+                    </td>
                 </tr>
             </table>
         </div>
@@ -43,10 +46,9 @@
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
-                <th class="text-center align-middle">Tipe</th>
-                <th class="text-center align-middle">Nama Bank</th>
-                <th class="text-center align-middle">Nomor Rekening</th>
-                <th class="text-center align-middle">Atas Nama</th>
+                <th class="text-center align-middle">Kode Sponsor</th>
+                <th class="text-center align-middle">Nama</th>
+                <th class="text-center align-middle">Nomor WA</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
@@ -54,14 +56,22 @@
             @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$loop->iteration}}</td>
-                    <td class="text-center align-middle">{{strtoupper($d->untuk)}}</td>
-                    <td class="text-center align-middle">{{$d->nama_bank}}</td>
-                    <td class="text-center align-middle">{{$d->nomor_rekening}}</td>
-                    <td class="text-center align-middle">{{$d->nama_rekening}}</td>
+                    <td class="align-middle">
+                        <div class="text-center">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#show-{{$d->id}}"><h4>{{$d->kode.sprintf("%02d",$d->nomor_kode_sponsor)}}</h4></a>
+                        </div>
+                        @include('database.sponsor.show')
+                        @include('database.sponsor.edit')
+                    </td>
+                    <td class="text-center align-middle">{{$d->nama}}</td>
+                    <td class="text-center align-middle">{{$d->nomor_wa}}</td>
                     <td class="text-center align-middle">
-                        {{-- edit button to route('rekening.edit') --}}
-                        <a href="{{route('rekening.edit', $d)}}" class="btn btn-warning btn-sm">Ubah</a>
-
+                       {{-- button delete with sweetalert confirmation --}}
+                        <form action="{{route('sponsor.destroy',$d->id)}}" method="post">
+                            @csrf
+                            @method('delete')
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus data ini?')">Delete</button>
+                        </form>
                     </td>
                 </tr>
             @endforeach
@@ -76,13 +86,6 @@
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script>
-
-
-
-    // hide alert after 5 seconds
-    setTimeout(function() {
-        $('#alert').fadeOut('slow');
-    }, 5000);
 
     $(document).ready(function() {
         $('#karyawan-data').DataTable();

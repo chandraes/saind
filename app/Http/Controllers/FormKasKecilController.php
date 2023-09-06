@@ -36,7 +36,7 @@ class FormKasKecilController extends Controller
         $kb = KasBesar::latest()->first();
         $rekening = Rekening::where('untuk', 'kas-kecil')->first();
 
-        if ($kb->saldo < 1000000) {
+        if ($kb == null || $kb->saldo < 1000000) {
             return redirect()->back()->with('error', 'Saldo Kas Besar Tidak Cukup');
         }
 
@@ -106,7 +106,7 @@ class FormKasKecilController extends Controller
 
         $data['saldo'] = $kk->saldo - $data['nominal_transaksi'];
         $data['jenis_transaksi_id'] = 2;
-        
+
         if($data['tipe'] == '1'){
             $data['transfer_ke'] = 'Cash';
             unset($data['bank']);

@@ -27,8 +27,8 @@
                         <div class="modal-body">
                             <div class="mb-3 mt-3">
                                 <select class="form-select form-select-lg" name="" id="tipeKasBesar">
-                                    <option value="masuk">Masuk</option>
-                                    <option value="keluar">Keluar</option>
+                                    <option value="masuk">Permintaan</option>
+                                    <option value="keluar">Pengeluaran</option>
                                 </select>
                             </div>
                         </div>
@@ -42,7 +42,7 @@
             </div>
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasBesar">
                 <img src="{{asset('images/kas-besar.svg')}}" alt="" width="100">
-                <h2>FORM KAS BESAR</h2>
+                <h2>FORM DEPOSIT</h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
@@ -60,14 +60,39 @@
                         <div class="modal-body">
                             <div class="mb-3 mt-3">
                                 <select class="form-select form-select-lg" name="" id="tipeKasKecil">
-                                    <option value="masuk">Masuk</option>
-                                    <option value="keluar">Keluar</option>
+                                    <option value="masuk">Permintaan</option>
+                                    <option value="keluar">Pengeluaran</option>
                                 </select>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                             <a href="#" class="btn btn-primary" onclick="tipeFormKasKecil()">Lanjutkan</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#uangJalan">
+                <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="100">
+                <h2>FORM KAS UANG JALAN</h2>
+            </a>
+            <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+            <div class="modal fade" id="uangJalan" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="mb-3 mt-3">
+                                <select class="form-select form-select-lg" name="" id="tipeKasUangJalan">
+                                    <option value="masuk">Permintaan</option>
+                                    <option value="keluar">Pengeluaran</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <a href="#" class="btn btn-primary" onclick="tipeFormKasUangJalan()">Lanjutkan</a>
                         </div>
                     </div>
                 </div>
@@ -99,6 +124,16 @@
                 window.location.href = "{{route('kas-kecil.masuk')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('kas-kecil.keluar')}}";
+            }
+        }
+
+        function tipeFormKasUangJalan()
+        {
+            let val = document.getElementById('tipeKasUangJalan').value;
+            if (val === 'masuk') {
+                window.location.href = "{{route('kas-uang-jalan.masuk')}}";
+            } else if (val === 'keluar') {
+                window.location.href = "{{route('kas-uang-jalan.keluar')}}";
             }
         }
 </script>

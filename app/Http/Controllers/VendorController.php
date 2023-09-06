@@ -9,6 +9,7 @@ use App\Models\VendorBayar;
 use App\Models\VendorUangJalan;
 use App\Models\Rute;
 use App\Models\CustomerRute;
+use App\Models\Sponsor;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -41,9 +42,11 @@ class VendorController extends Controller
     public function create()
     {
         $customers = Customer::all();
+        $sponsor = Sponsor::all();
 
         return view('database.vendor.create', [
             'customers' => $customers,
+            'sponsor' => $sponsor,
         ]);
     }
 
@@ -67,6 +70,7 @@ class VendorController extends Controller
             'bank' => 'required',
             'nama_rekening' => 'required',
             'status' => 'required',
+            'sponsor_id' => 'nullable',
         ]);
 
         // dd($data);
@@ -85,8 +89,10 @@ class VendorController extends Controller
      */
     public function show(Vendor $vendor)
     {
+        $sponsor = Sponsor::all();
         return view('database.vendor.show', [
             'vendor' => $vendor,
+            'sponsor' => $sponsor,
         ]);
     }
 
@@ -96,8 +102,10 @@ class VendorController extends Controller
     public function edit(string $id)
     {
         $vendor = Vendor::findOrFail($id);
+        $sponsor = Sponsor::all();
         return view('database.vendor.edit', [
             'vendor' => $vendor,
+            'sponsor' => $sponsor,
         ]);
 
     }
@@ -121,6 +129,7 @@ class VendorController extends Controller
             'bank' => 'required',
             'nama_rekening' => 'required',
             'status' => 'required',
+            'sponsor_id' => 'nullable',
         ]);
 
         $vendor = Vendor::findOrFail($id);

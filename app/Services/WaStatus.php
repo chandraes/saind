@@ -38,12 +38,41 @@ class WaStatus
         curl_close($curl);
 
         $result = json_decode($response, true);
-        dd($result);
+
         if ($result['status'] == true) {
             return $result;
         } else {
             return false;
         }
+
+    }
+
+    public function getRelog()
+    {
+        $apikey=$this->apikey;
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://starsender.online/api/relogDevice',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_HTTPHEADER => array(
+                'apikey: '.$apikey
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+
+        $result = json_decode($response, true);
+
 
     }
 
@@ -73,6 +102,10 @@ class WaStatus
 
         $result = json_decode($response, true);
 
-        return $result;
+        if ($result['status'] == true) {
+            return $result;
+        } else {
+            return false;
+        }
     }
 }
