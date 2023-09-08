@@ -72,7 +72,7 @@ class WaStatus
         curl_close($curl);
 
         $result = json_decode($response, true);
-
+        dd($result);
 
     }
 

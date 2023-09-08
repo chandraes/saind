@@ -50,9 +50,24 @@ class VehicleController extends Controller
             'transfer_ke' => 'required',
             'bank' => 'required',
             'no_rekening' => 'required',
+            'support_operational'=> 'nullable',
+            'gps' => 'nullable',
         ]);
 
         $data['nomor_lambung'] = Vehicle::nextNomorLambung();
+
+        // if $data has support_operational key
+        if (array_key_exists('support_operational', $data)) {
+            $data['support_operational'] = 1;
+        } else {
+            $data['support_operational'] = 0;
+        }
+
+        if (array_key_exists('gps', $data)) {
+            $data['gps'] = 1;
+        }   else {
+            $data['gps'] = 0;
+        }
 
         if ($data['nomor_lambung'] === 1) {
             $data['nomor_lambung'] = 101;
@@ -86,6 +101,8 @@ class VehicleController extends Controller
      */
     public function update(Request $request, Vehicle $vehicle)
     {
+
+
         $data = $request->validate([
             'vendor_id' => 'required|exists:vendors,id',
             'nopol' => 'required',
@@ -99,7 +116,23 @@ class VehicleController extends Controller
             'transfer_ke' => 'required',
             'bank' => 'required',
             'no_rekening' => 'required',
+            'support_operational'=> 'nullable',
+            'gps' => 'nullable',
         ]);
+
+        // if $data has support_operational key
+        if (array_key_exists('support_operational', $data)) {
+            $data['support_operational'] = 1;
+        } else {
+            $data['support_operational'] = 0;
+        }
+
+        if (array_key_exists('gps', $data)) {
+            $data['gps'] = 1;
+
+        }   else {
+            $data['gps'] = 0;
+        }
 
         $data['updated_by'] = auth()->user()->id;
 

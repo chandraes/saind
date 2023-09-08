@@ -23,6 +23,8 @@ class Vehicle extends Model
         'transfer_ke',
         'bank',
         'no_rekening',
+        'support_operational',
+        'gps',
     ];
 
     public function vendor()
