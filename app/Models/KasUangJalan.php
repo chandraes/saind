@@ -13,7 +13,7 @@ class KasUangJalan extends Model
         'nama_vendor',
         'nomor_lambung',
         'kode_kas_uang_jalan',
-        'nomor_kas_uang_jalan',
+        'nomor_kode_kas_uang_jalan',
         'kode_uang_jalan',
         'nomor_uang_jalan',
         'jenis_transaksi_id',

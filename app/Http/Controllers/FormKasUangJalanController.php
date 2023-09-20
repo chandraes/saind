@@ -18,7 +18,7 @@ class FormKasUangJalanController extends Controller
         if($nomor == null){
             $nomor = 1;
         }else{
-            $nomor = $nomor->nomor_kode_kas_kecil + 1;
+            $nomor = $nomor->nomor_kode_kas_uang_jalan + 1;
         }
 
         $rekening = Rekening::where('untuk', 'kas-uang-jalan')->first();

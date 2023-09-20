@@ -98,7 +98,46 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formLain">
+                <img src="{{asset('images/lain.svg')}}" alt="" width="100">
+                <h2>FORM LAIN-LAIN</h2>
+            </a>
+            <div class="modal fade" id="formLain" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="fllTitle">Form Lain-lain</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select class="form-select form-select-lg" name="" id="formLainlain">
+                                <option value="masuk">Masuk</option>
+                                <option value="keluar">Keluar</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeFormLainlain()">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Optional: Place to the bottom of scripts -->
+            <script>
+                const myModal = new bootstrap.Modal(document.getElementById('formLain'), options)
+
+            </script>
+        </div>
         @endif
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{route('billing.transaksi.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/transaction.svg')}}" alt="" width="100">
+                <h2>FORM TRANSAKSI</h2>
+            </a>
+        </div>
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="100">
@@ -134,6 +173,16 @@
                 window.location.href = "{{route('kas-uang-jalan.masuk')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('kas-uang-jalan.keluar')}}";
+            }
+        }
+
+        function tipeFormLainlain()
+        {
+            let val = document.getElementById('formLainlain').value;
+            if (val === 'masuk') {
+                window.location.href = "{{route('form-lain-lain.masuk')}}";
+            } else if (val === 'keluar') {
+                window.location.href = "{{route('form-lain-lain.keluar')}}";
             }
         }
 </script>
