@@ -77,8 +77,6 @@
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script>
 
-
-
     // hide alert after 5 seconds
     setTimeout(function() {
         $('#alert').fadeOut('slow');

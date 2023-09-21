@@ -6,7 +6,7 @@
             <h1><u>Edit Rekening {{strtoupper($data->untuk)}}</u></h1>
         </div>
     </div>
-    <form action="{{route('rekening.update', $data->id)}}" method="post" enctype="multipart/form-data">
+    <form action="{{route('rekening.update', $data->id)}}" method="post" enctype="multipart/form-data" id="masukForm">
         @csrf
         @method('PATCH')
         <div class="row">
@@ -51,3 +51,23 @@
     </form>
 </div>
 @endsection
+@push('js')
+<script>
+    // masukForm on submit, sweetalert confirm
+    $('#masukForm').submit(function(e){
+        e.preventDefault();
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, simpan!'
+            }).then((result) => {
+            if (result.isConfirmed) {
+                this.submit();
+            }
+        })
+    });
+</script>
+@endpush
