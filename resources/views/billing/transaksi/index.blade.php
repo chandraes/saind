@@ -14,13 +14,13 @@
         <div class="col-md-4 text-center mt-5">
             <a href="{{url()->previous()}}" class="text-decoration-none">
                 <img src="{{asset('images/muat.svg')}}" alt="" width="100">
-                <h2>Nota Muat</h2>
+                <h2>Nota Muat <span class="text-danger">{{$data->where('status', 1)->count() > 0 ? "(".$data->where('status', 1)->count().")" : '' }}</span></h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
             <a href="{{url()->previous()}}" class="text-decoration-none">
                 <img src="{{asset('images/bongkar.svg')}}" alt="" width="100">
-                <h2>Nota Bongkar</h2>
+                <h2>Nota Bongkar <span class="text-danger">{{$data->where('status', 2)->count() > 0 ? "(".$data->where('status', 2)->count().")" : '' }}</span></h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">

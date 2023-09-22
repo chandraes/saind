@@ -10,8 +10,8 @@ class KasUangJalan extends Model
     use HasFactory;
     protected $fillable = [
         'tanggal',
-        'nama_vendor',
-        'nomor_lambung',
+        'vendor_id',
+        'vehicle_id',
         'kode_kas_uang_jalan',
         'nomor_kode_kas_uang_jalan',
         'kode_uang_jalan',
@@ -19,8 +19,8 @@ class KasUangJalan extends Model
         'jenis_transaksi_id',
         'nominal_transaksi',
         'saldo',
-        'tambang',
-        'rute',
+        'customer_id',
+        'rute_id',
         'transfer_ke',
         'bank',
         'no_rekening',
@@ -34,5 +34,25 @@ class KasUangJalan extends Model
     public function getTanggalAttribute($value)
     {
         return date('d-m-Y', strtotime($value));
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function rute()
+    {
+        return $this->belongsTo(Rute::class);
     }
 }

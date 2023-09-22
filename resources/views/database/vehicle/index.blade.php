@@ -72,8 +72,10 @@
             <td class="text-center align-middle">
                 @if ($d->status == 'aktif')
                 <h5><span class="badge bg-success">Aktif</span></h5>
-                @else
+                @elseif($d->status == 'nonaktif')
                 <h5><span class="badge bg-danger">Nonaktif</span></h5>
+                @elseif($d->status == 'proses')
+                <h5><span class="badge bg-warning">Sedang Jalan</span></h5>
                 @endif
             </td>
             <td class="text-center align-middle">
