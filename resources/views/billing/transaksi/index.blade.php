@@ -13,6 +13,18 @@
         {{-- BACK BUTTON --}}
         <div class="col-md-4 text-center mt-5">
             <a href="{{url()->previous()}}" class="text-decoration-none">
+                <img src="{{asset('images/muat.svg')}}" alt="" width="100">
+                <h2>Nota Muat</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{url()->previous()}}" class="text-decoration-none">
+                <img src="{{asset('images/bongkar.svg')}}" alt="" width="100">
+                <h2>Nota Bongkar</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{url()->previous()}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="100">
                 <h2>KEMBALI</h2>
             </a>

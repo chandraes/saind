@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\KasKecil;
 use App\Models\Rekening;
 use App\Models\KasBesar;
+use App\Models\GroupWa;
 use Illuminate\Http\Request;
 use App\Services\WaStatus;
 use Illuminate\Support\Facades\DB;
@@ -69,10 +70,11 @@ class FormKasKecilController extends Controller
             KasBesar::create($data);
 
         });
+        $group = GroupWa::where('untuk', 'kas-kecil')->first();
         $pesan = "*Form Kas Kecil*\n\n".
                  "Nomor Kode Kas Kecil : KK".sprintf("%02d",$data['nomor_kode_kas_kecil'])."\n".
                  "Permintaan Dana Sebesar Rp. 1.000.000,-\n";
-        $send = new StarSender('Testing Group', $pesan);
+        $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');

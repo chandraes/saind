@@ -23,7 +23,10 @@ class Vendor extends Model
         'nama_rekening',
         'status',
         'sponsor_id',
-        'user_id'
+        'user_id',
+        'bank_uj',
+        'no_rekening_uj',
+        'nama_rekening_uj',
     ];
 
     public function user()

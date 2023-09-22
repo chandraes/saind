@@ -71,6 +71,9 @@ class VendorController extends Controller
             'nama_rekening' => 'required',
             'status' => 'required',
             'sponsor_id' => 'nullable',
+            'bank_uj' => 'required',
+            'no_rekening_uj' => 'required',
+            'nama_rekening_uj' => 'required',
         ]);
 
         // dd($data);
@@ -130,6 +133,9 @@ class VendorController extends Controller
             'nama_rekening' => 'required',
             'status' => 'required',
             'sponsor_id' => 'nullable',
+            'bank_uj' => 'required',
+            'no_rekening_uj' => 'required',
+            'nama_rekening_uj' => 'required',
         ]);
 
         $vendor = Vendor::findOrFail($id);

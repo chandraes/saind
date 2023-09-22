@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\KasUangJalan;
 use App\Models\KasBesar;
 use App\Models\Rekening;
+use App\Models\GroupWa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\StarSender;
@@ -75,11 +76,11 @@ class FormKasUangJalanController extends Controller
 
             KasBesar::create($data);
         });
-
+        $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
         $pesan = "*Form Kas Uang Jalan*\n\n".
                  "Nomor Kode Kas Kecil : KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."\n".
                  "Permintaan Dana Sebesar Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n";
-        $send = new StarSender('Testing Group', $pesan);
+        $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
@@ -88,7 +89,18 @@ class FormKasUangJalanController extends Controller
 
     public function keluar()
     {
-        return view('billing.kas-uang-jalan.keluar');
+        $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->first();
+
+        if($nomor == null){
+            $nomor = 1;
+        }else{
+            $nomor = $nomor->nomor_kode_kas_uang_jalan + 1;
+        }
+
+
+        return view('billing.kas-uang-jalan.keluar', [
+            'nomor' => $nomor,
+        ]);
     }
 
     public function keluar_store(Request $request)

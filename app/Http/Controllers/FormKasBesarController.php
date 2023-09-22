@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\KasBesar;
 use App\Models\Rekening;
+use App\Models\GroupWa;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
 
@@ -72,7 +73,9 @@ class FormKasBesarController extends Controller
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
 
-        $send = new StarSender('Testing Group', 'Ada transaksi masuk sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $send = new StarSender($group->nama_group, 'Ada transaksi masuk sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
         $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
@@ -139,8 +142,9 @@ class FormKasBesarController extends Controller
         if(!$store){
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
-
-        $send = new StarSender('Testing Group', 'Ada transaksi keluar sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        
+        $send = new StarSender($group->nama_group, 'Ada transaksi keluar sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
         $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
