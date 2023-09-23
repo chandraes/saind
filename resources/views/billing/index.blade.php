@@ -123,13 +123,6 @@
                     </div>
                 </div>
             </div>
-
-
-            <!-- Optional: Place to the bottom of scripts -->
-            <script>
-                const myModal = new bootstrap.Modal(document.getElementById('formLain'), options)
-
-            </script>
         </div>
         @endif
         <div class="col-md-4 text-center mt-5">

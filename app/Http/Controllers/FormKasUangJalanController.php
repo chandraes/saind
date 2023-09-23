@@ -161,10 +161,10 @@ class FormKasUangJalanController extends Controller
         if($nomor == null){
             $data['nomor_uang_jalan'] = 1;
         }else{
-            $data['nomor_uang_jalan'] = $nomor->nomor_kode_kas_uang_jalan + 1;
+            $data['nomor_uang_jalan'] = $nomor->nomor_uang_jalan + 1;
         }
 
-        $last = KasBesar::latest()->first();
+        $last = KasUangJalan::latest()->first();
 
         if($last->saldo < $data['nominal_transaksi'] || $last == null){
             return redirect()->back()->with('error', 'Saldo Kas Uang Jalan Tidak Cukup');

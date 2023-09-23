@@ -122,7 +122,7 @@ class VendorController extends Controller
             'nama' => 'required|min:3',
             'nickname' => 'required|min:3',
             'tipe' => 'required|in:perusahaan,perorangan',
-            'jabatan' => 'required|in:Direktur Utama,Direktur, Pemilik Unit',
+            'jabatan' => 'required',
             'perusahaan' => 'nullable',
             'npwp' => 'required',
             'alamat' => 'required',
