@@ -14,7 +14,8 @@ class Transaksi extends Model
         'tanggal_bongkar',
         'nota_muat',
         'tonase',
-        'timbangan',
+        'nota_bongkar',
+        'timbangan_bongkar',
         'status',
     ];
 

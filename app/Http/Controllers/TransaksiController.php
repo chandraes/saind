@@ -45,4 +45,24 @@ class TransaksiController extends Controller
             'data' => $data,
         ]);
     }
+
+    public function nota_bongkar_update(Request $request, Transaksi $transaksi)
+    {
+        // dd($request->all());
+        $data = $request->validate([
+            'nota_bongkar' => 'required',
+            'timbangan_bongkar' => 'required',
+        ]);
+
+        $data['status'] = 3;
+        $data['tanggal_bongkar'] = date('Y-m-d');
+
+        $transaksi->update($data);
+
+        $transaksi->kas_uang_jalan->vehicle->update([
+            'status' => 'aktif',
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil menyimpan data!!');
+    }
 }

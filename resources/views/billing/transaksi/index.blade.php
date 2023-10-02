@@ -24,6 +24,24 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
+            <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
+                <img src="{{asset('images/tagihan.svg')}}" alt="" width="100">
+                <h2>Nota Tagihan <span class="text-danger">{{$data->where('status', 3)->count() > 0 ? "(".$data->where('status', 3)->count().")" : '' }}</span></h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
+                <img src="{{asset('images/bayar.svg')}}" alt="" width="100">
+                <h2>Nota Bayar <span class="text-danger">{{$data->where('status', 3)->count() > 0 ? "(".$data->where('status', 3)->count().")" : '' }}</span></h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
+                <img src="{{asset('images/bonus.svg')}}" alt="" width="100">
+                <h2>Nota Bonus <span class="text-danger">{{$data->where('status', 3)->count() > 0 ? "(".$data->where('status', 3)->count().")" : '' }}</span></h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
             <a href="{{url()->previous()}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="100">
                 <h2>KEMBALI</h2>

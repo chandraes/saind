@@ -19,7 +19,7 @@ class FormKasUangJalanController extends Controller
 {
     public function masuk()
     {
-        $nomor = KasUangJalan::latest()->first();
+        $nomor = KasUangJalan::whereNotNull('nomor_kode_kas_uang_jalan')->latest()->first();
 
         if($nomor == null){
             $nomor = 1;
@@ -101,7 +101,7 @@ class FormKasUangJalanController extends Controller
         if($nomor == null){
             $nomor = 1;
         }else{
-            $nomor = $nomor->nomor_kode_kas_uang_jalan + 1;
+            $nomor = $nomor->nomor_uang_jalan + 1;
         }
 
 
