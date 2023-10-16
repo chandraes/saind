@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
 use App\Models\Customer;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TransaksiExport;
@@ -95,6 +96,11 @@ class TransaksiController extends Controller
             'data' => $data,
             'customer' => $customer,
         ]);
+    }
+
+    public function nota_bayar()
+    {
+        
     }
 
     public function tagihan_export(Customer $customer)
