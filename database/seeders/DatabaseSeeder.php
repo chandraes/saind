@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             JabatanSeeder::class,
             JenisTransaksiSeeder::class,
-            TipeTransaksiSeeder::class,
             RekeningSeeder::class,
             GroupWaSeeder::class,
         ]);
