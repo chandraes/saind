@@ -76,6 +76,7 @@ class VendorController extends Controller
             'nama_rekening_uj' => 'required',
         ]);
 
+
         // dd($data);
 
         $data['user_id'] = auth()->user()->id;
@@ -118,6 +119,7 @@ class VendorController extends Controller
      */
     public function update(Request $request, string $id)
     {
+
         $data = $request->validate([
             'nama' => 'required|min:3',
             'nickname' => 'required|min:3',
@@ -182,7 +184,6 @@ class VendorController extends Controller
             'customer_id' => 'required',
             'customer_id.*' => 'required|exists:customers,id',
             'pembayaran' => 'required',
-            'pembayaran.*' => 'required',
             'hk_opname' => 'nullable',
             'hk_opname.*' => 'nullable',
             'hk_titipan' => 'nullable',
@@ -206,18 +207,17 @@ class VendorController extends Controller
         }
 
         DB::transaction(function () use ($data, $id) {
-            foreach ($data['pembayaran'] as $p) {
-                for ($i=0; $i < count($data['customer_id']); $i++) {
-                    VendorBayar::create([
-                        'vendor_id' => $id,
-                        'customer_id' => $data['customer_id'][$i],
-                        'pembayaran' => $p,
-                        'harga_kesepakatan' => $p == 'opname' ? $data['hk_opname'][$i] : $data['hk_titipan'][$i],
-                        'user_id' => auth()->user()->id,
-                    ]);
-                }
+            Vendor::where('id', $id)->update([
+                'pembayaran' => $data['pembayaran'],
+            ]);
+            for ($i=0; $i < count($data['customer_id']); $i++) {
+                VendorBayar::create([
+                    'vendor_id' => $id,
+                    'customer_id' => $data['customer_id'][$i],
+                    'harga_kesepakatan' => $data['pembayaran'] == 'opname' ? $data['hk_opname'][$i] : $data['hk_titipan'][$i],
+                    'user_id' => auth()->user()->id,
+                ]);
             }
-
         });
 
         return redirect()->route('vendor.uang-jalan', $id);
@@ -336,7 +336,6 @@ class VendorController extends Controller
             'customer_id' => 'required',
             'customer_id.*' => 'required|exists:customers,id',
             'pembayaran' => 'required',
-            'pembayaran.*' => 'required',
             'hk_opname' => 'nullable',
             'hk_opname.*' => 'nullable',
             'hk_titipan' => 'nullable',
@@ -360,17 +359,17 @@ class VendorController extends Controller
         }
 
         DB::transaction(function () use ($data, $id) {
+            Vendor::where('id', $id)->update([
+                'pembayaran' => $data['pembayaran'],
+            ]);
             VendorBayar::where('vendor_id', $id)->delete();
-            foreach ($data['pembayaran'] as $p) {
-                for ($i=0; $i < count($data['customer_id']); $i++) {
-                    VendorBayar::updateOrCreate([
-                        'vendor_id' => $id,
-                        'customer_id' => $data['customer_id'][$i],
-                        'pembayaran' => $p,
-                    ],[
-                        'harga_kesepakatan' => $p == 'opname' ? $data['hk_opname'][$i] : $data['hk_titipan'][$i],
-                    ]);
-                }
+            for ($i=0; $i < count($data['customer_id']); $i++) {
+                VendorBayar::updateOrCreate([
+                    'vendor_id' => $id,
+                    'customer_id' => $data['customer_id'][$i],
+                ],[
+                    'harga_kesepakatan' => $data['pembayaran'] == 'opname' ? $data['hk_opname'][$i] : $data['hk_titipan'][$i],
+                ]);
             }
 
         });

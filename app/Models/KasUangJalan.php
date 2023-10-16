@@ -55,4 +55,9 @@ class KasUangJalan extends Model
     {
         return $this->belongsTo(Rute::class);
     }
+
+    public function transaksi()
+    {
+        return $this->belongsTo(Transaksi::class);
+    }
 }

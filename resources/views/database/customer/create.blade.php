@@ -16,7 +16,7 @@
         </div>
     </div>
     @endif
-    <form action="{{route('customer.store')}}" method="post">
+    <form action="{{route('customer.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
             <div class="col-md-4">
@@ -186,7 +186,57 @@
                     @endif
                 </div>
             </div>
+        </div>
+        <hr>
+        <div class="row mt-3 mb-3">
+            <h3 class="mb-3">Informasi PPN & PPh</h3>
+            <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                <label class="btn btn-warning active">
+                    <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off"> PPN
+                </label>
+                <label class="btn btn-warning">
+                    <input type="checkbox" class="me-2" name="pph" id="pph" autocomplete="off"> PPh
+                </label>
+               </div>
+        </div>
+        <hr>
+        <div class="row mt-3 mb-3">
+            <h3 class="mb-3">Tagihan</h3>
+            <div class="mb-3">
+                <label for="tagihan_dari" class="form-label">Di ambil dari</label>
+                <select class="form-select" name="tagihan_dari" id="tagihan_dari" required>
+                    <option value="1">Tonase Muat</option>
+                    <option value="2">Tonase Bongkar</option>
+                </select>
+                @if ($errors->has('tagihan_dari'))
+                <span class="text-danger">
+                    <strong>{{ $errors->first('tagihan_dari') }}</strong>
+                </span>
+                @endif
+            </div>
+        </div>
         <br>
+        <hr>
+        <h3>Pengaturan Tabel Tagihan</h3>
+        <div class="row">
+            <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                <label class="btn btn-warning active">
+                    <input type="checkbox" class="me-2" name="tanggal_muat" id="tanggal_muat" autocomplete="off"> Tanggal Muat
+                </label>
+                <label class="btn btn-warning">
+                    <input type="checkbox" class="me-2" name="nota_muat" id="nota_muat" autocomplete="off"> Nota Muat
+                </label>
+                <label class="btn btn-warning">
+                    <input type="checkbox" class="me-2" name="tonase" id="tonase" autocomplete="off"> Tonase Muat
+                </label>
+                <label class="btn btn-warning">
+                    <input type="checkbox" class="me-2" name="tanggal_bongkar" id="tanggal_bongkar" autocomplete="off"> Tanggal Bongkar
+                </label>
+                <label class="btn btn-warning">
+                    <input type="checkbox" class="me-2" name="selisih" id="selisih" autocomplete="off"> Selisih
+                </label>
+            </div>
+        </div>
         <div class="d-grid gap-3 mt-3">
             <button type="submit" class="btn btn-primary">Simpan</button>
             <a type="button" class="btn btn-secondary" href="{{route('customer.index')}}">Batal</a>
@@ -206,6 +256,21 @@
     <script>
         $(document).ready(function() {
             $('#rute').select2();
+        });
+        $('#masukForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah Data yang anda masukan sudah benar?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
         });
     </script>
 @endpush

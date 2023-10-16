@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Nota Bongkar</u></h1>
+            <h1><u>Nota Tagihan {{$customer->singkatan}}</u></h1>
         </div>
     </div>
     @if (session('success'))
@@ -38,7 +38,7 @@
     </div>
 </div>
 <div class="container-fluid mt-5 table-responsive ">
-    <table class="table table-bordered table-hover" id="data-table">
+    <table class="table table-bordered table-hover" id="">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
@@ -46,11 +46,26 @@
                 <th class="text-center align-middle">Kode</th>
                 <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Vendor</th>
-                <th class="text-center align-middle">Tambang</th>
                 <th class="text-center align-middle">Rute</th>
+                @if ($customer->tanggal_muat == 1)
                 <th class="text-center align-middle">Tanggal Muat</th>
+                @endif
+                @if ($customer->nota_muat == 1)
                 <th class="text-center align-middle">Nota Muat</th>
+                @endif
+                @if ($customer->tonase == 1)
                 <th class="text-center align-middle">Timbangan Muat</th>
+                @endif
+                @if ($customer->tanggal_bongkar == 1)
+                <th class="text-center align-middle">Tanggal Bongkar</th>
+                @endif
+                <th class="text-center align-middle">Nota Bongkar</th>
+                <th class="text-center align-middle">Timbangan Bongkar</th>
+                @if ($customer->selisih == 1)
+                <th class="text-center align-middle">Selisih (Ton)</th>
+                <th class="text-center align-middle">Selisih (%)</th>
+                @endif
+                <th class="text-center align-middle">Tagihan</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
@@ -67,7 +82,7 @@
                             role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">Nota Bongkar
+                                    <h5 class="modal-title" id="modalTitleId">Nota Tagihan
                                         {{$d->kas_uang_jalan->vehicle->nomor_lambung}}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
@@ -81,13 +96,14 @@
                                             <div class="col-4 mb-3">
                                                 <label for="tanggal_muat" class="form-label">Kode</label>
                                                 <input type="text" class="form-control" name="tanggal_muat"
-                                                    id="tanggal_muat" placeholder="" value="UJ{{sprintf("%02d",
+                                                    id="tanggal_muat" placeholder="" value="UJ{{sprintf(" %02d",
                                                     $d->kas_uang_jalan->nomor_uang_jalan)}}" readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tanggal_muat" class="form-label">Tanggal</label>
                                                 <input type="text" class="form-control" name="tanggal_uang_jalan"
-                                                    id="tanggal_muat" placeholder="" value="{{$d->kas_uang_jalan->tanggal}}" readonly>
+                                                    id="tanggal_muat" placeholder=""
+                                                    value="{{$d->kas_uang_jalan->tanggal}}" readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="no_lambung" class="form-label">Nomor Lambung</label>
@@ -135,13 +151,18 @@
                                         <div class="row">
                                             <div class="col-4 mb-3">
                                                 <label for="nota_bongkar" class="form-label">Nota Bongkar</label>
-                                                <input type="text" class="form-control" name="nota_bongkar" id="nota_bongkar"
-                                                    placeholder="" value="" required>
+                                                <input type="text" class="form-control" name="nota_bongkar"
+                                                    id="nota_bongkar" placeholder=""
+                                                    value="{{$d->nota_bongkar ? $d->nota_bongkar : ''}}"
+                                                    {{$d->nota_bongkar ? 'readonly' : ''}} required>
                                             </div>
                                             <div class="col-4 mb-3">
-                                                <label for="timbangan_bongkar" class="form-label">Timbangan Bongkar</label>
-                                                <input type="text" class="form-control" name="timbangan_bongkar" id="timbangan_bongkar"
-                                                    placeholder="" value="" required>
+                                                <label for="timbangan_bongkar" class="form-label">Timbangan
+                                                    Bongkar</label>
+                                                <input type="text" class="form-control" name="timbangan_bongkar"
+                                                    id="timbangan_bongkar" placeholder=""
+                                                    value="{{$d->timbangan_bongkar ? $d->timbangan_bongkar : ''}}"
+                                                    {{$d->timbangan_bongkar ? 'readonly' : ''}} required>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Tanggal Bongkar</label>
@@ -167,11 +188,32 @@
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
-                <td class="text-center align-middle">{{$d->kas_uang_jalan->customer->singkatan}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
+                @if ($customer->tanggal_muat == 1)
                 <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
+                @endif
+                @if ($customer->nota_muat == 1)
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
+                @endif
+                @if ($customer->tonase == 1)
                 <td class="text-center align-middle">{{$d->tonase}}</td>
+                @endif
+                @if ($customer->tanggal_bongkar == 1)
+                <td class="text-center align-middle">{{$d->tanggal_bongkar}}</td>
+                @endif
+                <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
+                <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
+                @if ($customer->selisih == 1)
+                <td class="text-center align-middle">{{$d->tonase - $d->timbangan_bongkar}}</td>
+                <td class="text-center align-middle">{{($d->tonase - $d->timbangan_bongkar)*0.1}}</td>
+                @endif
+                <td class="text-center align-middle">
+                    @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
+                    {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
+                    @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
+                    {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
+                    @endif
+                </td>
                 <td class="text-center align-middle">
                     <button class="btn btn-warning btn-block">Void</button>
                 </td>
@@ -196,8 +238,61 @@
             </script>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr>
+                <td class="text-center align-middle"
+                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
+                <td class="text-center align-middle"><strong>Total</strong></td>
+                <td align="right" class="align-middle">{{number_format($data->sum('nominal_tagihan'), 2, ',', '.')}}
+                </td>
+            </tr>
+            <tr>
+                <td class="text-center align-middle"
+                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
+                <td class="text-center align-middle"><strong>PPN</strong></td>
+                <td align="right" class="align-middle">
+                    @if ($customer->ppn == 1)
+                    {{number_format($data->sum('nominal_tagihan') * 0.11, 2, ',', '.')}}
+                    @endif
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle"
+                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>PPh</strong></td>
+                <td align="right" class="align-middle">
+                    @if ($customer->pph == 1)
+                    {{number_format($data->sum('nominal_tagihan') * 0.2, 2, ',', '.')}}
+                    @else
+                    0
+                    @endif
+                </td>
+            </tr>
+            <tr>
+                <td class="align-middle"
+                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Tagihan</strong></td>
+                <td align="right" class="align-middle">
+                    {{number_format($data->sum('nominal_tagihan') - ($customer->pph == 1 ? $data->sum('nominal_tagihan')
+                    * 0.2 : 0) + ($customer->ppn == 1 ? $data->sum('nominal_tagihan') * 0.11 : 0), 2, ',', '.')}}
+                </td>
+            </tr>
+        </tfoot>
     </table>
 </div>
+<div class="container-fluid mt-3 mb-3">
+    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+        <button class="btn btn-primary me-md-3 btn-lg" type="button">Lanjutkan</button>
+        <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}">Export</a>
+      </div>
+</div>
+
 @endsection
 @push('css')
 <link href="https://cdn.datatables.net/v/bs5/dt-1.13.5/datatables.min.css" rel="stylesheet">

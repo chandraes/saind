@@ -55,9 +55,58 @@ class CustomerController extends Controller
             'harga_opname' => 'required|numeric',
             'harga_titipan' => 'required|numeric',
             'rute' => 'required',
+            'tanggal_muat' => 'nullable',
+            'nota_muat' => 'nullable',
+            'tonase' => 'nullable',
+            'tanggal_bongkar' => 'nullable',
+            'selisih' => 'nullable',
+            'ppn' => 'nullable',
+            'pph' => 'nullable',
+            'tagihan_dari' => 'required',
         ]);
 
         $data['created_by'] = auth()->id();
+
+        if (array_key_exists('ppn', $data)) {
+            $data['ppn'] = 1;
+        } else {
+            $data['ppn'] = 0;
+        }
+
+        if (array_key_exists('pph', $data)) {
+            $data['pph'] = 1;
+
+        }   else {
+            $data['pph'] = 0;
+        }
+
+        if (array_key_exists('tanggal_muat', $data)) {
+            $data['tanggal_muat'] = 1;
+        } else {
+            $data['tanggal_muat'] = 0;
+        }
+        if (array_key_exists('nota_muat', $data)) {
+            $data['nota_muat'] = 1;
+        } else {
+            $data['nota_muat'] = 0;
+        }
+        if (array_key_exists('tonase', $data)) {
+            $data['tonase'] = 1;
+        } else {
+            $data['tonase'] = 0;
+        }
+
+        if (array_key_exists('tanggal_bongkar', $data)) {
+            $data['tanggal_bongkar'] = 1;
+        } else {
+            $data['tanggal_bongkar'] = 0;
+        }
+
+        if (array_key_exists('selisih', $data)) {
+            $data['selisih'] = 1;
+        } else {
+            $data['selisih'] = 0;
+        }
 
         DB::transaction(function () use($data) {
 
@@ -120,11 +169,60 @@ class CustomerController extends Controller
                     'harga_opname' => 'required|numeric',
                     'harga_titipan' => 'required|numeric',
                     'rute' => 'required',
+                    'tanggal_muat' => 'nullable',
+                    'nota_muat' => 'nullable',
+                    'tonase' => 'nullable',
+                    'tanggal_bongkar' => 'nullable',
+                    'selisih' => 'nullable',
+                    'ppn' => 'nullable',
+                    'pph' => 'nullable',
+                    'tagihan_dari' => 'required',
                 ]);
 
         // dd($data);
 
         $data['edited_by'] = auth()->id();
+
+        if (array_key_exists('ppn', $data)) {
+            $data['ppn'] = 1;
+        } else {
+            $data['ppn'] = 0;
+        }
+
+        if (array_key_exists('pph', $data)) {
+            $data['pph'] = 1;
+
+        }   else {
+            $data['pph'] = 0;
+        }
+        
+        if (array_key_exists('tanggal_muat', $data)) {
+            $data['tanggal_muat'] = 1;
+        } else {
+            $data['tanggal_muat'] = 0;
+        }
+        if (array_key_exists('nota_muat', $data)) {
+            $data['nota_muat'] = 1;
+        } else {
+            $data['nota_muat'] = 0;
+        }
+        if (array_key_exists('tonase', $data)) {
+            $data['tonase'] = 1;
+        } else {
+            $data['tonase'] = 0;
+        }
+
+        if (array_key_exists('tanggal_bongkar', $data)) {
+            $data['tanggal_bongkar'] = 1;
+        } else {
+            $data['tanggal_bongkar'] = 0;
+        }
+
+        if (array_key_exists('selisih', $data)) {
+            $data['selisih'] = 1;
+        } else {
+            $data['selisih'] = 0;
+        }
 
         DB::transaction(function () use($data, $customer) {
 

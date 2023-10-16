@@ -16,16 +16,17 @@
         </div>
     </div>
     @endif
-    <form action="{{route('vendor.pembayaran.update', $data->id)}}" method="post">
+    <form action="{{route('vendor.pembayaran.update', $data->id)}}" method="post" id="masukForm">
         @csrf
         <div class="row mt-3 mb-3">
             <div class="row">
                 <div class="mb-3">
 
                   <label for="pembayaran" class="form-label">Pembayaran</label>
-                  <select multiple class="form-select" name="pembayaran[]" id="pembayaran">
-                        <option value="opname" {{$data->vendor_bayar->where('pembayaran', 'opname')->first() ? 'selected' : ''}}>Opname</option>
-                        <option value="titipan" {{$data->vendor_bayar->where('pembayaran', 'titipan')->first() ? 'selected' : ''}}>Titipan</option>
+                  <select class="form-select" name="pembayaran" id="pembayaran">
+                        <option>-- Pilih Metode --</option>
+                        <option value="opname" {{$data->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
+                        <option value="titipan" {{$data->pembayaran == 'titipan' ? 'selected' : ''}}>Titipan</option>
                     </select>
                 </div>
                 @foreach ($customers as $v)
@@ -34,22 +35,23 @@
                 </div>
                 <input type="hidden" name="vendor_id" value="{{$data->id}}">
                 <input type="hidden" name="customer_id[]" value="{{$v->id}}">
-                <div class="col-md-3 mb-3 mt-3" id="opname-{{$v->id}}" {{$data->vendor_bayar->where('pembayaran', 'opname')->first() ? '' : 'hidden'}}>
+                <div class="col-md-3 mb-3 mt-3" id="opname-{{$v->id}}" {{$data->pembayaran == 'opname' ? '' : 'hidden'}}>
                     <label for="hk_opname" class="form-label">Harga Kesepakatan OPNAME</label>
                     <div class="input-group">
                         <span class="input-group-text">Rp.</span>
                         <input type="number" class="form-control" name="hk_opname[]"
-                            id="hk_opname" {{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first() ? 'required' : ''}} aria-describedby="helpId" placeholder="" value="{{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first() ? $data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first()->harga_kesepakatan : ''}}" @if (auth()->user()->role !== 'admin')
+                            id="hk_opname-{{$v->id}}" {{$data->pembayaran == 'opname' ? 'required' : ''}} aria-describedby="helpId" placeholder="" value="{{$data->vendor_bayar->where('customer_id', $v->id)->first() && $data->pembayaran == 'opname' ? $data->vendor_bayar->where('customer_id', $v->id)->first()->harga_kesepakatan : ''}}"
+                            @if (auth()->user()->role !== 'admin')
                             readonly
-                        @endif>
+                            @endif>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3 mt-3" id='titipan-{{$v->id}}' {{$data->vendor_bayar->where('pembayaran', 'titipan')->first() ? '' : 'hidden'}}>
+                <div class="col-md-3 mb-3 mt-3" id='titipan-{{$v->id}}' {{$data->pembayaran == 'titipan' ? '' : 'hidden'}}>
                     <label for="hk_titipan" class="form-label">Harga Kesepakatan Titipan</label>
                     <div class="input-group">
                         <span class="input-group-text">Rp.</span>
                         <input type="number" class="form-control" name="hk_titipan[]"
-                            id="hk_titipan" {{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first() ? 'titipan' : ''}} aria-describedby="helpId" placeholder="" value="{{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'titipan')->first() ? $data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'titipan')->first()->harga_kesepakatan : ''}}" @if (auth()->user()->role !== 'admin')
+                            id="hk_titipan-{{$v->id}}" {{$data->vendor_bayar->where('customer_id', $v->id)->where('pembayaran', 'opname')->first() ? 'titipan' : ''}} aria-describedby="helpId" placeholder="" value="{{$data->vendor_bayar->where('customer_id', $v->id)->first() && $data->pembayaran == 'titipan' ? $data->vendor_bayar->where('customer_id', $v->id)->first()->harga_kesepakatan : ''}}" @if (auth()->user()->role !== 'admin')
                             readonly
                         @endif>
                     </div>
@@ -85,47 +87,50 @@
 
         $('#pembayaran').on('select2:select', function(e) {
                 var data = e.params.data.id;
+                console.log(data);
                 var customer = {!! $customers !!};
                 if (data == 'opname') {
                     for(var i = 0; i < customer.length; i++){
                         // $('#opname-'+customer[i].id).show();
                         // remove hidden attribute
                         $('#opname-'+customer[i].id).removeAttr('hidden');
+                        $('#hk_opname-'+customer[i].id).val(customer[i].harga_opname);
+                        $('#hk_titipan-'+customer[i].id).val('');
                         $('#opname-'+customer[i].id).show();
+                        $('#titipan-'+customer[i].id).hide();
                         // set value to customer[i].harga_opname
-                        $('#opname'+customer[i].id).val(customer[i].harga_opname);
+
                     }
                 } else if(data == 'titipan'){
                     for(var i = 0; i < customer.length; i++){
+                        console.log(customer[i].harga_titipan);
                         // $('#opname-'+customer[i].id).show();
                         // remove hidden attribute
                         $('#titipan-'+customer[i].id).removeAttr('hidden');
                         $('#titipan-'+customer[i].id).show();
-                        // set value to customer[i].harga_titipan
-                        $('#titipan'+customer[i].id).val(customer[i].harga_titipan);
-                    }
-                }
-            });
-
-            $('#pembayaran').on('select2:unselect', function(e){
-                var data = e.params.data.id;
-                var customer = {!! $customers !!};
-                console.log(data);
-                if (data == 'opname') {
-                    for(var i = 0; i < customer.length; i++){
-                        // $('#opname-'+customer[i].id).show();
-                        // remove hidden attribute
+                        $('#hk_titipan-'+customer[i].id).val(customer[i].harga_titipan);
+                        $('#hk_opname-'+customer[i].id).val('');
                         $('#opname-'+customer[i].id).hide();
-                    }
-                } else if(data == 'titipan'){
-                    for(var i = 0; i < customer.length; i++){
-                        // $('#opname-'+customer[i].id).show();
-                        // remove hidden attribute
-                        $('#titipan-'+customer[i].id).hide();
+                        // set value to customer[i].harga_titipan
+
                     }
                 }
             });
-
+            $('#masukForm').submit(function(e){
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Apakah Data yang anda masukan sudah benar?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, simpan!'
+                    }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit();
+                    }
+                })
+            });
 
     </script>
 @endpush

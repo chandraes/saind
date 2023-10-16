@@ -22,7 +22,7 @@
             <div class="row">
                 <div class="mb-3">
                   <label for="pembayaran" class="form-label">Pembayaran</label>
-                  <select multiple class="form-select" name="pembayaran[]" id="pembayaran">
+                  <select class="form-select" name="pembayaran" id="pembayaran">
                         <option value="opname">Opname</option>
                         <option value="titipan">Titipan</option>
                     </select>
@@ -91,6 +91,9 @@
                     // remove hidden attribute
                     $('#opname-'+customer[i].id).removeAttr('hidden');
                     $('#opname-'+customer[i].id).show();
+                    // clear titipan value
+                    $('#titipan-'+customer[i].id).val('');
+                    $('#titipan-'+customer[i].id).hide();
                 }
             } else if(data == 'titipan'){
                 for(var i = 0; i < customer.length; i++){
@@ -98,27 +101,12 @@
                     // remove hidden attribute
                     $('#titipan-'+customer[i].id).removeAttr('hidden');
                     $('#titipan-'+customer[i].id).show();
+                    // clear opname value
+                    $('#opname-'+customer[i].id).val('');
+                    $('#opname-'+customer[i].id).hide();    
                 }
             }
         });
 
-        $('#pembayaran').on('select2:unselect', function(e){
-            var data = e.params.data.id;
-            var customer = {!! $customers !!};
-            console.log(data);
-            if (data == 'opname') {
-                for(var i = 0; i < customer.length; i++){
-                    // $('#opname-'+customer[i].id).show();
-                    // remove hidden attribute
-                    $('#opname-'+customer[i].id).hide();
-                }
-            } else if(data == 'titipan'){
-                for(var i = 0; i < customer.length; i++){
-                    // $('#opname-'+customer[i].id).show();
-                    // remove hidden attribute
-                    $('#titipan-'+customer[i].id).hide();
-                }
-            }
-        })
     </script>
 @endpush

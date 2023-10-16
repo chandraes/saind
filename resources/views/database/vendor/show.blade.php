@@ -118,6 +118,7 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
+                <h3 class="mb-3">Rekening Vendor</h3>
                 <div class="col-md-6 mb-3">
                     <label for="no_rekening" class="form-label">No. Rekening</label>
                     <input type="text" class="form-control {{$errors->has('no_rekening') ? 'is-invalid' : ''}}" name="no_rekening" id="no_rekening" placeholder="" value="{{$vendor->no_rekening}}" disabled>
@@ -155,6 +156,37 @@
                     @if ($errors->has('status'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('status') }}</strong>
+                    </span>
+                    @endif
+                </div>
+            </div>
+            <hr>
+            <div class="row mt-3 mb-3">
+                <h3 class="mb-3">Rekening Uang Jalan</h3>
+                <div class="col-md-4 mb-3">
+                    <label for="no_rekening_uj" class="form-label">No. Rekening Uang Jalan</label>
+                    <input type="text" class="form-control {{$errors->has('no_rekening_uj') ? 'is-invalid' : ''}}" name="no_rekening_uj" id="no_rekening_uj" placeholder="" value="{{$vendor->no_rekening_uj}}" disabled>
+                    @if ($errors->has('no_rekening_uj'))
+                    <span class="text-danger">
+                        <strong>{{ $errors->first('no_rekening_uj') }}</strong>
+                    </span>
+                    @endif
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="bank_uj" class="form-label">Nama Bank Uang Jalan</label>
+                    <input type="text" class="form-control {{$errors->has('bank_uj') ? 'is-invalid' : ''}}" name="bank_uj" id="bank_uj" placeholder="" value="{{$vendor->bank_uj}}" disabled>
+                    @if ($errors->has('bank_uj'))
+                    <span class="text-danger">
+                        <strong>{{ $errors->first('bank_uj') }}</strong>
+                    </span>
+                    @endif
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="nama_rekening_uj" class="form-label">Nama Pemilik Rekening Uang Jalan</label>
+                    <input type="text" class="form-control {{$errors->has('nama_rekening_uj') ? 'is-invalid' : ''}}" name="nama_rekening_uj" id="nama_rekening_uj" placeholder="" value="{{$vendor->nama_rekening_uj}}" disabled>
+                    @if ($errors->has('nama_rekening_uj'))
+                    <span class="text-danger">
+                        <strong>{{ $errors->first('nama_rekening_uj') }}</strong>
                     </span>
                     @endif
                 </div>

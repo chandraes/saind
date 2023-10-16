@@ -17,6 +17,10 @@ class Transaksi extends Model
         'nota_bongkar',
         'timbangan_bongkar',
         'status',
+        'nominal_tagihan',
+        'tagihan',
+        'bayar',
+        'bonus',
     ];
 
     public function kas_uang_jalan()

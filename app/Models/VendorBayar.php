@@ -13,7 +13,6 @@ class VendorBayar extends Model
         'vendor_id',
         'customer_id',
         'harga_kesepakatan',
-        'pembayaran',
     ];
 
     public function vendor()

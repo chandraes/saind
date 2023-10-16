@@ -89,18 +89,18 @@
                                                     <td class="text-center align-middle">{{$loop->iteration}}</td>
                                                     <td class="text-center align-middle">{{$c->nama}}</td>
                                                     <td class="text-center align-middle">
-                                                        @if ($d->vendor_bayar->where('customer_id', $c->id)->where('pembayaran','=' ,'opname')->first())
+                                                        @if ($d->vendor_bayar->where('customer_id', $c->id)->first() && $d->pembayaran == 'opname')
                                                         Rp.
                                                         {{
-                                                            number_format($d->vendor_bayar->where('customer_id', $c->id)->where('pembayaran','=' ,'opname')->pluck('harga_kesepakatan')['0'], 0, ',', '.')
+                                                            number_format($d->vendor_bayar->where('customer_id', $c->id)->pluck('harga_kesepakatan')['0'], 0, ',', '.')
                                                             }}
                                                         @endif
 
                                                     </td>
                                                     <td class="text-center align-middle">
-                                                        @if ($d->vendor_bayar->where('customer_id', $c->id)->where('pembayaran','=' ,'titipan')->first())
+                                                        @if ($d->vendor_bayar->where('customer_id', $c->id)->first() && $d->pembayaran == 'titipan')
                                                         Rp.  {{
-                                                            number_format($d->vendor_bayar->where('customer_id', $c->id)->where('pembayaran','=' ,'titipan')->pluck('harga_kesepakatan')['0'], 0, ',', '.')
+                                                            number_format($d->vendor_bayar->where('customer_id', $c->id)->pluck('harga_kesepakatan')['0'], 0, ',', '.')
                                                             }}
                                                         @endif
 

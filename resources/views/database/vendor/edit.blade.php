@@ -6,7 +6,7 @@
             <h1><u>Ubah Biodata Vendor</u></h1>
         </div>
     </div>
-    <form action="{{route('vendor.update', $vendor->id)}}" method="post">
+    <form action="{{route('vendor.update', $vendor->id)}}" method="post" id="masukForm">
         @csrf
         @method('PATCH')
         <div class="row mt-3 mb-3">
@@ -121,6 +121,7 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
+                <h3 class="mb-3">Rekening Vendor</h3>
                 <div class="col-md-6 mb-3">
                     <label for="no_rekening" class="form-label">No. Rekening</label>
                     <input type="text" class="form-control {{$errors->has('no_rekening') ? 'is-invalid' : ''}}" name="no_rekening" id="no_rekening" placeholder="" value="{{$vendor->no_rekening}}" required>
@@ -242,6 +243,22 @@
             theme: 'bootstrap-5'
         });
     });
+
+    $('#masukForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah Data yang anda masukan sudah benar?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
+        });
 
 </script>
 @endpush

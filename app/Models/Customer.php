@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Customer extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'kode_customer',
         'nama',
@@ -24,6 +24,14 @@ class Customer extends Model
         'harga_titipan',
         'created_by',
         'edited_by',
+        'tanggal_muat',
+        'nota_muat',
+        'tonase',
+        'tanggal_bongkar',
+        'selisih',
+        'ppn',
+        'pph',
+        'tagihan_dari',
     ];
 
     public function createdBy()
