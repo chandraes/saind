@@ -86,6 +86,9 @@ Route::group(['middleware' => ['auth']], function() {
             'index','store','update','destroy'
         ]);
 
+        Route::resource('kategori-barang', App\Http\Controllers\KategoriBarangController::class);
+        Route::post('database/kategori-barang-store', [App\Http\Controllers\KategoriBarangController::class, 'kategori_store'])->name('database.kategori-barang-store');
+
         Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
 
         Route::view('template', 'dokumen.template.index')->name('template');
