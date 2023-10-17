@@ -88,6 +88,8 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::resource('kategori-barang', App\Http\Controllers\KategoriBarangController::class);
         Route::post('database/kategori-barang-store', [App\Http\Controllers\KategoriBarangController::class, 'kategori_store'])->name('database.kategori-barang-store');
+        Route::delete('database/kategori-barang-destroy/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_destroy'])->name('database.kategori-barang-destroy');
+        Route::patch('database/kategori-barang-update/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_update'])->name('database.kategori-barang-update');
 
         Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
 

@@ -20,10 +20,10 @@
                         <tr>
                             <td class="text-center align-middle">{{$loop->iteration}}</td>
                             <td class="text-center align-middle">
-                                <form action="{{route('karyawan.jabatan-update', $j->id)}}" method="post" id="updateJabatan">
+                                <form action="{{route('database.kategori-barang-update', $j->id)}}" method="post" id="updateJabatan">
                                     @csrf
                                     @method('patch')
-                                    <input type="text" class="form-control" name="nama_jabatan" id="nama_jabatan-{{$j->id}}"
+                                    <input type="text" class="form-control" name="nama" id="nama_jabatan-{{$j->id}}"
                                         aria-describedby="helpId" placeholder="" value="{{$j->nama}}" readonly>
                                     <div class="btn-group m-3" role="group" aria-label="Save or cancel" id="buttonJabatan-{{$j->id}}" hidden>
                                         <button type="submit" class="btn btn-success">Simpan</button>
@@ -36,7 +36,7 @@
 
                                 <a onclick="toggleNamaJabatan({{$j->id}})" class="btn btn-warning"><i class="fa fa-edit"></i></a>
                                 {{-- form delete with confirmation --}}
-                                <form action="{{route('karyawan.jabatan-destroy', $j->id)}}" method="post" class="d-inline">
+                                <form action="{{route('database.kategori-barang-destroy', $j)}}" method="post" class="d-inline">
                                     @csrf
                                     @method('delete')
                                     <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i class="fa fa-trash"></i></button>

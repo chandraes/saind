@@ -14,7 +14,7 @@ class KategoriBarangController extends Controller
     public function index()
     {
         $kategori = KategoriBarang::all();
-        $barang = Barang::all();
+        $barang = Barang::all()->groupBy('kategori_barang_id');
         return view('database.barang.index', [
             'kategori' => $kategori,
             'barang' => $barang,
@@ -78,6 +78,24 @@ class KategoriBarangController extends Controller
         KategoriBarang::create($data);
 
         return redirect()->back()->with('success', 'Kategori berhasil ditambahkan');
+    }
+
+    public function kategori_update(Request $request, KategoriBarang $kategori)
+    {
+        $data = $request->validate([
+            'nama' => 'required',
+        ]);
+
+        $kategori->update($data);
+
+        return redirect()->back()->with('success', 'Kategori berhasil diubah');
+    }
+
+    public function kategori_destroy(KategoriBarang $kategori)
+    {
+        $kategori->delete();
+
+        return redirect()->back()->with('success', 'Kategori berhasil dihapus');
     }
 
 

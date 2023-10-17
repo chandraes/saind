@@ -36,7 +36,7 @@
                                 width="30"> Database</a></td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img src="{{asset('images/stock.svg')}}" alt="dokumen"
                                     width="30"> Tambah Kategori</a></td>
-                                    <td><a href="{{route('database')}}"><img src="{{asset('images/stock.svg')}}" alt="dokumen"
+                                    <td><a href="#"><img src="{{asset('images/barang.svg')}}" alt="dokumen"
                                         width="30"> Tambah Barang</a></td>
                 </tr>
             </table>
@@ -55,7 +55,41 @@
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
-
+        <tbody>
+        @if ($barang->count() == 0)
+            @foreach ($kategori as $k)
+            <tr>
+                <td class="text-center align-middle">{{$loop->iteration}}</td>
+                <td class="text-center align-middle">{{$k->nama}}</td>
+                <td class="text-center align-middle">-</td>
+                <td class="text-center align-middle">-</td>
+                <td class="text-center align-middle">-</td>
+                <td class="text-center align-middle">
+                    {{-- <a href="{{route('database.barang.create', $k->id)}}" class="btn btn-primary"><i class="fa fa-plus"></i></a> --}}
+                </td>
+            </tr>
+            @endforeach
+        @else
+            @foreach ($barang as $b)
+            <tr>
+                <td class="text-center align-middle">{{$loop->iteration}}</td>
+                <td class="text-center align-middle">{{$b->kategori->nama}}</td>
+                <td class="text-center align-middle">{{$b->nama}}</td>
+                <td class="text-center align-middle">{{$b->stok}}</td>
+                <td class="text-center align-middle">{{$b->harga_jual}}</td>
+                <td class="text-center align-middle">
+                    {{-- <a href="{{route('database.barang.edit', $b->id)}}" class="btn btn-warning"><i class="fa fa-edit"></i></a> --}}
+                    {{-- form delete with confirmation --}}
+                    {{-- <form action="{{route('database.barang.destroy', $b)}}" method="post" class="d-inline">
+                        @csrf
+                        @method('delete')
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i class="fa fa-trash"></i></button>
+                    </form> --}}
+                </td>
+            </tr>
+            @endforeach
+        @endif
+        </tbody>
     </table>
 </div>
 @endsection
