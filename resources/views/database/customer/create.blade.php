@@ -158,7 +158,7 @@
             <div class="col-md-12">
                 <div class="mb-3">
                     <label for="rute" class="form-label">Rute</label>
-                    <select class="form-select select2 @if ($errors->has('rute')) is-invalid @endif" name="rute" id="rute" required multiple>
+                    <select class="form-select select2 @if ($errors->has('rute')) is-invalid @endif" name="rute[]" id="rute" required multiple>
                         <option value="">Pilih Rute</option>
                         @foreach ($rute as $item)
                         <option value="{{$item->id}}">{{$item->nama}}</option>

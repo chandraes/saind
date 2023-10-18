@@ -42,6 +42,7 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
        $data = $request->validate([
                 'nama' => 'required|min:3',
                 'singkatan' => 'required',
@@ -54,7 +55,7 @@ class CustomerController extends Controller
                 'email' => 'required',
                 'harga_opname' => 'nullable',
                 'harga_titipan' => 'nullable',
-                'rute' => 'required',
+                'rute.*' => 'required',
                 'tanggal_muat' => 'nullable',
                 'nota_muat' => 'nullable',
                 'tonase' => 'nullable',
