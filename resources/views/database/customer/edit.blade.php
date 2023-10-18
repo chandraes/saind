@@ -148,31 +148,15 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label for="harga_opname" class="form-label">Harga OPNAME</label>
+                    <label for="harga_tagihan" class="form-label">Harga OPNAME</label>
                     <div class="input-group">
                         <span class="input-group-text">Rp.</span>
-                        <input type="number" class="form-control @if ($errors->has('harga_opname')) is-invalid @endif"
-                            name="harga_opname" id="harga_opname" required aria-describedby="helpId" placeholder=""
+                        <input type="number" class="form-control @if ($errors->has('harga_tagihan')) is-invalid @endif"
+                            name="harga_tagihan" id="harga_tagihan" required aria-describedby="helpId" placeholder=""
                             value="{{$data->harga_opname}}">
-                        @if ($errors->has('harga_opname'))
+                        @if ($errors->has('harga_tagihan'))
                         <div class="invalid-feedback">
-                            {{$errors->first('harga_opname')}}
-                        </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label for="harga_titipan" class="form-label">Harga Titipan</label>
-                    <div class="input-group">
-                        <span class="input-group-text">Rp.</span>
-                        <input type="number" class="form-control  @if ($errors->has('harga_titipan')) is-invalid @endif"
-                            name="harga_titipan" id="harga_titipan" required aria-describedby="helpId" placeholder=""
-                            value="{{$data->harga_titipan}}">
-                        @if ($errors->has('harga_titipan'))
-                        <div class="invalid-feedback">
-                            {{$errors->first('harga_titipan')}}
+                            {{$errors->first('harga_tagihan')}}
                         </div>
                         @endif
                     </div>
@@ -279,7 +263,7 @@
             $('#rute').select2();
         });
 
-        $('#masukForm').submit(function(e){
+    $('#masukForm').submit(function(e){
         e.preventDefault();
         Swal.fire({
             title: 'Apakah Data yang anda masukan sudah benar?',
