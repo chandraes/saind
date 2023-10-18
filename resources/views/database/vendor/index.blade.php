@@ -56,9 +56,11 @@
                 <td class="align-middle">{{$d->perusahaan}}</td>
                 <td class="align-middle">{{$d->nickname}}</td>
                 <td class="align-middle">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-pembayaran{{$d->id}}">
-                        Lihat Pembayaran
-                      </button>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary text-center" data-bs-toggle="modal" data-bs-target="#modal-pembayaran{{$d->id}}">
+                            Lihat Pembayaran
+                          </button>
+                    </div>
                     @include('database.vendor.show-pembayaran')
                 </td>
                 <td class="text-center align-middle">
