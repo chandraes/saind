@@ -87,10 +87,10 @@
             <div class="row mt-3 mb-3">
                 <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
                     <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}} autocomplete="off"> PPN
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off"> PPN
                     </label>
                     <label class="btn btn-warning">
-                        <input type="checkbox" class="me-2" name="pph" id="pph" {{$vendor->pph == 1 ? 'checked' : ''}} autocomplete="off"> PPh
+                        <input type="checkbox" class="me-2" name="pph" id="pph" autocomplete="off"> PPh
                     </label>
                    </div>
             </div>

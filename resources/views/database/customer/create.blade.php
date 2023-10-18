@@ -137,7 +137,7 @@
         </div>
         <br><hr>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="mb-3">
                     <label for="harga_tagihan" class="form-label">Harga Tagihan</label>
                     <div class="input-group">
