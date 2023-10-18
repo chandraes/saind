@@ -64,7 +64,6 @@ class CustomerController extends Controller
                 'ppn' => 'nullable',
                 'pph' => 'nullable',
                 'tagihan_dari' => 'required',
-                'harga_tagihan' => 'required',
         ]);
 
         $data['created_by'] = auth()->id();
@@ -110,7 +109,6 @@ class CustomerController extends Controller
             $data['selisih'] = 0;
         }
 
-        DB::transaction(function () use($data) {
 
             $customer = Customer::create($data);
 
@@ -120,9 +118,59 @@ class CustomerController extends Controller
                     'rute_id' => $rute,
                 ]);
             }
-        });
 
-        return redirect()->route('customer.index')->with('success', 'Customer berhasil ditambahkan');
+        return redirect()->route('customer.tagihan', $customer->id);
+    }
+
+    public function tagihan(Customer $customer)
+    {
+        return view('database.customer.create-tagihan', [
+            'data' => $customer,
+        ]);
+    }
+
+    public function tagihan_store(Request $request, Customer $customer)
+    {
+        $data = $request->validate([
+            'rute_id' => 'required',
+            'harga_tagihan' => 'required',
+        ]);
+
+
+        for ($i=0; $i < count($data['rute_id']); $i++) {
+            $customer->customer_tagihan()->create([
+                'rute_id' => $data['rute_id'][$i],
+                'harga_tagihan' => str_replace('.', '', $data['harga_tagihan'][$i]),
+            ]);
+        }
+
+        return redirect()->route('customer.index')->with('success', 'Tagihan berhasil ditambahkan');
+    }
+
+    public function tagihan_edit(Customer $customer)
+    {
+        return view('database.customer.edit-tagihan', [
+            'data' => $customer,
+        ]);
+    }
+
+    public function tagihan_update(Request $request, Customer $customer)
+    {
+        $data = $request->validate([
+            'rute_id' => 'required',
+            'harga_tagihan' => 'required',
+        ]);
+
+        $customer->customer_tagihan()->delete();
+
+        for ($i=0; $i < count($data['rute_id']); $i++) {
+            $customer->customer_tagihan()->create([
+                'rute_id' => $data['rute_id'][$i],
+                'harga_tagihan' => str_replace('.', '', $data['harga_tagihan'][$i]),
+            ]);
+        }
+
+        return redirect()->route('customer.index')->with('success', 'Tagihan berhasil diupdate');
     }
 
     /**
@@ -179,7 +227,6 @@ class CustomerController extends Controller
                     'ppn' => 'nullable',
                     'pph' => 'nullable',
                     'tagihan_dari' => 'required',
-                    'harga_tagihan' => 'required',
                 ]);
 
         // dd($data);

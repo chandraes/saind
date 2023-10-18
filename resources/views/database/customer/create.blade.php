@@ -137,24 +137,6 @@
         </div>
         <br><hr>
         <div class="row">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <label for="harga_tagihan" class="form-label">Harga Tagihan</label>
-                    <div class="input-group">
-                        <span class="input-group-text">Rp.</span>
-                        <input type="number" class="form-control @if ($errors->has('harga_tagihan')) is-invalid @endif" name="harga_tagihan" id="harga_tagihan" required
-                            aria-describedby="helpId" placeholder="">
-                            @if ($errors->has('harga_tagihan'))
-                            <div class="invalid-feedback">
-                                {{$errors->first('harga_tagihan')}}
-                            </div>
-                            @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-        <br><hr>
-        <div class="row">
             <div class="col-md-12">
                 <div class="mb-3">
                     <label for="rute" class="form-label">Rute</label>

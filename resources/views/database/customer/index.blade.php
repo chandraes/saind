@@ -7,26 +7,7 @@
             <h1><u>Customer</u></h1>
         </div>
     </div>
-    @if (session('success'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('success')}}
-            </strong>
-        </div>
-    </div>
-    @endif
-    @if (session('error'))
-    <div class="row">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="success-alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('error')}}
-            </strong>
-        </div>
-    </div>
-    @endif
+    @include('swal')
     <div class="row float-end">
         <div class="col-md-12">
             <strong>
@@ -72,7 +53,11 @@
                 <td>{{$loop->iteration}}</td>
                 <td><a href="{{route('customer.show', $d->id)}}"><strong>{{$d->nama}} ({{$d->singkatan}})</strong></a></td>
                 <td>{{$d->contact_person}}</td>
-                <td>Rp. {{number_format($d->harga_tagihan, 0, ',', '.')}}</td>
+                <td>
+                    @foreach ($d->customer_tagihan as $t)
+                    <h5><span class="badge bg-primary">Rp. {{number_format($t->harga_tagihan, 0, ',', '.')}}</span></h5>
+                    @endforeach
+                </td>
                 <td>
                     @foreach ($d->rute as $r)
                     <h5><span class="badge bg-primary">{{$r->nama}}</span></h5>
@@ -193,6 +178,8 @@
                 </td>
                 <td>{{$d->createdBy['name']}}</td>
                 <td>
+                    {{-- edit tagihan button --}}
+                    <a href="{{route('customer.tagihan-edit', $d->id)}}" class="btn btn-success">Edit Tagihan</a>
                     <a href="{{route('customer.edit', $d->id)}}" class="btn btn-primary m-2">
                         <i class="fa fa-edit"></i>
                     </a>

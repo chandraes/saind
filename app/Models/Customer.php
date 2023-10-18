@@ -32,7 +32,6 @@ class Customer extends Model
         'ppn',
         'pph',
         'tagihan_dari',
-        'harga_tagihan',
     ];
 
     public function createdBy()
@@ -54,5 +53,10 @@ class Customer extends Model
     public function document()
     {
         return $this->hasMany(CustomerDocument::class);
+    }
+
+    public function customer_tagihan()
+    {
+        return $this->hasMany(CustomerTagihan::class);
     }
 }
