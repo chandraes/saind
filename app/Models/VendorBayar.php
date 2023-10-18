@@ -9,10 +9,11 @@ class VendorBayar extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'nama',
         'vendor_id',
         'customer_id',
-        'harga_kesepakatan',
+        'rute_id',
+        'hk_opname',
+        'hk_titipan',
     ];
 
     public function vendor()
@@ -23,6 +24,11 @@ class VendorBayar extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function rute()
+    {
+        return $this->belongsTo(Rute::class);
     }
 
 }

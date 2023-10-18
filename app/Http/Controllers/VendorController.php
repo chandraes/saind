@@ -76,6 +76,7 @@ class VendorController extends Controller
             'nama_rekening_uj' => 'required',
             'ppn' => 'nullable',
             'pph' => 'nullable',
+            'pembayaran' => 'required',
         ]);
 
         if (array_key_exists('ppn', $data)) {
@@ -155,6 +156,7 @@ class VendorController extends Controller
             'nama_rekening_uj' => 'required',
             'ppn' => 'nullable',
             'pph' => 'nullable',
+            'pembayaran' => 'required',
         ]);
 
         if (array_key_exists('ppn', $data)) {
@@ -209,11 +211,13 @@ class VendorController extends Controller
 
     public function pembayaran_store(Request $request)
     {
+        // dd($request->all());
         $data = $request->validate([
             'vendor_id' => 'required|exists:vendors,id',
             'customer_id' => 'required',
             'customer_id.*' => 'required|exists:customers,id',
-            'pembayaran' => 'required',
+            'rute_id' => 'required',
+            'rute_id.*' => 'required|exists:rutes,id',
             'hk_opname' => 'nullable',
             'hk_opname.*' => 'nullable',
             'hk_titipan' => 'nullable',
@@ -237,14 +241,16 @@ class VendorController extends Controller
         }
 
         DB::transaction(function () use ($data, $id) {
-            Vendor::where('id', $id)->update([
-                'pembayaran' => $data['pembayaran'],
-            ]);
+            // Vendor::where('id', $id)->update([
+            //     'pembayaran' => $data['pembayaran'],
+            // ]);
             for ($i=0; $i < count($data['customer_id']); $i++) {
                 VendorBayar::create([
                     'vendor_id' => $id,
                     'customer_id' => $data['customer_id'][$i],
-                    'harga_kesepakatan' => $data['pembayaran'] == 'opname' ? $data['hk_opname'][$i] : $data['hk_titipan'][$i],
+                    'rute_id' => $data['rute_id'][$i],
+                    'hk_opname' => $data['hk_opname'][$i],
+                    'hk_titipan' => $data['hk_titipan'][$i],
                     'user_id' => auth()->user()->id,
                 ]);
             }

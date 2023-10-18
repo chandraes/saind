@@ -20,22 +20,13 @@
         @csrf
         <div class="row mt-3 mb-3">
             <div class="row">
-                <div class="mb-3">
-
-                  <label for="pembayaran" class="form-label">Pembayaran</label>
-                  <select class="form-select" name="pembayaran" id="pembayaran">
-                        <option>-- Pilih Metode --</option>
-                        <option value="opname" {{$data->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
-                        <option value="titipan" {{$data->pembayaran == 'titipan' ? 'selected' : ''}}>Titipan</option>
-                    </select>
-                </div>
-                @foreach ($customers as $v)
+                {{-- @foreach ($customers as $v)
                 <div class="col-md-12">
                     <h3>{{$v->nama}}</h3>
                 </div>
                 <input type="hidden" name="vendor_id" value="{{$data->id}}">
                 <input type="hidden" name="customer_id[]" value="{{$v->id}}">
-                <div class="col-md-3 mb-3 mt-3" id="opname-{{$v->id}}" {{$data->pembayaran == 'opname' ? '' : 'hidden'}}>
+                <div class="col-md-3 mb-3 mt-3" id="opname-{{$v->id}}">
                     <label for="hk_opname" class="form-label">Harga Kesepakatan OPNAME</label>
                     <div class="input-group">
                         <span class="input-group-text">Rp.</span>
@@ -46,7 +37,7 @@
                             @endif>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3 mt-3" id='titipan-{{$v->id}}' {{$data->pembayaran == 'titipan' ? '' : 'hidden'}}>
+                <div class="col-md-3 mb-3 mt-3" id='titipan-{{$v->id}}'>
                     <label for="hk_titipan" class="form-label">Harga Kesepakatan Titipan</label>
                     <div class="input-group">
                         <span class="input-group-text">Rp.</span>
@@ -56,6 +47,86 @@
                         @endif>
                     </div>
                 </div>
+                <br>
+                <hr>
+                @endforeach --}}
+                @foreach ($customers as $v)
+                <div class="col-md-12">
+                    <h3>{{$v->nama}}</h3>
+                </div>
+                <table class="table table-bordered table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="text-center align-middle">Rute</th>
+                            <th class="text-center align-middle">Harga Kesepakatan Opname</th>
+                            <th class="text-center align-middle">Harga Kesepakatan Titipan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($v->rute as $i)
+                        <input type="hidden" name="vendor_id" value="{{$data->id}}">
+                        <input type="hidden" name="customer_id[]" value="{{$v->id}}">
+                        <input type="hidden" name="rute_id[]" value="{{$i->id}}">
+                        <tr>
+                            <td class="text-center align-middle">
+                                {{$i->nama}}
+                            </td>
+                            <td class="text-center align-middle">
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp.</span>
+                                    <input type="number" class="form-control" name="hk_opname[]"
+                                        id="hk_opname" required aria-describedby="helpId" placeholder="" @if (auth()->user()->role !== 'admin')
+                                        readonly
+                                    @endif >
+                                </div>
+                            </td>
+                            <td class="text-center align-middle">
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp.</span>
+                                    <input type="number" class="form-control" name="hk_titipan[]"
+                                        id="hk_titipan" required aria-describedby="helpId" placeholder="" @if (auth()->user()->role !== 'admin')
+                                        readonly
+                                    @endif>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                {{-- @foreach ($v->rute as $i)
+                <input type="hidden" name="vendor_id" value="{{$id}}">
+                <input type="hidden" name="customer_id[]" value="{{$v->id}}">
+                <input type="hidden" name="rute_id[]" value="{{$i->id}}">
+
+                <div class="col-md-4 mb-3 mt-3" id="rute-{{$v->id}}">
+                       <div class="mb-3">
+                         <label for="rute" class="form-label">Rute</label>
+                         <input type="text"
+                           class="form-control" name="rute" id="rute" aria-describedby="helpId" placeholder="" value="{{$i->nama}}">
+                       </div>
+                </div>
+                <div class="col-md-4 mb-3 mt-3" id="opname-{{$v->id}}">
+                    <label for="hk_opname" class="form-label">Harga Kesepakatan OPNAME</label>
+                    <div class="input-group">
+                        <span class="input-group-text">Rp.</span>
+                        <input type="number" class="form-control" name="hk_opname[]"
+                            id="hk_opname" required aria-describedby="helpId" placeholder="" @if (auth()->user()->role !== 'admin')
+                            readonly
+                        @endif >
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3 mt-3" id='titipan-{{$v->id}}'>
+                    <label for="hk_titipan" class="form-label">Harga Kesepakatan Titipan</label>
+                    <div class="input-group">
+                        <span class="input-group-text">Rp.</span>
+                        <input type="number" class="form-control" name="hk_titipan[]"
+                            id="hk_titipan" required aria-describedby="helpId" placeholder="" @if (auth()->user()->role !== 'admin')
+                            readonly
+                        @endif>
+                    </div>
+                </div>
+
+                @endforeach --}}
                 <br>
                 <hr>
                 @endforeach

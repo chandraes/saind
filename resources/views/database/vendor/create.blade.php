@@ -116,7 +116,7 @@
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="sponsor_select" class="form-label">Sponsor</label>
-                    <select class="form-select {{$errors->has('sponsor_id') ? 'is-invalid' : ''}}" name="sponsor_id" id="sponsor_select">
+                    <select class="form-select {{$errors->has('sponsor_id') ? 'is-invalid' : ''}}" name="sponsor_id" id="sponsor_select" required>
                         <option value="">-- Pilih Sponsor --</option>
                         @foreach ($sponsor as $s)
                         <option value="{{$s->id}}">{{$s->nama}}</option>
@@ -128,6 +128,14 @@
                     </span>
                     @endif
                 </div>
+            </div>
+            <hr>
+            <div class="row mt-3 mb-3">
+                <label for="pembayaran" class="form-label">Pembayaran</label>
+                <select class="form-select" name="pembayaran" id="pembayaran">
+                      <option value="opname">Opname</option>
+                      <option value="titipan">Titipan</option>
+                  </select>
             </div>
             <hr>
             <div class="row mt-3 mb-3">
@@ -204,6 +212,7 @@
                     </span>
                     @endif
                 </div>
+
             </div>
             <div class="row">
                 <div class="col-md-6">
