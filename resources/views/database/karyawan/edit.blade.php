@@ -6,7 +6,7 @@
             <h1><u>Tambah Karyawan</u></h1>
         </div>
     </div>
-    <form action="{{route('karyawan.update', $karyawan->id)}}" method="post" enctype="multipart/form-data">
+    <form action="{{route('karyawan.update', $karyawan->id)}}" method="post" enctype="multipart/form-data" id="masukForm">
         @csrf
         @method('PATCH')
         <div class="row">
@@ -283,6 +283,24 @@
 <script>
       $(document).ready(function(){
             $('#gaji_pokok').maskMoney();
+            $('#tunjangan_jabatan').maskMoney();
+            $('#tunjangan_keluarga').maskMoney();
+        });
+
+        $('#masukForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
         });
 </script>
 @endpush

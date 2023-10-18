@@ -7,23 +7,7 @@
             <h1><u>Biodata Karyawan</u></h1>
         </div>
     </div>
-    @if (session('success'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-
-            <strong>{{session('success')}}</strong>
-        </div>
-    </div>
-    @endif
-    @if (session('error'))
-    <div class="row">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>{{session('error')}}</strong>
-        </div>
-    </div>
-    @endif
+    @include('swal')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
