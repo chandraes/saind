@@ -139,6 +139,7 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::get('transaksi/nota-tagihan/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'tagihan_export'])->name('transaksi.nota-tagihan.export');
 
+    Route::resource('bbm-storing', App\Http\Controllers\BbmStoringController::class);
 
     // billing route
     Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index');
