@@ -59,8 +59,8 @@ class VendorController extends Controller
         $data = $request->validate([
             'nama' => 'required|min:3',
             'nickname' => 'required|min:3',
-            'tipe' => 'required|in:perusahaan,perorangan',
-            'jabatan' => 'required|in:Direktur Utama,Direktur, Pemilik Unit',
+            'tipe' => 'required',
+            'jabatan' => 'required',
             'perusahaan' => 'nullable',
             'npwp' => 'required',
             'alamat' => 'required',

@@ -36,8 +36,8 @@
                                 width="30"> Database</a></td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img src="{{asset('images/stock.svg')}}" alt="dokumen"
                                     width="30"> Tambah Kategori</a></td>
-                                    <td><a href="#"><img src="{{asset('images/barang.svg')}}" alt="dokumen"
-                                        width="30"> Tambah Barang</a></td>
+                                    {{-- <td><a href="#"><img src="{{asset('images/barang.svg')}}" alt="dokumen"
+                                        width="30"> Tambah Barang</a></td> --}}
                 </tr>
             </table>
         </div>

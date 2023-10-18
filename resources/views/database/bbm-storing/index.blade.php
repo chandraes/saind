@@ -36,13 +36,13 @@
     </div>
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-4">
-            <table class="table">
+            <table class="table" id="data-table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen"
                                 width="30"> Database</a></td>
-                    <td><a href="#"><img src="{{asset('images/company.svg')}}" alt="add-rute"
+                    <td><a href="#"><img src="{{asset('images/bbm.svg')}}" alt="add-rute"
                                 width="30"> Tambah Storing</a>
                     </td>
 
@@ -92,30 +92,11 @@
         $("#success-alert").slideUp(500);
     });
 
+    // datatable
     $(document).ready(function() {
-        var data = {!! $data->pluck('id') !!}
-
         $('#data').DataTable();
 
-        for (let i = 0; i < data.length; i++) {
-            $('.edit-'+data[i]).select2(
-                {
-                    placeholder: "Pilih Rute",
-                    allowClear: true,
-                    theme: 'bootstrap-5',
-                    width: 'resolve'
-                }
-            );
-        }
-
-        $('#store-route').select2(
-            {
-                placeholder: "Pilih Rute",
-                allowClear: true,
-                theme: 'bootstrap-5',
-                width: 'resolve'
-            }
-        );
     } );
+
 </script>
 @endpush

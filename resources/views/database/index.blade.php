@@ -58,7 +58,7 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="{{route('kategori-barang.index')}}" class="text-decoration-none">
+            <a href="{{route('bbm-storing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/bbm.svg')}}" alt="" width="100">
                 <h2>BBM Storing</h2>
             </a>
