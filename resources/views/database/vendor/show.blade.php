@@ -83,6 +83,20 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
+                <h3 class="mb-3">Informasi PPN & PPh</h3>
+                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                    <label class="btn btn-success active">
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}}
+                        autocomplete="off" disabled> PPN
+                    </label>
+                    <label class="btn btn-success">
+                        <input type="checkbox" class="me-2" name="pph" id="pph" {{$vendor->pph == 1 ? 'checked' : ''}}
+                        autocomplete="off" disabled> PPh
+                    </label>
+                </div>
+            </div>
+            <hr>
+            <div class="row mt-3 mb-3">
                 <div class="col-md-4 mb-3">
                     <label for="no_hp" class="form-label">No. HP</label>
                     <input type="text" class="form-control {{$errors->has('no_hp') ? 'is-invalid' : ''}}" name="no_hp" id="no_hp" placeholder="" value="{{$vendor->no_hp}}" disabled>

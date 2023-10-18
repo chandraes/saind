@@ -27,7 +27,9 @@ class Vendor extends Model
         'bank_uj',
         'no_rekening_uj',
         'nama_rekening_uj',
-        'pembayaran'
+        'pembayaran',
+        'ppn',
+        'pph',
     ];
 
     public function user()

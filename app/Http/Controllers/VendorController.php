@@ -74,7 +74,22 @@ class VendorController extends Controller
             'bank_uj' => 'required',
             'no_rekening_uj' => 'required',
             'nama_rekening_uj' => 'required',
+            'ppn' => 'nullable',
+            'pph' => 'nullable',
         ]);
+
+        if (array_key_exists('ppn', $data)) {
+            $data['ppn'] = 1;
+        } else {
+            $data['ppn'] = 0;
+        }
+
+        if (array_key_exists('pph', $data)) {
+            $data['pph'] = 1;
+
+        }   else {
+            $data['pph'] = 0;
+        }
 
 
         // dd($data);
@@ -138,7 +153,22 @@ class VendorController extends Controller
             'bank_uj' => 'required',
             'no_rekening_uj' => 'required',
             'nama_rekening_uj' => 'required',
+            'ppn' => 'nullable',
+            'pph' => 'nullable',
         ]);
+
+        if (array_key_exists('ppn', $data)) {
+            $data['ppn'] = 1;
+        } else {
+            $data['ppn'] = 0;
+        }
+
+        if (array_key_exists('pph', $data)) {
+            $data['pph'] = 1;
+
+        }   else {
+            $data['pph'] = 0;
+        }
 
         $vendor = Vendor::findOrFail($id);
 

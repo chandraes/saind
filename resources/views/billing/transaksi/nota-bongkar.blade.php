@@ -6,24 +6,7 @@
             <h1><u>Nota Bongkar</u></h1>
         </div>
     </div>
-    @if (session('success'))
-    <script>
-        Swal.fire(
-                'Berhasil!',
-                '{{session('success')}}',
-                'success'
-            )
-    </script>
-    @endif
-    @if (session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: '{{session('error')}}',
-        })
-    </script>
-    @endif
+   @include('swal')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
