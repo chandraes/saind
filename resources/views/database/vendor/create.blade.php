@@ -229,7 +229,7 @@
         if (type === 'perusahaan') {
             // remove option #jabatan
             // add option "Direktur Utama" and "Direktur" to select with id="jabatan"
-            $('#jabatan').html('<option value="Direktur Utama">Direktur Utama</option><option value="Direktur">Direktur</option>');
+            $('#jabatan').html('<option selected value="Direktur Utama">Direktur Utama</option><option value="Direktur">Direktur</option>');
             // show #perusahaan-row
             $('#perusahaan-row').show();
             $('#perusahaan-row').removeAttr('hidden');
@@ -241,7 +241,7 @@
             $('#perusahaan').val('');
             $('#perusahaan-row').hide();
             // add option "Pemilik" to select with id="jabatan"
-            $('#jabatan').html('<option value="Pemilik Unit" selected>Pemilik Unit</option>');
+            $('#jabatan').html('<option selected value="Pemilik Unit" selected>Pemilik Unit</option>');
         } else {
 
         }
