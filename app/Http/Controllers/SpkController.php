@@ -107,9 +107,10 @@ class SpkController extends Controller
         $data = $spk;
         $template = TemplateSpk::orderBy('halaman', 'asc')->get();
 
-        $hk_mip = $data->vendor->vendor_bayar->where('pembayaran', $data->pembayaran)->where('customer_id', 1)->first()->harga_kesepakatan;
-        $hk_bp = $data->vendor->vendor_bayar->where('pembayaran', $data->pembayaran)->where('customer_id', 2)->first()->harga_kesepakatan;
-
+        // $hk_mip = $data->vendor->where('pembayaran', $data->pembayaran)->vendor_bayar->where('customer_id', 1)->first()->harga_kesepakatan;
+        // $hk_bp = $data->vendor->where('pembayaran', $data->pembayaran)->where('customer_id', 2)->first()->harga_kesepakatan;
+        $hk_mip = $data->vendor->vendor_bayar->where('customer_id', 1)->first()->harga_kesepakatan;
+        $hk_bp = $data->vendor->vendor_bayar->where('customer_id', 2)->first()->harga_kesepakatan;
         // $customer = Customer::all();
         // make $data->tanggal_indo from $data->tanggal
         $data->tanggal_indo = Carbon::parse($data->tanggal)->isoFormat('D MMMM Y');
