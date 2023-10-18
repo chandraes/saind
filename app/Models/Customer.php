@@ -32,6 +32,7 @@ class Customer extends Model
         'ppn',
         'pph',
         'tagihan_dari',
+        'harga_tagihan',
     ];
 
     public function createdBy()

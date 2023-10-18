@@ -43,26 +43,27 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
        $data = $request->validate([
-            'nama' => 'required|min:3',
-            'singkatan' => 'required',
-            'npwp' => 'required',
-            'alamat' => 'required|min:3',
-            'contact_person' => 'required|min:3',
-            'jabatan' => 'required',
-            'no_hp' => 'required',
-            'no_wa' => 'required',
-            'email' => 'required',
-            'harga_opname' => 'required|numeric',
-            'harga_titipan' => 'required|numeric',
-            'rute' => 'required',
-            'tanggal_muat' => 'nullable',
-            'nota_muat' => 'nullable',
-            'tonase' => 'nullable',
-            'tanggal_bongkar' => 'nullable',
-            'selisih' => 'nullable',
-            'ppn' => 'nullable',
-            'pph' => 'nullable',
-            'tagihan_dari' => 'required',
+                'nama' => 'required|min:3',
+                'singkatan' => 'required',
+                'npwp' => 'required',
+                'alamat' => 'required|min:3',
+                'contact_person' => 'required|min:3',
+                'jabatan' => 'required',
+                'no_hp' => 'required',
+                'no_wa' => 'required',
+                'email' => 'required',
+                'harga_opname' => 'nullable',
+                'harga_titipan' => 'nullable',
+                'rute' => 'required',
+                'tanggal_muat' => 'nullable',
+                'nota_muat' => 'nullable',
+                'tonase' => 'nullable',
+                'tanggal_bongkar' => 'nullable',
+                'selisih' => 'nullable',
+                'ppn' => 'nullable',
+                'pph' => 'nullable',
+                'tagihan_dari' => 'required',
+                'harga_tagihan' => 'required',
         ]);
 
         $data['created_by'] = auth()->id();
@@ -166,8 +167,8 @@ class CustomerController extends Controller
                     'no_hp' => 'required',
                     'no_wa' => 'required',
                     'email' => 'required',
-                    'harga_opname' => 'required|numeric',
-                    'harga_titipan' => 'required|numeric',
+                    'harga_opname' => 'nullable',
+                    'harga_titipan' => 'nullable',
                     'rute' => 'required',
                     'tanggal_muat' => 'nullable',
                     'nota_muat' => 'nullable',
@@ -177,6 +178,7 @@ class CustomerController extends Controller
                     'ppn' => 'nullable',
                     'pph' => 'nullable',
                     'tagihan_dari' => 'required',
+                    'harga_tagihan' => 'required',
                 ]);
 
         // dd($data);
@@ -195,7 +197,7 @@ class CustomerController extends Controller
         }   else {
             $data['pph'] = 0;
         }
-        
+
         if (array_key_exists('tanggal_muat', $data)) {
             $data['tanggal_muat'] = 1;
         } else {
