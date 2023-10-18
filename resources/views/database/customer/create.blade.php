@@ -205,7 +205,7 @@
             </div>
         </div>
         <div class="d-grid gap-3 mt-3">
-            <button type="submit" class="btn btn-primary">Simpan</button>
+            <button type="submit" class="btn btn-primary">Simpan & Lanjutkan</button>
             <a type="button" class="btn btn-secondary" href="{{route('customer.index')}}">Batal</a>
         </div>
     </form>

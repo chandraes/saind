@@ -49,7 +49,7 @@
             @endforeach
             <div class="row">
                 <div class="col-md-6">
-                    <button type="submit" class="btn btn-block btn-primary">Simpan & Lanjutkan</button>
+                    <button type="submit" class="btn btn-block btn-primary">Simpan</button>
                     <a href="{{ route('vendor.index') }}" class="btn btn-block btn-danger">Batal</a>
                 </div>
             </div>
