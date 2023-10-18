@@ -99,6 +99,32 @@
             </div>
         </div>
         <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
+                <img src="{{asset('images/barang.svg')}}" alt="" width="100">
+                <h2>FORM BARANG</h2>
+            </a>
+            <div class="modal fade" id="formBarang" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="fllTitle">Form Barang</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select class="form-select form-select-lg" name="" id="formBarangSelect">
+                                <option value="masuk">Beli</option>
+                                <option value="keluar">Jual</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeFormBarang()">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formLain">
                 <img src="{{asset('images/lain.svg')}}" alt="" width="100">
                 <h2>FORM LAIN-LAIN</h2>
@@ -176,6 +202,16 @@
                 window.location.href = "{{route('form-lain-lain.masuk')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('form-lain-lain.keluar')}}";
+            }
+        }
+
+        function tipeFormBarang()
+        {
+            let val = document.getElementById('formBarangSelect').value;
+            if (val === 'masuk') {
+                window.location.href = "#";
+            } else if (val === 'keluar') {
+                window.location.href = "#";
             }
         }
 </script>
