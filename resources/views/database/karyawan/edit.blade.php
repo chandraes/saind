@@ -50,6 +50,52 @@
             </div>
         </div>
         <hr>
+        <h3>Gaji & Tunjangan</h3>
+        <div class="row mt-3">
+            <div class="col-md-4 mb-3">
+                <label for="gaji_pokok" class="form-label">Gaji Pokok</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Rp</span>
+                    <input type="text" class="form-control @if ($errors->has('gaji_pokok'))
+                    is-invalid
+                @endif" name="gaji_pokok" id="gaji_pokok" required data-thousands="." value="{{$karyawan->gaji_pokok}}">
+                </div>
+                @if ($errors->has('gaji_pokok'))
+                <div class="invalid-feedback">
+                    {{$errors->first('gaji_pokok')}}
+                </div>
+                @endif
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="tunjangan_jabatan" class="form-label">Tunjangan Jabatan</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Rp</span>
+                    <input type="text" class="form-control @if ($errors->has('tunjangan_jabatan'))
+                    is-invalid
+                @endif" name="tunjangan_jabatan" id="tunjangan_jabatan" required data-thousands="." value="{{$karyawan->tunjangan_jabatan}}">
+                </div>
+                @if ($errors->has('tunjangan_jabatan'))
+                <div class="invalid-feedback">
+                    {{$errors->first('tunjangan_jabatan')}}
+                </div>
+                @endif
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="tunjangan_keluarga" class="form-label">Tunjangan Keluarga</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Rp</span>
+                    <input type="text" class="form-control @if ($errors->has('tunjangan_keluarga'))
+                    is-invalid
+                @endif" name="tunjangan_keluarga" id="tunjangan_keluarga" required data-thousands="." value="{{$karyawan->tunjangan_keluarga}}">
+                </div>
+                @if ($errors->has('tunjangan_keluarga'))
+                <div class="invalid-feedback">
+                    {{$errors->first('tunjangan_keluarga')}}
+                </div>
+                @endif
+            </div>
+        </div>
+        <hr>
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="nik" class="form-label">NIK</label>
@@ -232,3 +278,11 @@
     </form>
 </div>
 @endsection
+@push('js')
+<script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
+<script>
+      $(document).ready(function(){
+            $('#gaji_pokok').maskMoney();
+        });
+</script>
+@endpush

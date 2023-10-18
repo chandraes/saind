@@ -45,6 +45,9 @@ class KaryawanController extends Controller
     {
         $data = $request->validate([
             'nama' => 'required',
+            'gaji_pokok' => 'required',
+            'tunjangan_jabatan' => 'required',
+            'tunjangan_keluarga' => 'required',
             'nickname' => 'required',
             'jabatan_id' => 'required',
             'nik' => 'required',
@@ -67,6 +70,10 @@ class KaryawanController extends Controller
 
         $data['bank'] = "BCA";
 
+        $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
+        $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
+        $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
+        
         $data['created_by'] = auth()->user()->id;
 
         DB::transaction(function () use ($data, $request) {
@@ -95,7 +102,7 @@ class KaryawanController extends Controller
         $karyawan->mulai_bekerja = Carbon::parse($karyawan->mulai_bekerja)->locale('id')->isoFormat('D MMMM YYYY');
         $karyawan->tanggal_lahir = Carbon::parse($karyawan->tanggal_lahir)->locale('id')->isoFormat('D MMMM YYYY');
 
-        
+
 
         $pdf = PDF::loadview('database.karyawan.show', [
             'karyawan' => $karyawan,
@@ -126,6 +133,9 @@ class KaryawanController extends Controller
             'nama' => 'required',
             'nickname' => 'required',
             'jabatan_id' => 'required',
+            'gaji_pokok' => 'required',
+            'tunjangan_jabatan' => 'required',
+            'tunjangan_keluarga' => 'required',
             'nik' => 'required',
             'npwp' => 'required',
             'bpjs_tk' => 'required',
@@ -147,6 +157,10 @@ class KaryawanController extends Controller
         $data['bank'] = "BCA";
 
         $data['updated_by'] = auth()->user()->id;
+
+        $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
+        $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
+        $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
 
         DB::transaction(function () use ($data, $request, $karyawan) {
 
