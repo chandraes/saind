@@ -7,15 +7,7 @@
             <h1><u>Vendor</u></h1>
         </div>
     </div>
-    @if (session('success'))
-    <script>
-        Swal.fire(
-                'Berhasil!',
-                '{{session('success')}}',
-                'success'
-            )
-    </script>
-    @endif
+   @include('swal')
     <div class="row float-end">
         <div class="col-md-12">
             <strong>
