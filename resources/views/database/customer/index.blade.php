@@ -59,8 +59,7 @@
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Nama Customer</th>
                 <th class="text-center align-middle">Contact Person</th>
-                <th class="text-center align-middle">Harga OPNAME</th>
-                <th class="text-center align-middle">Harga Titipan</th>
+                <th class="text-center align-middle">Harga Tagihan</th>
                 <th class="text-center align-middle">Rute</th>
                 <th class="text-center align-middle">Dokumen</th>
                 <th class="text-center align-middle">Dibuat Oleh</th>
@@ -73,8 +72,7 @@
                 <td>{{$loop->iteration}}</td>
                 <td><a href="{{route('customer.show', $d->id)}}"><strong>{{$d->nama}} ({{$d->singkatan}})</strong></a></td>
                 <td>{{$d->contact_person}}</td>
-                <td>Rp. {{number_format($d->harga_opname, 0, ',', '.')}}</td>
-                <td>Rp. {{number_format($d->harga_titipan, 0, ',', '.')}}</td>
+                <td>Rp. {{number_format($d->harga_tagihan, 0, ',', '.')}}</td>
                 <td>
                     @foreach ($d->rute as $r)
                     <h5><span class="badge bg-primary">{{$r->nama}}</span></h5>
