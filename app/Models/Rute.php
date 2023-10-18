@@ -32,4 +32,6 @@ class Rute extends Model
     {
         return $this->belongsToMany(Customer::class, 'customer_rute', 'rute_id', 'customer_id');
     }
+
+    
 }

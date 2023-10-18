@@ -31,4 +31,10 @@ class VendorBayar extends Model
         return $this->belongsTo(Rute::class);
     }
 
+    // distinc customer
+    public function scopeCustomer($query)
+    {
+        return $query->select('customer_id')->distinct();
+    }
+
 }

@@ -7,29 +7,31 @@
             </div>
             <div class="modal-body">
                   @if ($d->vendor_bayar->count() > 0)
-                  @foreach ($d->vendor_bayar as $i)
 
-                    {{$i->customer->nama}}
-                    <table class="table table-hover table-bordered">
+                    {{-- <h3>{{$i->customer->nama}}</h3> --}}
+                    <table class="table table-bordered table-hover">
                         <thead class="table-primary">
                             <tr>
+                                <th class="text-center align-middle">Customer</th>
                                 <th class="text-center align-middle">Rute</th>
-                                <th class="text-center align-middle">Kesepakatan Opname</th>
-                                <th class="text-center align-middle">Kesepakatan Titipan</th>
+                                <th class="text-center align-middle">Kesepakan OPNAME</th>
+                                <th class="text-center align-middle">Kesepakan Titipan</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($i as $a)
+                            @foreach ($d->vendor_bayar as $i)
                             <tr>
-                                <td class="text-center align-middle">{{$a}}</td>
-                                <td class="text-center align-middle"></td>
-                                <td class="text-center align-middle"></td>
+                                <td class="text-center align-middle">{{$i->customer->nama}}</td>
+                                <td class="text-center align-middle">{{$i->rute != null ? $i->rute->nama : '' }}</td>
+                                <td class="text-center align-middle">{{number_format($i->hk_opname, 0, ',','.')}}</td>
+                                <td class="text-center align-middle">{{number_format($i->hk_titipan, 0, ',','.')}}</td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
-                  @endforeach
-                  <table class="table table-bordered table-hover">
+
+
+                  {{-- <table class="table table-bordered table-hover">
                       <thead class="text-center align-middle">
                           <th class="text-center align-middle">No</th>
                           <th class="text-center align-middle">Customer</th>
@@ -60,8 +62,8 @@
                               </td>
                           </tr>
                           @endforeach
-                      </tbody>
-              </table>
+                      </tbody> --}}
+              {{-- </table> --}}
                   @endif
             </div>
             <div class="modal-footer">
