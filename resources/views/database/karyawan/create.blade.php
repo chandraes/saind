@@ -6,7 +6,7 @@
             <h1><u>Tambah Karyawan</u></h1>
         </div>
     </div>
-    <form action="{{route('karyawan.store')}}" method="post" enctype="multipart/form-data">
+    <form action="{{route('karyawan.store')}}" method="post" enctype="multipart/form-data" id="masukForm">
         @csrf
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -277,3 +277,29 @@
     </form>
 </div>
 @endsection
+@push('js')
+<script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
+    <script>
+           $(document).ready(function(){
+            $('#gaji_pokok').maskMoney();
+            $('#tunjangan_jabatan').maskMoney();
+            $('#tunjangan_keluarga').maskMoney();
+        });
+
+        $('#masukForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
+        });
+    </script>
+@endpush
