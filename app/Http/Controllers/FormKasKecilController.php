@@ -138,4 +138,14 @@ class FormKasKecilController extends Controller
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
     }
+
+    public function void()
+    {
+        $month = date('m');
+        $year = date('Y');
+        $data = KasKecil::where('jenis_transaksi_id', 2)->whereMonth('tanggal', $month)->whereYear('tanggal', $year)->get();
+        return view('billing.kas-kecil.void', [
+            'data' => $data,
+        ]);
+    }
 }

@@ -60,8 +60,8 @@
                         <div class="modal-body">
                             <div class="mb-3 mt-3">
                                 <select class="form-select form-select-lg" name="" id="tipeKasKecil">
-                                    <option value="masuk">Permintaan Dana</option>
-                                    <option value="keluar">Pengeluaran Dana</option>
+                                    <option value="masuk">Permintaan Dana Kas Kecil</option>
+                                    <option value="keluar">Pengeluaran Dana Kas Kecil</option>
                                 </select>
                             </div>
                         </div>
@@ -85,8 +85,8 @@
                         <div class="modal-body">
                             <div class="mb-3 mt-3">
                                 <select class="form-select form-select-lg" name="" id="tipeKasUangJalan">
-                                    <option value="masuk">Permintaan</option>
-                                    <option value="keluar">Pengeluaran</option>
+                                    <option value="masuk">Permintaan Uang Jalan</option>
+                                    <option value="keluar">Pengeluaran Uang Jalan</option>
                                 </select>
                             </div>
                         </div>

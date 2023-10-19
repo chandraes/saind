@@ -127,6 +127,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('kas-kecil/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk_store'])->name('kas-kecil.masuk.store');
     Route::get('kas-kecil/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar'])->name('kas-kecil.keluar');
     Route::post('kas-kecil/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar_store'])->name('kas-kecil.keluar.store');
+    // Route::get('kas-kecil/void')
 
     Route::get('kas-uang-jalan/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk'])->name('kas-uang-jalan.masuk');
     Route::post('kas-uang-jalan/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk_store'])->name('kas-uang-jalan.masuk.store');
