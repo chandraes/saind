@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Pembayaran Vendor</u></h1>
+            <h1><u>Pembayaran ke Vendor</u></h1>
         </div>
     </div>
     @if (session('error'))
@@ -77,7 +77,7 @@
                                     <input type="number" class="form-control" name="hk_opname[]"
                                         id="hk_opname" required aria-describedby="helpId" placeholder="" @if (auth()->user()->role !== 'admin')
                                         readonly
-                                    @endif >
+                                    @endif>
                                 </div>
                             </td>
                             <td class="text-center align-middle">

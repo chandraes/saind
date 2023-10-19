@@ -79,11 +79,10 @@
                                 <select class="form-select" name="" id="">
                                     <option selected>Select one</option>
                                     @foreach ($vendor as $v)
-                                    <option value="{{$v->id}}">{{$v->nama}} </option>
+                                    <option value="{{$v->id}}">{{$v->nama}} ()</option>
                                     @endforeach
                                 </select>
                             </div>
-
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -92,13 +91,6 @@
                     </div>
                 </div>
             </div>
-
-
-            <!-- Optional: Place to the bottom of scripts -->
-            <script>
-                const myModal = new bootstrap.Modal(document.getElementById('vendorBayar'), options)
-
-            </script>
         </div>
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">

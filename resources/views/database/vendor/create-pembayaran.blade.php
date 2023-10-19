@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Pembayaran Vendor</u></h1>
+            <h1><u>Pembayaran ke Vendor</u></h1>
         </div>
     </div>
     @if (session('error'))
