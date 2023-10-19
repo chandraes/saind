@@ -34,7 +34,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('harga_tagihan'))
                     is-invalid
-                @endif" name="harga_tagihan[]" id="harga_tagihan-{{$i->id}}" required data-thousands="." >
+                @endif" name="harga_tagihan[]" id="harga_tagihan-{{$i->id}}" required data-thousands="." value="{{number_format($data->customer_tagihan->where('rute_id', $i->id)->first()->harga_tagihan, 0, ',','.')}}">
                   </div>
                 @if ($errors->has('harga_tagihan'))
                 <div class="invalid-feedback">
