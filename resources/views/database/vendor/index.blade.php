@@ -42,7 +42,7 @@
                 <th class="text-center align-middle">Nama CP</th>
                 <th class="text-center align-middle">Nama Perusahaan</th>
                 <th class="text-center align-middle">Nickname</th>
-                <th class="text-center align-middle">Pembayaran</th>
+                {{-- <th class="text-center align-middle">Pembayaran</th> --}}
                 <th class="text-center align-middle">Uang Jalan</th>
                 <th class="text-center align-middle">Status</th>
                 <th class="text-center align-middle">Action</th>
@@ -55,14 +55,14 @@
                 <td class="align-middle"><a href="{{route('vendor.show', $d->id)}}"><strong>{{$d->nama}}</strong></a></td>
                 <td class="align-middle">{{$d->perusahaan}}</td>
                 <td class="align-middle">{{$d->nickname}}</td>
-                <td class="align-middle">
+                {{-- <td class="align-middle">
                     <div class="text-center">
                         <button type="button" class="btn btn-primary text-center" data-bs-toggle="modal" data-bs-target="#modal-pembayaran{{$d->id}}">
                             Lihat Pembayaran
                           </button>
                     </div>
-                    @include('database.vendor.show-pembayaran')
-                </td>
+                @include('database.vendor.show-pembayaran')
+                </td> --}}
                 <td class="text-center align-middle">
                      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-uang{{$d->id}}">
                         Lihat Uang Jalan

@@ -12,6 +12,8 @@ class CustomerTagihan extends Model
         'customer_id',
         'rute_id',
         'harga_tagihan',
+        'opname',
+        'titipan',
     ];
 
     public function customer()

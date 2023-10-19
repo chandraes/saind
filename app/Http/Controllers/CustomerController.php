@@ -134,6 +134,8 @@ class CustomerController extends Controller
         $data = $request->validate([
             'rute_id' => 'required',
             'harga_tagihan' => 'required',
+            'opname' => 'required',
+            'titipan' => 'required',
         ]);
 
 
@@ -141,6 +143,8 @@ class CustomerController extends Controller
             $customer->customer_tagihan()->create([
                 'rute_id' => $data['rute_id'][$i],
                 'harga_tagihan' => str_replace('.', '', $data['harga_tagihan'][$i]),
+                'opname' => str_replace('.', '', $data['opname'][$i]),
+                'titipan' => str_replace('.', '', $data['titipan'][$i]),
             ]);
         }
 
@@ -159,6 +163,8 @@ class CustomerController extends Controller
         $data = $request->validate([
             'rute_id' => 'required',
             'harga_tagihan' => 'required',
+            'opname' => 'required',
+            'titipan' => 'required',
         ]);
 
         $customer->customer_tagihan()->delete();
@@ -167,6 +173,8 @@ class CustomerController extends Controller
             $customer->customer_tagihan()->create([
                 'rute_id' => $data['rute_id'][$i],
                 'harga_tagihan' => str_replace('.', '', $data['harga_tagihan'][$i]),
+                'opname' => str_replace('.', '', $data['opname'][$i]),
+                'titipan' => str_replace('.', '', $data['titipan'][$i]),
             ]);
         }
 
