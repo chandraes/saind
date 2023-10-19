@@ -140,12 +140,12 @@ class FormKasBesarController extends Controller
         }
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
-        $pesan = "==========================\n".
-                "*Form Withdrawal Dana*\n".
-                 "==========================\n\n".
-                 "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
-                 "Ditransfer ke rek:\n\n".
-                 "Bank    : ".$data['bank']."\n".
+        $pesan =    "==========================\n".
+                    "*Form Pengembalian Deposit*\n".
+                    "==========================\n\n".
+                    "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank    : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
                     "==========================\n\n".
