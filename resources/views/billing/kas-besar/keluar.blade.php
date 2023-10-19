@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Deposit Keluar</u></h1>
+            <h1><u>Pengembalian Deposit</u></h1>
         </div>
     </div>
     @if (session('error'))
@@ -29,7 +29,7 @@
                 <label for="uraian" class="form-label">Uraian</label>
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid
-                @endif" name="uraian" id="uraian" required value="Cicilan" disabled>
+                @endif" name="uraian" id="uraian" required value="Withdraw" disabled>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="nominal_transaksi" class="form-label">Nominal</label>

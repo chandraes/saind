@@ -107,7 +107,7 @@ class FormKasBesarController extends Controller
             'nominal_transaksi' => 'required',
         ]);
 
-        $data['uraian'] = 'Cicilan';
+        $data['uraian'] = 'Withdraw';
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
@@ -143,7 +143,7 @@ class FormKasBesarController extends Controller
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
         $group = GroupWa::where('untuk', 'kas-besar')->first();
-        
+
         $send = new StarSender($group->nama_group, 'Ada transaksi keluar sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
         $res = $send->sendGroup();
 
