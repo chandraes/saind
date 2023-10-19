@@ -62,6 +62,7 @@
                                 <select class="form-select form-select-lg" name="" id="tipeKasKecil">
                                     <option value="masuk">Permintaan Dana Kas Kecil</option>
                                     <option value="keluar">Pengeluaran Dana Kas Kecil</option>
+                                    <option value="void">Void Dana Kas Kecil</option>
                                 </select>
                             </div>
                         </div>
@@ -182,6 +183,8 @@
                 window.location.href = "{{route('kas-kecil.masuk')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('kas-kecil.keluar')}}";
+            } else if (val === 'void') {
+                window.location.href = "{{route('kas-kecil.void')}}";
             }
         }
 

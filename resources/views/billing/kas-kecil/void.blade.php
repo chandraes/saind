@@ -20,6 +20,17 @@
         @csrf
         <div class="row">
             <div class="col-4 mb-3">
+                <div class="mb-3">
+                    <label for="pengeluaran_id" class="form-label">Pengeluaran</label>
+                    <select class="form-select" name="pengeluaran_id" id="pengeluaran_id" onchange="selectPengeluaran()">
+                        <option> -- Pilih Pengeluaran Kas Kecil --</option>
+                        @foreach ($data as $d)
+                            <option value="{{$d->id}}">{{$d->uraian}}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="col-4 mb-3">
                 <label for="uraian" class="form-label">Uraian</label>
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid

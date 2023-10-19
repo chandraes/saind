@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Kas Uang Jalan Keluar</u></h1>
+            <h1><u>Kas Uang Jalan (Keluar)</u></h1>
         </div>
     </div>
     @if (session('error'))
