@@ -173,7 +173,7 @@
         </table>
     </div>
     <span class="text-pdf"><strong>* Untuk sistem titipan tidak perlu mengisi poin 12 (mekanisme uang jalan)</strong></span><br>
-    <span class="text-pdf"><strong>* Sponsor :</strong></span>
+    <span class="text-pdf"><strong>* Sponsor : {{$data->sponsor->nama}}</strong></span>
     <br><br><br>
     <div class="row text-pdf">
         <div class="row-pdf">
