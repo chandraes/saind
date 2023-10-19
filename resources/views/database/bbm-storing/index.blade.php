@@ -40,8 +40,8 @@
             <tr>
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">KM</th>
-                <th class="text-center align-middle">Vendor</th>
-                <th class="text-center align-middle">Mekanik</th>
+                <th class="text-center align-middle">Tagihan ke Vendor</th>
+                <th class="text-center align-middle">Bayar ke Mekanik</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
