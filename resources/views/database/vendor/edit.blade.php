@@ -135,6 +135,14 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
+                <label for="pembayaran" class="form-label">Pembayaran</label>
+                <select class="form-select" name="pembayaran" id="pembayaran">
+                      <option value="opname" {{$vendor->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
+                      <option value="titipan" {{$vendor->pembayaran == 'titipan' ? 'selected' : ''}}>Titipan</option>
+                  </select>
+            </div>
+            <hr>
+            <div class="row mt-3 mb-3">
                 <h3 class="mb-3">Rekening Vendor</h3>
                 <div class="col-md-6 mb-3">
                     <label for="no_rekening" class="form-label">No. Rekening</label>
