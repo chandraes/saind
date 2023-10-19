@@ -80,7 +80,7 @@ class FormKasBesarController extends Controller
                  "D".sprintf("%02d",$data['nomor_kode_deposit'])."\n".
                  "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
                  "Ditransfer ke rek:\n\n".
-                "Bank    : ".$data['bank']."\n".
+                "Bank     : ".$data['bank']."\n".
                 "Nama    : ".$data['transfer_ke']."\n".
                 "No. Rek : ".$data['no_rekening']."\n\n".
                 "==========================\n\n".
@@ -145,7 +145,7 @@ class FormKasBesarController extends Controller
                     "==========================\n\n".
                     "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank    : ".$data['bank']."\n".
+                    "Bank     : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
                     "==========================\n\n".

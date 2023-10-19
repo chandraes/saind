@@ -60,8 +60,8 @@
                         <div class="modal-body">
                             <div class="mb-3 mt-3">
                                 <select class="form-select form-select-lg" name="" id="tipeKasKecil">
-                                    <option value="masuk">Permintaan</option>
-                                    <option value="keluar">Pengeluaran</option>
+                                    <option value="masuk">Permintaan Dana</option>
+                                    <option value="keluar">Pengeluaran Dana</option>
                                 </select>
                             </div>
                         </div>
