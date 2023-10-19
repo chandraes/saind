@@ -147,8 +147,8 @@ class FormKasBesarController extends Controller
                  "Bank    : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
-                    "==========================\n".
-                    "Terima kasih\n";
+                    "==========================\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
