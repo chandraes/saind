@@ -74,8 +74,17 @@ class FormKasBesarController extends Controller
         }
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
-
-        $send = new StarSender($group->nama_group, 'Ada transaksi masuk sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
+        $pesan = "*Form Permintaan Dana*\n".
+                 "==========================\n\n".
+                 "Nomor Kode Kas Besar : D".sprintf("%02d",$data['nomor_kode_deposit'])."\n".
+                 "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
+                 "Ditransfer ke rek:\n".
+                    "Nama : ".$data['transfer_ke']."\n".
+                    "Bank : ".$data['bank']."\n".
+                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Terima kasih\n";
+        $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
@@ -144,7 +153,16 @@ class FormKasBesarController extends Controller
         }
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
-        $send = new StarSender($group->nama_group, 'Ada transaksi keluar sebesar Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.'));
+        $pesan = "*Form Withdrawal Dana*\n".
+                 "==========================\n\n".
+                 "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
+                 "Ditransfer ke rek:\n".
+                    "Nama : ".$data['transfer_ke']."\n".
+                    "Bank : ".$data['bank']."\n".
+                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Terima kasih\n";
+        $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
