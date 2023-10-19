@@ -143,6 +143,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('transaksi/nota-tagihan/{customer}', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan'])->name('transaksi.nota-tagihan');
 
     Route::get('transaksi/nota-tagihan/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'tagihan_export'])->name('transaksi.nota-tagihan.export');
+    Route::get('transaksi/nota-bayar/{vendor}', [App\Http\Controllers\TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
 
     Route::resource('bbm-storing', App\Http\Controllers\BbmStoringController::class);
 

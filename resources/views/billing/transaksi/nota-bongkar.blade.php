@@ -101,17 +101,17 @@
                                             <div class="col-4 mb-3">
                                                 <label for="nota_muat" class="form-label">Nota Muat</label>
                                                 <input type="text" class="form-control" name="nota_muat" id="nota_muat"
-                                                    placeholder="" value="{{$d->nota_muat}}" required>
+                                                    placeholder="" value="{{$d->nota_muat}}" readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Timbangan Muat</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{$d->tonase}}" required>
+                                                    placeholder="" value="{{$d->tonase}}" readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Tanggal Muat</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{$d->tanggal_muat}}" required>
+                                                    placeholder="" value="{{$d->tanggal_muat}}" readonly>
                                             </div>
                                         </div>
                                         <hr>
