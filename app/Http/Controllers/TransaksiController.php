@@ -79,9 +79,9 @@ class TransaksiController extends Controller
         }
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
-            $data['nominal_bayar'] = $transaksi->timbangan_bongkar * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_opname;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_opname;
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
-            $data['nominal_bayar'] = $transaksi->timbangan_bongkar * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_titipan;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_titipan;
         }
 
         $transaksi->update($data);
