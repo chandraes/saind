@@ -15,9 +15,11 @@ class TransaksiController extends Controller
     {
         $data = Transaksi::all();
         $customer = Customer::all();
+        $vendor = Vendor::all();
         return view('billing.transaksi.index', [
             'data' => $data,
             'customer' => $customer,
+            'vendor' => $vendor,
         ]);
     }
 
@@ -104,7 +106,7 @@ class TransaksiController extends Controller
 
     public function nota_bayar()
     {
-        
+
     }
 
     public function tagihan_export(Customer $customer)

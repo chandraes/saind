@@ -84,32 +84,6 @@
     <br>
     <hr>
     <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label for="harga_opname" class="form-label">Harga OPNAME</label>
-                <div class="input-group">
-                    <span class="input-group-text">Rp.</span>
-                    <input type="number" class="form-control @if ($errors->has('harga_opname')) is-invalid @endif"
-                        name="harga_opname" id="harga_opname" aria-describedby="helpId" placeholder=""
-                        value="{{$data->harga_opname}}" disabled>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label for="harga_titipan" class="form-label">Harga Titipan</label>
-                <div class="input-group">
-                    <span class="input-group-text">Rp.</span>
-                    <input type="number" class="form-control  @if ($errors->has('harga_titipan')) is-invalid @endif"
-                        name="harga_titipan" id="harga_titipan" aria-describedby="helpId" placeholder=""
-                        value="{{$data->harga_titipan}}" disabled>
-                </div>
-            </div>
-        </div>
-    </div>
-    <br>
-    <hr>
-    <div class="row">
         <div class="col-md-12">
             <div class="mb-3">
                 <label for="rute" class="form-label">Rute</label>

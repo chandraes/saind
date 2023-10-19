@@ -78,8 +78,8 @@
                             <div class="mb-3">
                                 <select class="form-select" name="" id="">
                                     <option selected>Select one</option>
-                                    @foreach ($data as $v)
-                                    <option value="{{$v->kas_uang_jalan->vendor_id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
+                                    @foreach ($vendor as $v)
+                                    <option value="{{$v->id}}">{{$v->nama}} </option>
                                     @endforeach
                                 </select>
                             </div>
