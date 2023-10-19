@@ -74,16 +74,17 @@ class FormKasBesarController extends Controller
         }
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
-        $pesan = "*Form Permintaan Dana*\n".
+        $pesan ="==========================\n".
+                "*Form Permintaan Deposit*\n".
                  "==========================\n\n".
-                 "Nomor Kode Kas Besar : D".sprintf("%02d",$data['nomor_kode_deposit'])."\n".
+                 "D".sprintf("%02d",$data['nomor_kode_deposit'])."\n".
                  "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
-                 "Ditransfer ke rek:\n".
-                    "Nama : ".$data['transfer_ke']."\n".
-                    "Bank : ".$data['bank']."\n".
-                    "No. Rek : ".$data['no_rekening']."\n\n".
-                    "==========================\n".
-                    "Terima kasih\n";
+                 "Ditransfer ke rek:\n\n".
+                "Bank    : ".$data['bank']."\n".
+                "Nama    : ".$data['transfer_ke']."\n".
+                "No. Rek : ".$data['no_rekening']."\n\n".
+                "==========================\n\n".
+                "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
@@ -142,9 +143,9 @@ class FormKasBesarController extends Controller
         $pesan = "*Form Withdrawal Dana*\n".
                  "==========================\n\n".
                  "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
-                 "Ditransfer ke rek:\n".
-                    "Nama : ".$data['transfer_ke']."\n".
-                    "Bank : ".$data['bank']."\n".
+                 "Ditransfer ke rek:\n\n".
+                 "Bank    : ".$data['bank']."\n".
+                    "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
                     "==========================\n".
                     "Terima kasih\n";
