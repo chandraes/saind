@@ -21,7 +21,7 @@
                             </div>
                         </div>
                         <div class="col-4">
-                            <label for="biaya_vendor" class="form-label">Biaya Vendor</label>
+                            <label for="biaya_vendor" class="form-label">Tagihan ke Vendor</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control @if ($errors->has('biaya_vendor'))
@@ -35,7 +35,7 @@
                             @endif
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="biaya_mekanik" class="form-label">Biaya Mekanik</label>
+                            <label for="biaya_mekanik" class="form-label">Bayar Mekanik</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control @if ($errors->has('biaya_mekanik'))
