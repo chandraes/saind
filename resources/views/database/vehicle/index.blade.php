@@ -34,7 +34,7 @@
             <th class="text-center align-middle">No</th>
             <th class="text-center align-middle">Nomor Lambung</th>
             <th class="text-center align-middle">Vendor</th>
-            <th class="text-center align-middle">Tipe</th>
+            <th class="text-center align-middle">Tipe & Index</th>
             <th class="text-center align-middle">Tahun</th>
             <th class="text-center align-middle">Status</th>
             <th class="text-center align-middle">Action</th>

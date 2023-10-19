@@ -41,10 +41,10 @@
                         </div>
                         <div class="col-6 mb-3">
                             <label for="no_mesin" class="form-label">Nomor Mesin</label>
-                            <input type="text" class="form-control" name="no_mesin" id="no_mesin" readonly disabled value="{{$d->tipe}}">
+                            <input type="text" class="form-control" name="no_mesin" id="no_mesin" readonly disabled value="{{$d->no_mesin}}">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="tipe" class="form-label">Tipe</label>
+                            <label for="tipe" class="form-label">Tipe & Index</label>
                             <input type="text" class="form-control" name="tipe" id="tipe" readonly disabled value="{{$d->tipe}}">
                         </div>
                         <div class="col-6 mb-3">
