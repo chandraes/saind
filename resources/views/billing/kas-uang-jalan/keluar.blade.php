@@ -145,20 +145,20 @@
                     success: function (data) {
                         $('#vendor_id').val(data.nama);
                         $('#p_vendor').val(data.id);
-                        if (data.bank_uj == null || data.no_rekening_uj == null || data.nama_rekening_uj == null) {
+                        if (data.transfer_ke == null || data.bank == null || data.no_rekening == null) {
                             // sweetalert
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Oops...',
-                                text: 'Rekening Uang Jalan Vendor ini belum diisi, silahkan isi terlebih dahulu di Database Vendor!!',
+                                text: 'Rekening Uang Jalan Vehicle ini belum diisi, silahkan isi terlebih dahulu di Database Vehicle!!',
                             });
                             $('#transfer_ke').val('');
                             $('#bank').val('');
                             $('#no_rekening').val('');
                         } else {
-                            $('#transfer_ke').val(data.nama_rekening_uj);
-                            $('#bank').val(data.bank_uj);
-                            $('#no_rekening').val(data.no_rekening_uj);
+                            $('#transfer_ke').val(data.transfer_ke);
+                            $('#bank').val(data.bank);
+                            $('#no_rekening').val(data.no_rekening);
                         }
                     }
                 });
