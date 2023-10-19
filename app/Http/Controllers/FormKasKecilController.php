@@ -72,10 +72,16 @@ class FormKasKecilController extends Controller
         });
         $group = GroupWa::where('untuk', 'kas-kecil')->first();
         $pesan =    "==========================\n".
-                    "*Form Kas Kecil*\n".
+                    "*Form Permintaan Kas Kecil*\n".
                     "==========================\n\n".
-                    "Nomor Kode Kas Kecil : KK".sprintf("%02d",$data['nomor_kode_kas_kecil'])."\n".
-                    "Permintaan Dana Sebesar Rp. 1.000.000,-\n";
+                    "KK".sprintf("%02d",$data['nomor_kode_kas_kecil'])."\n".
+                    "Nilai : Rp. 1.000.000,-\n";
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$data['bank']."\n".
+                    "Nama    : ".$data['transfer_ke']."\n".
+                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "==========================\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
