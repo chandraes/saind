@@ -92,19 +92,11 @@ class FormKasBesarController extends Controller
 
     public function keluar()
     {
-        $nomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
 
-        if($nomor == null){
-            $nomor = 1;
-        }else{
-            $nomor = $nomor->nomor_kode_deposit + 1;
-        }
 
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
-        return view('billing.kas-besar.keluar', [
-            'nomor' => $nomor,
-        ]);
+        return view('billing.kas-besar.keluar');
     }
 
     public function keluar_store(Request $request)
@@ -122,12 +114,6 @@ class FormKasBesarController extends Controller
         $data['tanggal'] = date('Y-m-d');
         $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
 
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
-        if($lastNomor == null){
-            $data['nomor_kode_deposit'] = 1;
-        }else{
-            $data['nomor_kode_deposit'] = $lastNomor->nomor_kode_deposit + 1;
-        }
 
         $last = KasBesar::latest()->first();
         if($last == null){

@@ -18,14 +18,7 @@
     <form action="{{route('kas-besar.keluar.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
-            <div class="col-md-2 mb-3">
-                <label for="nik" class="form-label">Kode</label>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1">D</span>
-                    <input type="text" class="form-control" name="nomor_kode_deposit" value="{{sprintf("%02d", $nomor)}}" disabled>
-                  </div>
-            </div>
-            <div class="col-6 mb-3">
+            <div class="col-4 mb-3">
                 <label for="uraian" class="form-label">Uraian</label>
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid
