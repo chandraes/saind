@@ -77,7 +77,7 @@
                                     <input type="number" class="form-control" name="hk_opname[]"
                                         id="hk_opname" required aria-describedby="helpId" placeholder="" @if (auth()->user()->role !== 'admin')
                                         readonly
-                                    @endif>
+                                    @endif value="{{$data->vendor_bayar->where('customer_id', $v->id)->where('rute_id', $i->id)->first()->hk_opname}}">
                                 </div>
                             </td>
                             <td class="text-center align-middle">
@@ -86,7 +86,7 @@
                                     <input type="number" class="form-control" name="hk_titipan[]"
                                         id="hk_titipan" required aria-describedby="helpId" placeholder="" @if (auth()->user()->role !== 'admin')
                                         readonly
-                                    @endif>
+                                    @endif value="{{$data->vendor_bayar->where('customer_id', $v->id)->where('rute_id', $i->id)->first()->hk_titipan}}">
                                 </div>
                             </td>
                         </tr>
