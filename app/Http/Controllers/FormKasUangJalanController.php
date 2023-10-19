@@ -82,9 +82,17 @@ class FormKasUangJalanController extends Controller
             KasBesar::create($data);
         });
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
-        $pesan = "*Form Kas Uang Jalan*\n\n".
-                 "Nomor Kode Kas Uang Jalan : KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."\n".
-                 "Permintaan Dana Sebesar Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n";
+        $pesan =    "==========================\n".
+                    "*Form Permintaan Dana Kas Uang Jalan*\n".
+                    "==========================\n\n".
+                    "KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."\n".
+                    "Nilai : Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$data['bank']."\n".
+                    "Nama    : ".$data['transfer_ke']."\n".
+                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "==========================\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
@@ -180,11 +188,14 @@ class FormKasUangJalanController extends Controller
         });
 
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
-        $pesan = "*Form Kas Uang Jalan*\n\n".
-                "Tanggal : ". $data['tanggal']."\n".
-                 "Nomor Kode Uang Jalan : UJ".sprintf("%02d",$data['nomor_uang_jalan'])."\n".
-                 "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
-                 "Permintaan Dana Sebesar Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n";
+        $pesan =    "==========================\n".
+                    "*Form Pengeluaran Uang Jalan*\n".
+                    "==========================\n\n".
+                    "UJ".sprintf("%02d",$data['nomor_uang_jalan'])."\n".
+                    "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+                    "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n".
+                    "==========================\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 

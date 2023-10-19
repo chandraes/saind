@@ -86,7 +86,7 @@
                         <div class="modal-body">
                             <div class="mb-3 mt-3">
                                 <select class="form-select form-select-lg" name="" id="tipeKasUangJalan">
-                                    <option value="masuk">Permintaan Uang Jalan</option>
+                                    <option value="masuk">Permintaan Kas Uang Jalan</option>
                                     <option value="keluar">Pengeluaran Uang Jalan</option>
                                 </select>
                             </div>
