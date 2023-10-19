@@ -71,11 +71,15 @@ class TransaksiController extends Controller
         $data['tanggal_bongkar'] = date('Y-m-d');
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
-
-            $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->first()->harga_kesepakatan;
+            $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
         } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
-            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->first()->harga_kesepakatan;
+            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+        }
 
+        if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
+            $data['nominal_bayar'] = $transaksi->timbangan_bongkar * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_opname;
+        } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
+            $data['nominal_bayar'] = $transaksi->timbangan_bongkar * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_titipan;
         }
 
         $transaksi->update($data);
@@ -100,7 +104,7 @@ class TransaksiController extends Controller
 
     public function nota_bayar()
     {
-        
+
     }
 
     public function tagihan_export(Customer $customer)

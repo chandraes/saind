@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Nota Tagihan {{$customer->singkatan}}</u></h1>
+            <h1><u>Nota Bayar {{$customer->singkatan}}</u></h1>
         </div>
     </div>
     @include('swal')

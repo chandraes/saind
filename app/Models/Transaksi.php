@@ -18,6 +18,7 @@ class Transaksi extends Model
         'timbangan_bongkar',
         'status',
         'nominal_tagihan',
+        'nominal_bayar',
         'tagihan',
         'bayar',
         'bonus',

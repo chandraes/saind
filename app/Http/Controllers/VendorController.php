@@ -371,7 +371,8 @@ class VendorController extends Controller
             'vendor_id' => 'required|exists:vendors,id',
             'customer_id' => 'required',
             'customer_id.*' => 'required|exists:customers,id',
-            'pembayaran' => 'required',
+            'rute_id' => 'required',
+            'rute_id.*' => 'required|exists:rutes,id',
             'hk_opname' => 'nullable',
             'hk_opname.*' => 'nullable',
             'hk_titipan' => 'nullable',
@@ -395,16 +396,15 @@ class VendorController extends Controller
         }
 
         DB::transaction(function () use ($data, $id) {
-            Vendor::where('id', $id)->update([
-                'pembayaran' => $data['pembayaran'],
-            ]);
             VendorBayar::where('vendor_id', $id)->delete();
             for ($i=0; $i < count($data['customer_id']); $i++) {
-                VendorBayar::updateOrCreate([
+                VendorBayar::create([
                     'vendor_id' => $id,
                     'customer_id' => $data['customer_id'][$i],
-                ],[
-                    'harga_kesepakatan' => $data['pembayaran'] == 'opname' ? $data['hk_opname'][$i] : $data['hk_titipan'][$i],
+                    'rute_id' => $data['rute_id'][$i],
+                    'hk_opname' => $data['hk_opname'][$i],
+                    'hk_titipan' => $data['hk_titipan'][$i],
+                    'user_id' => auth()->user()->id,
                 ]);
             }
 
