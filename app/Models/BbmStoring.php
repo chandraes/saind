@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class BbmStoring extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'km',
+        'biaya_vendor',
+        'biaya_mekanik',
+    ];
 }

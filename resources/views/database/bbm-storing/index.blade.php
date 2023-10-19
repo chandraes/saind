@@ -1,32 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
+<div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>BBM Storing</u></h1>
         </div>
     </div>
-    @if (session('success'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('success')}}
-            </strong>
-        </div>
-    </div>
-    @endif
-    @if (session('error'))
-    <div class="row">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert" id="success-alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('error')}}
-            </strong>
-        </div>
-    </div>
-    @endif
+    @include('swal')
     <div class="row float-end">
         <div class="col-md-12">
             <strong>
@@ -37,13 +18,14 @@
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-4">
             <table class="table" id="data-table">
-                <tr class="text-center">
+                <tr>
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen"
                                 width="30"> Database</a></td>
-                    <td><a href="#"><img src="{{asset('images/bbm.svg')}}" alt="add-rute"
+                    <td><a href="#"  data-bs-toggle="modal" data-bs-target="#create-storing"><img src="{{asset('images/bbm.svg')}}"
                                 width="30"> Tambah Storing</a>
+                        @include('database.bbm-storing.create')
                     </td>
 
                 </tr>
@@ -52,7 +34,7 @@
     </div>
 </div>
 
-<div class="container-fluid mt-5 table-responsive">
+<div class="container mt-5 table-responsive">
     <table class="table table-bordered table-hover" id="data">
         <thead class="table-success">
             <tr>
@@ -64,7 +46,43 @@
             </tr>
         </thead>
         <tbody>
+            @foreach ($data as $d)
+            <tr>
+                <td class="text-center align-middle">{{$loop->iteration}}</td>
+                <td class="text-center align-middle">{{$d->km}}</td>
+                <td class="text-center align-middle">{{number_format($d->biaya_vendor, 0, ',', '.')}}</td>
+                <td class="text-center align-middle">{{number_format($d->biaya_mekanik, 0, ',', '.')}}</td>
+                <td class="text-center align-middle">
+                    @include('database.bbm-storing.edit')
+                    <form action="{{route('bbm-storing.destroy', $d)}}" method="post" id="deleteForm-{{$d->id}}">
+                        @method('delete')
+                        @csrf
+                        <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#edit-{{$d->id}}">
+                            Edit
+                        </button>
+                        <button type="submit" class="btn btn-danger m-2">Hapus</button>
+                    </form>
+                    <script>
 
+                        $('#deleteForm-{{$d->id}}').submit(function(e){
+                            e.preventDefault();
+                            Swal.fire({
+                                title: 'Apakah anda yakin untuk menghapus data ini?',
+                                icon: 'error',
+                                showCancelButton: true,
+                                confirmButtonColor: '#3085d6',
+                                cancelButtonColor: '#6c757d',
+                                confirmButtonText: 'Ya, hapus!'
+                                }).then((result) => {
+                                if (result.isConfirmed) {
+                                    this.submit();
+                                }
+                            })
+                        });
+                    </script>
+                </td>
+            </tr>
+            @endforeach
         </tbody>
     </table>
 </div>
@@ -85,18 +103,32 @@
 
 <script src="https://cdn.datatables.net/v/bs5/dt-1.13.5/datatables.min.js"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
-
+<script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
 <script>
-    // success-alert close after 5 second
-    $("#success-alert").fadeTo(5000, 500).slideUp(500, function(){
-        $("#success-alert").slideUp(500);
-    });
-
     // datatable
     $(document).ready(function() {
         $('#data').DataTable();
+        $('#biaya_vendor').maskMoney();
+        $('#biaya_mekanik').maskMoney();
+    });
 
-    } );
+      // masukForm on submit, sweetalert confirm
+      $('#masukForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah data sudah benar?',
+                text: "Pastikan data sudah benar sebelum disimpan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
+        });
 
 </script>
 @endpush

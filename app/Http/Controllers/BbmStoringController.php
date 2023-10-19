@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BbmStoring;
 use Illuminate\Http\Request;
 
 class BbmStoringController extends Controller
@@ -11,7 +12,10 @@ class BbmStoringController extends Controller
      */
     public function index()
     {
-        return view('database.bbm-storing.index');
+        $data = BbmStoring::all();
+        return view('database.bbm-storing.index', [
+            'data' => $data,
+        ]);
     }
 
     /**
@@ -27,13 +31,24 @@ class BbmStoringController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'km' => 'required',
+            'biaya_vendor' => 'required',
+            'biaya_mekanik' => 'required',
+        ]);
+
+        $data['biaya_vendor'] = str_replace('.', '', $data['biaya_vendor']);
+        $data['biaya_mekanik'] = str_replace('.', '', $data['biaya_mekanik']);
+
+        BbmStoring::create($data);
+
+        return redirect()->route('bbm-storing.index')->with('success', 'Data berhasil ditambahkan');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(BbmStoring $bbmStoring)
     {
         //
     }
@@ -41,7 +56,7 @@ class BbmStoringController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(BbmStoring $bbmStoring)
     {
         //
     }
@@ -49,16 +64,29 @@ class BbmStoringController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, BbmStoring $bbmStoring)
     {
-        //
+        $data = $request->validate([
+            'km' => 'required',
+            'biaya_vendor' => 'required',
+            'biaya_mekanik' => 'required',
+        ]);
+
+        $data['biaya_vendor'] = str_replace('.', '', $data['biaya_vendor']);
+        $data['biaya_mekanik'] = str_replace('.', '', $data['biaya_mekanik']);
+
+        $bbmStoring->update($data);
+
+        return redirect()->route('bbm-storing.index')->with('success', 'Data berhasil diubah');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(BbmStoring $bbmStoring)
     {
-        //
+        $bbmStoring->delete();
+
+        return redirect()->route('bbm-storing.index')->with('success', 'Data berhasil dihapus');
     }
 }
