@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use App\Models\Customer;
 use App\Models\Vendor;
+use App\Models\PasswordKonfirmasi;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TransaksiExport;
@@ -109,4 +110,40 @@ class TransaksiController extends Controller
         $id = $customer->id;
         return Excel::download(new TransaksiExport($id), 'customer.xlsx');
     }
+
+    public function void(Request $request, Transaksi $transaksi)
+    {
+        $data = $request->validate([
+            'password' => 'required',
+        ]);
+
+        $password = PasswordKonfirmasi::first();
+
+        if (!$password) {
+            return redirect()->back()->with('error', 'Password belum diatur!!');
+        }
+
+        if ($data['password'] != $password->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        return view('billing.transaksi.void', [
+            'data' => $transaksi,
+        ]);
+    }
+
+    public function void_store(Request $request, Transaksi $transaksi)
+    {
+        $data = $request->validate([
+            'alasan' => 'required',
+        ]);
+
+        $data['void'] = 1;
+
+        $transaksi->update($data);
+
+        return redirect()->route('transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+
+    }
+
 }

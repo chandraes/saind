@@ -22,6 +22,8 @@ class Transaksi extends Model
         'tagihan',
         'bayar',
         'bonus',
+        'void',
+        'alasan',
     ];
 
     public function kas_uang_jalan()
