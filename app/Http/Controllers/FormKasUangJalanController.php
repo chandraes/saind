@@ -81,9 +81,9 @@ class FormKasUangJalanController extends Controller
         KasBesar::create($data);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
-        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Dana Kas Uang Jalan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."\n".
                     "Nilai : Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".
                     "Ditransfer ke rek:\n\n".
@@ -188,9 +188,9 @@ class FormKasUangJalanController extends Controller
         Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
 
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
-        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengeluaran Uang Jalan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴n\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴n\n".
                     "UJ".sprintf("%02d",$data['nomor_uang_jalan'])."\n".
                     "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
                     "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".

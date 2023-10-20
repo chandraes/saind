@@ -74,9 +74,9 @@ class FormKasBesarController extends Controller
         }
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
-        $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+        $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Form Permintaan Deposit*\n".
-                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                  "D".sprintf("%02d",$data['nomor_kode_deposit'])."\n".
                  "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
                  "Ditransfer ke rek:\n\n".
@@ -145,9 +145,9 @@ class FormKasBesarController extends Controller
         }
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
-        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengembalian Deposit*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$data['bank']."\n".

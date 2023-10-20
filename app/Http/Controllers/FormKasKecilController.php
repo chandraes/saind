@@ -78,9 +78,9 @@ class FormKasKecilController extends Controller
 
 
         $group = GroupWa::where('untuk', 'kas-kecil')->first();
-        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Kecil*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "KK".sprintf("%02d",$data['nomor_kode_kas_kecil'])."\n".
                     "Nilai : Rp. 1.000.000,-\n\n".
                     "Ditransfer ke rek:\n\n".
