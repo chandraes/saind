@@ -71,27 +71,28 @@ class FormKasUangJalanController extends Controller
         $data['bank'] = $rekening->nama_bank;
         $data['no_rekening'] = $rekening->nomor_rekening;
 
-        DB::transaction(function () use ($data, $kb) {
 
-            KasUangJalan::create($data);
+        $store = KasUangJalan::create($data);
 
-            $data['saldo'] = $kb->saldo - $data['nominal_transaksi'];
-            $data['jenis_transaksi_id'] = 2;
-            $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
+        $data['saldo'] = $kb->saldo - $data['nominal_transaksi'];
+        $data['jenis_transaksi_id'] = 2;
+        $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
 
-            KasBesar::create($data);
-        });
-        $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
-        $pesan =    "==========================\n".
+        KasBesar::create($data);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Dana Kas Uang Jalan*\n".
-                    "==========================\n\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."\n".
                     "Nilai : Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank     : ".$data['bank']."\n".
+                    "Bank      : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
-                    "==========================\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Uang Jalan : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
@@ -180,17 +181,16 @@ class FormKasUangJalanController extends Controller
             $data['saldo'] = $last->saldo - $data['nominal_transaksi'];
         }
 
-        DB::transaction(function () use ($data) {
-            $store = KasUangJalan::create($data);
-            $transaksi['kas_uang_jalan_id'] = $store->id;
-            Transaksi::create($transaksi);
-            Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
-        });
+
+        $store = KasUangJalan::create($data);
+        $transaksi['kas_uang_jalan_id'] = $store->id;
+        Transaksi::create($transaksi);
+        Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
 
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
-        $pesan =    "==========================\n".
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengeluaran Uang Jalan*\n".
-                    "==========================\n\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "UJ".sprintf("%02d",$data['nomor_uang_jalan'])."\n".
                     "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
                     "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".
@@ -199,6 +199,8 @@ class FormKasUangJalanController extends Controller
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
                     "==========================\n".
+                    "Sisa Saldo Kas Uang Jalan : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
