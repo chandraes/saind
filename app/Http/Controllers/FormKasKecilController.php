@@ -64,19 +64,19 @@ class FormKasKecilController extends Controller
         $data['bank'] = $rekening->nama_bank;
         $data['no_rekening'] = $rekening->nomor_rekening;
 
-        DB::transaction(function () use ($data, $kb) {
-            $data['jenis_transaksi_id'] = 1;
-            KasKecil::create($data);
 
-            $data['saldo'] = $kb->saldo - 1000000;
-            $data['jenis_transaksi_id'] = 2;
-            $data['nominal_transaksi'] = 1000000;
-            $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
+        $data['jenis_transaksi_id'] = 1;
+
+        $store = KasKecil::create($data);
+
+        $data['saldo'] = $kb->saldo - 1000000;
+        $data['jenis_transaksi_id'] = 2;
+        $data['nominal_transaksi'] = 1000000;
+        $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
+
+        KasBesar::create($data);
 
 
-            KasBesar::create($data);
-
-        });
         $group = GroupWa::where('untuk', 'kas-kecil')->first();
         $pesan =    "==========================\n".
                     "*Form Permintaan Kas Kecil*\n".
@@ -87,7 +87,8 @@ class FormKasKecilController extends Controller
                     "Bank     : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
-                    "==========================\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Kecil : Rp. ".number_format($store->saldo, 0, ',', '.')."\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
