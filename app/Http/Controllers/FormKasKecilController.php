@@ -88,7 +88,8 @@ class FormKasKecilController extends Controller
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
                     "==========================\n".
-                    "Sisa Saldo Kas Kecil : Rp. ".number_format($store->saldo, 0, ',', '.')."\n".
+                    "Sisa Saldo Kas Kecil : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
