@@ -33,7 +33,7 @@ class FormKasKecilController extends Controller
 
     public function masuk_store()
     {
-        $kk = KasKecil::latest()->first();
+        $kk = KasKecil::whereNotNull('nomor_kode_kas_kecil')->latest()->first();
         $kb = KasBesar::latest()->first();
         $rekening = Rekening::where('untuk', 'kas-kecil')->first();
 
@@ -43,10 +43,17 @@ class FormKasKecilController extends Controller
 
         if($kk == null){
             $data['nomor_kode_kas_kecil'] = 1;
-            $data['saldo'] = 1000000;
+
         }else{
             $data['nomor_kode_kas_kecil']= $kk->nomor_kode_kas_kecil + 1;
-            $data['saldo'] = $kk->saldo + 1000000;
+        }
+
+        $last = KasKecil::latest()->first();
+
+        if($last == null){
+            $data['saldo'] = 1000000;
+        }else{
+            $data['saldo'] = $last->saldo + 1000000;
         }
 
         $data['tanggal'] = date('Y-m-d');
