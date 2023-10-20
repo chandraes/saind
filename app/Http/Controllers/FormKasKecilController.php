@@ -15,7 +15,7 @@ class FormKasKecilController extends Controller
 {
     public function masuk()
     {
-        $nomor = KasKecil::latest()->first();
+        $nomor = KasKecil::whereNotNull('nomor_kode_kas_kecil')->latest()->first();
 
         if($nomor == null){
             $nomor = 1;
@@ -189,7 +189,7 @@ class FormKasKecilController extends Controller
 
         $store = KasKecil::create($data);
         $kk->update(['void' => 1]);
-        
+
         if(!$store){
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
