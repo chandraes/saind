@@ -83,7 +83,11 @@ class FormKasBesarController extends Controller
                 "Bank     : ".$data['bank']."\n".
                 "Nama    : ".$data['transfer_ke']."\n".
                 "No. Rek : ".$data['no_rekening']."\n\n".
-                "==========================\n\n".
+                "==========================\n".
+                "Sisa Saldo Kas Besar : \n".
+                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                "Total Modal Investor : \n".
+                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
