@@ -74,8 +74,7 @@ class FormKasKecilController extends Controller
         $data['nominal_transaksi'] = 1000000;
         $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
 
-        KasBesar::create($data);
-
+        $store2 = KasBesar::create($data);
 
         $group = GroupWa::where('untuk', 'kas-kecil')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -88,6 +87,8 @@ class FormKasKecilController extends Controller
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
                     "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store2->saldo, 0, ',', '.')."\n\n".
                     "Sisa Saldo Kas Kecil : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
