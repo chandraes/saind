@@ -78,7 +78,7 @@ class FormKasUangJalanController extends Controller
         $data['jenis_transaksi_id'] = 2;
         $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
 
-        KasBesar::create($data);
+        $store2 = KasBesar::create($data);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -91,6 +91,8 @@ class FormKasUangJalanController extends Controller
                     "Nama    : ".$data['transfer_ke']."\n".
                     "No. Rek : ".$data['no_rekening']."\n\n".
                     "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store2->saldo, 0, ',', '.')."\n\n".
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
