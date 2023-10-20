@@ -16,16 +16,16 @@
     </script>
     @endif
 
-    <form action="{{route('kas-kecil.keluar.store')}}" method="post" id="masukForm">
+    <form action="{{route('kas-kecil.void.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
             <div class="col-4 mb-3">
                 <div class="mb-3">
-                    <label for="pengeluaran_id" class="form-label">Pengeluaran</label>
-                    <select class="form-select" name="pengeluaran_id" id="pengeluaran_id" onchange="selectPengeluaran()">
-                        <option> -- Pilih Pengeluaran Kas Kecil --</option>
+                    <label for="kas_kecil_id" class="form-label">Pengeluaran</label>
+                    <select class="form-select" name="kas_kecil_id" id="kas_kecil_id" onchange="selectPengeluaran()" required>
+                        <option value=""> -- Pilih Pengeluaran Kas Kecil --</option>
                         @foreach ($data as $d)
-                            <option value="{{$d->id}}">{{$d->uraian}}</option>
+                            <option value="{{$d->id}}">{{$d->uraian}} ({{$d->tanggal}})</option>
                         @endforeach
                     </select>
                 </div>
@@ -34,7 +34,7 @@
                 <label for="uraian" class="form-label">Uraian</label>
                 <input type="text" class="form-control @if ($errors->has('uraian'))
                     is-invalid
-                @endif" name="uraian" id="uraian" required value="{{old('uraian')}}" maxlength="20">
+                @endif" name="uraian" id="uraian" required value="{{old('uraian')}}" maxlength="20" readonly>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="nominal_transaksi" class="form-label">Nominal</label>
@@ -42,7 +42,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('nominal_transaksi'))
                     is-invalid
-                @endif" name="nominal_transaksi" id="nominal_transaksi" required data-thousands=".">
+                @endif" name="nominal_transaksi" id="nominal_transaksi" required data-thousands="." readonly>
                 </div>
                 @if ($errors->has('nominal_transaksi'))
                 <div class="invalid-feedback">
@@ -50,57 +50,8 @@
                 </div>
                 @endif
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="mb-3">
-                    <label for="tipe" class="form-label">Sistem Pembayaran</label>
-                    <select class="form-select" name="tipe" id="tipe" onchange="tipeFun()" required>
-                        <option>-- Pilih transfer / cash --</option>
-                        <option value="1">Cash</option>
-                        <option value="2">Transfer</option>
-                    </select>
-                </div>
-            </div>
         </div>
         <hr>
-        <div class="" id="fieldTransfer" hidden>
-            <h3>Transfer Ke</h3>
-            <br>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="transfer_ke" class="form-label">Nama</label>
-                    <input type="text" class="form-control @if ($errors->has('transfer_ke'))
-                    is-invalid
-                @endif" name="transfer_ke" id="transfer_ke" value="{{old('transfer_ke')}}" maxlength="15">
-                    @if ($errors->has('transfer_ke'))
-                    <div class="invalid-feedback">
-                        {{$errors->first('transfer_ke')}}
-                    </div>
-                    @endif
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="bank" class="form-label">Bank</label>
-                    <input type="text" class="form-control @if ($errors->has('bank'))
-                    is-invalid
-                @endif" name="bank" id="bank" value="{{old('bank')}}" maxlength="10">
-                    @if ($errors->has('bank'))
-                    <div class="invalid-feedback">
-                        {{$errors->first('bank')}}
-                    </div>
-                    @endif
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="no_rekening" class="form-label">Nomor Rekening</label>
-                    <input type="text" class="form-control @if ($errors->has('no_rekening'))
-                    is-invalid
-                @endif" name="no_rekening" id="no_rekening" value="{{old('no_rekening')}}">
-                    @if ($errors->has('no_rekening'))
-                    <div class="invalid-feedback">
-                        {{$errors->first('no_rekening')}}
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
 
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-success" type="submit">Simpan</button>
@@ -117,28 +68,19 @@
             $('#nominal_transaksi').maskMoney();
         });
 
-        function tipeFun()
+        function selectPengeluaran()
         {
-            var tipe = $('#tipe').val();
-            if(tipe == 1){
-                // show fieldTransfer
-                $('#fieldTransfer').attr('hidden', true);
-
-                $('#transfer_ke').attr('disabled', true);
-                $('#bank').attr('disabled', true);
-                $('#no_rekening').attr('disabled', true);
-            }else if(tipe == 2){
-                // hide fieldTransfer
-                $('#fieldTransfer').attr('hidden', false);
-                $('#transfer_ke').val('');
-                $('#bank').val('');
-                $('#no_rekening').val('');
-                $('#transfer_ke').attr('disabled', false);
-                $('#bank').attr('disabled', false);
-                $('#no_rekening').attr('disabled', false);
-            } else {
-                $('#fieldTransfer').attr('hidden', true);
-            }
+            var id = $('#kas_kecil_id').val();
+            $.ajax({
+                url: "{{route('kas-kecil.get-void')}}",
+                type: "GET",
+                data: {id: id},
+                success: function(data){
+                    console.log(data.data.uraian);
+                    $('#uraian').val("Void " + data.data.uraian);
+                    $('#nominal_transaksi').val(data.data.nominal_transaksi);
+                }
+            });
         }
 
         // masukForm on submit, sweetalert confirm

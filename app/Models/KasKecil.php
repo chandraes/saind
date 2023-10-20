@@ -18,6 +18,7 @@ class KasKecil extends Model
         'transfer_ke',
         'bank',
         'no_rekening',
+        'void',
     ];
 
     public function jenis_transaksi()

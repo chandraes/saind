@@ -143,9 +143,60 @@ class FormKasKecilController extends Controller
     {
         $month = date('m');
         $year = date('Y');
-        $data = KasKecil::where('jenis_transaksi_id', 2)->whereMonth('tanggal', $month)->whereYear('tanggal', $year)->get();
+        $data = KasKecil::where('jenis_transaksi_id', 2)->where('void', 0)->whereMonth('tanggal', $month)->whereYear('tanggal', $year)->get();
         return view('billing.kas-kecil.void', [
             'data' => $data,
         ]);
     }
+
+    public function get_void(Request $request)
+    {
+        $data = KasKecil::find($request->id);
+
+        return response()->json([
+            'data' => $data,
+        ]);
+    }
+
+    public function void_store(Request $request)
+    {
+        $data = $request->validate([
+            'kas_kecil_id' => 'required',
+        ]);
+
+        $kk = KasKecil::find($data['kas_kecil_id']);
+
+        if(!$kk){
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
+        }
+
+        $data['tanggal'] = date('Y-m-d');
+        $data['nominal_transaksi'] = $kk->nominal_transaksi;
+        $data['jenis_transaksi_id'] = 1;
+
+        $data['uraian'] = 'Void '.$kk->uraian;
+        $data['transfer_ke'] = "Void";
+
+        $last = KasKecil::latest()->first();
+
+        if($last == null){
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
+        }else{
+            $data['saldo'] = $last->saldo + $data['nominal_transaksi'];
+        }
+
+        unset($data['kas_kecil_id']);
+
+        $store = KasKecil::create($data);
+        $kk->update(['void' => 1]);
+        
+        if(!$store){
+            return redirect()->back()->with('error', 'Data gagal disimpan');
+        }
+
+        return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
+
+
+    }
+
 }

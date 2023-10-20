@@ -193,8 +193,12 @@ class FormKasUangJalanController extends Controller
                     "==========================\n\n".
                     "UJ".sprintf("%02d",$data['nomor_uang_jalan'])."\n".
                     "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
-                    "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n".
-                    "==========================\n\n".
+                    "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$data['bank']."\n".
+                    "Nama    : ".$data['transfer_ke']."\n".
+                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "==========================\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();

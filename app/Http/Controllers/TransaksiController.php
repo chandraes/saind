@@ -15,7 +15,8 @@ class TransaksiController extends Controller
     {
         $data = Transaksi::all();
         $customer = Customer::all();
-        $vendor = Vendor::all();
+        $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->get()->unique('vendor_id');
+        // dd($bayar);
         return view('billing.transaksi.index', [
             'data' => $data,
             'customer' => $customer,
@@ -63,12 +64,6 @@ class TransaksiController extends Controller
             'timbangan_bongkar' => 'required',
         ]);
 
-        // cek harga kesepakatan
-        if($transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->first() == null)
-        {
-           return redirect()->back()->with('error', 'Harga kesepakatan belum diisi!!');
-        }
-
         $data['status'] = 3;
         $data['tanggal_bongkar'] = date('Y-m-d');
 
@@ -79,9 +74,9 @@ class TransaksiController extends Controller
         }
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_opname;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_opname;
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->vendor->vendor_bayar->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_titipan;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_titipan;
         }
 
         $transaksi->update($data);
