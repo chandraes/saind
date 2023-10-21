@@ -84,8 +84,8 @@ class FormKasUangJalanController extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Uang Jalan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."\n".
-                    "Nilai : Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".
+                    "*KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."*\n\n".
+                    "Nilai : *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank      : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
@@ -193,12 +193,12 @@ class FormKasUangJalanController extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengeluaran Uang Jalan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "UJ".sprintf("%02d",$data['nomor_uang_jalan'])."\n\n".
+                    "*UJ".sprintf("%02d",$data['nomor_uang_jalan'])."*\n\n".
                     "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
                     "Vendor : ".$store->vendor->nama."\n\n".
                     "Tambang : ".$store->customer->singkatan."\n".
                     "Rute : ".$store->rute->nama."\n\n".
-                    "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".
+                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
