@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use App\Models\Customer;
 use App\Models\Vendor;
+use App\Models\KasUangJalan;
+use App\Models\GroupWa;
+use App\Services\StarSender;
+use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -27,7 +31,7 @@ class TransaksiController extends Controller
 
     public function nota_muat()
     {
-        $data = Transaksi::where('status', 1)->get();
+        $data = Transaksi::where('status', 1)->where('void', 0)->get();
         return view('billing.transaksi.nota-muat', [
             'data' => $data,
         ]);
@@ -50,7 +54,7 @@ class TransaksiController extends Controller
 
     public function nota_bongkar()
     {
-        $data = Transaksi::where('status', 2)->get();
+        $data = Transaksi::where('status', 2)->where('void', 0)->get();
 
         return view('billing.transaksi.nota-bongkar', [
             'data' => $data,
@@ -91,7 +95,7 @@ class TransaksiController extends Controller
 
     public function nota_tagihan(Customer $customer)
     {
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)
+        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('void', 0)
                             ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)->get();
 
         return view('billing.transaksi.tagihan.index', [
@@ -138,11 +142,46 @@ class TransaksiController extends Controller
             'alasan' => 'required',
         ]);
 
+        // dd($data);
+
         $data['void'] = 1;
 
         $transaksi->update($data);
 
-        return redirect()->route('transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+        $last = KasUangJalan::latest()->first();
+        $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
+
+        $store = KasUangJalan::create([
+            'jenis_transaksi_id' => 1,
+            'nominal_transaksi' => $transaksi->kas_uang_jalan->nominal_transaksi,
+            'tanggal' => date('Y-m-d'),
+            'saldo' => $last->saldo + $transaksi->kas_uang_jalan->nominal_transaksi,
+            'transfer_ke' => substr($rek->nama_rekening, 0, 15),
+            'bank' => $rek->nama_bank,
+            'no_rekening' => $rek->nomor_rekening,
+        ]);
+
+        $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
+
+        $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    "*Void Uang Jalan*\n".
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan)."\n".
+                    "Nomor Lambung : ".$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
+                    "Nilai :  Rp. ".number_format($transaksi->kas_uang_jalan->nominal_transaksi, 0, ',', '.').",-\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$rek->nama_bank."\n".
+                    "Nama    : ".$rek->nama_rekening."\n".
+                    "No. Rek : ".$rek->nomor_rekening."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Uang Jalan : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
+
+
+        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
 
     }
 

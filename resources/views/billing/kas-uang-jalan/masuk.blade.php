@@ -77,14 +77,13 @@
                 <label for="no_rekening" class="form-label">Nomor Rekening</label>
                 <input type="text" class="form-control @if ($errors->has('no_rekening'))
                     is-invalid
-                @endif" name="no_rekening" id="no_rekening" disabled value="{{$rekening->nomor_rekening}}">
+                @endif" name="no_rekening" id="no_rekening" readonly value="{{$rekening->nomor_rekening}}">
                 @if ($errors->has('no_rekening'))
                 <div class="invalid-feedback">
                     {{$errors->first('no_rekening')}}
                 </div>
                 @endif
             </div>
-            <input type="hidden" name="no_rekening" value="12351293851203">
         </div>
 
         <div class="d-grid gap-3 mt-3">

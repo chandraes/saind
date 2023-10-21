@@ -6,6 +6,7 @@
             <h1><u>FORM TRANSAKSI</u></h1>
         </div>
     </div>
+    @include('swal')
     <div class="row justify-content-left mt-5">
         @if (auth()->user()->role === 'admin')
 
@@ -14,8 +15,8 @@
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('transaksi.nota-muat')}}" class="text-decoration-none">
                 <img src="{{asset('images/muat.svg')}}" alt="" width="100">
-                <h2>Nota Muat <span class="text-danger">{{$data->where('status', 1)->count() > 0 ?
-                        "(".$data->where('status', 1)->count().")" : '' }}</span></h2>
+                <h2>Nota Muat <span class="text-danger">{{$data->where('status', 1)->where('void',0)->count() > 0 ?
+                        "(".$data->where('status', 1)->where('void',0)->count().")" : '' }}</span></h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
