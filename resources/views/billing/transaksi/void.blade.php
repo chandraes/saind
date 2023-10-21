@@ -72,7 +72,7 @@
                 {{-- button submit --}}
                 <div class="col-12 text-center">
                     <button type="submit" class="btn btn-primary btn-inline">Simpan</button>
-                    <a href="{{ route('transaksi.nota-muat') }}" class="btn btn-danger btn-inline">Kembali</a>
+                    <a href="{{ url()->previous() }}" class="btn btn-danger btn-inline">Kembali</a>
                 </div>
             </div>
         </form>

@@ -96,7 +96,9 @@ class TransaksiController extends Controller
     public function nota_tagihan(Customer $customer)
     {
         $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
-                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)->get();
+                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
+                            ->select('transaksis.*')
+                            ->get();
 
         return view('billing.transaksi.tagihan.index', [
             'data' => $data,
@@ -119,6 +121,7 @@ class TransaksiController extends Controller
         $id = $customer->id;
         return Excel::download(new TransaksiExport($id), 'customer.xlsx');
     }
+
 
     public function void(Request $request, Transaksi $transaksi)
     {
