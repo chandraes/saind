@@ -58,7 +58,7 @@ class FormLainController extends Controller
         $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Dana Masuk*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                 "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
+                 "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                  "Ditransfer ke rek:\n\n".
                 "Bank     : ".$data['bank']."\n".
                 "Nama    : ".$data['transfer_ke']."\n".
@@ -123,7 +123,7 @@ class FormLainController extends Controller
         $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                 "*Dana Keluar*\n".
                  "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                 "*Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                 "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                  "Ditransfer ke rek:\n\n".
                 "Bank     : ".$data['bank']."\n".
                 "Nama    : ".$data['transfer_ke']."\n".
