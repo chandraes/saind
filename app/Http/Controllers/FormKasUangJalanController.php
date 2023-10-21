@@ -192,7 +192,7 @@ class FormKasUangJalanController extends Controller
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengeluaran Uang Jalan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "UJ".sprintf("%02d",$data['nomor_uang_jalan'])."\n".
                     "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
                     "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-\n\n".

@@ -169,7 +169,7 @@ class TransaksiController extends Controller
 
         $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Void Uang Jalan*\n".
-                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                     "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan)."\n".
                     "Nomor Lambung : ".$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
                     "Alasan : ".$data['alasan']."\n".
@@ -182,7 +182,7 @@ class TransaksiController extends Controller
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
-                    
+
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
