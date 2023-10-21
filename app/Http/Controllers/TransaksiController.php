@@ -182,6 +182,7 @@ class TransaksiController extends Controller
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
+                    
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
