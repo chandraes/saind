@@ -172,6 +172,7 @@ class TransaksiController extends Controller
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan)."\n".
                     "Nomor Lambung : ".$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
+                    "Alasan : ".$data['alasan']."\n".
                     "Nilai :  Rp. ".number_format($transaksi->kas_uang_jalan->nominal_transaksi, 0, ',', '.').",-\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$rek->nama_bank."\n".
