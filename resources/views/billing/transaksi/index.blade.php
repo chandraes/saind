@@ -16,21 +16,21 @@
             <a href="{{route('transaksi.nota-muat')}}" class="text-decoration-none">
                 <img src="{{asset('images/muat.svg')}}" alt="" width="100">
                 <h2>Nota Muat <span class="text-danger">{{$data->where('status', 1)->where('void',0)->count() > 0 ?
-                        "(".$data->where('status', 1)->where('void',0)->count().")" : '' }}</span></h2>
+                        "(".$data->where('status', 1)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
                 <img src="{{asset('images/bongkar.svg')}}" alt="" width="100">
                 <h2>Nota Bongkar <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
-                        "(".$data->where('status', 2)->count().")" : '' }}</span></h2>
+                        "(".$data->where('status', 2)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
                 <img src="{{asset('images/tagihan.svg')}}" alt="" width="100">
                 <h2>Nota Tagihan <span class="text-danger">{{$data->where('status', 3)->where('tagihan', 0)->count() > 0
-                        ? "(".$data->where('status', 3)->where('tagihan', 0)->count().")" : '' }}</span></h2>
+                        ? "(".$data->where('status', 3)->where('tagihan', 0)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
             <div class="modal fade" id="customerId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="customerTitleId" aria-hidden="true">
