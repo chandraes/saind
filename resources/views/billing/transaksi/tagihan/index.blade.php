@@ -217,7 +217,7 @@
                     colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
-                <td align="right" class="align-middle">{{number_format($data->sum('nominal_tagihan'), 2, ',', '.')}}
+                <td align="right" class="align-middle">{{number_format($data->sum('nominal_tagihan'), 0, ',', '.')}}
                 </td>
             </tr>
             <tr>
@@ -227,7 +227,7 @@
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td align="right" class="align-middle">
                     @if ($customer->ppn == 1)
-                    {{number_format($data->sum('nominal_tagihan') * 0.11, 2, ',', '.')}}
+                    {{number_format($data->sum('nominal_tagihan') * 0.11, 0, ',', '.')}}
                     @endif
                 </td>
             </tr>
@@ -239,7 +239,7 @@
                 <td class="text-center align-middle"><strong>PPh</strong></td>
                 <td align="right" class="align-middle">
                     @if ($customer->pph == 1)
-                    {{number_format($data->sum('nominal_tagihan') * 0.2, 2, ',', '.')}}
+                    {{number_format($data->sum('nominal_tagihan') * 0.02, 0, ',', '.')}}
                     @else
                     0
                     @endif
@@ -253,7 +253,7 @@
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td align="right" class="align-middle">
                     {{number_format($data->sum('nominal_tagihan') - ($customer->pph == 1 ? $data->sum('nominal_tagihan')
-                    * 0.2 : 0) + ($customer->ppn == 1 ? $data->sum('nominal_tagihan') * 0.11 : 0), 2, ',', '.')}}
+                    * 0.2 : 0) + ($customer->ppn == 1 ? $data->sum('nominal_tagihan') * 0.11 : 0), 0, ',', '.')}}
                 </td>
             </tr>
         </tfoot>
