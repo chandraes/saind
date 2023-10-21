@@ -80,8 +80,8 @@ class FormKasKecilController extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Kecil*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "KK".sprintf("%02d",$data['nomor_kode_kas_kecil'])."\n".
-                    "Nilai : Rp. 1.000.000,-\n\n".
+                    "*KK".sprintf("%02d",$data['nomor_kode_kas_kecil'])."*\n\n".
+                    "Nilai : *Rp. 1.000.000,-*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
