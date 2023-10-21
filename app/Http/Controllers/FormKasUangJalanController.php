@@ -66,7 +66,6 @@ class FormKasUangJalanController extends Controller
 
         $data['tanggal'] = date('Y-m-d');
         $data['jenis_transaksi_id'] = 1;
-        $data['uraian'] = 'Permintaan Dana';
         $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
         $data['bank'] = $rekening->nama_bank;
         $data['no_rekening'] = $rekening->nomor_rekening;
