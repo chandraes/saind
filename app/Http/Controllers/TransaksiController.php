@@ -194,4 +194,30 @@ class TransaksiController extends Controller
 
     }
 
+    public function back(Request $request, Transaksi $transaksi)
+    {
+        $data = $request->validate([
+            'password' => 'required',
+        ]);
+
+        $password = PasswordKonfirmasi::first();
+
+        if (!$password) {
+            return redirect()->back()->with('error', 'Password belum diatur!!');
+        }
+
+        if ($data['password'] != $password->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        $transaksi->update([
+            'status' => 1,
+            'nota_bongkar' => null,
+            'tonase' => null,
+        ]);
+
+        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+
+    }
+
 }
