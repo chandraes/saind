@@ -56,8 +56,9 @@ class FormLainController extends Controller
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                "*Dana Masuk*\n".
+                "*Form Lain2 (Dana Masuk)*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                 "Uraian :  ".$data['uraian']."\n".
                  "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                  "Ditransfer ke rek:\n\n".
                 "Bank     : ".$data['bank']."\n".
@@ -121,8 +122,9 @@ class FormLainController extends Controller
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                "*Dana Keluar*\n".
+                "*Form Lain2 (Dana Keluar)*\n".
                  "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                 "Uraian :  ".$data['uraian']."\n".
                  "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                  "Ditransfer ke rek:\n\n".
                 "Bank     : ".$data['bank']."\n".
