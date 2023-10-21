@@ -192,6 +192,36 @@
                     @endif
                 </td>
                 <td class="text-center align-middle">
+
+                    <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
+                        Back
+                      </button>
+
+                      <!-- Modal Body -->
+                      <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+                      <div class="modal fade" id="backModal-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="Title-{{$d->id}}" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                              <div class="modal-content">
+                                  <div class="modal-header">
+                                      <h5 class="modal-title" id="Title-{{$d->id}}">Masukkan Password</h5>
+                                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  </div>
+                                  <form action="{{route('transaksi.back-tagihan', $d)}}" method="post">
+                                      @csrf
+                                  <div class="modal-body">
+                                      <input type="password" class="form-control" id="password" name="password"
+                                          placeholder="Password" aria-label="Password" aria-describedby="password"
+                                          required>
+                                  </div>
+                                  <div class="modal-footer">
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                      <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                                  </div>
+                              </form>
+                              </div>
+                          </div>
+                      </div>
+
                     <button class="btn btn-warning btn-block m-2" type="button" data-bs-toggle="modal" data-bs-target="#modalVoid-{{$d->id}}">Void</button>
 
                     <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
