@@ -34,7 +34,6 @@ class FormKasBesarController extends Controller
             'nominal_transaksi' => 'required',
         ]);
 
-        $data['uraian'] = 'Deposit';
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);

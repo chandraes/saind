@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\KasBesar;
 use App\Models\Rekening;
 use Illuminate\Http\Request;
+use App\Services\StarSender;
+use App\Models\GroupWa;
 
 class FormLainController extends Controller
 {
@@ -50,6 +52,25 @@ class FormLainController extends Controller
          if(!$store){
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
+
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                "*Dana Masuk*\n".
+                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                 "Nilai :  Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."\n\n".
+                 "Ditransfer ke rek:\n\n".
+                "Bank     : ".$data['bank']."\n".
+                "Nama    : ".$data['transfer_ke']."\n".
+                "No. Rek : ".$data['no_rekening']."\n\n".
+                "==========================\n".
+                "Sisa Saldo Kas Besar : \n".
+                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                "Total Modal Investor : \n".
+                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                "Terima kasih 🙏🙏🙏\n";
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
     }

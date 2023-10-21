@@ -139,8 +139,8 @@
                         </div>
                         <div class="modal-body">
                             <select class="form-select form-select-lg" name="" id="formLainlain">
-                                <option value="masuk">Masuk</option>
-                                <option value="keluar">Keluar</option>
+                                <option value="masuk">Dana Masuk</option>
+                                <option value="keluar">Dana Keluar</option>
                             </select>
                         </div>
                         <div class="modal-footer">
