@@ -42,13 +42,13 @@
                 <th class="text-center align-middle">Nota Muat</th>
                 @endif
                 @if ($customer->tonase == 1)
-                <th class="text-center align-middle">Timbangan Muat</th>
+                <th class="text-center align-middle">Tonase Muat</th>
                 @endif
                 @if ($customer->tanggal_bongkar == 1)
                 <th class="text-center align-middle">Tanggal Bongkar</th>
                 @endif
                 <th class="text-center align-middle">Nota Bongkar</th>
-                <th class="text-center align-middle">Timbangan Bongkar</th>
+                <th class="text-center align-middle">Tonase Bongkar</th>
                 @if ($customer->selisih == 1)
                 <th class="text-center align-middle">Selisih (Ton)</th>
                 <th class="text-center align-middle">Selisih (%)</th>
