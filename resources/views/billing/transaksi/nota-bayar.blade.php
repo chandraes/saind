@@ -49,7 +49,6 @@
                 <th class="text-center align-middle">Selisih (%)</th>
                 @endif
                 <th class="text-center align-middle">Tagihan</th>
-                <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -196,9 +195,6 @@
                     @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
                     {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
                     @endif
-                </td>
-                <td class="text-center align-middle">
-                    <button class="btn btn-warning btn-block">Void</button>
                 </td>
             </tr>
             <script>

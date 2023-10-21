@@ -3,7 +3,12 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Nota Tagihan {{$customer->singkatan}}</u></h1>
+            <h1><u>Nota Tagihan</u></h1>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-12 text-center">
+            <h1><u>{{$customer->nama}} ({{$customer->singkatan}})</u></h1>
         </div>
     </div>
     @include('swal')
@@ -70,10 +75,6 @@
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
-                                <form action="{{route('transaksi.nota-bongkar.update', $d->id)}}" method="post"
-                                    id="masukForm{{$d->id}}">
-                                    @csrf
-                                    @method('PATCH')
                                     <div class="modal-body">
                                         <div class="row">
                                             <div class="col-4 mb-3">
@@ -117,17 +118,17 @@
                                             <div class="col-4 mb-3">
                                                 <label for="nota_muat" class="form-label">Nota Muat</label>
                                                 <input type="text" class="form-control" name="nota_muat" id="nota_muat"
-                                                    placeholder="" value="{{$d->nota_muat}}" required>
+                                                    placeholder="" value="{{$d->nota_muat}}" readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Timbangan Muat</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{$d->tonase}}" required>
+                                                    placeholder="" value="{{$d->tonase}}" readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Tanggal Muat</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{$d->tanggal_muat}}" required>
+                                                    placeholder="" value="{{$d->tanggal_muat}}" readonly>
                                             </div>
                                         </div>
                                         <hr>
@@ -137,7 +138,7 @@
                                                 <input type="text" class="form-control" name="nota_bongkar"
                                                     id="nota_bongkar" placeholder=""
                                                     value="{{$d->nota_bongkar ? $d->nota_bongkar : ''}}"
-                                                    {{$d->nota_bongkar ? 'readonly' : ''}} required>
+                                                    {{$d->nota_bongkar ? 'readonly' : ''}} readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="timbangan_bongkar" class="form-label">Timbangan
@@ -145,22 +146,15 @@
                                                 <input type="text" class="form-control" name="timbangan_bongkar"
                                                     id="timbangan_bongkar" placeholder=""
                                                     value="{{$d->timbangan_bongkar ? $d->timbangan_bongkar : ''}}"
-                                                    {{$d->timbangan_bongkar ? 'readonly' : ''}} required>
+                                                    {{$d->timbangan_bongkar ? 'readonly' : ''}} readonly>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Tanggal Bongkar</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{date('d M Y')}}" required>
+                                                    placeholder="" value="{{date('d M Y')}}" readonly>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Batal</button>
-                                        <button type="submit" class="btn btn-primary">Simpan</button>
-                                    </div>
-                                </form>
-
                             </div>
                         </div>
                     </div>
