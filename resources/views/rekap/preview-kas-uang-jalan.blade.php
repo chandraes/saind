@@ -16,6 +16,7 @@
                 <th class="text-center align-middle table-pdf text-pdf">Nomor Lambung</th>
                 <th class="text-center align-middle table-pdf text-pdf">Kas Uang Jalan</th>
                 <th class="text-center align-middle table-pdf text-pdf">Uang Jalan</th>
+                <th class="text-center align-middle table-pdf text-pdf">Kode Void</th>
                 <th class="text-center align-middle table-pdf text-pdf">Masuk</th>
                 <th class="text-center align-middle table-pdf text-pdf">Keluar</th>
                 <th class="text-center align-middle table-pdf text-pdf">Saldo</th>
@@ -29,6 +30,7 @@
                 <tr class="table-warning" style="background-color: yellow">
                     <td class="text-center align-middle table-pdf text-pdf" colspan="3" style="height: 20px">Saldo Bulan
                         {{$stringBulan}} {{$tahunSebelumnya}}</td>
+                    <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
@@ -49,6 +51,7 @@
                         $d->kode_kas_uang_jalan.sprintf("%02d",$d->nomor_kode_kas_uang_jalan) : ''}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nomor_uang_jalan ?
                             $d->kode_uang_jalan.sprintf("%02d",$d->nomor_uang_jalan) : ''}}</td>
+                    <td class="text-center align-middle table-pdf text-pdf text-danger">{{$d->kode_void ? $d->kode_void : ''}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->jenis_transaksi->id === 1 ?
                         number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
                     </td>
@@ -75,6 +78,7 @@
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
+                    <td class="table-pdf text-pdf"></td>
                 </tr>
                 <tr>
                     <td colspan="3" class="text-center align-middle table-pdf text-pdf"><strong>GRAND TOTAL</strong></td>
@@ -89,6 +93,7 @@
                             {{$data->last() ? number_format($data->last()->saldo, 0, ',', '.') : ''}}
                         </strong>
                     </td>
+                    <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>

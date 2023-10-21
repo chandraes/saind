@@ -75,6 +75,9 @@
                             <h5 class="modal-title" id="modalTitleId">Pilih Vendor</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
+                        <form action="{{ route('transaksi.nota-bayar') }}" method="post">
+                        @cs
+                        </form>
                         <div class="modal-body">
                             <div class="mb-3">
                                 <select class="form-select" name="" id="">
@@ -89,6 +92,7 @@
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                             <button type="button" class="btn btn-primary">Lanjutkan</button>
                         </div>
+                    </form>
                     </div>
                 </div>
             </div>

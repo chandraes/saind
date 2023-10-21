@@ -89,6 +89,7 @@
                 <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Kas Uang Jalan</th>
                 <th class="text-center align-middle">Uang Jalan</th>
+                <th class="text-center align-middle">Kode Void</th>
                 <th class="text-center align-middle">Masuk</th>
                 <th class="text-center align-middle">Keluar</th>
                 <th class="text-center align-middle">Saldo</th>
@@ -102,6 +103,7 @@
                 <tr class="table-warning">
                     <td class="text-center align-middle" colspan="3">Saldo Bulan
                         {{$stringBulan}} {{$tahunSebelumnya}}</td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -122,7 +124,8 @@
                         $d->kode_kas_uang_jalan.sprintf("%02d",$d->nomor_kode_kas_uang_jalan) : ''}}</td>
                     <td class="text-center align-middle">{{$d->nomor_uang_jalan ?
                         $d->kode_uang_jalan.sprintf("%02d",$d->nomor_uang_jalan) : ''}}</td>
-                    <td class="text-center align-middle">{{$d->jenis_transaksi->id === 1 ?
+                    <td class="text-center align-middle text-danger">{{$d->kode_void ? $d->kode_void : ''}}</td>
+                    <td class="text-center align-middle @if ($d->void == 1) text-danger @endif">{{$d->jenis_transaksi->id === 1 ?
                         number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
                     </td>
                     <td class="text-center align-middle text-danger">{{$d->jenis_transaksi->id === 2 ?
@@ -136,6 +139,7 @@
                 </tr>
                 @endforeach
                 <tr>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -163,6 +167,7 @@
                             {{$data->last() ? number_format($data->last()->saldo, 0, ',', '.') : ''}}
                         </strong>
                     </td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>

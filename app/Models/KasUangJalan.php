@@ -24,6 +24,8 @@ class KasUangJalan extends Model
         'transfer_ke',
         'bank',
         'no_rekening',
+        'void',
+        'kode_void',
     ];
 
     public function jenis_transaksi()

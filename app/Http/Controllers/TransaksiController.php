@@ -104,9 +104,14 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function nota_bayar()
+    public function nota_bayar($vendorId)
     {
+        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('void', 0)
+                            ->where('bayar', 0)->where('kuj.vendor_id', $vendorId)->get();
 
+        return view('billing.transaksi.bayar.index', [
+            'data' => $data,
+        ]);
     }
 
     public function tagihan_export(Customer $customer)
@@ -152,6 +157,8 @@ class TransaksiController extends Controller
         $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
 
         $store = KasUangJalan::create([
+            'void' => 1,
+            'kode_void' => "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan),
             'jenis_transaksi_id' => 1,
             'nominal_transaksi' => $transaksi->kas_uang_jalan->nominal_transaksi,
             'tanggal' => date('Y-m-d'),
