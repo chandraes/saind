@@ -161,6 +161,10 @@ class TransaksiController extends Controller
             'no_rekening' => $rek->nomor_rekening,
         ]);
 
+        $transaksi->kas_uang_jalan->vehicle->update([
+            'status' => 'aktif',
+        ]);
+
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
 
         $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
