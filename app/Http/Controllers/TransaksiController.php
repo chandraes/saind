@@ -170,8 +170,11 @@ class TransaksiController extends Controller
         $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Void Uang Jalan*\n".
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan)."\n".
+                    "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan)."\n\n".
                     "Nomor Lambung : ".$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
+                    "Vendor : ".$transaksi->kas_uang_jalan->vendor->nama."\n\n".
+                    "Tambang : ".$transaksi->kas_uang_jalan->customer->singkatan."\n".
+                    "Rute : ".$transaksi->kas_uang_jalan->rute->nama."\n\n".
                     "Alasan : ".$data['alasan']."\n".
                     "Nilai :  Rp. ".number_format($transaksi->kas_uang_jalan->nominal_transaksi, 0, ',', '.').",-\n\n".
                     "Ditransfer ke rek:\n\n".
