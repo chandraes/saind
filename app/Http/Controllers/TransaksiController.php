@@ -37,7 +37,7 @@ class TransaksiController extends Controller
     {
         $data = $request->validate([
             'nota_muat' => 'required',
-            'tonase' => 'required',
+            'tonase' => 'required|numeric',
         ]);
 
         $data['status'] = 2;

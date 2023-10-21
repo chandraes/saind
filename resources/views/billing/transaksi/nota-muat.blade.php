@@ -7,6 +7,18 @@
         </div>
     </div>
     @include('swal')
+    {{-- error validation show in swal --}}
+    @if ($errors->any())
+    <script>
+        Swal.fire({
+            title: 'Error!',
+            text: '{{$errors->first()}}',
+            icon: 'error',
+            confirmButtonText: 'Ok'
+        })
+    </script>
+    @endif
+    {{-- end error validation --}}
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
@@ -101,9 +113,10 @@
                                                     placeholder="" required>
                                             </div>
                                             <div class="col-4 mb-3">
-                                                <label for="tonase" class="form-label">Tonase</label>
+                                                <label for="tonase" class="form-label">Tonase </label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
                                                     placeholder="" required>
+                                                    <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tanggal_muat" class="form-label">Tanggal Muat</label>
