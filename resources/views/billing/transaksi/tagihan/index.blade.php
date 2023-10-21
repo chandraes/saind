@@ -251,9 +251,9 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
-                <td align="right" class="align-middle">
+                <td align="right" class="align-middle"> <strong>
                     {{number_format($data->sum('nominal_tagihan') - ($customer->pph == 1 ? $data->sum('nominal_tagihan')
-                    * 0.02 : 0) + ($customer->ppn == 1 ? $data->sum('nominal_tagihan') * 0.11 : 0), 0, ',', '.')}}
+                    * 0.02 : 0) + ($customer->ppn == 1 ? $data->sum('nominal_tagihan') * 0.11 : 0), 0, ',', '.')}}</strong>
                 </td>
             </tr>
         </tfoot>
