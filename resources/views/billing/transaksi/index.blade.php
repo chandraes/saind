@@ -8,6 +8,7 @@
     </div>
     @include('swal')
     <div class="row justify-content-left mt-5">
+        <h2>Transaksi</h2>
         @if (auth()->user()->role === 'admin')
 
         @endif
@@ -26,6 +27,9 @@
                         "(".$data->where('status', 2)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
         </div>
+    </div>
+    <div class="row justify-content-left mt-5">
+        <h2>Pembayaran</h2>
         <div class="col-md-4 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
                 <img src="{{asset('images/tagihan.svg')}}" alt="" width="100">
@@ -104,12 +108,17 @@
                         "(".$data->where('status', 3)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
         </div>
+    </div>
+    <div class="row mt-5 justify-content-left">
+        <h2>Cut Off</h2>
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice.svg')}}" alt="" width="100">
                 <h2>Invoice</h2>
             </a>
         </div>
+    </div>
+    <div class="row mt-5 justify-content-left">
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('billing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="100">
