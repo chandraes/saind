@@ -57,7 +57,6 @@ class FormKasKecilController extends Controller
         }
 
         $data['tanggal'] = date('Y-m-d');
-        $data['uraian'] = 'Permintaan Dana';
         $data['nominal_transaksi'] = 1000000;
         // make $rekening->nama_rekening max 15 char
         $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
