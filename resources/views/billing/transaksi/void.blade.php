@@ -64,7 +64,7 @@
                     <div class="mb-3">
                         <label for="alasan" class="form-label">Alasan Void</label>
                         <input type="text" class="form-control" name="alasan" id="alasan" aria-describedby="helpId"
-                            placeholder="" required>
+                            placeholder="" required maxlength="30" required>
                     </div>
                 </div>
             </div>
