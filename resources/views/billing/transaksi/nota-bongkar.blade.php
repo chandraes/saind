@@ -6,7 +6,18 @@
             <h1><u>Nota Bongkar</u></h1>
         </div>
     </div>
-   @include('swal')
+    @include('swal')
+    {{-- error validation show in swal --}}
+    @if ($errors->any())
+    <script>
+        Swal.fire({
+            title: 'Error!',
+            text: '{{$errors->first()}}',
+            icon: 'error',
+            confirmButtonText: 'Ok'
+        })
+    </script>
+    @endif
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
@@ -104,7 +115,7 @@
                                                     placeholder="" value="{{$d->nota_muat}}" readonly>
                                             </div>
                                             <div class="col-4 mb-3">
-                                                <label for="tonase" class="form-label">Timbangan Muat</label>
+                                                <label for="tonase" class="form-label">Tonase Muat</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
                                                     placeholder="" value="{{$d->tonase}}" readonly>
                                             </div>
@@ -122,9 +133,10 @@
                                                     placeholder="" value="" required>
                                             </div>
                                             <div class="col-4 mb-3">
-                                                <label for="timbangan_bongkar" class="form-label">Timbangan Bongkar</label>
+                                                <label for="timbangan_bongkar" class="form-label">Tonase Bongkar</label>
                                                 <input type="text" class="form-control" name="timbangan_bongkar" id="timbangan_bongkar"
                                                     placeholder="" value="" required>
+                                                    <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Tanggal Bongkar</label>

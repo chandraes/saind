@@ -181,8 +181,8 @@
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
                 @if ($customer->selisih == 1)
-                <td class="text-center align-middle">{{$d->tonase - $d->timbangan_bongkar}}</td>
-                <td class="text-center align-middle">{{($d->tonase - $d->timbangan_bongkar)*0.1}}</td>
+                <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}</td>
+                <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2, ',','.')}}</td>
                 @endif
                 <td class="text-center align-middle">
                     @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
@@ -194,7 +194,7 @@
                 <td class="text-center align-middle">
 
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
-                        Back
+                        Edit
                       </button>
 
                       <!-- Modal Body -->
@@ -275,6 +275,7 @@
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td align="right" class="align-middle">{{number_format($data->sum('nominal_tagihan'), 0, ',', '.')}}
                 </td>
+                <td></td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
@@ -286,6 +287,7 @@
                     {{number_format($data->sum('nominal_tagihan') * 0.11, 0, ',', '.')}}
                     @endif
                 </td>
+                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
@@ -300,6 +302,7 @@
                     0
                     @endif
                 </td>
+                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
@@ -311,6 +314,7 @@
                     {{number_format($data->sum('nominal_tagihan') - ($customer->pph == 1 ? $data->sum('nominal_tagihan')
                     * 0.02 : 0) + ($customer->ppn == 1 ? $data->sum('nominal_tagihan') * 0.11 : 0), 0, ',', '.')}}</strong>
                 </td>
+                <td></td>
             </tr>
         </tfoot>
     </table>

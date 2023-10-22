@@ -20,7 +20,10 @@ class TransaksiController extends Controller
     {
         $data = Transaksi::all();
         $customer = Customer::all();
-        $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->get()->unique('vendor_id');
+        $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                                    ->where('status', 3)
+                                    ->where('transaksis.void', 0)
+                                    ->get()->unique('vendor_id');
         // dd($bayar);
         return view('billing.transaksi.index', [
             'data' => $data,
@@ -66,7 +69,7 @@ class TransaksiController extends Controller
         // dd($request->all());
         $data = $request->validate([
             'nota_bongkar' => 'required',
-            'timbangan_bongkar' => 'required',
+            'timbangan_bongkar' => 'required|numeric',
         ]);
 
         $data['status'] = 3;
@@ -248,13 +251,29 @@ class TransaksiController extends Controller
             return redirect()->back()->with('error', 'Password salah!!');
         }
 
-        $transaksi->update([
-            'status' => 2,
-            'nota_bongkar' => null,
-            'timbangan_bongkar' => null,
+        return redirect()->route('transaksi.nota-tagihan.edit', $transaksi);
+    }
+
+    public function nota_tagihan_edit(Transaksi $transaksi)
+    {
+        return view('billing.transaksi.tagihan.edit', [
+            'd' => $transaksi,
+        ]);
+    }
+
+    public function nota_tagihan_update(Request $request, Transaksi $transaksi)
+    {
+
+        $data = $request->validate([
+            'tonase' => 'required|numeric',
+            'timbangan_bongkar' => 'required|numeric',
+            'nota_muat' => 'required',
+            'nota_bongkar' => 'required',
         ]);
 
-        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+        $transaksi->update($data);
+
+        return redirect()->route('transaksi.nota-tagihan', $transaksi->kas_uang_jalan->customer_id)->with('success', 'Berhasil menyimpan data!!');
     }
 
 }
