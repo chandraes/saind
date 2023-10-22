@@ -159,6 +159,30 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kasbon.svg')}}" alt="" width="100">
+                <h2>FORM KASBON</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/storing.svg')}}" alt="" width="100">
+                <h2>FORM STORING BBM</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/form-vendor.svg')}}" alt="" width="100">
+                <h2>FORM VENDOR</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/gaji.svg')}}" alt="" width="100">
+                <h2>FORM GAJI</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="100">
                 <h2>Dashboard</h2>

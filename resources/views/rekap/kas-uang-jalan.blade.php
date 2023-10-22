@@ -81,7 +81,7 @@
 </div>
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
-        <table class="table table-hover table-bordered" ">
+        <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
@@ -98,23 +98,23 @@
                 <th class="text-center align-middle">Cash/Transfer</th>
                 <th class="text-center align-middle">Bank</th>
             </tr>
+            <tr class="table-warning">
+                <td class="text-center align-middle" colspan="3">Saldo Bulan
+                    {{$stringBulan}} {{$tahunSebelumnya}}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-center align-middle">Rp. {{$dataSebelumnya ? number_format($dataSebelumnya->saldo,
+                    0, ',','.') : ''}}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
             </thead>
             <tbody>
-                <tr class="table-warning">
-                    <td class="text-center align-middle" colspan="3">Saldo Bulan
-                        {{$stringBulan}} {{$tahunSebelumnya}}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-center align-middle">Rp. {{$dataSebelumnya ? number_format($dataSebelumnya->saldo,
-                        0, ',','.') : ''}}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
@@ -153,6 +153,8 @@
                     <td></td>
                     <td></td>
                 </tr>
+            </tbody>
+            <tfoot>
                 <tr>
                     <td colspan="3" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
                     <td></td>
@@ -173,7 +175,7 @@
                     <td></td>
                     <td></td>
                 </tr>
-            </tbody>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -191,9 +193,23 @@
     }, 5000);
 
     $(document).ready(function() {
-        $('#karyawan-data').DataTable();
+        $('#rekapTable').DataTable({
+            "paging": false,
+            "ordering": false,
+            "searching": false,
+            "scrollCollapse": true,
+            "scrollY": "550px",
+            "fixedColumns": {
+                "leftColumns": 4,
+                "rightColumns": 2
+            },
+            "columnDefs": [{
+                "targets": [8, 9, 10, 11],
+                "searchable": false
+            }]
+        });
 
-    } );
+    });
 
 </script>
 @endpush
