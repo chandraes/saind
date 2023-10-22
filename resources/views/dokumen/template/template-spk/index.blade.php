@@ -74,11 +74,11 @@
 </div>
 @endsection
 @push('css')
-<link href="https://cdn.datatables.net/v/bs5/dt-1.13.5/datatables.min.css" rel="stylesheet">
+<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
-<script src="https://cdn.datatables.net/v/bs5/dt-1.13.5/datatables.min.js"></script>
+<script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
 
 

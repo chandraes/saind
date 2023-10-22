@@ -200,7 +200,7 @@
 
 @endsection
 @push('css')
-<link href="https://cdn.datatables.net/v/bs5/dt-1.13.5/datatables.min.css" rel="stylesheet">
+<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 {{--
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" /> --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
@@ -212,7 +212,7 @@
 @push('js')
 
 
-<script src="https://cdn.datatables.net/v/bs5/dt-1.13.5/datatables.min.js"></script>
+<script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 
 <script>
