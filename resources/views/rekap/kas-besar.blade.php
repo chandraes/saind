@@ -79,7 +79,7 @@
 </div>
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
-        <table class="table table-hover table-bordered" ">
+        <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
@@ -95,25 +95,20 @@
                 <th class="text-center align-middle">Bank</th>
                 <th class="text-center align-middle">Modal Investor</th>
             </tr>
+            <tr class="table-warning">
+
+                <td colspan="6" class="text-center align-middle">Saldo Bulan
+                    {{$stringBulan}} {{$tahunSebelumnya}}</td>
+                <td colspan="2"></td>
+                <td class="text-center align-middle">Rp. {{$dataSebelumnya ? number_format($dataSebelumnya->saldo,
+                    0, ',','.') : ''}}</td>
+                <td></td>
+                <td></td>
+                <td class="text-center align-middle">Rp. {{$dataSebelumnya ?
+                    number_format($dataSebelumnya->modal_investor_terakhir, 0,',','.') : ''}}</td>
+            </tr>
             </thead>
             <tbody>
-                <tr class="table-warning">
-                    <td></td>
-                    <td class="text-center align-middle">Saldo Bulan
-                        {{$stringBulan}} {{$tahunSebelumnya}}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-center align-middle">Rp. {{$dataSebelumnya ? number_format($dataSebelumnya->saldo,
-                        0, ',','.') : ''}}</td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-center align-middle">Rp. {{$dataSebelumnya ?
-                        number_format($dataSebelumnya->modal_investor_terakhir, 0,',','.') : ''}}</td>
-                </tr>
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
@@ -151,6 +146,8 @@
                     <td></td>
                     <td></td>
                 </tr>
+            </tbody>
+            <tfoot>
                 <tr>
                     <td colspan="4" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
                     <td></td>
@@ -173,7 +170,7 @@
                         </strong>
                     </td>
                 </tr>
-            </tbody>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -191,7 +188,20 @@
     }, 5000);
 
     $(document).ready(function() {
-        $('#karyawan-data').DataTable();
+        $('#rekapTable').DataTable({
+            "paging": false,
+            "ordering": false,
+            "scrollCollapse": true,
+            "scrollY": "500px",
+            "fixedColumns": {
+                "leftColumns": 4,
+                "rightColumns": 2
+            },
+            "columnDefs": [{
+                "targets": [8, 9, 10, 11],
+                "searchable": false
+            }]
+        });
 
     } );
 
