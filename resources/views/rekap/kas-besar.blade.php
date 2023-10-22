@@ -192,7 +192,7 @@
             "paging": false,
             "ordering": false,
             "scrollCollapse": true,
-            "scrollY": "90vh",
+            "scrollY": "70%",
             "fixedColumns": {
                 "leftColumns": 4,
                 "rightColumns": 2
