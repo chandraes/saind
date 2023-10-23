@@ -38,6 +38,8 @@
                 <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Vendor</th>
                 <th class="text-center align-middle">Rute</th>
+                <th class="text-center align-middle">Jarak</th>
+                <th class="text-center align-middle">Harga</th>
                 <th class="text-center align-middle">Tanggal Muat</th>
                 <th class="text-center align-middle">Nota Muat</th>
                 <th class="text-center align-middle">Tonase Muat</th>
@@ -156,6 +158,22 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
+                <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->jarak}}</td>
+                <td class="text-center align-middle">
+                    @if ($d->kas_uang_jalan->vendor->pembayaran == 'opname')
+                        @if ($d->kas_uang_jalan->rute->jarak > 50)
+                            1000
+                        @else
+                            500
+                        @endif
+                    @elseif($d->kas_uang_jalan->vendor->pembayaran == 'titipan')
+                        @if ($d->kas_uang_jalan->rute->jarak > 50)
+                            500
+                        @else
+                            250
+                        @endif
+                    @endif
+                </td>
                 <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
                 <td class="text-center align-middle">{{$d->tonase}}</td>
@@ -187,9 +205,9 @@
             @endforeach
         </tbody>
         <tfoot>
-            <tr>
+            <tr align="right">
                 <td class="text-center align-middle"
-                    colspan="11"></td>
+                    colspan="13"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
