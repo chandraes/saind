@@ -11,6 +11,7 @@
         $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
         $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
         $profit = $data->sum('profit');
+
     @endphp
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
@@ -63,6 +64,7 @@
                 @endif
                 <th class="text-center align-middle">Tagihan</th>
                 <th class="text-center align-middle">Profit</th>
+                <th class="text-center align-middle">Profit (%)</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
@@ -211,6 +213,9 @@
 
                 </td>
                 <td class="text-center align-middle">
+                    {{number_format((($d->profit/$d->nominal_bayar)*0.1), 2, ',','.')}}%
+                </td>
+                <td class="text-center align-middle">
 
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
                         Edit
@@ -296,6 +301,7 @@
                 </td>
                 <td>{{number_format($profit, 0, ',', '.')}}</td>
                 <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
@@ -307,6 +313,7 @@
                     {{number_format($ppn, 0, ',', '.')}}
 
                 </td>
+                <td></td>
                 <td></td>
                 <td></td>
             </tr>
@@ -323,6 +330,7 @@
                 </td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
@@ -333,6 +341,7 @@
                 <td align="right" class="align-middle"> <strong>
                     {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
+                <td></td>
                 <td></td>
                 <td></td>
             </tr>
