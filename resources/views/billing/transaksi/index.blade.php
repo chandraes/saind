@@ -73,7 +73,7 @@
 
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="modalTitleId">Pilih Vendor</h5>
@@ -83,7 +83,7 @@
                         @csrf
                         <div class="modal-body">
                             <div class="mb-3">
-                                <select class="form-select" name="vendor_id" id="">
+                                <select class="form-select" name="vendor_id" id="vendorSelect">
                                     <option selected>Select one</option>
                                     @foreach ($vendor as $v)
                                     <option value="{{$v->kas_uang_jalan->vendor->id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
@@ -101,7 +101,7 @@
             </div>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
+            <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="100">
                 <h2>Nota Bonus <span class="text-danger">{{$data->where('status', 3)->where('void', 0)->count() > 0 ?
                         "(".$data->where('status', 3)->where('void', 0)->count().")" : '' }}</span></h2>
@@ -133,3 +133,11 @@
     </div>
 </div>
 @endsection
+@push('js')
+    <script src="{{asset('js/select2.min.js')}}"></script>
+    <script>
+        $(document).ready(function() {
+            $('#vendorSelect').select2();
+        });
+    </script>
+@endpush

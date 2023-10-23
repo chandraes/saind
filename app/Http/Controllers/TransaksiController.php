@@ -85,9 +85,17 @@ class TransaksiController extends Controller
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
+
+
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
+
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
+
+        $data['nominal_bonus'] = $transaksi->tonase * $harga;
 
         $transaksi->update($data);
 
@@ -282,9 +290,13 @@ class TransaksiController extends Controller
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
+
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
+        $data['nominal_bonus'] = $data['tonase'] * $harga;
 
         $transaksi->update($data);
 
