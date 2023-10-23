@@ -12,6 +12,7 @@
         $pph = $vendor->pph == 1 && $data ? $data->sum('nominal_bayar') * 0.02 : 0;
         $total_uang_jalan = $data ? $data->sum('kas_uang_jalan.nominal_transaksi') : 0;
         $total_netto = $data ? $total_tagihan - $data->sum('kas_uang_jalan.nominal_transaksi') : 0;
+        $grant_total = $total_netto-$pph+$ppn;
     @endphp
     <div class="row justify-content-center">
         <div class="col-md-15 text-center">
@@ -259,7 +260,7 @@
                 <td></td>
                 <td>
                     <strong>
-                        {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}
+                        {{number_format($grant_total, 0, ',', '.')}}
                     </strong>
                 </td>
             </tr>
