@@ -11,6 +11,7 @@
         $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
         $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
         $profit = $data->sum('profit');
+        $profit_persen = ($data->sum('profit') / $data->sum('nominal_bayar')) * 100;
 
     @endphp
     <div class="row justify-content-center">
@@ -213,7 +214,7 @@
 
                 </td>
                 <td class="text-center align-middle">
-                    {{number_format((($d->profit/$d->nominal_bayar)*0.1), 2, ',','.')}}%
+                    {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
                 </td>
                 <td class="text-center align-middle">
 
@@ -300,7 +301,7 @@
                 <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
                 <td>{{number_format($profit, 0, ',', '.')}}</td>
-                <td></td>
+                <td>{{number_format($profit_persen, 2, ',', '.')}}%</td>
                 <td></td>
             </tr>
             <tr>
