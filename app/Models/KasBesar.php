@@ -26,6 +26,8 @@ class KasBesar extends Model
         'no_rekening',
         'modal_investor',
         'modal_investor_terakhir',
+        'kode_tagihan',
+        'nomor_kode_tagihan',
     ];
 
     public function jenis_transaksi()

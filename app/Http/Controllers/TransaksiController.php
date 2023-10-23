@@ -6,6 +6,8 @@ use App\Models\Transaksi;
 use App\Models\Customer;
 use App\Models\Vendor;
 use App\Models\KasUangJalan;
+use App\Models\InvoiceTagihan;
+use App\Models\InvoiceTagihanDetail;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use App\Models\Rekening;
@@ -274,6 +276,47 @@ class TransaksiController extends Controller
         $transaksi->update($data);
 
         return redirect()->route('transaksi.nota-tagihan', $transaksi->kas_uang_jalan->customer_id)->with('success', 'Berhasil menyimpan data!!');
+    }
+
+    public function nota_tagihan_lanjut(Request $request, Customer $customer)
+    {
+        $data = $request->validate([
+            'total_tagihan' => 'required|numeric',
+        ]);
+
+        $tagihan = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->select('transaksis.id')
+                            ->where('transaksis.status', 3)
+                            ->where('transaksis.void', 0)
+                            ->where('tagihan', 0)
+                            ->where('kuj.customer_id', $customer->id)->get();
+
+
+
+        $data['tanggal'] = date('Y-m-d');
+        // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
+        $data['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->max('no_invoice') + 1;
+        $data['customer_id'] = $customer->id;
+        $data['total_bayar'] = 0;
+        $data['sisa_tagihan'] = $data['total_tagihan'];
+        $data['lunas'] = 0;
+        $data['periode'] = "Periode ".$data['no_invoice'];
+
+        $invoice = InvoiceTagihan::create($data);
+
+        foreach ($tagihan as $key => $value) {
+            $value->update([
+                'tagihan' => 1,
+            ]);
+
+            InvoiceTagihanDetail::create([
+                'invoice_tagihan_id' => $invoice->id,
+                'transaksi_id' => $value->id,
+            ]);
+        }
+
+        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
+
     }
 
 }

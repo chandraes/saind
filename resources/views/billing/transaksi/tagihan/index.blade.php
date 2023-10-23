@@ -6,6 +6,11 @@
             <h1><u>Nota Tagihan</u></h1>
         </div>
     </div>
+    @php
+        $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
+        $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
+        $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
+    @endphp
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>{{$customer->nama}} ({{$customer->singkatan}})</u></h1>
@@ -26,7 +31,7 @@
     </div>
 </div>
 <div class="container-fluid mt-5 table-responsive ">
-    <table class="table table-bordered table-hover" id="">
+    <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
@@ -273,7 +278,7 @@
                     colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
-                <td align="right" class="align-middle">{{number_format($data->sum('nominal_tagihan'), 0, ',', '.')}}
+                <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
                 <td></td>
             </tr>
@@ -283,9 +288,9 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td align="right" class="align-middle">
-                    @if ($customer->ppn == 1)
-                    {{number_format($data->sum('nominal_tagihan') * 0.11, 0, ',', '.')}}
-                    @endif
+
+                    {{number_format($ppn, 0, ',', '.')}}
+
                 </td>
                 <td></td>
             </tr>
@@ -296,11 +301,9 @@
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
                 <td align="right" class="align-middle">
-                    @if ($customer->pph == 1)
-                    {{number_format($data->sum('nominal_tagihan') * 0.02, 0, ',', '.')}}
-                    @else
-                    0
-                    @endif
+
+                    {{number_format($pph, 0, ',', '.')}}
+
                 </td>
                 <td></td>
             </tr>
@@ -311,8 +314,7 @@
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td align="right" class="align-middle"> <strong>
-                    {{number_format($data->sum('nominal_tagihan') - ($customer->pph == 1 ? $data->sum('nominal_tagihan')
-                    * 0.02 : 0) + ($customer->ppn == 1 ? $data->sum('nominal_tagihan') * 0.11 : 0), 0, ',', '.')}}</strong>
+                    {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
             </tr>
@@ -321,7 +323,11 @@
 </div>
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-        <button class="btn btn-primary me-md-3 btn-lg" type="button">Lanjutkan</button>
+        <form action="{{route('transaksi.nota-tagihan.lanjut', $customer)}}" method="post" id="lanjutForm">
+            @csrf
+            <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}">
+            <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
+        </form>
         <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}">Export</a>
       </div>
 </div>
@@ -332,15 +338,43 @@
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
+<script src="{{asset('assets/js/dt-font.js')}}"></script>
+<script src="{{asset('assets/js/dt-pdf.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     // hide alert after 5 seconds
 
 
     $(document).ready(function() {
-        $('#data-table').DataTable();
+        var table = $('#notaTable').DataTable({
+            "paging": false,
+            "ordering": false,
+            "searching": false,
+            "scrollCollapse": true,
+            "scrollY": "550px",
+            "fixedColumns": {
+                "leftColumns": 3,
+                "rightColumns": 1
+            },
+        });
 
-    } );
+    });
+
+    $('#lanjutForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
+        });
 
     function toggleInputTambah() {
         var value = document.getElementById('vendor_id').value;

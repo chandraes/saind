@@ -112,7 +112,7 @@
     <div class="row mt-5 justify-content-left">
         <h2>Cut Off</h2>
         <div class="col-md-4 text-center mt-5">
-            <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
+            <a href="{{route('billing.transaksi.invoice.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice.svg')}}" alt="" width="100">
                 <h2>Invoice</h2>
             </a>

@@ -119,7 +119,9 @@
                         $d->kode_kas_kecil.sprintf("%02d",$d->nomor_kode_kas_kecil) : ''}}</td>
                     <td class="text-center align-middle">{{$d->nomor_kode_kas_uang_jalan ?
                         $d->kode_kas_uang_jalan.sprintf("%02d",$d->nomor_kode_kas_uang_jalan) : ''}}</td>
-                    <td class="text-center align-middle"></td>
+                    <td class="text-center align-middle">
+                        {{$d->nomor_kode_tagihan ? $d->kode_tagihan.sprintf("%02d",$d->nomor_kode_tagihan) : ''}}
+                    </td>
                     <td class="text-center align-middle">{{$d->jenis_transaksi->id === 1 ?
                         number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
                     </td>
