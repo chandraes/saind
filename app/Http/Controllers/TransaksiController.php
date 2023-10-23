@@ -110,6 +110,8 @@ class TransaksiController extends Controller
 
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
+        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'];
+
         $transaksi->update($data);
 
         $transaksi->kas_uang_jalan->vehicle->update([
@@ -297,6 +299,8 @@ class TransaksiController extends Controller
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
+
+        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'];
 
         $transaksi->update($data);
 

@@ -13,6 +13,18 @@ return new class extends Migration
     {
         Schema::create('invoice_bonuses', function (Blueprint $table) {
             $table->id();
+            $table->date('tanggal');
+            // index tanggal
+            $table->index('tanggal');
+            $table->string('periode');
+            $table->bigInteger('no_invoice');
+            $table->foreignId('sponsor_id')->constrained('sponsors')->cascadeOnDelete();
+            // unique combination of customer_id and no_invoice
+            $table->unique(['sponsor_id', 'no_invoice']);
+            $table->bigInteger('total_bonus');
+            $table->bigInteger('total_bayar')->default(0);
+            $table->bigInteger('sisa_bonus')->default(0);
+            $table->boolean('lunas')->default(false);
             $table->timestamps();
         });
     }

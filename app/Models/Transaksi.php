@@ -20,6 +20,7 @@ class Transaksi extends Model
         'nominal_tagihan',
         'nominal_bayar',
         'nominal_bonus',
+        'profit',
         'tagihan',
         'bayar',
         'bonus',

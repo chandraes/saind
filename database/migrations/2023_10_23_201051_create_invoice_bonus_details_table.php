@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('invoice_bonus_details', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('invoice_bonus_id')->constrained('invoice_bonuses')->cascadeOnDelete();
+            $table->foreignId('transaksi_id')->constrained('transaksis')->cascadeOnDelete();
             $table->timestamps();
         });
     }
