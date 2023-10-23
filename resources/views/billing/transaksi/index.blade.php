@@ -135,13 +135,6 @@
                     </div>
                 </div>
             </div>
-
-
-            <!-- Optional: Place to the bottom of scripts -->
-            <script>
-                const myModal = new bootstrap.Modal(document.getElementById('sponsorModal'), options)
-
-            </script>
         </div>
     </div>
     <div class="row mt-5 justify-content-left">

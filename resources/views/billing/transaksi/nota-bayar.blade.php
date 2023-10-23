@@ -30,6 +30,8 @@
                 <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Vendor</th>
                 <th class="text-center align-middle">Rute</th>
+                <th class="text-center align-middle">Jarak</th>
+                <th class="text-center align-middle">Harga</th>
                 @if ($customer->tanggal_muat == 1)
                 <th class="text-center align-middle">Tanggal Muat</th>
                 @endif

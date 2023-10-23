@@ -2,7 +2,7 @@
 @section('content')
 <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-13 text-center">
+        <div class="col-md-15 text-center">
             <h1><u>Nota Bayar</u></h1>
         </div>
     </div>
@@ -12,7 +12,7 @@
         $pph = $vendor->pph == 1 && $data ? $data->sum('nominal_bayar') * 0.02 : 0;
     @endphp
     <div class="row justify-content-center">
-        <div class="col-md-13 text-center">
+        <div class="col-md-15 text-center">
             <h1><u>{{$vendor->nama}}</u></h1>
         </div>
     </div>
@@ -40,6 +40,8 @@
                 <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Vendor</th>
                 <th class="text-center align-middle">Rute</th>
+                <th class="text-center align-middle">Jarak</th>
+                <th class="text-center align-middle">Harga</th>
                 <th class="text-center align-middle">Tanggal Muat</th>
                 <th class="text-center align-middle">Nota Muat</th>
                 <th class="text-center align-middle">Tonase Muat</th>
@@ -160,6 +162,15 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
+                <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->jarak}}</td>
+                <td class="text-center align-middle">
+                    @if ($d->kas_uang_jalan->vendor->pembayaran == 'opname')
+                    {{$d->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $d->kas_uang_jalan->rute_id)->where('customer_id', $d->kas_uang_jalan->customer_id)->first()->opname}}
+                    @elseif($d->kas_uang_jalan->vendor->pembayaran == 'titipan')
+                    {{$d->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $d->kas_uang_jalan->rute_id)->where('customer_id', $d->kas_uang_jalan->customer_id)->first()->titipan}}
+                    @endif
+
+                </td>
                 <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
                 <td class="text-center align-middle">{{$d->tonase}}</td>
@@ -196,14 +207,14 @@
         <tfoot>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="13"></td>
+                    colspan="15"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="13"></td>
+                    colspan="15"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td align="right" class="align-middle">
 
@@ -213,7 +224,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="13">
+                    colspan="15">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
                 <td align="right" class="align-middle">
@@ -224,7 +235,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="13">
+                    colspan="15">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td align="right" class="align-middle"> <strong>
