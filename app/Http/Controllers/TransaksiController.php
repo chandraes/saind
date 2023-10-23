@@ -27,12 +27,14 @@ class TransaksiController extends Controller
         $customer = Customer::all();
         $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                                     ->where('status', 3)
+                                    ->where('transaksis.tagihan', 0)
                                     ->where('transaksis.void', 0)
                                     ->get()->unique('vendor_id');
 
         $sponsor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                                     ->join('vendors as v', 'kuj.vendor_id', 'v.id')
                                     ->join('sponsors as s', 'v.sponsor_id', 's.id')
+                                    ->where('transaksis.bonus', 0)
                                     ->where('transaksis.status', 3)
                                     ->where('transaksis.void', 0)
                                     ->get()->unique('sponsor_id');
@@ -106,7 +108,7 @@ class TransaksiController extends Controller
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
 
-        $data['nominal_bonus'] = $transaksi->tonase * $harga;
+        $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
         $transaksi->update($data);
 
@@ -294,7 +296,7 @@ class TransaksiController extends Controller
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
-        $data['nominal_bonus'] = $data['tonase'] * $harga;
+        $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
         $transaksi->update($data);
 

@@ -102,8 +102,8 @@
         <div class="col-md-4 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sponsorModal">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="100">
-                <h2>Nota Bonus <span class="text-danger">{{$data->where('status', 3)->where('void', 0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('void', 0)->count().")" : '' }}</span></h2>
+                <h2>Nota Bonus <span class="text-danger">{{$data->where('status', 3)->where('bonus', 0)->where('void', 0)->count() > 0 ?
+                        "(".$data->where('status', 3)->where('bonus', 0)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
 
             <!-- Modal Body -->
@@ -122,7 +122,7 @@
                                     <select class="form-select" name="sponsor_id" id="vendorSelect">
                                         <option selected>Select one</option>
                                         @foreach ($sponsor as $v)
-                                        <option value="{{$v->kas_uang_jalan->vendor->id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
+                                        <option value="{{$v->kas_uang_jalan->vendor->sponsor->id}}">{{$v->kas_uang_jalan->vendor->sponsor->nama}}</option>
                                         @endforeach
                                     </select>
                                 </div>
