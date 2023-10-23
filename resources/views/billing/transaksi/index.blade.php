@@ -115,8 +115,7 @@
                             <h5 class="modal-title" id="modalTitleId">Pilih Sponsor</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{ route('transaksi.nota-bonus') }}" method="post">
-                            @csrf
+                        <form action="{{ route('transaksi.nota-bonus') }}" method="get">
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <select class="form-select" name="sponsor_id" id="vendorSelect">
