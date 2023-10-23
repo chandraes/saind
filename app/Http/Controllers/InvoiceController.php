@@ -48,7 +48,7 @@ class InvoiceController extends Controller
         {
             $data['nomor_kode_tagihan'] = 1;
         } else {
-            $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_deposit + 1;
+            $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
         }
 
         if ($last) {
@@ -90,5 +90,82 @@ class InvoiceController extends Controller
         }
 
         return redirect()->back()->with('success', 'Invoice berhasil di lunasi');
+    }
+
+    public function tagihan_cicil(Request $request, InvoiceTagihan $invoice)
+    {
+        $data = $request->validate([
+            'cicilan' => 'required'
+        ]);
+
+        $data['cicilan'] = str_replace('.', '', $data['cicilan']);
+
+          if($data['cicilan'] > $invoice->sisa_tagihan)
+        {
+            return redirect()->back()->with('error', 'Cicilan tidak boleh lebih besar dari sisa tagihan');
+        }
+
+        if ($data['cicilan'] == $invoice->sisa_tagihan) {
+            $data['lunas'] = 1;
+
+            $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+
+            if($lastNomor == null)
+            {
+                $data['nomor_kode_tagihan'] = 1;
+            } else {
+                $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
+            }
+
+        }
+
+        $data['total_bayar'] = $data['cicilan'] + $invoice->total_bayar;
+
+        $data['sisa_tagihan'] = $invoice->sisa_tagihan - $data['cicilan'];
+
+        $invoice->update($data);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $last = KasBesar::latest()->first();
+
+        if ($last) {
+            $data['uraian'] = 'Cicil '.$invoice->customer->singkatan.' - '.$invoice->periode;
+            $data['jenis_transaksi_id'] = 1;
+            $data['nominal_transaksi'] = $data['cicilan'];
+            $data['saldo'] = $last->saldo + $data['cicilan'];
+            $data['tanggal'] = date('Y-m-d');
+
+            $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+            $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
+            $data['no_rekening'] = $rekening->nomor_rekening;
+            $data['bank'] = $rekening->nama_bank;
+
+            $data['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+
+            $store = KasBesar::create($data);
+
+            $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                "*Invoice Tagihan Cicil*\n".
+                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                 "Tambang : ".$invoice->customer->singkatan."\n".
+                "Periode : ".$invoice->periode."\n\n".
+                 "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                 "Ditransfer ke rek:\n\n".
+                "Bank     : ".$data['bank']."\n".
+                "Nama    : ".$data['transfer_ke']."\n".
+                "No. Rek : ".$data['no_rekening']."\n\n".
+                "==========================\n".
+                "Sisa Saldo Kas Besar : \n".
+                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                "Total Modal Investor : \n".
+                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                "Terima kasih 🙏🙏🙏\n";
+            $send = new StarSender($group->nama_group, $pesan);
+            $res = $send->sendGroup();
+        }
+
+        return redirect()->back()->with('success', 'Invoice berhasil di cicil');
     }
 }
