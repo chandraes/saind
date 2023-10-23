@@ -2,7 +2,7 @@
 @section('content')
 <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
+        <div class="col-md-13 text-center">
             <h1><u>Nota Bayar</u></h1>
         </div>
     </div>
@@ -12,8 +12,8 @@
         $pph = $vendor->pph == 1 && $data ? $data->sum('nominal_bayar') * 0.02 : 0;
     @endphp
     <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            <h1><u>{{$customer->nama}} ({{$customer->singkatan}})</u></h1>
+        <div class="col-md-13 text-center">
+            <h1><u>{{$vendor->nama}}</u></h1>
         </div>
     </div>
     @include('swal')
@@ -40,26 +40,15 @@
                 <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Vendor</th>
                 <th class="text-center align-middle">Rute</th>
-                @if ($customer->tanggal_muat == 1)
                 <th class="text-center align-middle">Tanggal Muat</th>
-                @endif
-                @if ($customer->nota_muat == 1)
                 <th class="text-center align-middle">Nota Muat</th>
-                @endif
-                @if ($customer->tonase == 1)
                 <th class="text-center align-middle">Tonase Muat</th>
-                @endif
-                @if ($customer->tanggal_bongkar == 1)
                 <th class="text-center align-middle">Tanggal Bongkar</th>
-                @endif
                 <th class="text-center align-middle">Nota Bongkar</th>
                 <th class="text-center align-middle">Tonase Bongkar</th>
-                @if ($customer->selisih == 1)
                 <th class="text-center align-middle">Selisih (Ton)</th>
                 <th class="text-center align-middle">Selisih (%)</th>
-                @endif
                 <th class="text-center align-middle">Tagihan</th>
-                <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -171,32 +160,18 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
-                @if ($customer->tanggal_muat == 1)
                 <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
-                @endif
-                @if ($customer->nota_muat == 1)
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
-                @endif
-                @if ($customer->tonase == 1)
                 <td class="text-center align-middle">{{$d->tonase}}</td>
-                @endif
-                @if ($customer->tanggal_bongkar == 1)
                 <td class="text-center align-middle">{{$d->tanggal_bongkar}}</td>
-                @endif
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
-                @if ($customer->selisih == 1)
                 <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}</td>
                 <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2, ',','.')}}</td>
-                @endif
                 <td class="text-center align-middle">
-                    @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
                     {{number_format(($d->nominal_bayar), 0, ',', '.')}}
-                    @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
-                    {{number_format(($d->nominal_bayar), 0, ',', '.')}}
-                    @endif
                 </td>
-                <td class="text-center align-middle">
+                {{-- <td class="text-center align-middle">
 
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
                         Edit
@@ -250,7 +225,7 @@
                             </div>
                         </div>
                     </div>
-                </td>
+                </td> --}}
             </tr>
             <script>
                 $('#masukForm{{$d->id}}').submit(function(e){
@@ -275,29 +250,24 @@
         <tfoot>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
+                    colspan="13"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
-                <td></td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
+                    colspan="13"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td align="right" class="align-middle">
 
                     {{number_format($ppn, 0, ',', '.')}}
 
                 </td>
-                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                    colspan="13">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
                 <td align="right" class="align-middle">
@@ -305,30 +275,24 @@
                     {{number_format($pph, 0, ',', '.')}}
 
                 </td>
-                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                    colspan="13">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td align="right" class="align-middle"> <strong>
                     {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
-                <td></td>
             </tr>
         </tfoot>
     </table>
 </div>
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-        <form action="{{route('transaksi.nota-tagihan.lanjut', $customer)}}" method="post" id="lanjutForm">
-            @csrf
-            <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}">
+
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
-        </form>
-        <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}">Export</a>
+        <a class="btn btn-success btn-lg" href="#">Export</a>
       </div>
 </div>
 

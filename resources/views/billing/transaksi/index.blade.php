@@ -86,7 +86,7 @@
                                 <select class="form-select" name="vendor_id" id="">
                                     <option selected>Select one</option>
                                     @foreach ($vendor as $v)
-                                    <option value="{{$v->id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
+                                    <option value="{{$v->kas_uang_jalan->vendor->id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
                                     @endforeach
                                 </select>
                             </div>
