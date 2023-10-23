@@ -10,6 +10,8 @@
         $total_tagihan = $data ? $data->sum('nominal_bayar') : 0;
         $ppn = $vendor->ppn == 1 && $data ? $data->sum('nominal_bayar') * 0.11 : 0;
         $pph = $vendor->pph == 1 && $data ? $data->sum('nominal_bayar') * 0.02 : 0;
+        $total_uang_jalan = $data ? $data->sum('kas_uang_jalan.nominal_transaksi') : 0;
+        $total_netto = $data ? $total_tagihan - $data->sum('kas_uang_jalan.nominal_transaksi') : 0;
     @endphp
     <div class="row justify-content-center">
         <div class="col-md-15 text-center">
@@ -50,7 +52,9 @@
                 <th class="text-center align-middle">Tonase Bongkar</th>
                 <th class="text-center align-middle">Selisih (Ton)</th>
                 <th class="text-center align-middle">Selisih (%)</th>
-                <th class="text-center align-middle">Tagihan</th>
+                <th class="text-center align-middle">Bruto</th>
+                <th class="text-center align-middle">Uang Jalan</th>
+                <th class="text-center align-middle">Netto</th>
             </tr>
         </thead>
         <tbody>
@@ -182,6 +186,12 @@
                 <td class="text-center align-middle">
                     {{number_format(($d->nominal_bayar), 0, ',', '.')}}
                 </td>
+                <td class="text-center align-middle">
+                    {{number_format(($d->kas_uang_jalan->nominal_transaksi), 0, ',', '.')}}
+                </td>
+                <td class="text-center align-middle">
+                    {{number_format(($d->nominal_bayar-$d->kas_uang_jalan->nominal_transaksi), 0, ',', '.')}}
+                </td>
 
             </tr>
             <script>
@@ -211,6 +221,12 @@
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
+                <td>
+                    {{number_format($total_uang_jalan, 0, ',', '.')}}
+                </td>
+                <td>
+                    {{number_format($total_netto, 0, ',', '.')}}
+                </td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
@@ -221,6 +237,8 @@
                     {{number_format($ppn, 0, ',', '.')}}
 
                 </td>
+                <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
@@ -232,6 +250,8 @@
                     {{number_format($pph, 0, ',', '.')}}
 
                 </td>
+                <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
@@ -241,6 +261,8 @@
                 <td align="right" class="align-middle"> <strong>
                     {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
+                <td></td>
+                <td></td>
             </tr>
         </tfoot>
     </table>
