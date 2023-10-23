@@ -101,11 +101,48 @@
             </div>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sponsorModal">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="100">
                 <h2>Nota Bonus <span class="text-danger">{{$data->where('status', 3)->where('void', 0)->count() > 0 ?
                         "(".$data->where('status', 3)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
+
+            <!-- Modal Body -->
+            <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+            <div class="modal fade" id="sponsorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitleId">Pilih Sponsor</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ route('transaksi.nota-bonus') }}" method="post">
+                            @csrf
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <select class="form-select" name="sponsor_id" id="vendorSelect">
+                                        <option selected>Select one</option>
+                                        @foreach ($sponsor as $v)
+                                        <option value="{{$v->kas_uang_jalan->vendor->id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Optional: Place to the bottom of scripts -->
+            <script>
+                const myModal = new bootstrap.Modal(document.getElementById('sponsorModal'), options)
+
+            </script>
         </div>
     </div>
     <div class="row mt-5 justify-content-left">

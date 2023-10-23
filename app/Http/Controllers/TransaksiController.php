@@ -8,6 +8,7 @@ use App\Models\Vendor;
 use App\Models\KasUangJalan;
 use App\Models\InvoiceTagihan;
 use App\Models\InvoiceTagihanDetail;
+use App\Models\Sponsor;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use App\Models\Rekening;
@@ -26,11 +27,19 @@ class TransaksiController extends Controller
                                     ->where('status', 3)
                                     ->where('transaksis.void', 0)
                                     ->get()->unique('vendor_id');
+
+        $sponsor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                                    ->join('vendors as v', 'kuj.vendor_id', 'v.id')
+                                    ->join('sponsors as s', 'v.sponsor_id', 's.id')
+                                    ->where('transaksis.status', 3)
+                                    ->where('transaksis.void', 0)
+                                    ->get()->unique('sponsor_id');
         // dd($bayar);
         return view('billing.transaksi.index', [
             'data' => $data,
             'customer' => $customer,
             'vendor' => $vendor,
+            'sponsor' => $sponsor,
         ]);
     }
 
@@ -342,6 +351,25 @@ class TransaksiController extends Controller
 
         return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
 
+    }
+
+    public function nota_bonus(Request $request)
+    {
+        $sponsorId = $request->sponsor_id;
+        $sponsor = Sponsor::find($sponsorId);
+        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                            ->join('vendors as v', 'kuj.vendor_id', 'v.id')
+                            ->join('sponsors as s', 'v.sponsor_id', 's.id')
+                            ->where('transaksis.status', 3)->where('transaksis.void', 0)
+                            ->where('bayar', 0)
+                            ->where('s.id', $sponsorId)
+                            ->select('transaksis.*')
+                            ->get();
+
+        return view('billing.transaksi.bonus.index', [
+            'data' => $data,
+            'sponsor' => $sponsor,
+        ]);
     }
 
 }
