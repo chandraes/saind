@@ -162,7 +162,7 @@
                 <td class="text-center align-middle">
                     @if ($d->kas_uang_jalan->vendor->pembayaran == 'opname')
                         @if ($d->kas_uang_jalan->rute->jarak > 50)
-                            1000
+                            1.000
                         @else
                             500
                         @endif
