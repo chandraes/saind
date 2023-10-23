@@ -405,7 +405,7 @@ class TransaksiController extends Controller
                             ->join('vendors as v', 'kuj.vendor_id', 'v.id')
                             ->join('sponsors as s', 'v.sponsor_id', 's.id')
                             ->where('transaksis.status', 3)->where('transaksis.void', 0)
-                            ->where('bayar', 0)
+                            ->where('bonus', 0)
                             ->where('s.id', $sponsorId)
                             ->select('transaksis.*')
                             ->get();
