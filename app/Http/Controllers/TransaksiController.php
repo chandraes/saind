@@ -84,9 +84,9 @@ class TransaksiController extends Controller
         }
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_opname;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->hk_titipan;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
         }
 
         $transaksi->update($data);
@@ -111,13 +111,16 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function nota_bayar($vendorId)
+    public function nota_bayar(Request $request)
     {
+        $vendorId = $request->vendor_id;
+        $vendor = Vendor::find($vendorId);
         $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
                             ->where('bayar', 0)->where('kuj.vendor_id', $vendorId)->get();
 
         return view('billing.transaksi.bayar.index', [
             'data' => $data,
+            'vendor' => $vendor,
         ]);
     }
 
@@ -154,8 +157,6 @@ class TransaksiController extends Controller
         $data = $request->validate([
             'alasan' => 'required',
         ]);
-
-        // dd($data);
 
         $data['void'] = 1;
 
@@ -272,6 +273,18 @@ class TransaksiController extends Controller
             'nota_muat' => 'required',
             'nota_bongkar' => 'required',
         ]);
+
+        if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
+            $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+        } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
+            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+        }
+
+        if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+        } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
+        }
 
         $transaksi->update($data);
 

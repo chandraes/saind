@@ -81,10 +81,9 @@
                         </div>
                         <form action="{{ route('transaksi.nota-bayar') }}" method="post">
                         @csrf
-                        </form>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <select class="form-select" name="" id="">
+                                <select class="form-select" name="vendor_id" id="">
                                     <option selected>Select one</option>
                                     @foreach ($vendor as $v)
                                     <option value="{{$v->id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
@@ -94,7 +93,7 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            <button type="button" class="btn btn-primary">Lanjutkan</button>
+                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
                         </div>
                     </form>
                     </div>
