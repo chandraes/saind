@@ -232,37 +232,36 @@
                 <td class="text-center align-middle"
                     colspan="15"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
-                <td align="right" class="align-middle">
-
+                <td align="right" class="align-middle"></td>
+                <td></td>
+                <td>
                     {{number_format($ppn, 0, ',', '.')}}
-
                 </td>
-                <td></td>
-                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
                     colspan="15">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
-                <td align="right" class="align-middle">
-
+                <td align="right" class="align-middle"></td>
+                <td></td>
+                <td>
                     {{number_format($pph, 0, ',', '.')}}
-
                 </td>
-                <td></td>
-                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
                     colspan="15">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
-                <td align="right" class="align-middle"> <strong>
-                    {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
+                <td align="right" class="align-middle">
                 </td>
                 <td></td>
-                <td></td>
+                <td>
+                    <strong>
+                        {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}
+                    </strong>
+                </td>
             </tr>
         </tfoot>
     </table>
