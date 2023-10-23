@@ -8,6 +8,8 @@ use App\Models\Vendor;
 use App\Models\KasUangJalan;
 use App\Models\InvoiceTagihan;
 use App\Models\InvoiceTagihanDetail;
+use App\Models\InvoiceBayar;
+use App\Models\InvoiceBayarDetail;
 use App\Models\Sponsor;
 use App\Models\GroupWa;
 use App\Services\StarSender;
@@ -125,19 +127,6 @@ class TransaksiController extends Controller
         return view('billing.transaksi.tagihan.index', [
             'data' => $data,
             'customer' => $customer,
-        ]);
-    }
-
-    public function nota_bayar(Request $request)
-    {
-        $vendorId = $request->vendor_id;
-        $vendor = Vendor::find($vendorId);
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
-                            ->where('bayar', 0)->where('kuj.vendor_id', $vendorId)->get();
-
-        return view('billing.transaksi.bayar.index', [
-            'data' => $data,
-            'vendor' => $vendor,
         ]);
     }
 
@@ -350,6 +339,59 @@ class TransaksiController extends Controller
         }
 
         return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
+
+    }
+
+    public function nota_bayar(Request $request)
+    {
+        $vendorId = $request->vendor_id;
+        $vendor = Vendor::find($vendorId);
+        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
+                            ->where('bayar', 0)->where('kuj.vendor_id', $vendorId)->get();
+
+        return view('billing.transaksi.bayar.index', [
+            'data' => $data,
+            'vendor' => $vendor,
+        ]);
+    }
+
+    public function nota_bayar_lanjut(Request $request, Vendor $vendor)
+    {
+        $data = $request->validate([
+            'total_bayar' => 'required|numeric',
+        ]);
+        // dd($data);
+        $bayar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->select('transaksis.id')
+                            ->where('transaksis.status', 3)
+                            ->where('transaksis.void', 0)
+                            ->where('bayar', 0)
+                            ->where('kuj.vendor_id', $vendor->id)->get();
+
+        $data['tanggal'] = date('Y-m-d');
+        // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
+        $data['no_invoice'] = InvoiceBayar::where('vendor_id', $vendor->id)->max('no_invoice') + 1;
+        $data['vendor_id'] = $vendor->id;
+        $data['total_bayar'] = $data['total_bayar'];
+        $data['sisa_bayar'] = $data['total_bayar'];
+        $data['bayar'] = 0;
+        $data['lunas'] = 0;
+        $data['periode'] = "Periode ".$data['no_invoice'];
+
+        $invoice = InvoiceBayar::create($data);
+
+        foreach ($bayar as $key => $value) {
+            $value->update([
+                'bayar' => 1,
+            ]);
+
+            InvoiceBayarDetail::create([
+                'invoice_bayar_id' => $invoice->id,
+                'transaksi_id' => $value->id,
+            ]);
+        }
+
+        return redirect()->route('transaksi.nota-bayar', ['vendor_id' =>$vendor])->with('success', 'Berhasil menyimpan data!!');
 
     }
 

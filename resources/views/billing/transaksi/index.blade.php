@@ -67,8 +67,8 @@
         <div class="col-md-4 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
                 <img src="{{asset('images/bayar.svg')}}" alt="" width="100">
-                <h2>Nota Bayar <span class="text-danger">{{$data->where('status', 3)->where('void', 0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('void', 0)->count().")" : '' }}</span></h2>
+                <h2>Nota Bayar <span class="text-danger">{{$data->where('status', 3)->where('bayar', 0)->where('void', 0)->count() > 0 ?
+                        "(".$data->where('status', 3)->where('bayar', 0)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
 
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
@@ -79,8 +79,7 @@
                             <h5 class="modal-title" id="modalTitleId">Pilih Vendor</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{ route('transaksi.nota-bayar') }}" method="post">
-                        @csrf
+                        <form action="{{ route('transaksi.nota-bayar') }}" method="get">
                         <div class="modal-body">
                             <div class="mb-3">
                                 <select class="form-select" name="vendor_id" id="vendorSelect">

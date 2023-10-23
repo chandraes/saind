@@ -171,61 +171,7 @@
                 <td class="text-center align-middle">
                     {{number_format(($d->nominal_bayar), 0, ',', '.')}}
                 </td>
-                {{-- <td class="text-center align-middle">
 
-                    <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
-                        Edit
-                      </button>
-
-                      <!-- Modal Body -->
-                      <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-                      <div class="modal fade" id="backModal-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="Title-{{$d->id}}" aria-hidden="true">
-                          <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                              <div class="modal-content">
-                                  <div class="modal-header">
-                                      <h5 class="modal-title" id="Title-{{$d->id}}">Masukkan Password</h5>
-                                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                  </div>
-                                  <form action="{{route('transaksi.back-tagihan', $d)}}" method="post">
-                                      @csrf
-                                  <div class="modal-body">
-                                      <input type="password" class="form-control" id="password" name="password"
-                                          placeholder="Password" aria-label="Password" aria-describedby="password"
-                                          required>
-                                  </div>
-                                  <div class="modal-footer">
-                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                                      <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                                  </div>
-                              </form>
-                              </div>
-                          </div>
-                      </div>
-
-                    <button class="btn btn-warning btn-block m-2" type="button" data-bs-toggle="modal" data-bs-target="#modalVoid-{{$d->id}}">Void</button>
-
-                    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-                    <div class="modal fade" id="modalVoid-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">Masukan Password </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <form action="{{route('transaksi.void-masuk', $d->id)}}" method="post">
-                                    @csrf
-                                <div class="modal-body">
-                                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" aria-label="Password" aria-describedby="password" required>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    <button type="submit" class="btn btn-primary">Save</button>
-                                </div>
-                            </form>
-                            </div>
-                        </div>
-                    </div>
-                </td> --}}
             </tr>
             <script>
                 $('#masukForm{{$d->id}}').submit(function(e){
@@ -291,7 +237,11 @@
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
 
+        <form action="{{route('transaksi.nota-bayar.lanjut', $vendor)}}" method="post" id="lanjutForm">
+            @csrf
+            <input type="hidden" name="total_bayar" value="{{$total_tagihan-$pph+$ppn}}">
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
+        </form>
         <a class="btn btn-success btn-lg" href="#">Export</a>
       </div>
 </div>

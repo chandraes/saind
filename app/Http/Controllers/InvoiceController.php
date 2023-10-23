@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvoiceTagihan;
+use App\Models\InvoiceBayar;
 use App\Models\KasBesar;
 use App\Models\Rekening;
 use App\Models\GroupWa;
@@ -14,9 +15,11 @@ class InvoiceController extends Controller
     public function index()
     {
         $invoice = InvoiceTagihan::where('lunas', 0)->count();
+        $bayar = InvoiceBayar::where('lunas', 0)->count();
 
         return view('billing.transaksi.invoice.index', [
-            'invoice' => $invoice
+            'invoice' => $invoice,
+            'bayar' => $bayar
         ]);
     }
 
@@ -167,5 +170,14 @@ class InvoiceController extends Controller
         }
 
         return redirect()->back()->with('success', 'Invoice berhasil di cicil');
+    }
+
+    public function invoice_bayar()
+    {
+        $invoice = InvoiceBayar::where('lunas', 0)->get();
+
+        return view('billing.transaksi.invoice.invoice-bayar', [
+            'data' => $invoice
+        ]);
     }
 }

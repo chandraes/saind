@@ -19,9 +19,9 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
+            <a href="{{route('invoice.bayar.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-bayar.svg')}}" alt="" width="100">
-                <h2>BAYAR</h2>
+                <h2>BAYAR <span class="text-danger">{{$bayar > 0 ? "(".$bayar.")" : ''}}</h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
