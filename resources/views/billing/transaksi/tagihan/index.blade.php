@@ -40,6 +40,8 @@
                 <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Vendor</th>
                 <th class="text-center align-middle">Rute</th>
+                <th class="text-center align-middle">Jarak (Km)</th>
+                <th class="text-center align-middle">Harga</th>
                 @if ($customer->tanggal_muat == 1)
                 <th class="text-center align-middle">Tanggal Muat</th>
                 @endif
@@ -171,6 +173,12 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
+                <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->jarak}}</td>
+                <td class="text-center align-middle">
+                    {{$d->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $d->kas_uang_jalan->customer_id)
+                                                                    ->where('rute_id', $d->kas_uang_jalan->rute_id)
+                                                                    ->first()->harga_tagihan}}
+                </td>
                 @if ($customer->tanggal_muat == 1)
                 <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
                 @endif
@@ -275,7 +283,7 @@
         <tfoot>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
@@ -284,7 +292,7 @@
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td align="right" class="align-middle">
@@ -296,7 +304,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
@@ -309,7 +317,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
