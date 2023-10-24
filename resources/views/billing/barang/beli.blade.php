@@ -7,17 +7,24 @@
         </div>
     </div>
     <div class="row justify-content-left mt-3 mb-3">
-        <div class="col-3">
-            <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#keranjangBelanja">
-                <i class="fa fa-shopping-cart"> Keranjang </i> ({{$keranjang->count()}})
-            </a>
-            @include('billing.barang.keranjang')
-        </div>
-        <div class="col-3">
-            {{-- empty shopping chart button--}}
-
-            
-
+        <div class="col-5">
+            <table>
+                <tr>
+                    <td>
+                        <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#keranjangBelanja" >
+                            <i class="fa fa-shopping-cart"> Keranjang </i> ({{$keranjang->count()}})
+                        </a>
+                        @include('billing.barang.keranjang')
+                    </td>
+                    <td>
+                        <form action="{{route('billing.form-barang.keranjang-empty')}}" method="get" id="kosongKeranjang">
+                            <button class="btn btn-danger" type="submit">
+                                <i class="fa fa-trash"> Kosongkan Keranjang </i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            </table>
         </div>
     </div>
     @include('swal')
@@ -75,6 +82,38 @@
     <script>
         $(function() {
              $('#harga_satuan').maskMoney();
+        });
+
+        $('#kosongKeranjang').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
+        });
+
+        $('#beliBarang').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
         });
 
         // funGetBarang

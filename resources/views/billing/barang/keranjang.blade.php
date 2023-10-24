@@ -24,7 +24,7 @@
                             <td class="text-center align-middle">{{$b->barang->nama}}</td>
                             <td class="text-center align-middle">{{$b->jumlah}}</td>
                             <td class="text-center align-middle">{{number_format($b->harga_satuan, 0, ',','.')}}</td>
-                            <td class="text-center align-middle">{{number_format($b->jumlah*$b->harga_satuan, 0, ',','.')}}</td>
+                            <td class="text-center align-middle">{{number_format($b->total, 0, ',','.')}}</td>
                             <td class="text-center align-middle">
                                 <form action="{{route('billing.form-barang.keranjang-destroy', $b->id)}}" method="post">
                                     @csrf
@@ -35,11 +35,23 @@
                         </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td class="text-center align-middle"></td>
+                            <td class="text-center align-middle"></td>
+                            <td class="text-center align-middle"></td>
+                            <td class="text-center align-middle"></td>
+                            <td class="text-center align-middle">{{count($keranjang) > 0 ? number_format($keranjang->sum('total'), 0, ',','.') : ''}}</td>
+                            <td class="text-center align-middle"></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary">Beli</button>
+                <form action="{{route('billing.form-barang.barang-store')}}" method="get" id="beliBarang">
+                    <button type="submit" class="btn btn-primary">Beli Barang</button>
+                </form>
             </div>
         </div>
     </div>
