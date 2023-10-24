@@ -84,6 +84,7 @@
                     <td colspan="3" class="text-center align-middle table-pdf text-pdf"><strong>GRAND TOTAL</strong></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
+                    <td class="table-pdf text-pdf"></td>
                     <td class="text-center align-middle table-pdf text-pdf"><strong>{{number_format($data->where('jenis_transaksi_id',
                             1)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
                     <td class="text-center align-middle table-pdf text-pdf text-danger"><strong>{{number_format($data->where('jenis_transaksi_id',
@@ -93,7 +94,6 @@
                             {{$data->last() ? number_format($data->last()->saldo, 0, ',', '.') : ''}}
                         </strong>
                     </td>
-                    <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>
                     <td class="table-pdf text-pdf"></td>

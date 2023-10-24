@@ -15,7 +15,7 @@ class Barang extends Model
         'stok',
     ];
 
-    public function kategoriBarang()
+    public function kategori_barang()
     {
         return $this->belongsTo(KategoriBarang::class);
     }

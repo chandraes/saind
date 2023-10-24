@@ -14,10 +14,9 @@ class KategoriBarangController extends Controller
     public function index()
     {
         $kategori = KategoriBarang::all();
-        $barang = Barang::all()->groupBy('kategori_barang_id');
+
         return view('database.barang.index', [
             'kategori' => $kategori,
-            'barang' => $barang,
         ]);
     }
 

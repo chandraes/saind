@@ -27,7 +27,7 @@ class TransaksiController extends Controller
         $customer = Customer::all();
         $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                                     ->where('status', 3)
-                                    ->where('transaksis.tagihan', 0)
+                                    ->where('transaksis.bayar', 0)
                                     ->where('transaksis.void', 0)
                                     ->get()->unique('vendor_id');
 
