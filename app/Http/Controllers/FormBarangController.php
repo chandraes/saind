@@ -7,6 +7,8 @@ use App\Models\Barang;
 use App\Models\KeranjangBelanja;
 use App\Models\RekapBarang;
 use App\Models\KasBesar;
+use App\Models\Rekening;
+use App\Models\GroupWa;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
 
@@ -73,6 +75,10 @@ class FormBarangController extends Controller
 
         $keranjang = KeranjangBelanja::where('user_id', $user_id)->get();
 
+        if ($keranjang->count() == 0) {
+            return redirect()->route('billing.form-barang.beli')->with('error', 'Keranjang kosong');
+        }
+
         $last = KasBesar::latest()->first();
 
         $total = $keranjang->sum('total');
@@ -82,12 +88,15 @@ class FormBarangController extends Controller
         }
 
 
-        $data['tanggal'] = now();
-        $data['jenis_transaksi_id'] = 2;
-        $data['nominal_transaksi'] = $total;
-        $data['saldo'] = $last->saldo - $total;
-        $data['modal_investor_terakhir'] = $last->modal_investor_terakhir;
-        $data['uraian'] = 'Pembelian barang';
+        $kas['tanggal'] = now();
+        $kas['jenis_transaksi_id'] = 2;
+        $kas['nominal_transaksi'] = $total;
+        $kas['saldo'] = $last->saldo - $total;
+        $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+        $kas['uraian'] = 'Pembelian barang';
+        $kas['transfer_ke'] = 'Toko';
+        $kas['bank'] = '-';
+        $kas['no_rekening'] = '-';
 
         foreach ($keranjang as $k) {
             $data = [
@@ -100,6 +109,7 @@ class FormBarangController extends Controller
                 'total' => $k->total,
             ];
 
+
             // increment stok barang
             $barang = Barang::find($k->barang_id);
             $barang->stok += $k->jumlah;
@@ -108,9 +118,28 @@ class FormBarangController extends Controller
             RekapBarang::create($data);
         }
 
-        KasBesar::create($data);
+        $store = KasBesar::create($kas);
 
         KeranjangBelanja::where('user_id', $user_id)->delete();
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Beli Barang*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$kas['bank']."\n".
+                    "Nama    : ".$kas['transfer_ke']."\n".
+                    "No. Rek : ".$kas['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
 
         return redirect()->route('billing.form-barang.beli')->with('success', 'Berhasil membeli barang');
 

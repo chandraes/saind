@@ -30,24 +30,76 @@
     </div>
 </div>
 <div class="container mt-5 table-responsive ">
-    <table class="table table-hover table-bordered" id="stickyTable">
+    <table class="table table-bordered" id="dataTable">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Kategori</th>
-                <th class="text-center align-middle">Nama Barang</th>
-                <th class="text-center align-middle">Stok</th>
-                <th class="text-center align-middle">Harga Jual</th>
-                <th class="text-center align-middle">Action</th>
+                <th class="text-center align-middle">Barang</th>
+                {{-- <th class="text-center align-middle">Barang</th> --}}
+                {{-- <th class="text-center align-middle">Harga Jual</th>
+                <th class="text-center align-middle">Action</th> --}}
             </tr>
         </thead>
         <tbody>
             @foreach ($kategori as $k)
             @if ($k->barang->count() > 0)
             <tr>
-                <td rowspan="{{$k->barang->count()}}" class="text-center align-middle">{{$loop->iteration}}</td>
-                <td rowspan="{{$k->barang->count()}}" class="text-center align-middle">{{$k->nama}}</td>
-                @foreach ($k->barang as $b)
+                <td class="text-center align-middle">{{$loop->iteration}}</td>
+                <td class="text-center align-middle">{{$k->nama}}</td>
+                <td>
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-success">
+                            <tr>
+                                <th class="text-center align-middle">Barang</th>
+                                <th class="text-center align-middle">Stok</th>
+                                <th class="text-center align-middle">Harga Jual</th>
+                                <th class="text-center align-middle">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($k->barang as $b)
+                            <tr>
+                                <td class="text-center align-middle">{{$b->nama}}</td>
+                                <td class="text-center align-middle">{{$b->stok}}</td>
+                                <td class="text-center align-middle">Rp. {{number_format($b->harga_jual, 0, ',', '.')}}</td>
+                                <td class="text-center align-middle">
+                                    <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editBarang-{{$b->id}}">Edit</a>
+
+                                    @include('database.barang.harga-jual')
+
+                                    <form action="{{route('barang.destroy', $b->id)}}" method="post" class="d-inline" id="deleteBarang-{{$b->id}}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <script>
+                                 $(document).ready(function(){
+                                    $('#harga_jual-{{$b->id}}').maskMoney();
+                                    $('#deleteBarang-{{$b->id}}').submit(function(e){
+                                        e.preventDefault();
+                                        Swal.fire({
+                                            title: 'Apakah anda yakin menghapus data ini?',
+                                            icon: 'warning',
+                                            showCancelButton: true,
+                                            confirmButtonColor: '#3085d6',
+                                            cancelButtonColor: '#6c757d',
+                                            confirmButtonText: 'Ya, Hapus!'
+                                            }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                this.submit();
+                                            }
+                                        })
+                                    });
+                                });
+                            </script>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </td>
+                {{-- @foreach ($k->barang as $b)
                 <td class="text-center align-middle">{{$b->nama}}</td>
                     <td class="text-center align-middle">{{$b->stok}}</td>
                     <td class="text-center align-middle">Rp. {{number_format($b->harga_jual, 0, ',', '.')}}</td>
@@ -83,15 +135,12 @@
                     });
                 });
             </script>
-            @endforeach
+            @endforeach --}}
             @else
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$k->nama}}</td>
                 <td class="text-center align-middle">-</td>
-                <td class="text-center align-middle">-</td>
-                <td class="text-center align-middle">-</td>
-                <td class="text-center align-middle"></td>
             </tr>
             @endif
             @endforeach
@@ -120,7 +169,11 @@
     }, 5000);
 
     $(document).ready(function() {
-        $('#karyawan-data').DataTable();
+        $('#dataTable').DataTable({
+            "paging": false,
+            "scrollCollapse": true,
+            "scrollY": "550px",
+        });
 
         $('#kategori_barang_id').select2({
             theme: 'bootstrap-5'
