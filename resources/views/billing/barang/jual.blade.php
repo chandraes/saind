@@ -27,8 +27,8 @@
                     <label for="id" class="form-label">Nomor Lambung</label>
                     <select class="form-select" name="id" id="id" onchange="funGetVendor()">
                         <option selected> -- Pilih Nomor Lambung -- </option>
-                        @foreach ($transaksi as $d)
-                            <option value="{{$d->kas_uang_jalan->vehicle->id}}">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</option>
+                        @foreach ($vehicle as $d)
+                            <option value="{{$d->id}}">{{$d->nomor_lambung}}</option>
                         @endforeach
                     </select>
                 </div>

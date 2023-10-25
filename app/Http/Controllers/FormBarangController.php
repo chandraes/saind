@@ -7,6 +7,7 @@ use App\Models\Barang;
 use App\Models\KeranjangBelanja;
 use App\Models\RekapBarang;
 use App\Models\KasVendor;
+use App\Models\Vehicle;
 use App\Models\KasBesar;
 use App\Models\Transaksi;
 use App\Models\Rekening;
@@ -110,7 +111,6 @@ class FormBarangController extends Controller
                 'total' => $k->total,
             ];
 
-
             // increment stok barang
             $barang = Barang::find($k->barang_id);
             $barang->stok += $k->jumlah;
@@ -156,14 +156,13 @@ class FormBarangController extends Controller
 
     public function jual()
     {
-        $transaksi = Transaksi::whereIn('transaksis.status', [1, 2])
-                                ->get();
+        $vehicle = Vehicle::where('status', 'aktif')->get();
 
         $kategori = KategoriBarang::all();
 
         return view('billing.barang.jual', [
             'kategori' => $kategori,
-            'transaksi' => $transaksi,
+            'vehicle' => $vehicle,
         ]);
     }
 
