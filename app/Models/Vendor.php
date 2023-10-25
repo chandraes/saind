@@ -53,4 +53,9 @@ class Vendor extends Model
     {
         return $this->belongsTo(Sponsor::class);
     }
+
+    public function kas_vendor()
+    {
+        return $this->hasMany(KasVendor::class);
+    }
 }

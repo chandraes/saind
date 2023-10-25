@@ -28,7 +28,7 @@
         </div>
         @endif
         <div class="col-md-4 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('rekap.stock-barang')}}" class="text-decoration-none">
                 <img src="{{asset('images/stock.svg')}}" alt="" width="100">
                 <h2>Stock Barang</h2>
             </a>
@@ -46,10 +46,38 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorModal">
                 <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
                 <h2>Kas Vendor</h2>
             </a>
+
+            <div class="modal fade" id="vendorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="vendorTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="vendorTitle">Pilih Vendor</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{route('rekap.kas-vendor')}}" method="get">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <select class="form-select" name="vendor" id="vendor">
+                                    <option value=""> -- Pilih Vendor -- </option>
+                                    @foreach ($vendor as $v)
+                                    <option value="{{$v->id}}">{{$v->nama}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
@@ -60,3 +88,19 @@
     </div>
 </div>
 @endsection
+@push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+@endpush
+@push('js')
+<script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
+<script>
+    $(document).ready(function () {
+        $('#vendor').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Pilih Vendor --'
+        });
+    });
+</script>
+@endpush

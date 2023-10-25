@@ -17,4 +17,11 @@ class RekapBarang extends Model
         'harga_satuan',
         'total',
     ];
+
+    public function barang()
+    {
+        return $this->belongsTo(Barang::class);
+    }
+
+    
 }

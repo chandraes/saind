@@ -6,7 +6,9 @@ use App\Models\KategoriBarang;
 use App\Models\Barang;
 use App\Models\KeranjangBelanja;
 use App\Models\RekapBarang;
+use App\Models\KasVendor;
 use App\Models\KasBesar;
+use App\Models\Transaksi;
 use App\Models\Rekening;
 use App\Models\GroupWa;
 use App\Services\StarSender;
@@ -84,9 +86,8 @@ class FormBarangController extends Controller
         $total = $keranjang->sum('total');
 
         if ($total > $last->saldo) {
-            return redirect()->route('billing.form-barang.beli')->with('error', 'Saldo tidak cukup');
+            return redirect()->route('billing.form-barang.beli')->with('error', 'Saldo kas besar tidak cukup!');
         }
-
 
         $kas['tanggal'] = now();
         $kas['jenis_transaksi_id'] = 2;
@@ -138,10 +139,81 @@ class FormBarangController extends Controller
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
+
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
         return redirect()->route('billing.form-barang.beli')->with('success', 'Berhasil membeli barang');
+
+    }
+
+    public function get_harga_jual(Request $request)
+    {
+        $barang = Barang::find($request->barang_id);
+
+        return response()->json($barang);
+    }
+
+    public function jual()
+    {
+        $transaksi = Transaksi::whereIn('transaksis.status', [1, 2])
+                                ->get();
+
+        $kategori = KategoriBarang::all();
+
+        return view('billing.barang.jual', [
+            'kategori' => $kategori,
+            'transaksi' => $transaksi,
+        ]);
+    }
+
+    public function jual_store(Request $request)
+    {
+        $data = $request->validate([
+            'vendor_id' => 'required',
+            'id' => 'required',
+            'barang_id' => 'required',
+            'jumlah' => 'required',
+        ]);
+
+        $barang = Barang::find($data['barang_id']);
+
+        if ($barang->stok < $data['jumlah']) {
+            return redirect()->route('billing.index')->with('error', 'Stok barang tidak cukup');
+        }
+
+        $kas['vendor_id'] = $data['vendor_id'];
+        $kas['vehicle_id'] = $data['id'];
+        $kas['tanggal'] = now();
+        $kas['quantity'] = $data['jumlah'];
+        $kas['harga_satuan'] = Barang::find($data['barang_id'])->harga_jual;
+        $kas['pinjaman'] = $kas['harga_satuan'] * $kas['quantity'];
+        $kas['uraian'] = 'Beli '.$barang->kategori_barang->nama.' '.$barang->nama;
+
+        $last = KasVendor::where('vendor_id', $kas['vendor_id'])->latest()->first();
+
+        if ($last) {
+            $kas['sisa'] = $last->sisa + $kas['pinjaman'];
+        } else {
+            $kas['sisa'] = $kas['pinjaman'];
+        }
+
+        $data['tanggal'] = now();
+        $data['jenis_transaksi'] = 2;
+        $data['harga_satuan'] = Barang::find($data['barang_id'])->harga_jual;
+        $data['total'] = $data['jumlah'] * $data['harga_satuan'];
+        $data['nama_barang'] = Barang::find($data['barang_id'])->nama;
+
+        $store = KasVendor::create($kas);
+
+        RekapBarang::create($data);
+
+        $barang->stok -= $data['jumlah'];
+        $barang->save();
+
+        return redirect()->route('billing.index')->with('success', 'Berhasil menjual barang');
+
+
 
     }
 }
