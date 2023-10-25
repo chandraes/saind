@@ -291,7 +291,7 @@
             if (val === 'masuk') {
                 window.location.href = "{{route('billing.storing.index')}}";
             } else if (val === 'keluar') {
-                window.location.href = "#";
+                window.location.href = "{{route('billing.storing.void')}}";
             }
         }
 </script>

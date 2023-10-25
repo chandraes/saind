@@ -69,6 +69,7 @@
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
                 <th class="text-center align-middle">Uraian</th>
+                <th class="text-center align-middle">Nomor Lambung</th>
                 <th class="text-center align-middle">Pinjaman/Pelunasan</th>
                 <th class="text-center align-middle">Bayar</th>
                 <th class="text-center align-middle">Sisa</th>
@@ -79,6 +80,7 @@
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->uraian}}</td>
+                    <td class="text-center align-middle">{{$d->vehicle->nomor_lambung}}</td>
                     <td class="text-center align-middle">{{number_format($d->pinjaman, 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{$d->bayar}}</td>
                     <td class="text-center align-middle">{{number_format($d->sisa, 0, ',','.')}}</td>
@@ -87,6 +89,7 @@
             </tbody>
             <tfoot>
                 <tr>
+                    <td></td>
                     <td></td>
                     <td class="text-center align-middle"><strong>Grand Total</strong> </td>
                     <td class="text-center align-middle">{{number_format($data->sum('pinjaman'), 0, ',','.')}}</td>
