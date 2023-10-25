@@ -129,10 +129,31 @@
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formStoring">
                 <img src="{{asset('images/storing.svg')}}" alt="" width="100">
                 <h2>FORM STORING BBM</h2>
             </a>
+
+            <div class="modal fade" id="formStoring" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="fllTitle">Form Storing</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select class="form-select form-select-lg" name="" id="formStoringSelect">
+                                <option value="masuk">BBM Storing</option>
+                                <option value="keluar">Void Storing</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeformStoring()">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
@@ -261,6 +282,16 @@
                 window.location.href = "{{route('billing.form-barang.beli')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('billing.form-barang.jual')}}";
+            }
+        }
+
+        function tipeformStoring()
+        {
+            let val = document.getElementById('formStoringSelect').value;
+            if (val === 'masuk') {
+                window.location.href = "{{route('billing.storing.index')}}";
+            } else if (val === 'keluar') {
+                window.location.href = "#";
             }
         }
 </script>
