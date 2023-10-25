@@ -30,4 +30,11 @@ class FormStoringConroller extends Controller
 
         return response()->json($storing);
     }
+
+    public function get_status_so(Request $request)
+    {
+        $data = Vehicle::find($request->vehicle_id)->support_operational;
+
+        return response()->json($data);
+    }
 }

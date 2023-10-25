@@ -43,8 +43,8 @@
             </div>
             <div class="col-4">
                 <div class="mb-3">
-                    <label for="id" class="form-label">Pilih Lokasi</label>
-                    <select class="form-select" name="id" id="id" onchange="funGetStoring()">
+                    <label for="storing_id" class="form-label">Pilih Lokasi</label>
+                    <select class="form-select" name="storing_id" id="storing_id" onchange="funGetStoring()">
                         <option selected> -- Pilih Lokasi-- </option>
                         @foreach ($storing as $d)
                             <option value="{{$d->id}}">{{$d->km}}</option>
@@ -68,7 +68,7 @@
                   </div>
             </div>
             <div class="col-md-4 mb-3">
-                <label for="harga_vendor" class="form-label"></label>
+                <label for="harga_vendor" class="form-label">Vendor</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('harga_vendor'))
@@ -76,13 +76,13 @@
                 @endif" name="harga_vendor" id="harga_vendor" data-thousands="." disabled>
                   </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-4 mb-3" id="jadaDiv">
                 <label for="jasa" class="form-label">Jasa</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('jasa'))
                     is-invalid
-                @endif" name="jasa" id="jasa" data-thousands="." disabled>
+                @endif" name="jasa" id="jasa" data-thousands=".">
                   </div>
             </div>
         </div>
@@ -100,7 +100,7 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#harga_satuan').maskMoney();
+             $('#jasa').maskMoney();
         });
 
         $('#masukForm').submit(function(e){
@@ -151,38 +151,40 @@
             });
         }
 
-        function getHargaJual() {
-            var barang_id = $('#barang_id').val();
+        function funGetStoring() {
+            var id = $('#storing_id').val();
             $.ajax({
-                url: "{{route('billing.form-barang.get-harga-jual')}}",
+                url: "{{route('billing.storing.get-storing')}}",
                 type: "GET",
                 data: {
-                    barang_id: barang_id
+                    id: id
                 },
                 success: function(data){
                     console.log(data);
-                    // maskMoney
-                    $('#harga_jual').maskMoney('destroy');
-                    $('#harga_jual').maskMoney();
-                    $('#harga_jual').maskMoney('mask', (data.harga_jual));
-
-                    // $('#harga_jual').val((data.harga_jual));
+                    $('#mekanik').maskMoney('destroy');
+                    $('#mekanik').maskMoney();
+                    $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
+                    $('#harga_vendor').maskMoney('destroy');
+                    $('#harga_vendor').maskMoney();
+                    $('#harga_vendor').maskMoney('mask', (data.biaya_vendor));
                 }
             });
         }
 
-        function getTotal() {
-            var jumlah = $('#jumlah').val();
-            var harga_jual = $('#harga_jual').val();
-            // remove . from harga_jual
-            harga_jual = harga_jual.replace(/\./g,'');
-            console.log(harga_jual);
-            console.log(jumlah);
-            var total = jumlah * harga_jual;
-            console.log(total);
-            $('#total').maskMoney('destroy');
-            $('#total').maskMoney();
-            $('#total').maskMoney('mask', (total));
+        function funGetStatusSo()
+        {
+            var id = $('#id').val();
+            $.ajax({
+                url: "{{route('billing.form-barang.get-status-so')}}",
+                type: "GET",
+                data: {
+                    id: id
+                },
+                success: function(data){
+                    console.log(data);
+                    // if 1
+                }
+            });
         }
 
         // funGetBarang
