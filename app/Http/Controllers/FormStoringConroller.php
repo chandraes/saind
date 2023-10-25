@@ -54,6 +54,7 @@ class FormStoringConroller extends Controller
         $vendor['storing'] = 1;
 
         if (!empty($data['jasa'])) {
+            $data['jasa'] = str_replace('.', '', $data['jasa']);
             $vendor['pinjaman'] = $storing->biaya_vendor + $data['jasa'];
         } else {
             $vendor['pinjaman'] = $storing->biaya_vendor;
@@ -146,7 +147,7 @@ class FormStoringConroller extends Controller
                     'vendor_id' => 'required',
                 ]);
 
-        dd($data);
+
     }
 
     public function storing_latest(Request $request)
