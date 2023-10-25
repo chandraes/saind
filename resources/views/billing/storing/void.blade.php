@@ -61,7 +61,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('mekanik'))
                     is-invalid
-                @endif" name="mekanik" id="mekanik" data-thousands="." disabled>
+                @endif" name="mekanik" id="mekanik" data-thousands="." readonly>
                   </div>
             </div>
             <div class="col-md-4 mb-3">
@@ -70,7 +70,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('total_void'))
                     is-invalid
-                @endif" name="total_void" id="total_void" data-thousands="." disabled>
+                @endif" name="total_void" id="total_void" data-thousands="." readonly>
                   </div>
             </div>
         </div>
@@ -149,9 +149,14 @@
                     vendor_id: vendor_id
                 },
                 success: function(data){
-                    $('#storing_id').val(data.id);
-                    $('#storing_id').prop('disabled', true);
-                    funGetStoring();
+                    $('#lokasi').val(data.lokasi);
+                    $('#mekanik').maskMoney('destroy');
+                    $('#mekanik').maskMoney();
+                    $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
+                    $('#total_void').maskMoney('destroy');
+                    $('#total_void').maskMoney();
+                    $('#total_void').maskMoney('mask', (data.total));
+
                 }
             });
 

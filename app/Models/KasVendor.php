@@ -31,4 +31,9 @@ class KasVendor extends Model
     {
         return $this->belongsTo(Vehicle::class);
     }
+
+    public function bbm_storing()
+    {
+        return $this->belongsTo(BbmStoring::class);
+    }
 }

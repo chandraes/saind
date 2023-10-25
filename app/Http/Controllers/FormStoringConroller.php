@@ -37,8 +37,11 @@ class FormStoringConroller extends Controller
 
         $rekening = Rekening::where('untuk', 'mekanik')->first();
 
-        $vendorId = Vehicle::find($request->id)->value('vendor_id');
+        $vehicle = Vehicle::find($request->id);
 
+        $vendorId = $vehicle->vendor_id;
+
+        // dd($vendorId);
         $storing = BbmStoring::find($request->storing_id);
 
         $last = KasVendor::where('vendor_id', $vendorId)->latest()->first();
@@ -47,7 +50,7 @@ class FormStoringConroller extends Controller
         $vendor['bbm_storing_id'] = $request->storing_id;
         $vendor['vehicle_id'] = $request->id;
         $vendor['tanggal'] = date('Y-m-d');
-        $vendor['uraian'] = 'BBM Storing '.Vehicle::find($request->id)->value('nomor_lambung');
+        $vendor['uraian'] = 'BBM Storing '.$vehicle->nomor_lambung;
         $vendor['storing'] = 1;
 
         if (!empty($data['jasa'])) {
@@ -67,7 +70,7 @@ class FormStoringConroller extends Controller
         KasVendor::create($vendor);
 
         $data['tanggal'] = date('Y-m-d');
-        $data['uraian'] = 'BBM Storing '. Vehicle::find($request->id)->value('nomor_lambung');
+        $data['uraian'] = 'BBM Storing '. $vehicle->nomor_lambung;
         $data['jenis_transaksi_id'] = 2;
         $data['nominal_transaksi'] = $storing->biaya_mekanik;
         $data['transfer_ke'] = $rekening->nama_rekening;
@@ -134,14 +137,32 @@ class FormStoringConroller extends Controller
         ]);
     }
 
+    public function void_store(Request $request)
+    {
+        $data = $request->validate([
+                    'total' => 'required',
+                    'mekanik' => 'required',
+                    'id' => 'required',
+                    'vendor_id' => 'required',
+                ]);
+
+        dd($data);
+    }
+
     public function storing_latest(Request $request)
     {
-        $vendorId = $request->id;
+        $vendorId = $request->vendor_id;
         $vehicleId = $request->vehicle_id;
 
-        $storing = KasVendor::where('vendor_id', $vendorId)->where('storing', 1)
-                            ->where('vehicle_id', $vehicleId)->latest()->first();
-
-        return response()->json($storing);
+        $storing = KasVendor::where('vendor_id', $vendorId)
+                            ->where('vehicle_id', $vehicleId)
+                            ->where('storing', 1)
+                            ->latest()->first();
+        $data = [
+            'lokasi' => $storing->bbm_storing->km,
+            'biaya_mekanik' => $storing->bbm_storing->biaya_mekanik,
+            'total' => $storing->pinjaman,
+        ];
+        return response()->json($data);
     }
 }
