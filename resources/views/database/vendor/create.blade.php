@@ -218,6 +218,7 @@
             // set #perusahaan value to null
             $('#perusahaan').val('');
             $('#perusahaan-row').hide();
+            $('#perusahaan').attr('required', false);
             // add option "Pemilik" to select with id="jabatan"
             $('#jabatan').html('<option selected value="Pemilik Unit" selected>Pemilik Unit</option>');
         } else {

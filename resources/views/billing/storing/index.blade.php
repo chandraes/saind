@@ -19,13 +19,13 @@
             </ul>
         </div>
     @endif
-    <form action="{{route('billing.form-barang.jual-store')}}" method="post" id="masukForm">
+    <form action="{{route('billing.storing.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
             <div class="col-4">
                 <div class="mb-3">
                     <label for="id" class="form-label">Nomor Lambung</label>
-                    <select class="form-select" name="id" id="id" onchange="funGetVendor()">
+                    <select class="form-select" name="id" id="id" onchange="funGetVendor()" required>
                         <option selected> -- Pilih Nomor Lambung -- </option>
                         @foreach ($vehicle as $d)
                             <option value="{{$d->id}}">{{$d->nomor_lambung}}</option>
@@ -76,7 +76,7 @@
                 @endif" name="harga_vendor" id="harga_vendor" data-thousands="." disabled>
                   </div>
             </div>
-            <div class="col-md-4 mb-3" id="jadaDiv">
+            <div class="col-md-4 mb-3" id="jasadiv">
                 <label for="jasa" class="form-label">Jasa</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
@@ -87,9 +87,45 @@
             </div>
         </div>
         <hr>
-
+        <h2>Transfer Ke</h2>
+        <br>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="transfer_ke" class="form-label">Nama</label>
+                <input type="text" class="form-control @if ($errors->has('transfer_ke'))
+                    is-invalid
+                @endif" name="transfer_ke" id="transfer_ke" disabled value="{{$rekening->nama_rekening}}">
+                @if ($errors->has('transfer_ke'))
+                <div class="invalid-feedback">
+                    {{$errors->first('transfer_ke')}}
+                </div>
+                @endif
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="bank" class="form-label">Bank</label>
+                <input type="text" class="form-control @if ($errors->has('bank'))
+                    is-invalid
+                @endif" name="bank" id="bank" disabled value="{{$rekening->nama_bank}}">
+                @if ($errors->has('bank'))
+                <div class="invalid-feedback">
+                    {{$errors->first('bank')}}
+                </div>
+                @endif
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="no_rekening" class="form-label">Nomor Rekening</label>
+                <input type="text" class="form-control @if ($errors->has('no_rekening'))
+                    is-invalid
+                @endif" name="no_rekening" id="no_rekening" disabled value="{{$rekening->nomor_rekening}}">
+                @if ($errors->has('no_rekening'))
+                <div class="invalid-feedback">
+                    {{$errors->first('no_rekening')}}
+                </div>
+                @endif
+            </div>
+        </div>
         <div class="d-grid gap-3 mt-3">
-            <button class="btn btn-primary">Jual</button>
+            <button class="btn btn-primary">Lanjutkan</button>
             <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>
           </div>
     </form>
@@ -144,7 +180,7 @@
                     id: id
                 },
                 success: function(data){
-                    console.log(data.id);
+                    funGetStatusSo();
                     $('#vendor_id').val(data.id);
                     $('#vendor').val(data.nama);
                 }
@@ -153,6 +189,7 @@
 
         function funGetStoring() {
             var id = $('#storing_id').val();
+
             $.ajax({
                 url: "{{route('billing.storing.get-storing')}}",
                 type: "GET",
@@ -160,13 +197,17 @@
                     id: id
                 },
                 success: function(data){
-                    console.log(data);
+
+
                     $('#mekanik').maskMoney('destroy');
                     $('#mekanik').maskMoney();
                     $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
                     $('#harga_vendor').maskMoney('destroy');
                     $('#harga_vendor').maskMoney();
                     $('#harga_vendor').maskMoney('mask', (data.biaya_vendor));
+
+                    // call funGetStatusSo
+
                 }
             });
         }
@@ -174,36 +215,29 @@
         function funGetStatusSo()
         {
             var id = $('#id').val();
+
             $.ajax({
-                url: "{{route('billing.form-barang.get-status-so')}}",
+                url: "{{route('billing.storing.get-status-so')}}",
                 type: "GET",
                 data: {
                     id: id
                 },
                 success: function(data){
                     console.log(data);
-                    // if 1
-                }
-            });
-        }
+                    // if 1 disable jasa and hide jasadiv
+                    if (data == 1) {
 
-        // funGetBarang
-        function funGetBarang() {
-            var kategori_barang_id = $('#kategori_barang_id').val();
-            $.ajax({
-                url: "{{route('billing.form-barang.get-barang')}}",
-                type: "GET",
-                data: {
-                    kategori_barang_id: kategori_barang_id
-                },
-                success: function(data){
-                    console.log(data);
-                    $('#barang_id').empty();
+                        $('#jasa').prop('disabled', true);
+                        // make jasa not required
+                        $('#jasa').prop('required', false);
+                        $('#jasadiv').hide();
 
-                    $('#barang_id').append('<option value=""> -- Pilih kategori barang -- </option>');
-                    $.each(data, function(index, value){
-                        $('#barang_id').append('<option value="'+value.id+'">'+value.nama+' ('+value.stok+')'+'</option>');
-                    });
+                    } else if(data == 0) {
+                        $('#jasa').prop('disabled', false);
+                        // make jasa required
+                        $('#jasa').prop('required', true);
+                        $('#jasadiv').show();
+                    }
                 }
             });
         }
