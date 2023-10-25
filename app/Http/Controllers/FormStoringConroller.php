@@ -57,6 +57,7 @@ class FormStoringConroller extends Controller
             $data['jasa'] = str_replace('.', '', $data['jasa']);
             $vendor['pinjaman'] = $storing->biaya_vendor + $data['jasa'];
         } else {
+            $data['jasa'] = 0;
             $vendor['pinjaman'] = $storing->biaya_vendor;
         }
 
@@ -106,6 +107,8 @@ class FormStoringConroller extends Controller
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Jasa Mekanik : \n".
+                    "Rp. ".number_format($data['jasa'], 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
@@ -123,9 +126,10 @@ class FormStoringConroller extends Controller
 
     public function get_status_so(Request $request)
     {
-        $data = Vehicle::find($request->id)->value('support_operational');
+        $data = Vehicle::find($request->id);
+        $so = $data->support_operational;
 
-        return response()->json($data);
+        return response()->json($so);
     }
 
     public function void()
