@@ -357,7 +357,7 @@ class RekapController extends Controller
 
             $group = GroupWa::where('untuk', 'kas-besar')->first();
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                    "*Form Void Storing*\n".
+                    "*Form Void BBM Storing*\n".
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                     "No. Lambung : ".$kas_vendor->vehicle->nomor_lambung."\n".
                     "Vendor : ".$kas_vendor->vendor->nama."\n\n".
