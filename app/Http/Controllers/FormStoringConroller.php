@@ -23,4 +23,11 @@ class FormStoringConroller extends Controller
     {
 
     }
+
+    public function get_storing(Request $request)
+    {
+        $storing = BbmStoring::find($request->id);
+
+        return response()->json($storing);
+    }
 }

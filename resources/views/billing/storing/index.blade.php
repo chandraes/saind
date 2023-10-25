@@ -22,7 +22,7 @@
     <form action="{{route('billing.form-barang.jual-store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
-            <div class="col-6">
+            <div class="col-4">
                 <div class="mb-3">
                     <label for="id" class="form-label">Nomor Lambung</label>
                     <select class="form-select" name="id" id="id" onchange="funGetVendor()">
@@ -33,7 +33,7 @@
                     </select>
                 </div>
             </div>
-            <div class="col-6">
+            <div class="col-4">
                 <div class="mb-3">
                   <label for="vendor" class="form-label">Nama Vendor</label>
                   <input type="text"
@@ -41,35 +41,48 @@
                     <input type="hidden" name="vendor_id" id="vendor_id" required>
                 </div>
             </div>
+            <div class="col-4">
+                <div class="mb-3">
+                    <label for="id" class="form-label">Pilih Lokasi</label>
+                    <select class="form-select" name="id" id="id" onchange="funGetStoring()">
+                        <option selected> -- Pilih Lokasi-- </option>
+                        @foreach ($storing as $d)
+                            <option value="{{$d->id}}">{{$d->km}}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="row">
-            
+
         </div>
         <hr>
         <div class="row">
-            <div class="col-4">
-                <div class="mb-3">
-                  <label for="jumlah" class="form-label">Jumlah</label>
-                  <input type="number"
-                    class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId" placeholder="" required oninput="getTotal()">
-                </div>
-            </div>
             <div class="col-md-4 mb-3">
-                <label for="harga_jual" class="form-label">Harga Satuan</label>
+                <label for="mekanik" class="form-label">Mekanik</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
-                    <input type="text" class="form-control @if ($errors->has('harga_jual'))
+                    <input type="text" class="form-control @if ($errors->has('mekanik'))
                     is-invalid
-                @endif" name="harga_jual" id="harga_jual" data-thousands="." disabled>
+                @endif" name="mekanik" id="mekanik" data-thousands="." disabled>
                   </div>
             </div>
             <div class="col-md-4 mb-3">
-                <label for="total" class="form-label">Total</label>
+                <label for="harga_vendor" class="form-label"></label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
-                    <input type="text" class="form-control @if ($errors->has('total'))
+                    <input type="text" class="form-control @if ($errors->has('harga_vendor'))
                     is-invalid
-                @endif" name="total" id="total" data-thousands="." disabled>
+                @endif" name="harga_vendor" id="harga_vendor" data-thousands="." disabled>
+                  </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="jasa" class="form-label">Jasa</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Rp</span>
+                    <input type="text" class="form-control @if ($errors->has('jasa'))
+                    is-invalid
+                @endif" name="jasa" id="jasa" data-thousands="." disabled>
                   </div>
             </div>
         </div>
