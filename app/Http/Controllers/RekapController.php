@@ -327,8 +327,6 @@ class RekapController extends Controller
             'void' => 1,
         ]);
 
-
-
         $data['vendor_id'] = $kas_vendor->vendor_id;
         $data['vehicle_id'] = $kas_vendor->vehicle_id;
         $data['bbm_storing_id'] = $kas_vendor->bbm_storing_id;
@@ -376,7 +374,6 @@ class RekapController extends Controller
             $send = new StarSender($group->nama_group, $pesan);
             $res = $send->sendGroup();
         }
-
 
         return redirect()->route('rekap.index')->with('success', 'Berhasil Void Kas Vendor!!');
 

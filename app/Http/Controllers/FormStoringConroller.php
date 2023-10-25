@@ -75,7 +75,7 @@ class FormStoringConroller extends Controller
             $jasa['bbm_storing_id'] = $request->storing_id;
             $jasa['vehicle_id'] = $request->id;
             $jasa['tanggal'] = date('Y-m-d');
-            $jasa['uraian'] = 'Jasa BBM Storing '.$vehicle->nomor_lambung;
+            $jasa['uraian'] = 'Jasa Mekanik '.$vehicle->nomor_lambung;
             $jasa['storing'] = 0;
             $jasa['jasa'] = 1;
             $jasa['pinjaman'] = $data['jasa'];
