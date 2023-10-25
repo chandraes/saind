@@ -6,6 +6,7 @@
          <h1><u>REKAP</u></h1>
         </div>
     </div>
+    @include('swal')
     <div class="row justify-content-left">
         @if (auth()->user()->role === 'admin')
         <div class="col-md-4 text-center mt-5">

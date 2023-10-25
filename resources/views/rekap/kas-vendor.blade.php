@@ -57,7 +57,8 @@
             </div>
             <div class="col-md-3 mb-3">
                 <label for="showPrint" class="form-label">&nbsp;</label>
-                <a href="{{route('rekap.kas-kecil.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank" class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
+                <a href="{{route('rekap.kas-kecil.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank"
+                    class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
             </div>
         </div>
     </form>
@@ -66,14 +67,15 @@
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
-            <tr>
-                <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Uraian</th>
-                <th class="text-center align-middle">Nomor Lambung</th>
-                <th class="text-center align-middle">Pinjaman/Pelunasan</th>
-                <th class="text-center align-middle">Bayar</th>
-                <th class="text-center align-middle">Sisa</th>
-            </tr>
+                <tr>
+                    <th class="text-center align-middle">Tanggal</th>
+                    <th class="text-center align-middle">Uraian</th>
+                    <th class="text-center align-middle">Nomor Lambung</th>
+                    <th class="text-center align-middle">Pinjaman/Pelunasan</th>
+                    <th class="text-center align-middle">Bayar</th>
+                    <th class="text-center align-middle">Sisa</th>
+                    <th class="text-center align-middle">Action</th>
+                </tr>
             </thead>
             <tbody>
                 @foreach ($data as $d)
@@ -84,6 +86,41 @@
                     <td class="text-center align-middle">{{number_format($d->pinjaman, 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{$d->bayar}}</td>
                     <td class="text-center align-middle">{{number_format($d->sisa, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">
+                        @if ($d->storing == 1 && $d->void == 0 || $d->jasa == 1 && $d->void == 0)
+                        {{-- button edit --}}
+                        {{-- button void --}}
+                        <button class="btn btn-danger" data-bs-toggle="modal"
+                            data-bs-target="#void-{{$d->id}}">Void</button>
+
+                        <div class="modal fade" id="void-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
+                            data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                                role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalTitleId">Void Storing</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <form action="{{route('rekap.kas-vendor.void', $d)}}" method="post">
+                                        @csrf
+                                        <div class="modal-body">
+                                            <input type="password" class="form-control" id="password" name="password"
+                                                placeholder="Password" aria-label="Password" aria-describedby="password"
+                                                required>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Tutup</button>
+                                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -94,13 +131,16 @@
                     <td class="text-center align-middle"><strong>Grand Total</strong> </td>
                     <td class="text-center align-middle">{{number_format($data->sum('pinjaman'), 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($data->sum('bayar'), 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman') - $data->sum('bayar'), 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman') - $data->sum('bayar'),
+                        0, ',','.')}}</td>
+                    <td></td>
                 </tr>
                 {{-- <tr>
                     <td colspan="3" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
                     <td class="text-center align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
                             1)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
-                    <td class="text-center align-middle text-danger"><strong>{{number_format($data->where('jenis_transaksi_id',
+                    <td class="text-center align-middle text-danger">
+                        <strong>{{number_format($data->where('jenis_transaksi_id',
                             2)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
                     <td class="text-center align-middle">
                         <strong>

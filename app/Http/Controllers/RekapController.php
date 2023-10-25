@@ -8,6 +8,10 @@ use App\Models\Vendor;
 use App\Models\KasUangJalan;
 use App\Models\KasVendor;
 use App\Models\Transaksi;
+use App\Models\Rekening;
+use App\Models\GroupWa;
+use App\Services\StarSender;
+use App\Models\PasswordKonfirmasi;
 use App\Models\RekapBarang;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -301,5 +305,80 @@ class RekapController extends Controller
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
         ]);
+    }
+
+    public function kas_vendor_void(Request $request, KasVendor $kas_vendor)
+    {
+        $data = $request->validate([
+            'password' => 'required',
+        ]);
+
+        $password = PasswordKonfirmasi::first();
+
+        if (!$password) {
+            return redirect()->back()->with('error', 'Password belum diatur!!');
+        }
+
+        if ($data['password'] != $password->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        $kas_vendor->update([
+            'void' => 1,
+        ]);
+
+
+
+        $data['vendor_id'] = $kas_vendor->vendor_id;
+        $data['vehicle_id'] = $kas_vendor->vehicle_id;
+        $data['bbm_storing_id'] = $kas_vendor->bbm_storing_id;
+        $data['tanggal'] = date('Y-m-d');
+        $data['uraian'] = 'Void '.$kas_vendor->uraian;
+        $data['bayar'] = $kas_vendor->pinjaman;
+        $data['sisa'] = $kas_vendor->sisa - $data['bayar'];
+
+        KasVendor::create($data);
+
+        if ($kas_vendor->storing == 1) {
+            $last = KasBesar::latest()->first();
+            $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+            $kas['tanggal'] = date('Y-m-d');
+            $kas['uraian'] = 'Void '.$kas_vendor->uraian;
+            $kas['nominal_transaksi'] = $kas_vendor->bbm_storing->biaya_mekanik;
+            $kas['jenis_transaksi_id'] = 1;
+            $kas['saldo'] = $last->saldo + $kas['nominal_transaksi'];
+            $kas['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
+            $kas['no_rekening'] = $rekening->nomor_rekening;
+            $kas['bank'] = $rekening->nama_bank;
+            $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+
+            $store = KasBesar::create($kas);
+
+            $group = GroupWa::where('untuk', 'kas-besar')->first();
+            $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    "*Form Void Storing*\n".
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                    "No. Lambung : ".$kas_vendor->vehicle->nomor_lambung."\n".
+                    "Vendor : ".$kas_vendor->vendor->nama."\n\n".
+                    "Lokasi : ".$kas_vendor->bbm_storing->km."\n".
+                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$kas['bank']."\n".
+                    "Nama    : ".$kas['transfer_ke']."\n".
+                    "No. Rek : ".$kas['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+            $send = new StarSender($group->nama_group, $pesan);
+            $res = $send->sendGroup();
+        }
+
+
+        return redirect()->route('rekap.index')->with('success', 'Berhasil Void Kas Vendor!!');
+
     }
 }

@@ -76,7 +76,8 @@ class FormStoringConroller extends Controller
             $jasa['vehicle_id'] = $request->id;
             $jasa['tanggal'] = date('Y-m-d');
             $jasa['uraian'] = 'Jasa BBM Storing '.$vehicle->nomor_lambung;
-            $jasa['storing'] = 1;
+            $jasa['storing'] = 0;
+            $jasa['jasa'] = 1;
             $jasa['pinjaman'] = $data['jasa'];
             $jasa['sisa'] = $simpan->sisa + $data['jasa'];
 
@@ -167,8 +168,6 @@ class FormStoringConroller extends Controller
                     'id' => 'required',
                     'vendor_id' => 'required',
                 ]);
-
-
     }
 
     public function storing_latest(Request $request)

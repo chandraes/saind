@@ -212,7 +212,5 @@ class FormBarangController extends Controller
 
         return redirect()->route('billing.index')->with('success', 'Berhasil menjual barang');
 
-
-
     }
 }

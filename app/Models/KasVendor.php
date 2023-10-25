@@ -20,6 +20,8 @@ class KasVendor extends Model
         'bayar',
         'sisa',
         'storing',
+        'void',
+        'jasa',
     ];
 
     public function vendor()
