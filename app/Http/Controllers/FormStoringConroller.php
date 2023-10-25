@@ -95,6 +95,7 @@ class FormStoringConroller extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form BBM Storing*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Lokasi : ".$storing->km."\n".
                     "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$data['bank']."\n".
