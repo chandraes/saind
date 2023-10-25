@@ -55,7 +55,7 @@ class FormStoringConroller extends Controller
 
         if (!empty($data['jasa'])) {
             $data['jasa'] = str_replace('.', '', $data['jasa']);
-            $vendor['pinjaman'] = $storing->biaya_vendor + $data['jasa'];
+            $vendor['pinjaman'] = $storing->biaya_vendor;
         } else {
             $data['jasa'] = 0;
             $vendor['pinjaman'] = $storing->biaya_vendor;
@@ -68,8 +68,22 @@ class FormStoringConroller extends Controller
             $vendor['sisa'] = $vendor['pinjaman'];
         }
 
+        $simpan = KasVendor::create($vendor);
 
-        KasVendor::create($vendor);
+        if ($data['jasa'] > 0) {
+            $jasa['vendor_id'] = $vendorId;
+            $jasa['bbm_storing_id'] = $request->storing_id;
+            $jasa['vehicle_id'] = $request->id;
+            $jasa['tanggal'] = date('Y-m-d');
+            $jasa['uraian'] = 'Jasa BBM Storing '.$vehicle->nomor_lambung;
+            $jasa['storing'] = 1;
+            $jasa['pinjaman'] = $data['jasa'];
+            $jasa['sisa'] = $simpan->sisa + $data['jasa'];
+
+            KasVendor::create($jasa);
+        }
+
+
 
         $data['tanggal'] = date('Y-m-d');
         $data['uraian'] = 'BBM Storing '. $vehicle->nomor_lambung;
@@ -96,6 +110,8 @@ class FormStoringConroller extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form BBM Storing*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "No. Lambung : ".$vehicle->nomor_lambung."\n".
+                    "Vendor : ".$vehicle->vendor->nama."\n\n".
                     "Lokasi : ".$storing->km."\n".
                     "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
