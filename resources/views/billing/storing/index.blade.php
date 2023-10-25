@@ -126,7 +126,7 @@
             </div>
         </div>
         <div class="d-grid gap-3 mt-3">
-            <button class="btn btn-primary">Lanjutkan</button>
+            <button class="btn btn-primary">Ok</button>
             <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>
           </div>
     </form>
