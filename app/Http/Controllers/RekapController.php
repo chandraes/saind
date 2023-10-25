@@ -373,6 +373,19 @@ class RekapController extends Controller
                     "Terima kasih 🙏🙏🙏\n";
             $send = new StarSender($group->nama_group, $pesan);
             $res = $send->sendGroup();
+        } else {
+            $group = GroupWa::where('untuk', 'team')->first();
+            $pesan ="==========================\n".
+                    "*Form Void Jasa Mekanik*\n".
+                    "==========================\n\n".
+                    "No. Lambung : ".$kas_vendor->vehicle->nomor_lambung."\n".
+                    "Vendor : ".$kas_vendor->vendor->nama."\n\n".
+                    "Lokasi : ".$kas_vendor->bbm_storing->km."\n".
+                    "Nilai :  *Rp. ".number_format($data['bayar'], 0, ',', '.')."*\n\n".
+                    "==========================\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+            $send = new StarSender($group->nama_group, $pesan);
+            $res = $send->sendGroup();
         }
 
         return redirect()->route('rekap.index')->with('success', 'Berhasil Void Kas Vendor!!');
