@@ -46,10 +46,61 @@
                         </tr>
                     </tfoot>
                 </table>
+                <form action="{{route('billing.form-barang.barang-store')}}" method="get" id="beliBarang">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                              <label for="uraian" class="form-label">Uraian</label>
+                              <input type="text"
+                                class="form-control" name="uraian" id="uraian" aria-describedby="helpId" placeholder="" required>
+                            </div>
+                        </div>
+                    </div>
+                <hr>
+                <h2>
+                    Transfer Ke
+                </h2>
+                <br>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="transfer_ke" class="form-label">Nama Rekening</label>
+                        <input type="text" class="form-control @if ($errors->has('transfer_ke'))
+                        is-invalid
+                    @endif" name="transfer_ke" id="transfer_ke" value="{{old('transfer_ke')}}" maxlength="15" required>
+                        @if ($errors->has('transfer_ke'))
+                        <div class="invalid-feedback">
+                            {{$errors->first('transfer_ke')}}
+                        </div>
+                        @endif
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="bank" class="form-label">Bank</label>
+                        <input type="text" class="form-control @if ($errors->has('bank'))
+                        is-invalid
+                    @endif" name="bank" id="bank" value="{{old('bank')}}" maxlength="10" required>
+                        @if ($errors->has('bank'))
+                        <div class="invalid-feedback">
+                            {{$errors->first('bank')}}
+                        </div>
+                        @endif
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="no_rekening" class="form-label">Nomor Rekening</label>
+                        <input type="text" class="form-control @if ($errors->has('no_rekening'))
+                        is-invalid
+                    @endif" name="no_rekening" id="no_rekening" value="{{old('no_rekening')}}" required>
+                        @if ($errors->has('no_rekening'))
+                        <div class="invalid-feedback">
+                            {{$errors->first('no_rekening')}}
+                        </div>
+                        @endif
+                    </div>
+                </div>
             </div>
+
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <form action="{{route('billing.form-barang.barang-store')}}" method="get" id="beliBarang">
+
                     <button type="submit" class="btn btn-primary">Beli Barang</button>
                 </form>
             </div>

@@ -91,8 +91,6 @@
                   </div>
             </div>
         </div>
-        <hr>
-
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary">Jual</button>
             <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>

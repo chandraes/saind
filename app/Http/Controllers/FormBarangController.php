@@ -72,8 +72,15 @@ class FormBarangController extends Controller
         return redirect()->route('billing.form-barang.beli')->with('success', 'Berhasil mengosongkan keranjang');
     }
 
-    public function beli_store()
+    public function beli_store(Request $request)
     {
+        $data = $request->validate([
+            'uraian' => 'required',
+            'bank' => 'required',
+            'transfer_ke' => 'required',
+            'no_rekening' => 'required',
+        ]);
+
         $user_id = auth()->user()->id;
 
         $keranjang = KeranjangBelanja::where('user_id', $user_id)->get();
@@ -95,10 +102,10 @@ class FormBarangController extends Controller
         $kas['nominal_transaksi'] = $total;
         $kas['saldo'] = $last->saldo - $total;
         $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
-        $kas['uraian'] = 'Pembelian barang';
-        $kas['transfer_ke'] = 'Toko';
-        $kas['bank'] = '-';
-        $kas['no_rekening'] = '-';
+        $kas['uraian'] = $data['uraian'];
+        $kas['transfer_ke'] = $data['transfer_ke'];
+        $kas['bank'] = $data['bank'];
+        $kas['no_rekening'] = $data['no_rekening'];
 
         foreach ($keranjang as $k) {
             $data = [
@@ -128,6 +135,7 @@ class FormBarangController extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Beli Barang*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Uraian : ".$kas['uraian']."\n".
                     "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$kas['bank']."\n".
