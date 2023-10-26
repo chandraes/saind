@@ -161,8 +161,64 @@
                     id: id
                 },
                 success: function(data){
+                    funGetStatusSo();
                     $('#vendor_id').val(data.id);
                     $('#vendor').val(data.nama);
+                }
+            });
+        }
+
+        function funGetStoring() {
+            var id = $('#storing_id').val();
+
+            $.ajax({
+                url: "{{route('billing.storing.get-storing')}}",
+                type: "GET",
+                data: {
+                    id: id
+                },
+                success: function(data){
+
+
+                    $('#mekanik').maskMoney('destroy');
+                    $('#mekanik').maskMoney();
+                    $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
+                    $('#harga_vendor').maskMoney('destroy');
+                    $('#harga_vendor').maskMoney();
+                    $('#harga_vendor').maskMoney('mask', (data.biaya_vendor));
+
+                    // call funGetStatusSo
+
+                }
+            });
+        }
+
+        function funGetStatusSo()
+        {
+            var id = $('#id').val();
+
+            $.ajax({
+                url: "{{route('billing.storing.get-status-so')}}",
+                type: "GET",
+                data: {
+                    id: id
+                },
+                success: function(data){
+                    console.log(data);
+                    // if 1 disable jasa and hide jasadiv
+                    if (data == 1) {
+
+                        $('#jasa').prop('disabled', true);
+                        // make jasa not required
+                        $('#jasa').prop('required', false);
+                        $('#jasadiv').hide();
+
+                    } else if(data == 0) {
+                        $('#jasa').prop('disabled', false);
+                        // make jasa required
+                        $('#jasa').prop('required', true);
+                        $('#jasadiv').show();
+                    }
                 }
             });
         }

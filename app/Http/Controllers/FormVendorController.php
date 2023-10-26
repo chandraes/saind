@@ -91,4 +91,9 @@ class FormVendorController extends Controller
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
     }
+
+    public function pelunasan()
+    {
+        
+    }
 }

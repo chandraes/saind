@@ -186,7 +186,7 @@
     <div class="row justify-content-left">
         <h2>STAFF</h2>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('billing.kasbon.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/kasbon.svg')}}" alt="" width="100">
                 <h2>FORM KASBON</h2>
             </a>
