@@ -9,7 +9,7 @@ Biodata {{ $karyawan->nama }}
             <b>
                 <h1>PT SAIND</h1>
                 <h2>
-                    BIODATA KARYAWAN
+                    BIODATA STAFF
                 </h2>
             </b>
         </strong>

@@ -70,7 +70,7 @@
         <div class="col-md-4 text-center MT-3 mb-3">
             <a href="{{route('rekening.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/akun-bank.svg')}}" alt="" width="100">
-                <h2>Rekening</h2>
+                <h2>Nomor Rekening Transaksi</h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-3 mb-3">
