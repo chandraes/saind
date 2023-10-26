@@ -283,8 +283,6 @@
 <script>
       $(document).ready(function(){
             $('#gaji_pokok').maskMoney();
-            $('#tunjangan_jabatan').maskMoney();
-            $('#tunjangan_keluarga').maskMoney();
         });
 
         $('#masukForm').submit(function(e){
