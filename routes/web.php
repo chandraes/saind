@@ -190,6 +190,8 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('billing/vendor/pelunasan', [App\Http\Controllers\FormVendorController::class, 'pelunasan'])->name('billing.vendor.pelunasan');
     Route::post('billing/vendor/pelunasan-store', [App\Http\Controllers\FormVendorController::class, 'pelunasan_store'])->name('billing.vendor.pelunasan-store');
     Route::get('billing/vendor/get-kas-vendor', [App\Http\Controllers\FormVendorController::class, 'get_kas_vendor'])->name('billing.vendor.get-kas-vendor');
+    Route::get('billing/vendor/bayar', [App\Http\Controllers\FormVendorController::class, 'bayar'])->name('billing.vendor.bayar');
+    Route::post('billing/vendor/bayar-store', [App\Http\Controllers\FormVendorController::class, 'bayar_store'])->name('billing.vendor.bayar-store');
 
     // form kasbon
     Route::get('billing/kasbon', [App\Http\Controllers\FormKasbonController::class, 'index'])->name('billing.kasbon.index');

@@ -288,6 +288,8 @@
                 window.location.href = "{{route('billing.vendor.titipan')}}";
             } else if(val === 'pelunasan') {
                 window.location.href = "{{route('billing.vendor.pelunasan')}}";
+            } else if(val === 'bayar') {
+                window.location.href = "{{route('billing.vendor.bayar')}}";
             }
         }
 </script>

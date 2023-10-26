@@ -6,6 +6,7 @@ use App\Models\KasVendor;
 use App\Models\KasBesar;
 use App\Models\Vendor;
 use App\Models\Vehicle;
+use App\Models\Rekening;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
@@ -175,5 +176,76 @@ class FormVendorController extends Controller
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
+    }
+
+    public function bayar()
+    {
+        $vendor = Vendor::all();
+
+        return view('billing.vendor.bayar', [
+            'vendor' => $vendor,
+        ]);
+    }
+
+    public function bayar_store(Request $request)
+    {
+        $data = $request->validate([
+            'vendor_id' => 'required',
+            'nominal' => 'required',
+        ]);
+
+        $v = Vendor::find($data['vendor_id']);
+        $last = KasBesar::latest()->first();
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        if ($lastNomor)  {
+            $kas['nomor_kode_tagihan'] = 1;
+        } else {
+            $kas['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
+        }
+
+        $kas['tanggal'] = date('Y-m-d');
+        $kas['uraian'] = "Pelunasan Vendor ".$v->nama;
+        $kas['jenis_transaksi_id'] = 1;
+        $kas['nominal_transaksi'] = $data['nominal'];
+        $kas['saldo'] = $last->saldo + $data['nominal'];
+        $kas['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
+        $kas['bank'] = $rekening->nama_bank;
+        $kas['no_rekening'] = $rekening->nomor_rekening;
+        $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+
+        $vendor['vendor_id'] = $data['vendor_id'];
+        $vendor['tanggal'] = date('Y-m-d');
+        $vendor['uraian'] = "Pelunasan dari Vendor";
+        $vendor['bayar'] = $data['nominal'];
+        $vendor['sisa'] = 0;
+
+        KasVendor::create($vendor);
+
+        $store = KasBesar::create($kas);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    "*Form Pelunasan dari Vendor*\n".
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                    "Vendor : ".$v->nama."\n\n".
+                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$kas['bank']."\n".
+                    "Nama    : ".$kas['transfer_ke']."\n".
+                    "No. Rek : ".$kas['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
+
+        return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
     }
 }
