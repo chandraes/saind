@@ -57,13 +57,13 @@
         <div class="col-md-4 text-center mt-3 mb-3">
             <a href="{{route('direksi.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/direksi.svg')}}" alt="" width="100">
-                <h2>Direksi</h2>
+                <h2>Biodata Direksi</h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-3 mb-3">
             <a href="{{route('karyawan.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/karyawan.svg')}}" alt="" width="100">
-                <h2>Karyawan</h2>
+                <h2>Biodata Staff</h2>
             </a>
         </div>
 
