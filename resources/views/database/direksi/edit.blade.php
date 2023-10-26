@@ -67,7 +67,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('tunjangan_jabatan'))
                     is-invalid
-                @endif" name="tunjangan_jabatan" id="tunjangan_jabatan" required data-thousands="." value="{{$data->tunjangan_jabatan}}">
+                @endif" name="tunjangan_jabatan" id="tunjangan_jabatan" data-thousands="." value="{{$data->tunjangan_jabatan}}">
                 </div>
                 @if ($errors->has('tunjangan_jabatan'))
                 <div class="invalid-feedback">
@@ -81,7 +81,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('tunjangan_keluarga'))
                     is-invalid
-                @endif" name="tunjangan_keluarga" id="tunjangan_keluarga" required data-thousands="." value="{{$data->tunjangan_keluarga}}">
+                @endif" name="tunjangan_keluarga" id="tunjangan_keluarga" data-thousands="." value="{{$data->tunjangan_keluarga}}">
                 </div>
                 @if ($errors->has('tunjangan_keluarga'))
                 <div class="invalid-feedback">
