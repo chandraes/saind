@@ -214,15 +214,12 @@
 </div>
 @endsection
 @push('js')
+
+@endpush
+@push('js')
 <script>
-    function tipeFormKasBesar() {
-            let tipeKasBesar = document.getElementById('tipeKasBesar').value;
-            if (tipeKasBesar === 'masuk') {
-                window.location.href = "{{route('kas-besar.masuk')}}";
-            } else if (tipeKasBesar === 'keluar') {
-                window.location.href = "{{route('kas-besar.keluar')}}";
-            }
-        }
+
+
         function tipeFormKasKecil() {
             let val = document.getElementById('tipeKasKecil').value;
             if (val === 'masuk') {
@@ -263,5 +260,5 @@
                 window.location.href = "{{route('billing.form-barang.jual')}}";
             }
         }
-
+</script>
 @endpush

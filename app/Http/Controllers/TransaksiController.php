@@ -16,7 +16,7 @@ use App\Services\StarSender;
 use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\TransaksiExport;
 
 class TransaksiController extends Controller
@@ -136,8 +136,19 @@ class TransaksiController extends Controller
 
     public function tagihan_export(Customer $customer)
     {
-        $id = $customer->id;
-        return Excel::download(new TransaksiExport($id), 'customer.xlsx');
+        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
+                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
+                            ->select('transaksis.*')
+                            ->get();
+
+        // get latest data from month before current month
+        // dd($bulan);
+        $pdf = PDF::loadview('billing.transaksi.tagihan.export', [
+            'data' => $data,
+            'customer' => $customer,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
     }
 
 
@@ -419,5 +430,6 @@ class TransaksiController extends Controller
             'sponsor' => $sponsor,
         ]);
     }
+
 
 }
