@@ -185,6 +185,8 @@ class FormBarangController extends Controller
 
         $barang = Barang::find($data['barang_id']);
 
+        $vehicle = Vehicle::find($data['id']);
+
         if ($barang->stok < $data['jumlah']) {
             return redirect()->route('billing.index')->with('error', 'Stok barang tidak cukup');
         }
@@ -217,6 +219,22 @@ class FormBarangController extends Controller
 
         $barang->stok -= $data['jumlah'];
         $barang->save();
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan =    "==========================\n".
+                    "*Form Jual Barang*\n".
+                    "==========================\n\n".
+                    "No. Lambung : ".$vehicle->nomor_lambung."\n".
+                    "Vendor : ".$vehicle->vendor->nama."\n\n".
+                    "Barang : ".$barang->nama."\n".
+                    "Jumlah : ".$data['jumlah']."\n".
+                    "Total :  *Rp. ".number_format($data['total'], 0, ',', '.')."*\n".
+                    "==========================\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Berhasil menjual barang');
 
