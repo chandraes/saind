@@ -46,7 +46,7 @@
         <tr>
             <td class="text-center align-middle">{{$loop->iteration}}</td>
             <td class="text-center align-middle">
-                <a href="#" class="@if ($d->no_index < 30) text-danger @endif" data-bs-toggle="modal" data-bs-target="#modalShow{{$d->id}}">
+                <a href="#" class="@if ($d->no_index < 30 || $d->tahun < 2016) text-danger @endif" data-bs-toggle="modal" data-bs-target="#modalShow{{$d->id}}">
                     <h5 class="">{{$d->nomor_lambung}}</h5>
                 </a>
             </td>
@@ -55,7 +55,7 @@
             <td class="text-center align-middle @if ($d->no_index < 30)
                 text-danger
             @endif">{{$d->no_index}}</td>
-            <td class="text-center align-middle">{{$d->tahun}}</td>
+            <td class="text-center align-middle @if ($d->tahun < 2016) text-danger @endif">{{$d->tahun}}</td>
             <td class="text-center align-middle">
                 @if ($d->status == 'aktif')
                 <h5><span class="badge bg-success">Aktif</span></h5>
