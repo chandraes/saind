@@ -363,15 +363,15 @@ class RekapController extends Controller
         ]);
         // dd($kas_vendor->vendor_id);
 
-        dd($kasVendorLast);
+
         $data['vendor_id'] = $kas_vendor->vendor_id;
         $data['vehicle_id'] = $kas_vendor->vehicle_id;
         $data['bbm_storing_id'] = $kas_vendor->bbm_storing_id;
         $data['tanggal'] = date('Y-m-d');
         $data['uraian'] = 'Void '.$kas_vendor->uraian;
         $data['bayar'] = $kas_vendor->pinjaman;
-        $data['sisa'] = $kasVendorLast->sisa - $data['bayar'];
-        dd($data);
+        $data['sisa'] = $kasVendorLast - $data['bayar'];
+
         KasVendor::create($data);
 
         if ($kas_vendor->storing == 1) {
