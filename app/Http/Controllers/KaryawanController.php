@@ -46,8 +46,8 @@ class KaryawanController extends Controller
         $data = $request->validate([
             'nama' => 'required',
             'gaji_pokok' => 'required',
-            'tunjangan_jabatan' => 'required',
-            'tunjangan_keluarga' => 'required',
+            'tunjangan_jabatan' => 'nullable',
+            'tunjangan_keluarga' => 'nullable',
             'nickname' => 'required',
             'jabatan_id' => 'required',
             'nik' => 'required',
@@ -73,7 +73,7 @@ class KaryawanController extends Controller
         $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
         $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
-        
+
         $data['created_by'] = auth()->user()->id;
 
         DB::transaction(function () use ($data, $request) {

@@ -86,25 +86,25 @@ class FormStoringConroller extends Controller
 
 
 
-        $data['tanggal'] = date('Y-m-d');
-        $data['uraian'] = 'BBM Storing '. $vehicle->nomor_lambung;
-        $data['jenis_transaksi_id'] = 2;
-        $data['nominal_transaksi'] = $storing->biaya_mekanik;
-        $data['transfer_ke'] = $rekening->nama_rekening;
-        $data['bank'] = $rekening->nama_bank;
-        $data['no_rekening'] = $rekening->nomor_rekening;
+        $kasArray['tanggal'] = date('Y-m-d');
+        $kasArray['uraian'] = 'BBM Storing '. $vehicle->nomor_lambung;
+        $kasArray['jenis_transaksi_id'] = 2;
+        $kasArray['nominal_transaksi'] = $storing->biaya_mekanik;
+        $kasArray['transfer_ke'] = $rekening->nama_rekening;
+        $kasArray['bank'] = $rekening->nama_bank;
+        $kasArray['no_rekening'] = $rekening->nomor_rekening;
 
         $kasBesar = KasBesar::latest()->first();
 
         if ($kasBesar) {
-            $data['saldo'] = $kasBesar->saldo - $data['nominal_transaksi'];
-            $data['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
+            $kasArray['saldo'] = $kasBesar->saldo - $kasArray['nominal_transaksi'];
+            $kasArray['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
         } else {
-            $data['saldo'] = $data['nominal_transaksi'];
-            $data['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
+            $kasArray['saldo'] = $kasArray['nominal_transaksi'];
+            $kasArray['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
         }
 
-        $store = KasBesar::create($data);
+        $store = KasBesar::create($kasArray);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
@@ -114,11 +114,11 @@ class FormStoringConroller extends Controller
                     "No. Lambung : ".$vehicle->nomor_lambung."\n".
                     "Vendor : ".$vehicle->vendor->nama."\n\n".
                     "Lokasi : ".$storing->km."\n".
-                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Nilai :  *Rp. ".number_format($kasArray['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank     : ".$data['bank']."\n".
-                    "Nama    : ".$data['transfer_ke']."\n".
-                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "Bank     : ".$kasArray['bank']."\n".
+                    "Nama    : ".$kasArray['transfer_ke']."\n".
+                    "No. Rek : ".$kasArray['no_rekening']."\n\n".
                     "==========================\n".
                     "Sisa Saldo Kas Besar : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".

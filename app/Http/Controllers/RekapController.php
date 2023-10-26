@@ -356,19 +356,22 @@ class RekapController extends Controller
         if ($data['password'] != $password->password) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
+        $kasVendorLast = KasVendor::where('vendor_id', '=', $kas_vendor->vendor_id)->latest()->max('sisa');
 
         $kas_vendor->update([
             'void' => 1,
         ]);
+        // dd($kas_vendor->vendor_id);
 
+        dd($kasVendorLast);
         $data['vendor_id'] = $kas_vendor->vendor_id;
         $data['vehicle_id'] = $kas_vendor->vehicle_id;
         $data['bbm_storing_id'] = $kas_vendor->bbm_storing_id;
         $data['tanggal'] = date('Y-m-d');
         $data['uraian'] = 'Void '.$kas_vendor->uraian;
         $data['bayar'] = $kas_vendor->pinjaman;
-        $data['sisa'] = $kas_vendor->sisa - $data['bayar'];
-
+        $data['sisa'] = $kasVendorLast->sisa - $data['bayar'];
+        dd($data);
         KasVendor::create($data);
 
         if ($kas_vendor->storing == 1) {
