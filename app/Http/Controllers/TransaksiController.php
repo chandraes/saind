@@ -10,6 +10,8 @@ use App\Models\InvoiceTagihan;
 use App\Models\InvoiceTagihanDetail;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBayarDetail;
+use App\Models\InvoiceBonus;
+use App\Models\InvoiceBonusDetail;
 use App\Models\Sponsor;
 use App\Models\GroupWa;
 use App\Services\StarSender;
@@ -429,6 +431,47 @@ class TransaksiController extends Controller
             'data' => $data,
             'sponsor' => $sponsor,
         ]);
+    }
+
+    public function nota_bonus_lanjut(Request $request, Sponsor $sponsor)
+    {
+        $data = $request->validate([
+            'total_bonus' => 'required|numeric',
+        ]);
+
+        $bonus = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vendors as v', 'kuj.vendor_id', 'v.id')
+                            ->join('sponsors as s', 'v.sponsor_id', 's.id')
+                            ->select('transaksis.id')
+                            ->where('transaksis.status', 3)
+                            ->where('transaksis.void', 0)
+                            ->where('bonus', 0)
+                            ->where('s.id', $sponsor->id)->get();
+
+        $data['tanggal'] = date('Y-m-d');
+        // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
+        $data['no_invoice'] = InvoiceBonus::where('sponsor_id', $sponsor->id)->max('no_invoice') + 1;
+        $data['sponsor_id'] = $sponsor->id;
+        $data['total_bayar'] = 0;
+        $data['sisa_bonus'] = $data['total_bonus'];
+        $data['lunas'] = 0;
+        $data['periode'] = "Periode ".$data['no_invoice'];
+
+        $invoice = InvoiceBonus::create($data);
+
+        foreach ($bonus as $key => $value) {
+            $value->update([
+                'bonus' => 1,
+            ]);
+
+            InvoiceBonusDetail::create([
+                'invoice_bonus_id' => $invoice->id,
+                'transaksi_id' => $value->id,
+            ]);
+
+        }
+
+        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
     }
 
 

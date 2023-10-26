@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE BAYAR</u></h1>
+            <h1><u>INVOICE BONUS</u></h1>
         </div>
     </div>
     @include('swal')
@@ -36,35 +36,35 @@
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Vendor</th>
+                <th class="text-center align-middle">Sponsor</th>
                 <th class="text-center align-middle">Invoice</th>
-                <th class="text-center align-middle">Total Bayar</th>
+                <th class="text-center align-middle">Total Bonus</th>
                 <th class="text-center align-middle">Balance</th>
-                <th class="text-center align-middle">Sisa Bayar</th>
-                <th class="text-center align-middle">Pembayaran ke Vendor</th>
+                <th class="text-center align-middle">Sisa Bonus</th>
+                <th class="text-center align-middle">Bayar</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($data as $d)
             <tr>
                 <td class="text-center align-middle">{{$d->tanggal}}</td>
-                <td class="text-center align-middle">{{$d->vendor->nama}}</td>
+                <td class="text-center align-middle">{{$d->sponsor->nama}}</td>
                 <td class="text-center align-middle">
                     {{$d->periode}}
+                </td>
+                <td class="text-center align-middle">
+                    {{number_format($d->total_bonus, 0, ',', '.')}}
                 </td>
                 <td class="text-center align-middle">
                     {{number_format($d->total_bayar, 0, ',', '.')}}
                 </td>
                 <td class="text-center align-middle">
-                    {{number_format($d->bayar, 0, ',', '.')}}
+                    {{number_format($d->sisa_bonus, 0, ',', '.')}}
                 </td>
                 <td class="text-center align-middle">
-                    {{number_format($d->sisa_bayar, 0, ',', '.')}}
-                </td>
-                <td class="text-center align-middle">
-                    <form action="{{route('invoice.tagihan.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
+                    <form action="{{route('invoice.bonus.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
                     @csrf
-                        <button type="submit" class="btn btn-success">Bayar </button>
+                        <button type="submit" class="btn btn-success">Pembayaran </button>
                     </form>
                 </td>
             </tr>
@@ -73,7 +73,7 @@
                     e.preventDefault();
                     Swal.fire({
                         title: 'Apakah anda yakin?',
-                        text: "Pelunasan Tagihan sebesar Rp. {{number_format($d->sisa_tagihan, 0, ',', '.')}}",
+                        text: "Pelunasan Tagihan sebesar Rp. {{number_format($d->sisa_bonus, 0, ',', '.')}}",
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#3085d6',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InvoiceTagihan;
 use App\Models\InvoiceBayar;
+use App\Models\InvoiceBonus;
 use App\Models\KasBesar;
 use App\Models\Rekening;
 use App\Models\GroupWa;
@@ -16,10 +17,12 @@ class InvoiceController extends Controller
     {
         $invoice = InvoiceTagihan::where('lunas', 0)->count();
         $bayar = InvoiceBayar::where('lunas', 0)->count();
+        $bonus = InvoiceBonus::where('lunas', 0)->count();
 
         return view('billing.transaksi.invoice.index', [
             'invoice' => $invoice,
-            'bayar' => $bayar
+            'bayar' => $bayar,
+            'bonus' => $bonus,
         ]);
     }
 
@@ -179,5 +182,81 @@ class InvoiceController extends Controller
         return view('billing.transaksi.invoice.invoice-bayar', [
             'data' => $invoice
         ]);
+    }
+
+    public function invoice_bonus()
+    {
+        $invoice = InvoiceBonus::where('lunas', 0)->get();
+
+        return view('billing.transaksi.invoice.invoice-bonus', [
+            'data' => $invoice
+        ]);
+    }
+
+    public function invoice_bonus_lunas(InvoiceBonus $invoice)
+    {
+
+        $last = KasBesar::latest()->first();
+
+        if ($last->saldo < $invoice->sisa_bonus) {
+            return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
+        }
+
+        $total_bayar = $invoice->sisa_bonus;
+
+        $invoice->update([
+            'total_bayar' => $total_bayar,
+            'sisa_bonus' => 0,
+            'lunas' => 1
+        ]);
+
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        if($lastNomor == null)
+        {
+            $data['nomor_kode_tagihan'] = 1;
+        } else {
+            $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
+        }
+
+        if ($last) {
+            $data['uraian'] = "Bonus ".$invoice->sponsor->nama.' - '.$invoice->periode;
+            $data['jenis_transaksi_id'] = 2;
+            $data['nominal_transaksi'] = $total_bayar;
+            $data['saldo'] = $last->saldo - $total_bayar;
+            $data['tanggal'] = date('Y-m-d');
+
+            $data['transfer_ke'] = substr($invoice->sponsor->transfer_ke, 0, 15);
+            $data['no_rekening'] = $invoice->sponsor->nomor_rekening;
+            $data['bank'] = $invoice->sponsor->nama_bank;
+
+            $data['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+
+            $store = KasBesar::create($data);
+
+            $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Invoice Bonus*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "*T".sprintf("%02d",$data['nomor_kode_tagihan'])."*\n\n".
+                    "Sponsor : ".$invoice->sponsor->nama."\n".
+                    "Periode : ".$invoice->periode."\n\n".
+                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$data['bank']."\n".
+                    "Nama    : ".$data['transfer_ke']."\n".
+                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+
+            $send = new StarSender($group->nama_group, $pesan);
+            $res = $send->sendGroup();
+        }
+
+        return redirect()->route('invoice.bonus.index')->with('success', 'Invoice berhasil di lunasi');
     }
 }

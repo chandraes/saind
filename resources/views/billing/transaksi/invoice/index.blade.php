@@ -21,13 +21,13 @@
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('invoice.bayar.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-bayar.svg')}}" alt="" width="100">
-                <h2>BAYAR <span class="text-danger">{{$bayar > 0 ? "(".$bayar.")" : ''}}</h2>
+                <h2>BAYAR <span class="text-danger">{{$bayar > 0 ? "(".$bayar.")" : ''}}</span></h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
+            <a href="{{route('invoice.bonus.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-bonus.svg')}}" alt="" width="100">
-                <h2>BONUS</h2>
+                <h2>BONUS<span class="text-danger">{{$bonus > 0 ? "(".$bonus.")" : ''}}</span></h2>
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">

@@ -217,9 +217,12 @@
 </div>
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-
+        <form action="{{route('transaksi.nota-bonus.lanjut', $sponsor)}}" method="post" id="lanjutForm">
+            @csrf
+            <input type="hidden" name="total_bonus" value="{{$total_tagihan}}">
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
-        <a class="btn btn-success btn-lg" href="#">Export</a>
+        </form>
+        {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
       </div>
 </div>
 
