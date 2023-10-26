@@ -486,4 +486,21 @@ class RekapController extends Controller
 
         return $pdf->stream('Rekap Kasbon '.$stringBulanNow.' '.$tahun.'.pdf');
     }
+
+    public function kas_bon_void(KasBon $kas)
+    {
+        $data = $request->validate([
+            'password' => 'required',
+        ]);
+
+        $password = PasswordKonfirmasi::first();
+
+        if (!$password) {
+            return redirect()->back()->with('error', 'Password belum diatur!!');
+        }
+
+        if ($data['password'] != $password->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+    }
 }
