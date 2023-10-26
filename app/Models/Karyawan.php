@@ -50,4 +50,9 @@ class Karyawan extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function kas_bon()
+    {
+        return $this->hasMany(KasBon::class);
+    }
 }

@@ -286,6 +286,8 @@
             let val = document.getElementById('vendorSelect').value;
             if (val === 'titipan') {
                 window.location.href = "{{route('billing.vendor.titipan')}}";
+            } else if(val === 'pelunasan') {
+                window.location.href = "{{route('billing.vendor.pelunasan')}}";
             }
         }
 </script>

@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Form Vendor Titipan</u></h1>
+            <h1><u>Form Pelunasan Vendor</u></h1>
         </div>
     </div>
     @include('swal')
@@ -31,21 +31,13 @@
             </div>
             <div class="col-3">
                 <div class="mb-3">
-                    <label for="id" class="form-label">Nomor Lambung</label>
-                    <select class="form-select" name="id" id="id" onchange="funGetVendor()" required>
-                        <option selected> -- Pilih Nomor Lambung -- </option>
+                    <label for="id" class="form-label">Vendor</label>
+                    <select class="form-select" name="id" id="id" onchange="funGetKas()" required>
+                        <option selected> -- Pilih Vendor -- </option>
                         @foreach ($vehicle as $d)
-                            <option value="{{$d->id}}">{{$d->nomor_lambung}}</option>
+                            <option value="{{$d->id}}">{{$d->nama}}</option>
                         @endforeach
                     </select>
-                </div>
-            </div>
-            <div class="col-3">
-                <div class="mb-3">
-                  <label for="vendor" class="form-label">Nama Vendor</label>
-                  <input type="text"
-                    class="form-control" name="vendor" id="vendor" aria-describedby="helpId" placeholder="" disabled>
-                    <input type="hidden" name="vendor_id" id="vendor_id" required>
                 </div>
             </div>
             <div class="col-md-3 mb-3">

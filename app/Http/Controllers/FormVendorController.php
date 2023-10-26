@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\KasVendor;
 use App\Models\KasBesar;
+use App\Models\Vendor;
 use App\Models\Vehicle;
 use App\Models\GroupWa;
 use App\Services\StarSender;
@@ -13,10 +14,7 @@ class FormVendorController extends Controller
 {
     public function titipan()
     {
-        $vehicle = Vehicle::join('vendors as v', 'v.id', 'vehicles.vendor_id')
-            ->where('v.pembayaran', '=', 'titipan')
-            ->select('vehicles.*')
-            ->get();
+        $vehicle = Vehicle::all();
 
         return view('billing.vendor.titipan', [
             'vehicle' => $vehicle,
@@ -94,6 +92,10 @@ class FormVendorController extends Controller
 
     public function pelunasan()
     {
-        
+        $vendor = Vendor::all();
+
+        return view('billing.vendor.pelunasan', [
+            'vendor' => $vendor,
+        ]);
     }
 }
