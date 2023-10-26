@@ -8,28 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class KasBesar extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'tanggal',
-        'uraian',
-        'kode_deposit',
-        'nomor_kode_deposit',
-        'kode_kas_kecil',
-        'nomor_kode_kas_kecil',
-        'kode_kas_uang_jalan',
-        'nomor_kode_kas_uang_jalan',
-        'tipe_transaksi_id',
-        'jenis_transaksi_id',
-        'nominal_transaksi',
-        'saldo',
-        'transfer_ke',
-        'bank',
-        'no_rekening',
-        'modal_investor',
-        'modal_investor_terakhir',
-        'kode_tagihan',
-        'nomor_kode_tagihan',
-    ];
-
+    protected $guarded = [];
+    
     public function jenis_transaksi()
     {
         return $this->belongsTo(JenisTransaksi::class);

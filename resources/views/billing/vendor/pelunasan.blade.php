@@ -19,86 +19,41 @@
             </ul>
         </div>
     @endif
-    <form action="{{route('billing.vendor.titipan-store')}}" method="post" id="masukForm">
+    <form action="{{route('billing.vendor.pelunasan-store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
-            <div class="col-3">
+            <div class="col-4">
                 <div class="mb-3">
                   <label for="" class="form-label">Tanggal</label>
                   <input type="text"
                     class="form-control" name="" id="" aria-describedby="helpId" placeholder="" value="{{date('d-m-Y')}}" disabled>
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col-4">
                 <div class="mb-3">
-                    <label for="id" class="form-label">Vendor</label>
-                    <select class="form-select" name="id" id="id" onchange="funGetKas()" required>
+                    <label for="vendor_id" class="form-label">Vendor</label>
+                    <select class="form-select" name="vendor_id" id="vendor_id" onchange="funGetKas()" required>
                         <option selected> -- Pilih Vendor -- </option>
-                        @foreach ($vehicle as $d)
+                        @foreach ($vendor as $d)
                             <option value="{{$d->id}}">{{$d->nama}}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
-                <label for="nilai" class="form-label">Nilai</label>
+            <div class="col-md-4 mb-3">
+                <label for="nilai" class="form-label">Nilai Tagihan</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('nilai'))
                     is-invalid
-                @endif" name="nilai" id="nilai" data-thousands="." required>
+                @endif" name="nilai" id="nilai" data-thousands="." disabled>
+                <input type="hidden" name="nominal" id="nominal">
                   </div>
             </div>
         </div>
-        <div class="row">
-
-        </div>
         <hr>
-        <div class="row">
-
-
-        </div>
-        <hr>
-        {{-- <h2>Transfer Ke</h2>
-        <br> --}}
-        {{-- <div class="row">
-
-            <div class="col-md-4 mb-3">
-                <label for="transfer_ke" class="form-label">Nama</label>
-                <input type="text" class="form-control @if ($errors->has('transfer_ke'))
-                    is-invalid
-                @endif" name="transfer_ke" id="transfer_ke" disabled value="{{$rekening->nama_rekening}}">
-                @if ($errors->has('transfer_ke'))
-                <div class="invalid-feedback">
-                    {{$errors->first('transfer_ke')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="bank" class="form-label">Bank</label>
-                <input type="text" class="form-control @if ($errors->has('bank'))
-                    is-invalid
-                @endif" name="bank" id="bank" disabled value="{{$rekening->nama_bank}}">
-                @if ($errors->has('bank'))
-                <div class="invalid-feedback">
-                    {{$errors->first('bank')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="no_rekening" class="form-label">Nomor Rekening</label>
-                <input type="text" class="form-control @if ($errors->has('no_rekening'))
-                    is-invalid
-                @endif" name="no_rekening" id="no_rekening" disabled value="{{$rekening->nomor_rekening}}">
-                @if ($errors->has('no_rekening'))
-                <div class="invalid-feedback">
-                    {{$errors->first('no_rekening')}}
-                </div>
-                @endif
-            </div>
-        </div> --}}
         <div class="d-grid gap-3 mt-3">
-            <button class="btn btn-primary">Ok</button>
+            <button class="btn btn-primary" hidden id="ok">Ok</button>
             <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>
           </div>
     </form>
@@ -128,88 +83,32 @@
             })
         });
 
-        $('#beliBarang').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah anda yakin?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submit();
-                }
-            })
-        });
-
-        function funGetVendor() {
-            var id = $('#id').val();
+        function funGetKas() {
+            var vendor_id = $('#vendor_id').val();
             $.ajax({
-                url: "{{route('kas-uang-jalan.get-vendor')}}",
+                url: "{{route('billing.vendor.get-kas-vendor')}}",
                 type: "GET",
                 data: {
-                    id: id
+                    vendor_id: vendor_id
                 },
                 success: function(data){
-                    funGetStatusSo();
-                    $('#vendor_id').val(data.id);
-                    $('#vendor').val(data.nama);
-                }
-            });
-        }
-
-        function funGetStoring() {
-            var id = $('#storing_id').val();
-
-            $.ajax({
-                url: "{{route('billing.storing.get-storing')}}",
-                type: "GET",
-                data: {
-                    id: id
-                },
-                success: function(data){
-
-
-                    $('#mekanik').maskMoney('destroy');
-                    $('#mekanik').maskMoney();
-                    $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
-                    $('#harga_vendor').maskMoney('destroy');
-                    $('#harga_vendor').maskMoney();
-                    $('#harga_vendor').maskMoney('mask', (data.biaya_vendor));
-
-                    // call funGetStatusSo
-
-                }
-            });
-        }
-
-        function funGetStatusSo()
-        {
-            var id = $('#id').val();
-
-            $.ajax({
-                url: "{{route('billing.storing.get-status-so')}}",
-                type: "GET",
-                data: {
-                    id: id
-                },
-                success: function(data){
-                    console.log(data);
-                    // if 1 disable jasa and hide jasadiv
-                    if (data == 1) {
-
-                        $('#jasa').prop('disabled', true);
-                        // make jasa not required
-                        $('#jasa').prop('required', false);
-                        $('#jasadiv').hide();
-
-                    } else if(data == 0) {
-                        $('#jasa').prop('disabled', false);
-                        // make jasa required
-                        $('#jasa').prop('required', true);
-                        $('#jasadiv').show();
+                    if (data >= 0) {
+                        // swal tidak ada tagihan
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Tidak ada tagihan yang harus dilunasi!',
+                        });
+                        $('#ok').attr('hidden', true);
+                        $('#nilai').val('');
+                        $('#nominal').val('');
+                    }
+                    else if(data < 0){
+                        // mask money
+                        // show button ok
+                        $('#ok').removeAttr('hidden');
+                        $('#nilai').maskMoney('mask', data);
+                        $('#nominal').val(data);
                     }
                 }
             });
