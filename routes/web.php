@@ -184,6 +184,10 @@ Route::group(['middleware' => ['auth']], function() {
     // billing route
     Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index');
 
+    // form vendor
+    Route::get('billing/vendor/titipan', [App\Http\Controllers\FormVendorController::class, 'titipan'])->name('billing.vendor.titipan');
+    Route::post('billing/vendor/titipan-store', [App\Http\Controllers\FormVendorController::class, 'titipan_store'])->name('billing.vendor.titipan-store');
+
     Route::get('billing/transaksi', [App\Http\Controllers\TransaksiController::class, 'index'])->name('billing.transaksi.index');
 
     Route::get('billing/transaksi/invoice', [App\Http\Controllers\InvoiceController::class, 'index'])->name('billing.transaksi.invoice.index');

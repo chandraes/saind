@@ -82,12 +82,32 @@
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formVendor">
                 <img src="{{asset('images/form-vendor.svg')}}" alt="" width="100">
                 <h2>FORM VENDOR</h2>
             </a>
-        </div>
 
+        </div>
+        <div class="modal fade" id="formVendor" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+            role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <div class="mb-3 mt-3">
+                            <select class="form-select form-select-lg" name="" id="vendorSelect">
+                                <option value="titipan">Titipan Vendor</option>
+                                <option value="pelunasan">Pelunasan Tagihan</option>
+                                <option value="bayar">Bayar dari Vendor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <a href="#" class="btn btn-primary" onclick="tipeformVendor()">Lanjutkan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
         @endif
@@ -258,6 +278,14 @@
                 window.location.href = "{{route('billing.form-barang.beli')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('billing.form-barang.jual')}}";
+            }
+        }
+
+        function tipeformVendor()
+        {
+            let val = document.getElementById('vendorSelect').value;
+            if (val === 'titipan') {
+                window.location.href = "{{route('billing.vendor.titipan')}}";
             }
         }
 </script>
