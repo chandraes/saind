@@ -9,23 +9,7 @@ class Vehicle extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'vendor_id',
-        'nomor_lambung',
-        'nopol',
-        'nama_stnk',
-        'no_rangka',
-        'no_mesin',
-        'tipe',
-        'tahun',
-        'no_kartu_gps',
-        'status',
-        'transfer_ke',
-        'bank',
-        'no_rekening',
-        'support_operational',
-        'gps',
-    ];
+    protected $guarded = [];
 
     public function vendor()
     {

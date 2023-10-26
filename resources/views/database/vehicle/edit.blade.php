@@ -47,9 +47,13 @@
                             <label for="no_mesin" class="form-label">Nomor Mesin</label>
                             <input type="text" class="form-control" name="no_mesin" id="no_mesin" value="{{$d->no_mesin}}">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="tipe" class="form-label">Tipe & Index</label>
+                        <div class="col-md-3 mb-3">
+                            <label for="tipe" class="form-label">Tipe</label>
                             <input type="text" class="form-control" name="tipe" id="tipe" value="{{$d->tipe}}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="no_index" class="form-label">Index</label>
+                            <input type="number" class="form-control" name="no_index" id="no_index" value="{{$d->no_index}}">
                         </div>
                         <div class="col-6 mb-3">
                             <label for="tahun" class="form-label">Tahun</label>

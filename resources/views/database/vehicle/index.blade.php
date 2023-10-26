@@ -34,7 +34,8 @@
             <th class="text-center align-middle">No</th>
             <th class="text-center align-middle">Nomor Lambung</th>
             <th class="text-center align-middle">Vendor</th>
-            <th class="text-center align-middle">Tipe & Index</th>
+            <th class="text-center align-middle">Tipe</th>
+            <th class="text-center align-middle">Index</th>
             <th class="text-center align-middle">Tahun</th>
             <th class="text-center align-middle">Status</th>
             <th class="text-center align-middle">Action</th>
@@ -45,12 +46,15 @@
         <tr>
             <td class="text-center align-middle">{{$loop->iteration}}</td>
             <td class="text-center align-middle">
-                <a href="#" data-bs-toggle="modal" data-bs-target="#modalShow{{$d->id}}">
-                    <h5>{{$d->nomor_lambung}}</h5>
+                <a href="#" class="@if ($d->no_index < 30) text-danger @endif" data-bs-toggle="modal" data-bs-target="#modalShow{{$d->id}}">
+                    <h5 class="">{{$d->nomor_lambung}}</h5>
                 </a>
             </td>
             <td class="align-middle">{{$d->vendor->nama}} {{$d->vendor->perusahaan}}</td>
             <td class="text-center align-middle">{{$d->tipe}}</td>
+            <td class="text-center align-middle @if ($d->no_index < 30)
+                text-danger
+            @endif">{{$d->no_index}}</td>
             <td class="text-center align-middle">{{$d->tahun}}</td>
             <td class="text-center align-middle">
                 @if ($d->status == 'aktif')

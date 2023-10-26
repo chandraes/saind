@@ -8,26 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Vendor extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'nama',
-        'nickname',
-        'tipe',
-        'jabatan',
-        'perusahaan',
-        'npwp',
-        'alamat',
-        'no_hp',
-        'email',
-        'bank',
-        'no_rekening',
-        'nama_rekening',
-        'status',
-        'sponsor_id',
-        'user_id',
-        'pembayaran',
-        'ppn',
-        'pph',
-    ];
+    protected $guarded = [];
 
     public function user()
     {
