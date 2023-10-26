@@ -62,7 +62,7 @@
                     {{number_format($d->sisa_bayar, 0, ',', '.')}}
                 </td>
                 <td class="text-center align-middle">
-                    <form action="{{route('invoice.tagihan.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
+                    <form action="{{route('invoice.bayar.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
                     @csrf
                         <button type="submit" class="btn btn-success">Bayar </button>
                     </form>
@@ -73,7 +73,7 @@
                     e.preventDefault();
                     Swal.fire({
                         title: 'Apakah anda yakin?',
-                        text: "Pelunasan Tagihan sebesar Rp. {{number_format($d->sisa_tagihan, 0, ',', '.')}}",
+                        text: "Pembayaran sebesar Rp. {{number_format($d->sisa_bayar, 0, ',', '.')}}",
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonColor: '#3085d6',

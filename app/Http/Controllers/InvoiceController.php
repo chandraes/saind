@@ -6,6 +6,7 @@ use App\Models\InvoiceTagihan;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
 use App\Models\KasBesar;
+use App\Models\KasVendor;
 use App\Models\Rekening;
 use App\Models\GroupWa;
 use Illuminate\Http\Request;
@@ -182,6 +183,35 @@ class InvoiceController extends Controller
         return view('billing.transaksi.invoice.invoice-bayar', [
             'data' => $invoice
         ]);
+    }
+
+    public function invoice_bayar_lunas(InvoiceBayar $invoice)
+    {
+        $total_bayar = $invoice->sisa_bayar;
+
+        $invoice->update([
+            'bayar' => $total_bayar,
+            'sisa_bayar' => 0,
+            'lunas' => 1
+        ]);
+
+        $last = KasVendor::where('vendor_id', $invoice->vendor_id)->latest()->first();
+
+        $data['tanggal'] = now();
+        $data['uraian'] = "Pembayaran ".' - '.$invoice->periode;
+        $data['bayar'] = $total_bayar;
+        $data['vendor_id'] = $invoice->vendor_id;
+
+        if ($last) {
+            $data['sisa'] = $last->sisa - $total_bayar;
+        } else {
+            $data['sisa'] = -$total_bayar;
+        }
+
+        KasVendor::create($data);
+
+        return redirect()->route('invoice.bayar.index')->with('success', 'Invoice berhasil di lunasi');
+
     }
 
     public function invoice_bonus()

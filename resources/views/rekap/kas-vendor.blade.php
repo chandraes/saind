@@ -5,6 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>Kas Vendor</u></h1>
+            <h1>{{$vendor->nama}}</h1>
             <h1>{{$stringBulanNow}} {{$tahun}}</h1>
         </div>
     </div>
@@ -94,9 +95,9 @@
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->uraian}}</td>
-                    <td class="text-center align-middle">{{$d->vehicle->nomor_lambung}}</td>
+                    <td class="text-center align-middle">{{$d->vehicle_id ? $d->vehicle->nomor_lambung : ''}}</td>
                     <td class="text-center align-middle">{{number_format($d->pinjaman, 0, ',', '.')}}</td>
-                    <td class="text-center align-middle">{{$d->bayar}}</td>
+                    <td class="text-center align-middle">{{number_format($d->bayar, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($d->sisa, 0, ',','.')}}</td>
                     <td class="text-center align-middle">
                         @if ($d->storing == 1 && $d->void == 0 || $d->jasa == 1 && $d->void == 0)

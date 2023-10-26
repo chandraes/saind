@@ -4,6 +4,7 @@
     <center>
         <h2>REKAP KAS VENDOR</h2>
         <h2>{{$vendor->nama}}</h2>
+        <h2>{{$stringBulanNow}} {{$tahun}}</h2>
     </center>
 </div>
 <div class="container-fluid table-responsive ml-3">
@@ -33,9 +34,9 @@
                 <tr>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->tanggal}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->uraian}}</td>
-                    <td class="text-center align-middle table-pdf text-pdf">{{$d->vehicle->nomor_lambung}}</td>
+                    <td class="text-center align-middle table-pdf text-pdf">{{$d->vehicle_id ? $d->vehicle->nomor_lambung : ''}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{number_format($d->pinjaman, 0, ',', '.')}}</td>
-                    <td class="text-center align-middle table-pdf text-pdf">{{$d->bayar}}</td>
+                    <td class="text-center align-middle table-pdf text-pdf">{{number_format($d->bayar, 0, ',','.')}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{number_format($d->sisa, 0, ',','.')}}</td>
                 </tr>
                 @endforeach
