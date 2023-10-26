@@ -23,9 +23,9 @@
     </div>
 </div>
 <div class="container-fluid mt-5">
-    <form action="{{route('rekap.kas-kecil')}}" method="get">
+    <form action="{{route('rekap.kas-vendor')}}" method="get">
         <div class="row">
-
+            <input type="hidden" name="vendor" value="{{$vendor->id}}">
             <div class="col-md-3 mb-3">
                 <label for="bulan" class="form-label">Bulan</label>
                 <select class="form-select" name="bulan" id="bulan">
@@ -57,7 +57,7 @@
             </div>
             <div class="col-md-3 mb-3">
                 <label for="showPrint" class="form-label">&nbsp;</label>
-                <a href="{{route('rekap.kas-kecil.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank"
+                <a href="{{route('rekap.kas-vendor.preview', ['bulan' => $bulan, 'tahun' => $tahun, 'vendor' => $vendor])}}" target="_blank"
                     class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
             </div>
         </div>
@@ -75,6 +75,18 @@
                     <th class="text-center align-middle">Bayar</th>
                     <th class="text-center align-middle">Sisa</th>
                     <th class="text-center align-middle">Action</th>
+                </tr>
+                <tr class="table-warning">
+
+                    <td colspan="3" class="text-center align-middle">
+                        {{$stringBulan}} {{$tahunSebelumnya}}</td>
+                    <td class="text-center align-middle"></td>
+                    <td></td>
+                    <td>
+                        Rp. {{$dataSebelumnya ?
+                            number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
+                    </td>
+                    <td class="text-center align-middle"></td>
                 </tr>
             </thead>
             <tbody>
