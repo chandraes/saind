@@ -60,10 +60,10 @@
                         <tbody>
                             @foreach ($k->barang as $b)
                             <tr>
-                                <td class="text-center align-middle">{{$b->nama}}</td>
-                                <td class="text-center align-middle">{{$b->stok}}</td>
-                                <td class="text-center align-middle">Rp. {{number_format($b->harga_jual, 0, ',', '.')}}</td>
-                                <td class="text-center align-middle">
+                                <td class="text-center align-middle" style="width: 40%">{{$b->nama}}</td>
+                                <td class="text-center align-middle" style="width: 10%">{{$b->stok}}</td>
+                                <td class="text-center align-middle" style="width: 30%">Rp. {{number_format($b->harga_jual, 0, ',', '.')}}</td>
+                                <td class="text-center align-middle" style="width: 20%">
                                     <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editBarang-{{$b->id}}">Edit</a>
 
                                     @include('database.barang.harga-jual')
