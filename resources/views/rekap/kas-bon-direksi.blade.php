@@ -95,9 +95,14 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="2" class="text-center align-middle"><strong>Grand Total</strong></td>
+                    <td colspan="2" class="text-center align-middle"><strong>Total</strong></td>
                     <td class="text-center align-middle" align="right">{{number_format($data->sum('total_kas'), 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{number_format($data->sum('total_bayar'), 0, ',', '.')}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="text-center align-middle"><strong>Sisa Kasbon
+                          </strong></td>
+                    <td colspan="2" class="text-center align-middle">Rp. {{number_format($data->sum('total_kas')-$data->sum('total_bayar'), 0, ',', '.')}}</td>
                 </tr>
             </tfoot>
         </table>
