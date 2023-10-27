@@ -73,6 +73,14 @@
                 <th class="text-center align-middle">Kasbon</th>
                 <th class="text-center align-middle">Bayar Kasbon</th>
             </tr>
+            <tr class="table-warning">
+
+                <td class="text-center align-middle">Sisa Hutang Bulan
+                    {{$stringBulan}} {{$tahunSebelumnya}}</td>
+                <td ></td>
+                <td colspan="2" class="text-center align-middle">Rp. {{$dataSebelumnya ? number_format($dataSebelumnya->sisa_kas,
+                    0, ',','.') : ''}}</td>
+            </tr>
             </thead>
             <tbody>
                 @foreach ($data as $d)
