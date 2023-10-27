@@ -327,7 +327,7 @@
             if (val === 'direksi') {
                 window.location.href = "{{route('billing.kasbon.direksi.index')}}";
             } else if(val === 'staff') {
-                window.location.href = "#";
+                window.location.href = "{{route('billing.kasbon.kas-bon-staff')}}";
             }
         }
 </script>

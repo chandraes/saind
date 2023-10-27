@@ -70,6 +70,7 @@
                 <th class="text-center align-middle">Tanggal</th>
                 <th class="text-center align-middle">Nama Karyawan</th>
                 <th class="text-center align-middle">Nominal</th>
+                <th class="text-center align-middle">Status</th>
                 <th class="text-center align-middle">Keterangan</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
@@ -80,6 +81,12 @@
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
                     <td class="text-center align-middle">{{$d->nominal}}</td>
+                    <td class="text-center align-middle">
+                        @if ($d->cicilan == 1)
+                        <h5><span class="badge bg-warning">Cicilan</span></h5>
+                        @else
+                        <h5><span class="badge bg-primary badge-xl">Potong Gaji</span></h5>
+                        @endif
                     <td class="text-center align-middle">
                         @if ($d->lunas == 1)
                         <span class="badge bg-success">Lunas</span>
@@ -103,7 +110,7 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="Close"></button>
                                     </div>
-                                    <form action="{{route('rekap.kas-vendor.void', $d)}}" method="post">
+                                    <form action="{{route('rekap.kas-bon.void', $d)}}" method="post">
                                         @csrf
                                         <div class="modal-body">
                                             <input type="password" class="form-control" id="password" name="password"

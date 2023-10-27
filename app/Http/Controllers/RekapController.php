@@ -362,8 +362,6 @@ class RekapController extends Controller
         $kas_vendor->update([
             'void' => 1,
         ]);
-        // dd($kas_vendor->vendor_id);
-
 
         $data['vendor_id'] = $kas_vendor->vendor_id;
         $data['vehicle_id'] = $kas_vendor->vehicle_id;
@@ -488,7 +486,7 @@ class RekapController extends Controller
         return $pdf->stream('Rekap Kasbon '.$stringBulanNow.' '.$tahun.'.pdf');
     }
 
-    public function kas_bon_void(KasBon $kas)
+    public function kas_bon_void(Request $request, KasBon $kas)
     {
         $data = $request->validate([
             'password' => 'required',
@@ -503,6 +501,47 @@ class RekapController extends Controller
         if ($data['password'] != $password->password) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
+
+        $kasBesar = KasBesar::latest()->first();
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        $k['uraian'] = 'Void Kasbon '.$kas->karyawan->nama;
+        $k['tanggal'] = date('Y-m-d');
+        $k['jenis_transaksi_id'] = 1;
+        $k['nominal_transaksi'] = $kas->nominal;
+        $k['saldo'] = $kasBesar->saldo + $kas->nominal;
+        $k['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
+        $k['no_rekening'] = $rekening->nomor_rekening;
+        $k['bank'] = $rekening->nama_bank;
+        $k['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
+
+        $store = KasBesar::create($k);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                "*Form Void Kasbon Staff*\n".
+                "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                "Nama : ".$kas->karyawan->nama."\n".
+                "Uraian : ".$k['uraian']."\n\n".
+                "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                "Ditransfer ke rek:\n\n".
+                "Bank     : ".$k['bank']."\n".
+                "Nama    : ".$k['transfer_ke']."\n".
+                "No. Rek : ".$k['no_rekening']."\n\n".
+                "==========================\n".
+                "Sisa Saldo Kas Besar : \n".
+                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                "Total Modal Investor : \n".
+                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                "Terima kasih 🙏🙏🙏\n";
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
+
+        $kas->delete();
+
+        return redirect()->route('rekap.kas-bon')->with('success', 'Berhasil Void Kasbon!!');
     }
 
     public function kas_bon_direksi(Request $request)

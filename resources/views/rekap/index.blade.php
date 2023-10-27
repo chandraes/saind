@@ -136,7 +136,7 @@
             if (val === 'direksi') {
                 window.location.href = "{{route('rekap.kas-bon.direksi')}}";
             } else if(val === 'staff') {
-                window.location.href = "#";
+                window.location.href = "{{route('rekap.kas-bon')}}";
             }
         }
 </script>

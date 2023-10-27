@@ -254,13 +254,16 @@ class FormKasbonController extends Controller
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
         $data['tanggal'] = date('Y-m-d');
+        $data['sisa_kas'] = $data['nominal'];
 
         $kasbon = KasBon::where('karyawan_id', $data['karyawan_id'])->where('lunas', 0)->sum('nominal');
 
         $karyawan = Karyawan::find($data['karyawan_id']);
 
-        if ($karyawan->gaji_pokok < $data['nominal'] || $karyawan->gaji_pokok < ($kasbon+$data['nominal'])) {
-            return redirect()->route('billing.kasbon.index')->with('error', 'Kasbon sudah melebihi gaji pokok!!');
+        $gapok = $karyawan->gaji_pokok * 0.5;
+
+        if ($gapok < $data['nominal'] || $gapok < ($kasbon+$data['nominal'])) {
+            return redirect()->route('billing.kasbon.index')->with('error', 'Kasbon sudah melebihi ketentuan!!');
         }
 
         $last = KasBesar::latest()->first();
@@ -304,6 +307,78 @@ class FormKasbonController extends Controller
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
+
+        return redirect()->route('billing.index')->with('success', 'Kasbon berhasil ditambahkan');
+    }
+
+    public function kas_bon_cicil()
+    {
+        $data = Karyawan::where('status', 'aktif')->get();
+
+        return view('billing.kasbon.kas-bon-cicil', [
+            'karyawan' => $data,
+        ]);
+    }
+
+    public function kas_bon_cicil_store(Request $request)
+    {
+        $data = $request->validate([
+            'karyawan_id' => 'required',
+            'nominal' => 'required',
+            'cicil_kali' => 'required|integer',
+            'mulai_bulan' => 'required|integer|between:1,12',
+        ]);
+
+        $kasBesar = KasBesar::latest()->first();
+
+        if ($kasBesar == null || $kasBesar->saldo < $data['nominal']) {
+            return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
+        }
+
+        $karyawan = Karyawan::find($data['karyawan_id']);
+
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
+        $data['mulai_tahun'] = date('Y');
+        $data['tanggal'] = date('Y-m-d');
+        $data['sisa_kas'] = $data['nominal'];
+        $data['cicilan'] = 1;
+        $data['cicilan_nominal'] = $data['nominal'] / $data['cicil_kali'];
+
+        KasBon::create($data);
+
+        $k['tanggal'] = $data['tanggal'];
+        $k['uraian'] = "Kasbon Cicilan ".$karyawan->nama;
+        $k['jenis_transaksi_id'] = 2;
+        $k['nominal_transaksi'] = $data['nominal'];
+        $k['saldo'] = $kasBesar->saldo - $data['nominal'];
+        $k['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
+        $k['transfer_ke'] = $karyawan->nama_rekening;
+        $k['bank'] = $karyawan->bank;
+        $k['no_rekening'] = $karyawan->no_rekening;
+
+        $store = KasBesar::create($k);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Kasbon Karyawan Cicilan*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Nama : ".$karyawan->nama."\n".
+                    "Uraian : ".$k['uraian']."\n\n".
+                    "Nominal :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$k['bank']."\n".
+                    "Nama    : ".$k['transfer_ke']."\n".
+                    "No. Rek : ".$k['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Kasbon berhasil ditambahkan');
     }

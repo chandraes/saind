@@ -7,7 +7,6 @@
         </div>
     </div>
     @include('swal')
-    {{-- show error first --}}
     @if ($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <strong>Whoops!</strong> Terjadi kesalahan.<br><br>
@@ -19,7 +18,7 @@
             </ul>
         </div>
     @endif
-    <form action="{{route('billing.kasbon.store')}}" method="post" id="masukForm">
+    <form action="{{route('billing.kasbon.kas-bon-cicil-store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
             <div class="col-4">
@@ -50,8 +49,34 @@
                   </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-2">
+                <div class="mb-3">
+                  <label for="cicil_kali" class="form-label">Berapa Kali Cicil</label>
+                  <input type="number"
+                    class="form-control" name="cicil_kali" id="cicil_kali" aria-describedby="helpId" placeholder="" required>
+                </div>
+            </div>
+            <div class="col-2">
+                <label for="mulai_bulan" class="form-label">Mulai Bulan</label>
+                <select class="form-select" name="mulai_bulan" id="mulai_bulan">
+                    <option value="1">Januari</option>
+                    <option value="2">Februari</option>
+                    <option value="3">Maret</option>
+                    <option value="4">April</option>
+                    <option value="5">Mei</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">Agustus</option>
+                    <option value="9">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+            </div>
+        </div>
         <div class="d-grid gap-3 mt-3">
-            <button class="btn btn-primary">Ok</button>
+            <button class="btn btn-primary" type="submit">Ok</button>
             <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>
           </div>
     </form>
