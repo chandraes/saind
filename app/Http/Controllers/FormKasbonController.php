@@ -54,8 +54,14 @@ class FormKasbonController extends Controller
         $direksi['uraian'] = $data['uraian'];
         $direksi['total_kas'] = $data['nominal'];
         $direksi['direksi_id'] = $data['direksi_id'];
-        $direksi['sisa_kas'] = $data['nominal'];
-        $direksi['total_bayar'] = 0;
+
+        $lastKasDireksi = KasDireksi::where('direksi_id', $data['direksi_id'])->latest()->orderBy('id', 'desc')->first();
+
+        if ($lastKasDireksi == null) {
+            $direksi['sisa_kas'] = $data['nominal'];
+        } else {
+            $direksi['sisa_kas'] = $lastKasDireksi->sisa_kas + $data['nominal'];
+        }
 
         $kas['tanggal'] = $direksi['tanggal'];
         $kas['uraian'] = $direksi['uraian'];
@@ -89,7 +95,7 @@ class FormKasbonController extends Controller
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($kasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Total Kasbon : \n".
-                    "Rp. ".number_format($d->kas_direksi->sum('sisa_kas'), 0, ',', '.')."\n\n".
+                    "Rp. ".number_format($store->sisa_kas, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
