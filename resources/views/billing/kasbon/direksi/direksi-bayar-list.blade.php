@@ -43,7 +43,7 @@
                 <div class="mb-3">
                   <label for="uraian" class="form-label">Uraian</label>
                   <input type="text"
-                    class="form-control" name="uraian" id="uraian" aria-describedby="helpId" placeholder="" required>
+                    class="form-control" name="uraian" id="uraian" aria-describedby="helpId" placeholder="" value="Bayar Kasbon" required>
                 </div>
             </div>
         </div>

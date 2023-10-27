@@ -152,7 +152,7 @@ class FormKasbonController extends Controller
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         $kas['tanggal'] = $d['tanggal'];
-        $kas['uraian'] = $d['uraian'];
+        $kas['uraian'] = $d['uraian']." ".$direksi->nama;
         $kas['jenis_transaksi_id'] = 1;
         $kas['nominal_transaksi'] = $data['nominal'];
         $kas['saldo'] = $lastKasBesar->saldo + $data['nominal'];
@@ -170,7 +170,7 @@ class FormKasbonController extends Controller
                 "*Form Bayar Kasbon Direksi*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                 "Nama : ".$direksi->nama."\n".
-                "Uraian : ".$kas['uraian']."\n\n".
+                "Uraian : ".$d['uraian']."\n\n".
                 "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
                 "Ditransfer ke rek:\n\n".
                 "Bank     : ".$kas['bank']."\n".
