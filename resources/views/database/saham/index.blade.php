@@ -52,7 +52,7 @@
                     <a href="#" data-bs-toggle="modal" data-bs-target="#editSaham-{{$k->id}}" class="btn btn-warning m-2"><i class="fa fa-edit"></i></a>
                     @include('database.saham.edit')
 
-                    <form action="{{route('direksi.destroy', $k->id)}}" method="post" class="d-inline" id="deleteForm-{{$k->id}}">
+                    <form action="{{route('pemegang-saham.destroy', $k->id)}}" method="post" class="d-inline" id="deleteForm-{{$k->id}}">
                         @csrf
                         @method('delete')
                         <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>

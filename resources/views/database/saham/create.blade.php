@@ -19,7 +19,7 @@
                         </div>
                         <div class="col-6">
                             <div class="mb-3">
-                                <label for="persentase" class="form-label">Persentasi</label>
+                                <label for="persentase" class="form-label">Persentase</label>
                                 <input type="number" class="form-control" name="persentase" id="persentase"
                                     aria-describedby="helpId" placeholder="" required>
                             </div>

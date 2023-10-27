@@ -36,7 +36,7 @@ class PemegangSahamController extends Controller
             'nomor_rekening' => 'required',
             'bank' => 'required',
         ]);
-        
+
         $saham = PemegangSaham::sum('persentase');
 
         if ($saham + $data['persentase'] > 100) {
@@ -69,7 +69,23 @@ class PemegangSahamController extends Controller
      */
     public function update(Request $request, PemegangSaham $pemegangSaham)
     {
-        //
+        $data = $request->validate([
+            'nama' => 'required',
+            'persentase' => 'required|integer',
+            'nama_rekening' => 'required',
+            'nomor_rekening' => 'required',
+            'bank' => 'required',
+        ]);
+
+        $saham = PemegangSaham::sum('persentase');
+
+        if ($saham - $pemegangSaham->persentase + $data['persentase'] > 100) {
+            return redirect()->back()->with('error', 'Persentase pemegang saham tidak boleh lebih dari 100%');
+        }
+
+        $pemegangSaham->update($data);
+
+        return redirect()->route('pemegang-saham.index')->with('success', 'Data berhasil diubah');
     }
 
     /**
@@ -77,6 +93,8 @@ class PemegangSahamController extends Controller
      */
     public function destroy(PemegangSaham $pemegangSaham)
     {
-        //
+        $pemegangSaham->delete();
+
+        return redirect()->route('pemegang-saham.index')->with('success', 'Data berhasil dihapus');
     }
 }
