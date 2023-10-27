@@ -265,7 +265,7 @@ class FormKasbonController extends Controller
         $gapok = $karyawan->gaji_pokok * 0.5;
 
         if ($gapok < $data['nominal'] || $gapok < ($kasbon+$data['nominal'])) {
-            return redirect()->route('billing.kasbon.index')->with('error', 'Kasbon sudah melebihi ketentuan!!');
+            return redirect()->back()->with('error', 'Kasbon sudah melebihi ketentuan!!');
         }
 
         $last = KasBesar::latest()->first();
