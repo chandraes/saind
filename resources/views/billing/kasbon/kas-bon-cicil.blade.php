@@ -76,22 +76,13 @@
             </div>
             <div class="col-2">
                 <label for="mulai_bulan" class="form-label">Mulai Bulan</label>
-                <select class="form-select" name="mulai_bulan" id="mulai_bulan">
-                    {{-- foreach bulan and disable under month now --}}
-                    @foreach ($bulan as $key => $value)
-                        @if ($key < date('m'))
-                            <option value="{{$key}}" disabled>{{$value}}</option>
-                        @else
-                            <option value="{{$key}}">{{$value}}</option>
-                        @endif
-                    @endforeach
-                </select>
+                <select class="form-select" name="mulai_bulan" id="mulai_bulan"></select>
             </div>
             <div class="col-2">
                 <div class="mb-3">
                   <label for="mulai_tahun" class="form-label">Mulai Tahun</label>
                   <input type="text"
-                    class="form-control" name="mulai_tahun" id="mulai_tahun" aria-describedby="helpId" placeholder="" required minlength="4" maxlength="4" value="{{date('Y')}}">
+                    class="form-control" name="mulai_tahun" id="mulai_tahun" aria-describedby="helpId" placeholder="" required minlength="4" maxlength="4" value="{{date('Y')}}" onchange="tahunInput()">
                 </div>
             </div>
         </div>
@@ -126,21 +117,31 @@
             })
         });
 
-        $('#beliBarang').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah anda yakin?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submit();
-                }
-            })
+        // document ready tahunInput()
+        $(document).ready(function() {
+            tahunInput();
         });
+
+        function tahunInput() {
+            var tahun = $('#mulai_tahun').val();
+            console.log(tahun);
+            if (tahun > {{date('Y')}}) {
+                $('#mulai_bulan').empty();
+                $('#mulai_bulan').append('<option value=""> -- Pilih Bulan -- </option>');
+                for (let i = 1; i <= 12; i++) {
+                    $('#mulai_bulan').append('<option value="'+i+'">'+@json($bulan) [i]+'</option>');
+                }
+            } else if(tahun == {{date('Y')}}) {
+                $('#mulai_bulan').empty();
+                $('#mulai_bulan').append('<option value=""> -- Pilih Bulan -- </option>');
+                for (let i = {{date('m')}}; i <= 12; i++) {
+                    $('#mulai_bulan').append('<option value="'+i+'">'+@json($bulan) [i]+'</option>');
+                }
+            } else {
+                $('#mulai_bulan').empty();
+                $('#mulai_bulan').append('<option value=""> -- Pilih Bulan -- </option>');
+            }
+        }
 
 
     </script>
