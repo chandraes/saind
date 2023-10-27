@@ -80,7 +80,7 @@
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->direksi->nama}}</td>
-                    <td class="text-center align-middle">{{$d->total_kas}}</td>
+                    <td class="text-center align-middle">{{number_format($d->total_kas, 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{$d->total_bayar}}</td>
                     <td class="text-center align-middle">{{$d->sisa_kas}}</td>
                     <td class="text-center align-middle">

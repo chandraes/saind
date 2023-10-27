@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
+<div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>Biodata Direksi</u></h1>
@@ -16,23 +16,26 @@
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen"
                                 width="30"> Database</a></td>
-                    <td><a href="{{route('pemegang-saham.create')}}"><img
+                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#createSaham"><img
                                 src="{{asset('images/saham.svg')}}" alt="add-document" width="30"> Tambah Pemegang Saham</a>
+
                     </td>
                 </tr>
             </table>
         </div>
     </div>
 </div>
-<div class="container-fluid mt-5 table-responsive ">
+@include('database.saham.create')
+<div class="container mt-5 table-responsive ">
     <table class="table table-hover table-bordered" id="karyawan-data">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Nama</th>
-                <th class="text-center align-middle">Nickname</th>
-                <th class="text-center align-middle">Jabatan</th>
-                <th class="text-center align-middle">Status</th>
+                <th class="text-center align-middle">Persentase</th>
+                <th class="text-center align-middle">Nama Rekening</th>
+                <th class="text-center align-middle">Bank</th>
+                <th class="text-center align-middle">Nomor Rekening</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
@@ -41,21 +44,14 @@
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$k->nama}}</td>
-                <td class="text-center align-middle">{{$k->nickname}}</td>
-                <td class="text-center align-middle">{{$k->jabatan}}</td>
+                <td class="text-center align-middle">{{$k->persentase}}%</td>
+                <td class="text-center align-middle">{{$k->nama_rekening}}</td>
+                <td class="text-center align-middle">{{$k->bank}}</td>
+                <td class="text-center align-middle">{{$k->nomor_rekening}}</td>
                 <td class="text-center align-middle">
-                    @if ($k->status == 'aktif')
-                    <h4><span class="badge bg-success text-white">{{strtoupper($k->status)}}</span></h4>
-                    @elseif($k->status == 'nonaktif')
-                    <h4><span class="badge bg-danger text-white">{{strtoupper($k->status)}}</span></h4>
-                    @endif
-                </td>
-                <td class="text-center align-middle">
-                    {{-- show button --}}
-                    <a href="{{route('direksi.show', $k->id)}}" class="btn btn-primary m-2" target="_blank"><i class="fa fa-eye"></i></a>
-                    {{-- edit button --}}
-                    <a href="{{route('direksi.edit', $k->id)}}" class="btn btn-warning m-2"><i class="fa fa-edit"></i></a>
-                    {{-- delete button --}}
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#editSaham-{{$k->id}}" class="btn btn-warning m-2"><i class="fa fa-edit"></i></a>
+                    @include('database.saham.edit')
+
                     <form action="{{route('direksi.destroy', $k->id)}}" method="post" class="d-inline" id="deleteForm-{{$k->id}}">
                         @csrf
                         @method('delete')
@@ -92,7 +88,8 @@
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script>
-
+    $('#karyawan-data').DataTable({
+    });
 
 </script>
 @endpush

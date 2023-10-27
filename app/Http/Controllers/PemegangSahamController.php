@@ -13,7 +13,7 @@ class PemegangSahamController extends Controller
     public function index()
     {
         $data = PemegangSaham::all();
-        return view('pemegang-saham.index', compact('data'));
+        return view('database.saham.index', compact('data'));
     }
 
     /**
@@ -29,7 +29,23 @@ class PemegangSahamController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'nama' => 'required',
+            'persentase' => 'required|integer',
+            'nama_rekening' => 'required',
+            'nomor_rekening' => 'required',
+            'bank' => 'required',
+        ]);
+        
+        $saham = PemegangSaham::sum('persentase');
+
+        if ($saham + $data['persentase'] > 100) {
+            return redirect()->back()->with('error', 'Persentase pemegang saham tidak boleh lebih dari 100%');
+        }
+
+        PemegangSaham::create($data);
+
+        return redirect()->route('pemegang-saham.index')->with('success', 'Data berhasil ditambahkan');
     }
 
     /**

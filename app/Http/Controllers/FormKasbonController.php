@@ -88,6 +88,8 @@ class FormKasbonController extends Controller
                     "Rp. ".number_format($kasBesar->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($kasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Total Kasbon : \n".
+                    "Rp. ".number_format($d->kas_direksi->sum('sisa_kas'), 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
