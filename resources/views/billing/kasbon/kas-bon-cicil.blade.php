@@ -79,7 +79,7 @@
                 <select class="form-select" name="mulai_bulan" id="mulai_bulan">
                     {{-- foreach bulan and disable under month now --}}
                     @foreach ($bulan as $key => $value)
-                        @if ($key <= date('m'))
+                        @if ($key < date('m'))
                             <option value="{{$key}}" disabled>{{$value}}</option>
                         @else
                             <option value="{{$key}}">{{$value}}</option>
