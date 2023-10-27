@@ -533,7 +533,7 @@ class RekapController extends Controller
                 "*Form Void Kasbon Staff*\n".
                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                 "Nama : ".$kas->karyawan->nama."\n".
-                "Uraian : ".$k['uraian']."\n".
+                "Uraian : ".$k['uraian']."\n\n".
                 "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
                 "Ditransfer ke rek:\n\n".
                 "Bank     : ".$k['bank']."\n".
