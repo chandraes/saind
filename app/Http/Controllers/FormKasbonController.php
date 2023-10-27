@@ -294,7 +294,8 @@ class FormKasbonController extends Controller
                     "*Form Kasbon Staff*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$karyawan->nama."\n".
-                    "Nominal :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n".
+                    "Uraian : Potong Gaji\n".
+                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n".
                     "Potong Gaji\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$kas['bank']."\n".
