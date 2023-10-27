@@ -51,6 +51,7 @@
                     @endforeach
                 </select>
             </div>
+            <input type="hidden" name="direksi_id" value="{{$direksi->id}}">
             <div class="col-md-3 mb-3">
                 <label for="tahun" class="form-label">&nbsp;</label>
                 <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
