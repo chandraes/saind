@@ -77,7 +77,7 @@ class FormKasbonController extends Controller
                     "*Form Kasbon Direksi*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$d->nama."\n".
-                    "Uraian : ".$kas['uraian']."\n".
+                    "Uraian : ".$kas['uraian']."\n\n".
                     "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$kas['bank']."\n".
@@ -294,7 +294,7 @@ class FormKasbonController extends Controller
                     "*Form Kasbon Staff*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$karyawan->nama."\n".
-                    "Uraian : Potong Gaji\n".
+                    "Uraian : Potong Gaji\n\n".
                     "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n".
                     "Potong Gaji\n\n".
                     "Ditransfer ke rek:\n\n".
