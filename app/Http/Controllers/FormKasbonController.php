@@ -78,7 +78,7 @@ class FormKasbonController extends Controller
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$d->nama."\n".
                     "Uraian : ".$kas['uraian']."\n".
-                    "Nominal :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$kas['bank']."\n".
                     "Nama    : ".$kas['transfer_ke']."\n".
@@ -368,7 +368,7 @@ class FormKasbonController extends Controller
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$karyawan->nama."\n".
                     "Uraian : ".$k['uraian']."\n\n".
-                    "Nominal :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$k['bank']."\n".
                     "Nama    : ".$k['transfer_ke']."\n".
