@@ -4,7 +4,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>REKAP KASBON DIREKSI</u></h1>
-            <h1></h1>
+            <h1>{{$direksi->nama}}</h1>
             <h1>{{$stringBulanNow}} {{$tahun}}</h1>
         </div>
     </div>
@@ -84,6 +84,13 @@
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="text-center align-middle"><strong>Grand Total</strong></td>
+                    <td class="text-center align-middle" align="right">{{number_format($d->sum('total_kas'), 0, ',', '.')}}</td>
+                    <td class="text-center align-middle">{{number_format($d->sum('total_bayar'), 0, ',', '.')}}</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -102,9 +109,11 @@
 
     $(document).ready(function() {
         $('#rekapTable').DataTable({
-            'paging': false,
-            'scrollY': "550px",
-            'info': false,
+            "paging": false,
+            "ordering": false,
+            "searching": false,
+            "scrollCollapse": true,
+            "scrollY": "550px",
         });
 
     } );
