@@ -291,10 +291,11 @@ class FormKasbonController extends Controller
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Form Kasbon*\n".
+                    "*Form Kasbon Staff*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$karyawan->nama."\n".
-                    "Nominal :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Nominal :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n".
+                    "Potong Gaji\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$kas['bank']."\n".
                     "Nama    : ".$kas['transfer_ke']."\n".
