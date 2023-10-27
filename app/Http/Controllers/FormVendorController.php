@@ -15,7 +15,7 @@ class FormVendorController extends Controller
 {
     public function titipan()
     {
-        $vehicle = Vehicle::all();
+        $vehicle = Vehicle::where('status', 'aktif')->get();
 
         return view('billing.vendor.titipan', [
             'vehicle' => $vehicle,

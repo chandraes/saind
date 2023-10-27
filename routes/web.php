@@ -197,6 +197,13 @@ Route::group(['middleware' => ['auth']], function() {
 
     // form kasbon
     Route::get('billing/kasbon', [App\Http\Controllers\FormKasbonController::class, 'index'])->name('billing.kasbon.index');
+    Route::view('billing.kasbon.direksi.index', 'billing.kasbon.direksi.index')->name('billing.kasbon.direksi.index');
+    Route::get('billing/kasbon/direksi/kasbon', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas'])->name('billing.kasbon.direksi.kasbon');
+    Route::get('billing/kasbon/direksi/bayar', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar'])->name('billing.kasbon.direksi.bayar');
+    Route::get('billing/kasbon/direksi/bayar/list', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_list'])->name('billing.kasbon.direksi.bayar.list');
+    Route::post('billing/kasbon/direksi/bayar/{kas}/lunas', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_lunas'])->name('billing.kasbon.direksi.bayar.lunas');
+    Route::post('billing/kasbon/direksi/bayar/{kas}/cicil', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_cicil'])->name('billing.kasbon.direksi.bayar.cicil');
+    Route::post('billing/kasbon/direksi/kasbon-store', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas_store'])->name('billing.kasbon.direksi.kasbon-store');
     Route::post('billing/kasbon/store', [App\Http\Controllers\FormKasbonController::class, 'store'])->name('billing.kasbon.store');
 
     Route::get('billing/transaksi', [App\Http\Controllers\TransaksiController::class, 'index'])->name('billing.transaksi.index');
@@ -243,6 +250,8 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::get('rekap/kas-bon', [App\Http\Controllers\RekapController::class, 'kas_bon'])->name('rekap.kas-bon');
     Route::get('rekap/kas-bon/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_bon'])->name('rekap.kas-bon.preview');
+
+    Route::get('rekap/kas-bon/direksi', [App\Http\Controllers\RekapController::class, 'kas_bon_direksi'])->name('rekap.kas-bon.direksi');
 });
 
 

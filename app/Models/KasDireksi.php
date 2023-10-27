@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class KasDireksi extends Model
 {
@@ -14,4 +15,11 @@ class KasDireksi extends Model
     {
         return $this->belongsTo(Direksi::class);
     }
+
+    public function getTanggalAttribute($value)
+    {
+        return Carbon::parse($value)->format('d-m-Y');
+    }
+
+
 }

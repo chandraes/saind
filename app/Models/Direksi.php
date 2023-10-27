@@ -19,4 +19,9 @@ class Direksi extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function kas_direksi()
+    {
+        return $this->hasMany(KasDireksi::class);
+    }
 }

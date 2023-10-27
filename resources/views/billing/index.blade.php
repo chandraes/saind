@@ -186,10 +186,30 @@
     <div class="row justify-content-left">
         <h2>STAFF</h2>
         <div class="col-md-3 text-center mt-5">
-            <a href="{{route('billing.kasbon.index')}}" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#direksiStaff">
                 <img src="{{asset('images/kasbon.svg')}}" alt="" width="100">
                 <h2>FORM KASBON</h2>
             </a>
+            <div class="modal fade" id="direksiStaff" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="direksiStafftitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="direksiStafftitle">Pilih Jenis Kasbon</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select class="form-select form-select-lg" name="" id="kasbonSelect">
+                                <option value="direksi">Direksi</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeFormKasBon()">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none">
@@ -239,6 +259,14 @@
 @push('js')
 <script>
 
+        function tipeFormKasBesar() {
+            let val = document.getElementById('tipeKasBesar').value;
+            if (val === 'masuk') {
+                window.location.href = "{{route('kas-besar.masuk')}}";
+            } else if (val === 'keluar') {
+                window.location.href = "{{route('kas-besar.keluar')}}";
+            }
+        }
 
         function tipeFormKasKecil() {
             let val = document.getElementById('tipeKasKecil').value;
@@ -290,6 +318,16 @@
                 window.location.href = "{{route('billing.vendor.pelunasan')}}";
             } else if(val === 'bayar') {
                 window.location.href = "{{route('billing.vendor.bayar')}}";
+            }
+        }
+
+        function tipeFormKasBon()
+        {
+            let val = document.getElementById('kasbonSelect').value;
+            if (val === 'direksi') {
+                window.location.href = "{{route('billing.kasbon.direksi.index')}}";
+            } else if(val === 'staff') {
+                window.location.href = "#";
             }
         }
 </script>

@@ -15,7 +15,7 @@ class FormStoringConroller extends Controller
 {
     public function index()
     {
-        $vehicle = Vehicle::all();
+        $vehicle = Vehicle::where('status', 'aktif')->get();
         $storing = BbmStoring::all();
         $rekening = Rekening::where('untuk', 'mekanik')->first();
 

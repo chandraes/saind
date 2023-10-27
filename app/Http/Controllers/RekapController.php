@@ -6,6 +6,7 @@ use App\Models\KasKecil;
 use App\Models\KasBesar;
 use App\Models\Vendor;
 use App\Models\KasBon;
+use App\Models\KasDireksi;
 use App\Models\KasUangJalan;
 use App\Models\KasVendor;
 use App\Models\Transaksi;
@@ -356,7 +357,7 @@ class RekapController extends Controller
         if ($data['password'] != $password->password) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
-        $kasVendorLast = KasVendor::where('vendor_id', '=', $kas_vendor->vendor_id)->latest()->max('sisa');
+        $kasVendorLast = KasVendor::where('vendor_id', '=', $kas_vendor->vendor_id)->latest()->orderBy('id', 'desc')->first()->sisa;
 
         $kas_vendor->update([
             'void' => 1,
@@ -502,5 +503,33 @@ class RekapController extends Controller
         if ($data['password'] != $password->password) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
+    }
+
+    public function kas_bon_direksi(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        $dataTahun = KasDireksi::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+
+        $data = KasDireksi::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+
+        $bulanSebelumnya = $bulan - 1;
+        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
+        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
+        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        // get latest data from month before current month
+        $dataSebelumnya = KasDireksi::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->first();
+
+        return view('rekap.kas-bon-direksi', [
+            'data' => $data,
+            'dataTahun' => $dataTahun,
+            'dataSebelumnya' => $dataSebelumnya,
+            'stringBulan' => $stringBulan,
+            'tahun' => $tahun,
+            'tahunSebelumnya' => $tahunSebelumnya,
+            'bulan' => $bulan,
+            'stringBulanNow' => $stringBulanNow,
+        ]);
     }
 }

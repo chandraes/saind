@@ -33,7 +33,7 @@
                 @endif
             </div>
             <div class="col-md-4 mb-3">
-                <label for="jabatan" class="form-label">Nickname</label>
+                <label for="jabatan" class="form-label">Jabatan</label>
                 <input type="text" class="form-control @if ($errors->has('jabatan'))
                     is-invalid
                 @endif" name="jabatan" id="jabatan" required value="{{$data->jabatan}}">

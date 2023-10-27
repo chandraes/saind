@@ -47,10 +47,30 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="{{route('rekap.kas-bon')}}" class="text-decoration-none">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKasbon">
                 <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="100">
                 <h2>Kasbon</h2>
             </a>
+            <div class="modal fade" id="modalKasbon" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="direksiStafftitle">Pilih Jenis Rekap Kasbon</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select class="form-select form-select-lg" name="" id="kasbonSelect">
+                                <option value="direksi">Direksi</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeFormKasBon()">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="col-md-4 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorModal">
@@ -109,5 +129,15 @@
             placeholder: '-- Pilih Vendor --'
         });
     });
+
+    function tipeFormKasBon()
+        {
+            let val = document.getElementById('kasbonSelect').value;
+            if (val === 'direksi') {
+                window.location.href = "{{route('rekap.kas-bon.direksi')}}";
+            } else if(val === 'staff') {
+                window.location.href = "#";
+            }
+        }
 </script>
 @endpush
