@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Form Vendor Titipan</u></h1>
+            <h1><u>Form Titipan Vendor</u></h1>
         </div>
     </div>
     @include('swal')
