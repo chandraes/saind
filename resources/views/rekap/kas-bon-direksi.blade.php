@@ -102,7 +102,7 @@
                 <tr>
                     <td colspan="2" class="text-center align-middle"><strong>Sisa Kasbon
                           </strong></td>
-                    <td colspan="2" class="text-center align-middle">Rp. {{number_format($data->sum('total_kas')-$data->sum('total_bayar'), 0, ',', '.')}}</td>
+                    <td colspan="2" class="text-center align-middle"><strong>Rp. {{number_format($data->sum('total_kas')-$data->sum('total_bayar'), 0, ',', '.')}}</strong></td>
                 </tr>
             </tfoot>
         </table>
