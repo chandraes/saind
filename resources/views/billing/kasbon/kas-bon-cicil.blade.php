@@ -1,5 +1,21 @@
 @extends('layouts.app')
 @section('content')
+@php
+    $bulan = [
+        '1' => 'Januari',
+        '2' => 'Februari',
+        '3' => 'Maret',
+        '4' => 'April',
+        '5' => 'Mei',
+        '6' => 'Juni',
+        '7' => 'Juli',
+        '8' => 'Agustus',
+        '9' => 'September',
+        '10' => 'Oktober',
+        '11' => 'November',
+        '12' => 'Desember',
+    ];
+@endphp
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
@@ -61,18 +77,14 @@
             <div class="col-2">
                 <label for="mulai_bulan" class="form-label">Mulai Bulan</label>
                 <select class="form-select" name="mulai_bulan" id="mulai_bulan">
-                    <option value="1">Januari</option>
-                    <option value="2">Februari</option>
-                    <option value="3">Maret</option>
-                    <option value="4">April</option>
-                    <option value="5">Mei</option>
-                    <option value="6">Juni</option>
-                    <option value="7">Juli</option>
-                    <option value="8">Agustus</option>
-                    <option value="9">September</option>
-                    <option value="10">Oktober</option>
-                    <option value="11">November</option>
-                    <option value="12">Desember</option>
+                    {{-- foreach bulan and disable under month now --}}
+                    @foreach ($bulan as $key => $value)
+                        @if ($key <= date('m'))
+                            <option value="{{$key}}" disabled>{{$value}}</option>
+                        @else
+                            <option value="{{$key}}">{{$value}}</option>
+                        @endif
+                    @endforeach
                 </select>
             </div>
             <div class="col-2">

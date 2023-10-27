@@ -11,6 +11,7 @@ use App\Models\Rekening;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class FormKasbonController extends Controller
 {
@@ -225,6 +226,8 @@ class FormKasbonController extends Controller
             'mulai_tahun' => 'required|integer',
         ]);
 
+
+
         $kasBesar = KasBesar::latest()->first();
 
         if ($kasBesar == null || $kasBesar->saldo < $data['nominal']) {
@@ -255,11 +258,15 @@ class FormKasbonController extends Controller
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
+        // buat nama bulan dari $data['mulai_bulan'] dengan bahasa indonesia
+        $bulan = Carbon::createFromDate($data['mulai_tahun'], $data['mulai_bulan'], 1)->locale('id')->monthName;
+
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Kasbon Staff*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$karyawan->nama."\n".
-                    "Uraian : Cicilan ".$data['cicil_kali']."X\n\n".
+                    "Uraian : Cicilan ".$data['cicil_kali']."X\n".
+                    "Mulai : ".$bulan." ".$data['mulai_tahun']."\n\n".
                     "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$k['bank']."\n".
