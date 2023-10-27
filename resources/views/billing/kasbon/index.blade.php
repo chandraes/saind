@@ -34,7 +34,7 @@
                 <div class="mb-3">
                     <label for="karyawan_id" class="form-label">Nama Karyawan</label>
                     <select class="form-select" name="karyawan_id" id="karyawan_id" required>
-                        <option> -- Pilih Karyawan -- </option>
+                        <option value=""> -- Pilih Karyawan -- </option>
                         @foreach ($karyawan as $d)
                             <option value="{{$d->id}}">{{$d->nama}}</option>
                         @endforeach
