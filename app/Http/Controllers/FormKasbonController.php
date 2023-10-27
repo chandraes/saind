@@ -333,6 +333,7 @@ class FormKasbonController extends Controller
             'nominal' => 'required',
             'cicil_kali' => 'required|integer',
             'mulai_bulan' => 'required|integer|between:1,12',
+            'mulai_tahun' => 'required|integer',
         ]);
 
         $kasBesar = KasBesar::latest()->first();
@@ -344,7 +345,6 @@ class FormKasbonController extends Controller
         $karyawan = Karyawan::find($data['karyawan_id']);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
-        $data['mulai_tahun'] = date('Y');
         $data['tanggal'] = date('Y-m-d');
         $data['sisa_kas'] = $data['nominal'];
         $data['cicilan'] = 1;

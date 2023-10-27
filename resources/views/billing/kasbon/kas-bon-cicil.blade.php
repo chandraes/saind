@@ -75,6 +75,13 @@
                     <option value="12">Desember</option>
                 </select>
             </div>
+            <div class="col-2">
+                <div class="mb-3">
+                  <label for="mulai_tahun" class="form-label">Mulai Tahun</label>
+                  <input type="text"
+                    class="form-control" name="mulai_tahun" id="mulai_tahun" aria-describedby="helpId" placeholder="" required minlength="4" maxlength="4" value="{{date('Y')}}">
+                </div>
+            </div>
         </div>
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary" type="submit">Ok</button>

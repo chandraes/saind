@@ -204,7 +204,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('billing/kasbon/direksi/bayar/list', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_list'])->name('billing.kasbon.direksi.bayar.list');
     Route::post('billing/kasbon/direksi/bayar/{kas}/lunas', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_lunas'])->name('billing.kasbon.direksi.bayar.lunas');
     Route::post('billing/kasbon/direksi/bayar/{kas}/cicil', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_cicil'])->name('billing.kasbon.direksi.bayar.cicil');
-    Route::post('billing/kasbon/direksi/kasbon-store', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas_store'])->name('billing.kasbon.direksi.kasbon-store');
+    Route::post('billing/kasbon/direksi/kasbon-store/{direksi}', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas_store'])->name('billing.kasbon.direksi.kasbon-store');
     Route::post('billing/kasbon/store', [App\Http\Controllers\FormKasbonController::class, 'store'])->name('billing.kasbon.store');
     Route::view('billing/kasbon/kas-bon-staff', 'billing.kasbon.kas-bon-staff')->name('billing.kasbon.kas-bon-staff');
     Route::get('billing/kasbon/kas-bon-cicil', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil'])->name('billing.kasbon.kas-bon-cicil');

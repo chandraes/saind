@@ -1,173 +1,99 @@
 @extends('layouts.app')
 @section('content')
 <div class="container">
-    <div class="row justify-content-center">
+    <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>KASBON DIREKSI</u></h1>
-            <h1>{{$direksi->nama}}</h1>
+            <h1><u>Form Bayar Kasbon Direksi</u></h1>
+            <h2>{{$direksi->nama}}</h2>
         </div>
     </div>
     @include('swal')
-    {{-- error validation show in swal --}}
+    {{-- show error first --}}
     @if ($errors->any())
-    <script>
-        Swal.fire({
-            title: 'Error!',
-            text: '{{$errors->first()}}',
-            icon: 'error',
-            confirmButtonText: 'Ok'
-        })
-    </script>
-    @endif
-    <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
-            <table class="table">
-                <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
-                                alt="dokumen" width="30"> Billing</a></td>
-                </tr>
-            </table>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Whoops!</strong> Terjadi kesalahan.<br><br>
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </ul>
         </div>
-    </div>
-</div>
-<div class="container mt-5 table-responsive ">
-    <table class="table table-bordered table-hover" id="data-table">
-        <thead class="table-success">
-            <tr>
-                <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Uraian</th>
-                <th class="text-center align-middle">Total Kasbon</th>
-                <th class="text-center align-middle">Balance</th>
-                <th class="text-center align-middle">Sisa kasbon</th>
-                <th class="text-center align-middle">Lunas</th>
-                <th class="text-center align-middle">Cicil</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($data as $d)
-            <tr>
-                <td class="text-center align-middle">{{$d->tanggal}}</td>
-                <td class="align-middle">{{$d->uraian}}</td>
-                <td class="text-center align-middle">
-                    {{number_format($d->total_kas, 0, ',', '.')}}
-                </td>
-                <td class="text-center align-middle">
-                    {{number_format($d->total_bayar, 0, ',', '.')}}
-                </td>
-                <td class="text-center align-middle">
-                    {{number_format($d->sisa_kas, 0, ',', '.')}}
-                </td>
-                <td class="text-center align-middle">
-                    <form action="{{route('billing.kasbon.direksi.bayar.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
-                    @csrf
-                        <button type="submit" class="btn btn-success">Pelunasan </button>
-                    </form>
-                </td>
-                <td class="text-center align-middle">
-                    <!-- Modal trigger button -->
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cicil-{{$d->id}}">
-                      Cicilan
-                    </button>
-
-                    <!-- Modal Body -->
-                    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-                    <div class="modal fade" id="cicil-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">Jumlah Cicilan</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <form action="{{route('billing.kasbon.direksi.bayar.cicil', $d)}}" method="post" id="cicilForm-{{$d->id}}">
-                                    @csrf
-                                <div class="modal-body">
-                                    <div class="input-group mb-3">
-                                        <span class="input-group-text" id="basic-addon1">Rp</span>
-                                        <input type="text" class="form-control @if ($errors->has('cicilan'))
-                                        is-invalid
-                                    @endif" name="cicilan" id="cicilanInput-{{$d->id}}" required data-thousands="." >
-                                      </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                                    <button type="submit" class="btn btn-primary">Simpan</button>
-                                </div>
-                            </form>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <!-- Optional: Place to the bottom of scripts -->
-                    <script>
-                        $('#cicilanInput-{{$d->id}}').maskMoney();
-
-                    </script>
-                </td>
-            </tr>
-            <script>
-                 $('#lunasForm-{{$d->id}}').submit(function(e){
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Apakah anda yakin?',
-                        text: "Pelunasan Tagihan sebesar Rp. {{number_format($d->sisa_kas, 0, ',', '.')}}",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Ya, simpan!'
-                        }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.submit();
-                        }
-                    })
-                });
-
-                $('#cicilForm-{{$d->id}}').submit(function(e){
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Apakah anda yakin?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Ya, simpan!'
-                        }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.submit();
-                        }
-                    })
-                });
-            </script>
-            @endforeach
-        </tbody>
-    </table>
+    @endif
+    <form action="{{route('billing.kasbon.direksi.kasbon-store')}}" method="post" id="masukForm">
+        @csrf
+        <div class="row">
+            <div class="col-4">
+                <div class="mb-3">
+                  <label for="" class="form-label">Tanggal</label>
+                  <input type="text"
+                    class="form-control" name="" id="" aria-describedby="helpId" placeholder="" value="{{date('d-m-Y')}}" disabled>
+                </div>
+            </div>
+            <div class="col-4 mb-3">
+                <label for="nominal" class="form-label">Nominal</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="basic-addon1">Rp</span>
+                    <input type="text" class="form-control @if ($errors->has('nominal'))
+                    is-invalid
+                @endif" name="nominal" id="nominal" data-thousands="." required>
+                  </div>
+            </div>
+            <div class="col-4">
+                <div class="mb-3">
+                  <label for="uraian" class="form-label">Uraian</label>
+                  <input type="text"
+                    class="form-control" name="uraian" id="uraian" aria-describedby="helpId" placeholder="" required>
+                </div>
+            </div>
+        </div>
+        <div class="d-grid gap-3 mt-3">
+            <button class="btn btn-primary">Ok</button>
+            <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>
+          </div>
+    </form>
 </div>
 @endsection
-@push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
-@endpush
 @push('js')
-<script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
-<script src="{{asset('assets/js/dt5.min.js')}}"></script>
-<script>
-    // hide alert after 5 seconds
+{{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
+    <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
+    <script>
+        $(function() {
+             $('#nominal').maskMoney();
+        });
+
+        $('#masukForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
+        });
+
+        $('#beliBarang').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            })
+        });
 
 
-    $(document).ready(function() {
-        $('#data-table').DataTable();
-
-    } );
-
-    function toggleInputTambah() {
-        var value = document.getElementById('vendor_id').value;
-        if (value == '') {
-            document.getElementById('row-input').hidden = true;
-        } else {
-            document.getElementById('row-input').hidden = false;
-        }
-    }
-</script>
+    </script>
 @endpush
