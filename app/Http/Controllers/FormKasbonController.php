@@ -136,7 +136,56 @@ class FormKasbonController extends Controller
         ]);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
+        $lastKasDireksi = KasDireksi::where('direksi_id', $direksi->id)->latest()->orderBy('id', 'desc')->first();
 
+        if ($lastKasDireksi == null || $lastKasDireksi->sisa_kas < $data['nominal']) {
+            return redirect()->back()->with('error', 'Pembayaran melebihi kasbon');
+        }
+
+        $d['tanggal'] = date('Y-m-d');
+        $d['uraian'] = $data['uraian'];
+        $d['total_bayar'] = $data['nominal'];
+        $d['direksi_id'] = $direksi->id;
+        $d['sisa_kas'] = $lastKasDireksi->sisa_kas - $data['nominal'];
+
+        $lastKasBesar = KasBesar::latest()->first();
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        $kas['tanggal'] = $d['tanggal'];
+        $kas['uraian'] = $d['uraian'];
+        $kas['jenis_transaksi_id'] = 1;
+        $kas['nominal_transaksi'] = $data['nominal'];
+        $kas['saldo'] = $lastKasBesar->saldo + $data['nominal'];
+        $kas['modal_investor_terakhir'] = $lastKasBesar->modal_investor_terakhir;
+        $kas['transfer_ke'] = $rekening->nama_rekening;
+        $kas['bank'] = $rekening->nama_bank;
+        $kas['no_rekening'] = $rekening->nomor_rekening;
+
+        KasDireksi::create($d);
+
+        $store = KasBesar::create($kas);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                "*Form Bayar Kasbon Direksi*\n".
+                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                "Nama : ".$direksi->nama."\n".
+                "Uraian : ".$kas['uraian']."\n\n".
+                "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                "Ditransfer ke rek:\n\n".
+                "Bank     : ".$kas['bank']."\n".
+                "Nama    : ".$kas['transfer_ke']."\n".
+                "No. Rek : ".$kas['no_rekening']."\n\n".
+                "==========================\n".
+                "Sisa Saldo Kas Besar : \n".
+                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                "Total Modal Investor : \n".
+                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                "Terima kasih 🙏🙏🙏\n";
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
+
+        return redirect()->route('billing.index')->with('success', 'Pembayaran berhasil disimpan!!');
 
     }
 
@@ -209,7 +258,10 @@ class FormKasbonController extends Controller
 
     public function kas_bon_cicil()
     {
-        $data = Karyawan::where('status', 'aktif')->get();
+        $kasbon = KasBon::where('lunas', 0)->where('cicilan', 1)->pluck('karyawan_id')->unique()->toArray();
+
+        // data where not in
+        $data = Karyawan::whereNotIn('id', $kasbon)->where('status', 'aktif')->get();
 
         return view('billing.kasbon.kas-bon-cicil', [
             'karyawan' => $data,

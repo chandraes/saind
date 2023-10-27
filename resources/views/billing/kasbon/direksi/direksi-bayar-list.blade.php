@@ -20,7 +20,7 @@
             </ul>
         </div>
     @endif
-    <form action="{{route('billing.kasbon.direksi.kasbon-store', $direksi)}}" method="post" id="masukForm">
+    <form action="{{route('billing.kasbon.direksi.bayar-store', $direksi)}}" method="post" id="masukForm">
         @csrf
         <div class="row">
             <div class="col-4">
