@@ -122,10 +122,7 @@ class FormKasbonController extends Controller
 
         $direksi = Direksi::find($data['direksi_id']);
 
-        $data = KasDireksi::where('direksi_id', $data['direksi_id'])->where('lunas', 0)->get();
-
         return view('billing.kasbon.direksi.direksi-bayar-list', [
-            'data' => $data,
             'direksi' => $direksi,
         ]);
     }
@@ -301,8 +298,7 @@ class FormKasbonController extends Controller
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Nama : ".$karyawan->nama."\n".
                     "Uraian : Potong Gaji\n\n".
-                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n".
-                    "Potong Gaji\n\n".
+                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$kas['bank']."\n".
                     "Nama    : ".$kas['transfer_ke']."\n".
