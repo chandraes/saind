@@ -36,7 +36,7 @@
                 <label for="nama_rekening" class="form-label">Atas Nama</label>
                 <input type="text" class="form-control @if ($errors->has('nama_rekening'))
                     is-invalid
-                @endif" name="nama_rekening" id="nama_rekening" required value="{{$data->nama_rekening}}">
+                @endif" name="nama_rekening" id="nama_rekening" required value="{{$data->nama_rekening}}" maxlength="15">
                 @if ($errors->has('nama_rekening'))
                 <div class="invalid-feedback">
                     {{$errors->first('nama_rekening')}}
