@@ -95,8 +95,8 @@
             <tfoot>
                 <tr>
                     <td colspan="2" class="text-center align-middle"><strong>Grand Total</strong></td>
-                    <td class="text-center align-middle" align="right">{{number_format($d->sum('total_kas'), 0, ',', '.')}}</td>
-                    <td class="text-center align-middle">{{number_format($d->sum('total_bayar'), 0, ',', '.')}}</td>
+                    <td class="text-center align-middle" align="right">{{number_format($data->sum('total_kas'), 0, ',', '.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('total_bayar'), 0, ',', '.')}}</td>
                 </tr>
             </tfoot>
         </table>

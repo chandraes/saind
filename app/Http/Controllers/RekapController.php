@@ -560,6 +560,7 @@ class RekapController extends Controller
 
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
+        
         $dataTahun = KasDireksi::where('direksi_id', $request->direksi_id)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
         $data = KasDireksi::where('direksi_id', $request->direksi_id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
