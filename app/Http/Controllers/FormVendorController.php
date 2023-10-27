@@ -38,33 +38,33 @@ class FormVendorController extends Controller
 
         $vehicle = Vehicle::find($data['id']);
 
-        $data['tanggal'] = date('Y-m-d');
-        $data['jenis_transaksi_id'] = 2;
-        $data['nominal_transaksi'] = $data['nilai'];
-        $data['saldo'] = $last->saldo - $data['nominal_transaksi'];
-        $data['uraian'] = "Titipan ".$vehicle->vendor->nama." (".$vehicle->nomor_lambung.")";
-        $data['transfer_ke'] = $vehicle->vendor->nama_rekening;
-        $data['bank'] = $vehicle->vendor->bank;
-        $data['no_rekening'] = $vehicle->vendor->no_rekening;
-        $data['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+        $d['tanggal'] = date('Y-m-d');
+        $d['jenis_transaksi_id'] = 2;
+        $d['nominal_transaksi'] = $data['nilai'];
+        $d['saldo'] = $last->saldo - $d['nominal_transaksi'];
+        $d['uraian'] = "Titipan ".$vehicle->vendor->nama." (".$vehicle->nomor_lambung.")";
+        $d['transfer_ke'] = $vehicle->vendor->nama_rekening;
+        $d['bank'] = $vehicle->vendor->bank;
+        $d['no_rekening'] = $vehicle->vendor->no_rekening;
+        $d['modal_investor_terakhir'] = $last->modal_investor_terakhir;
 
         $kas['vendor_id'] = $vehicle->vendor_id;
-        $kas['tanggal'] = $data['tanggal'];
+        $kas['tanggal'] = $d['tanggal'];
         $kas['vehicle_id'] = $data['id'];
         $kas['uraian'] = "Titipan "." Nolam ".$vehicle->nomor_lambung;
-        $kas['pinjaman'] = $data['nominal_transaksi'];
+        $kas['pinjaman'] = $d['nominal_transaksi'];
 
         $kasTerakhir = KasVendor::where('vendor_id', $vehicle->vendor_id)->latest()->first();
 
         if ($kasTerakhir) {
-            $kas['sisa'] = $kasTerakhir->sisa + $data['nominal_transaksi'];
+            $kas['sisa'] = $kasTerakhir->sisa + $d['nominal_transaksi'];
         } else {
-            $kas['sisa'] = $data['nominal_transaksi'];
+            $kas['sisa'] = $d['nominal_transaksi'];
         }
 
         KasVendor::create($kas);
 
-        $store = KasBesar::create($data);
+        $store = KasBesar::create($d);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
@@ -73,11 +73,11 @@ class FormVendorController extends Controller
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "No. Lambung : ".$vehicle->nomor_lambung."\n".
                     "Vendor : ".$vehicle->vendor->nama."\n\n".
-                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Nilai :  *Rp. ".number_format($d['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank     : ".$data['bank']."\n".
-                    "Nama    : ".$data['transfer_ke']."\n".
-                    "No. Rek : ".$data['no_rekening']."\n\n".
+                    "Bank     : ".$d['bank']."\n".
+                    "Nama    : ".$d['transfer_ke']."\n".
+                    "No. Rek : ".$d['no_rekening']."\n\n".
                     "==========================\n".
                     "Sisa Saldo Kas Besar : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
