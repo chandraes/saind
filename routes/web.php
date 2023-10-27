@@ -63,6 +63,8 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::group(['middleware' => 'role:admin'], function() {
 
+        Route::resource('pemegang-saham', App\Http\Controllers\PemegangSahamController::class);
+
         Route::view('pengaturan', 'pengaturan.index')->name('pengaturan');
         Route::post('password-konfirmasi', [App\Http\Controllers\PasswordKonfirmasiController::class, 'store'])->name('password-konfirmasi.store');
         Route::get('pengaturan/wa', [App\Http\Controllers\WaController::class, 'wa'])->name('pengaturan.wa');

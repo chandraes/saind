@@ -55,6 +55,12 @@
     <div class="row justify-content-left">
         <h2>OTHERS</h2>
         <div class="col-md-4 text-center mt-3 mb-3">
+            <a href="{{route('pemegang-saham.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/saham.svg')}}" alt="" width="100">
+                <h2>Pemegang Saham</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-3 mb-3">
             <a href="{{route('direksi.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/direksi.svg')}}" alt="" width="100">
                 <h2>Biodata Direksi</h2>

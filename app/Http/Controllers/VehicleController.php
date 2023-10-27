@@ -43,7 +43,7 @@ class VehicleController extends Controller
             'nama_stnk' => 'required',
             'no_rangka' => 'required',
             'no_mesin' => 'required',
-            'no_index' => 'required|number',
+            'no_index' => 'required|integer',
             'tipe' => 'required',
             'tahun' => 'required',
             'no_kartu_gps' => 'required',
