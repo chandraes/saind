@@ -134,7 +134,7 @@
         {
             let val = document.getElementById('kasbonSelect').value;
             if (val === 'direksi') {
-                window.location.href = "{{route('rekap.kas-bon.direksi')}}";
+                window.location.href = "{{route('rekap.direksi')}}";
             } else if(val === 'staff') {
                 window.location.href = "{{route('rekap.kas-bon')}}";
             }

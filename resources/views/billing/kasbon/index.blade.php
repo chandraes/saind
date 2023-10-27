@@ -4,6 +4,7 @@
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
             <h1><u>Form Kasbon</u></h1>
+            <h1>Potong Gaji</h1>
         </div>
     </div>
     @include('swal')

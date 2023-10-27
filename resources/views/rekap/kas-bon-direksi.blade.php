@@ -4,6 +4,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>REKAP KASBON DIREKSI</u></h1>
+            <h1></h1>
             <h1>{{$stringBulanNow}} {{$tahun}}</h1>
         </div>
     </div>
@@ -68,31 +69,19 @@
             <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Nama Direksi</th>
-                <th class="text-center align-middle">Total Kasbon</th>
-                <th class="text-center align-middle">Balance</th>
-                <th class="text-center align-middle">Sisa Kasbon</th>
-                <th class="text-center align-middle">Keterangan</th>
+                <th class="text-center align-middle">Uraian</th>
+                <th class="text-center align-middle">Kasbon</th>
+                <th class="text-center align-middle">Bayar Kasbon</th>
             </tr>
             </thead>
             <tbody>
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->direksi->nama}}</td>
+                    <td class="text-center align-middle">{{$d->uraian}}</td>
                     <td class="text-center align-middle">{{number_format($d->total_kas, 0, ',', '.')}}</td>
-                    <td class="text-center align-middle">{{$d->total_bayar}}</td>
-                    <td class="text-center align-middle">{{$d->sisa_kas}}</td>
-                    <td class="text-center align-middle">
-                        @if ($d->lunas == 1)
-                        <span class="badge bg-success">Lunas</span>
-                        @else
-                        <span class="badge bg-danger">Belum Lunas</span>
-                        @endif
-                    </td>
-
+                    <td class="text-center align-middle">{{number_format($d->total_bayar, 0, ',', '.')}}</td>
                 </tr>
-
                 @endforeach
             </tbody>
         </table>

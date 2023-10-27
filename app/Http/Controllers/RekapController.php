@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\KasKecil;
 use App\Models\KasBesar;
 use App\Models\Vendor;
+use App\Models\Direksi;
 use App\Models\KasBon;
 use App\Models\KasDireksi;
 use App\Models\KasUangJalan;
@@ -27,6 +28,15 @@ class RekapController extends Controller
 
         return view('rekap.index', [
             'vendor' => $vendor,
+        ]);
+    }
+
+    public function direksi()
+    {
+        $direksi = Direksi::all();
+
+        return view('rekap.direksi', [
+            'data' => $direksi,
         ]);
     }
 
@@ -546,11 +556,13 @@ class RekapController extends Controller
 
     public function kas_bon_direksi(Request $request)
     {
+        $direksi = Direksi::find($request->direksi_id);
+
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = KasDireksi::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+        $dataTahun = KasDireksi::where('direksi_id', $request->direksi_id)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = KasDireksi::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $data = KasDireksi::where('direksi_id', $request->direksi_id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -558,10 +570,11 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasDireksi::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->first();
+        $dataSebelumnya = KasDireksi::where('direksi_id', $request->direksi_id)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->first();
 
         return view('rekap.kas-bon-direksi', [
             'data' => $data,
+            'direksi' => $direksi,
             'dataTahun' => $dataTahun,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
