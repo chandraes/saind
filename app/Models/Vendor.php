@@ -39,4 +39,6 @@ class Vendor extends Model
     {
         return $this->hasMany(KasVendor::class);
     }
+
+    
 }

@@ -30,6 +30,15 @@ class FormVendorController extends Controller
         ]);
         $data['nilai'] = str_replace('.', '', $data['nilai']);
 
+        $v = Vendor::find($data['id']);
+        $kas = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+
+        $plafon = ($v->plafon_titipan * $v->vehicle->count()) - $kas;
+
+        if ($data['nilai'] > $plafon) {
+            return redirect()->back()->with('error', 'Nilai melebihi plafon titipan');
+        }
+        // dd($plafon);
         $last = KasBesar::latest()->first();
 
         if ($last == null || $last->saldo < $data['nilai']) {
@@ -97,6 +106,25 @@ class FormVendorController extends Controller
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
+    }
+
+    public function get_vehicle(Request $request)
+    {
+        $data = Vehicle::where('vendor_id', $request->id)->where('status', 'aktif')->pluck('nomor_lambung');
+        // change data to string with comma separator
+        $data = implode(', ', $data->toArray());
+
+        return response()->json($data);
+    }
+
+    public function get_plafon_titipan(Request $request)
+    {
+        $vendor = Vendor::find($request->id);
+        $kas = KasVendor::where('vendor_id', $request->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+
+        $plafon = ($vendor->plafon_titipan * $vendor->vehicle->count()) - $kas;
+
+        return response()->json($plafon);
     }
 
     public function get_kas_vendor(Request $request)

@@ -42,10 +42,9 @@
             </div>
             <div class="col-3">
                 <div class="mb-3">
-                  <label for="vendor" class="form-label">Nama Vendor</label>
+                  <label for="vendor" class="form-label">Nomor Lambung</label>
                   <input type="text"
-                    class="form-control" name="vendor" id="vendor" aria-describedby="helpId" placeholder="" disabled>
-                    <input type="hidden" name="vendor_id" id="vendor_id" required>
+                    class="form-control" name="nomor_lambung" id="nomor_lambung" aria-describedby="helpId" placeholder="" disabled>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
@@ -108,14 +107,45 @@
         function funGetVendor() {
             var id = $('#id').val();
             $.ajax({
-                url: "{{route('kas-uang-jalan.get-vendor')}}",
+                url: "{{route('billing.vendor.get-vehicle')}}",
                 type: "GET",
                 data: {
                     id: id
                 },
                 success: function(data){
-                    $('#vendor_id').val(data.id);
-                    $('#vendor').val(data.nama);
+                    funGetPlafonTitipan();
+                    $('#nomor_lambung').val(data);
+
+                }
+            });
+        }
+
+        function funGetPlafonTitipan() {
+
+            var id = $('#id').val();
+            $.ajax({
+                url: "{{route('billing.vendor.get-plafon-titipan')}}",
+                type: "GET",
+                data: {
+                    id: id
+                },
+                success: function(data){
+                    // console.log(data);
+                    if (data > 0) {
+                        $('#nilai').val(data);
+                        $('#nilai').maskMoney('mask', data);
+                    } else {
+                        // swal sisa saldo melebihi plafon
+                        $('#nilai').val('');
+                        // destory maskMoney
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Sisa saldo melebihi plafon!',
+                        });
+                    }
+
                 }
             });
         }

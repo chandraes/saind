@@ -38,4 +38,9 @@ class KasVendor extends Model
     {
         return $this->belongsTo(BbmStoring::class);
     }
+
+    public function sisa_terakhir()
+    {
+        return $this->latest()->orderBy('id', 'desc')->first()->sisa;
+    }
 }
