@@ -206,7 +206,7 @@ class FormBarangController extends Controller
         $kas['pinjaman'] = $kas['harga_satuan'] * $kas['quantity'];
         $kas['uraian'] = 'Beli '.$barang->kategori_barang->nama.' '.$barang->nama;
 
-        $last = KasVendor::where('vendor_id', $kas['vendor_id'])->latest()->first();
+        $last = KasVendor::where('vendor_id', $kas['vendor_id'])->latest()->orderBy('id', 'desc')->first();
 
         if ($last) {
             $kas['sisa'] = $last->sisa + $kas['pinjaman'];
