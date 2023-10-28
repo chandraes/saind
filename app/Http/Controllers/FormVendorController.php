@@ -49,11 +49,11 @@ class FormVendorController extends Controller
 
         $vendor = $vehicle->vendor;
 
-        if ($vendor->pembayaran == 'opname' && $data['nilai'] > 10000000) {
-            return redirect()->back()->with('error', 'Vendor Opname Tidak boleh melebihi Rp. 10.000.000,-');
-        } elseif ($vendor->pembayaran == 'titipan' && $data['nilai'] > 2000000) {
-            return redirect()->back()->with('error', 'Vendor Titipan Tidak boleh melebihi Rp. 20.000.000,-');
-        }
+        // if ($vendor->pembayaran == 'opname' && $data['nilai'] > 10000000) {
+        //     return redirect()->back()->with('error', 'Vendor Opname Tidak boleh melebihi Rp. 10.000.000,-');
+        // } elseif ($vendor->pembayaran == 'titipan' && $data['nilai'] > 2000000) {
+        //     return redirect()->back()->with('error', 'Vendor Titipan Tidak boleh melebihi Rp. 20.000.000,-');
+        // }
 
         $d['tanggal'] = date('Y-m-d');
         $d['jenis_transaksi_id'] = 2;
