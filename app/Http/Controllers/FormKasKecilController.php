@@ -139,8 +139,6 @@ class FormKasKecilController extends Controller
 
         $store = KasKecil::create($data);
 
-        // check if store success
-
         if(!$store){
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }

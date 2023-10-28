@@ -119,7 +119,7 @@ class FormVendorController extends Controller
 
     public function get_kas_vendor(Request $request)
     {
-        $data = KasVendor::where('vendor_id', $request->vendor_id)->latest()->first();
+        $data = KasVendor::where('vendor_id', $request->vendor_id)->latest()->orderBy('id', 'desc')->first();
 
         $sisa = $data ? $data->sisa : 0;
 
@@ -217,22 +217,25 @@ class FormVendorController extends Controller
     {
         $data = $request->validate([
             'vendor_id' => 'required',
-            'nominal' => 'required',
+            'nilai' => 'required',
+            'uraian' => 'required',
         ]);
+
+        $data['nominal'] = str_replace('.', '', $data['nilai']);
 
         $v = Vendor::find($data['vendor_id']);
         $last = KasBesar::latest()->first();
         $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
-        if ($lastNomor)  {
+        if ($lastNomor == null)  {
             $kas['nomor_kode_tagihan'] = 1;
         } else {
             $kas['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
         }
 
         $kas['tanggal'] = date('Y-m-d');
-        $kas['uraian'] = "Pelunasan Vendor ".$v->nama;
+        $kas['uraian'] = $data['uraian'];
         $kas['jenis_transaksi_id'] = 1;
         $kas['nominal_transaksi'] = $data['nominal'];
         $kas['saldo'] = $last->saldo + $data['nominal'];
@@ -241,11 +244,18 @@ class FormVendorController extends Controller
         $kas['no_rekening'] = $rekening->nomor_rekening;
         $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
 
+        $sisaTerakhir = KasVendor::where('vendor_id', $data['vendor_id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+
+        if ($sisaTerakhir < $data['nominal']) {
+            return redirect()->back()->with('error', 'Nilai melebihi sisa tagihan');
+        }
+        // dd($data['nominal']);
+
         $vendor['vendor_id'] = $data['vendor_id'];
         $vendor['tanggal'] = date('Y-m-d');
-        $vendor['uraian'] = "Pelunasan dari Vendor";
+        $vendor['uraian'] = $data['uraian'];
         $vendor['bayar'] = $data['nominal'];
-        $vendor['sisa'] = 0;
+        $vendor['sisa'] = $sisaTerakhir - $vendor['bayar'];
 
         KasVendor::create($vendor);
 
@@ -256,7 +266,8 @@ class FormVendorController extends Controller
         $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Form Pelunasan dari Vendor*\n".
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    "Vendor : ".$v->nama."\n\n".
+                    "Vendor : ".$v->nama."\n".
+                    "Uraian : ".$data['uraian']."\n\n".
                     "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$kas['bank']."\n".

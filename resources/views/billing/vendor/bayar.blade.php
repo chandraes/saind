@@ -46,9 +46,16 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('nilai'))
                     is-invalid
-                @endif" name="nilai" id="nilai" data-thousands="." disabled>
+                @endif" name="nilai" id="nilai" data-thousands="." required>
                 <input type="hidden" name="nominal" id="nominal">
                   </div>
+            </div>
+            <div class="col-12 mb-3">
+                <div class="mb-3">
+                  <label for="uraian" class="form-label">Uraian</label>
+                  <input type="text"
+                    class="form-control" name="uraian" id="uraian" aria-describedby="helpId" placeholder="" maxlength="20">
+                </div>
             </div>
         </div>
         <hr>
