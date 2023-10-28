@@ -70,9 +70,10 @@
 <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
 <script src="{{asset('assets/js/moment.min.js')}}"></script>
 <script>
-    $(document).ready(function(){
+        $(function() {
             $('#nominal_transaksi').maskMoney();
         });
+  
 
          $('#nominal_transaksi').on('keyup', function(){
              let val = $(this).val();

@@ -9,11 +9,13 @@ use App\Models\Rekening;
 use App\Models\GroupWa;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
+use Carbon\Carbon;
 
 class FormDevidenController extends Controller
 {
     public function index()
     {
+        // carbon month now month name in indonesian
         $persen = PersentaseAwal::all();
 
         if($persen->sum('persentase') != 100){
@@ -50,6 +52,7 @@ class FormDevidenController extends Controller
 
         $persentase = PersentaseAwal::all();
         $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $month = Carbon::now()->locale('id')->monthName;
 
         foreach ($persentase as $persen) {
 
@@ -74,7 +77,7 @@ class FormDevidenController extends Controller
                 $store = KasBesar::create($k);
 
                 $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                            "*Form Deviden*\n".
+                            "*Form Deviden ".$month."*\n".
                             "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                             "Nama  : ".$v->nama."\n".
                             "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".

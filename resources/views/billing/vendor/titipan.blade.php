@@ -31,11 +31,11 @@
             </div>
             <div class="col-3">
                 <div class="mb-3">
-                    <label for="id" class="form-label">Nomor Lambung</label>
+                    <label for="id" class="form-label">Nomor Vendor</label>
                     <select class="form-select" name="id" id="id" onchange="funGetVendor()" required>
-                        <option selected> -- Pilih Nomor Lambung -- </option>
-                        @foreach ($vehicle as $d)
-                            <option value="{{$d->id}}">{{$d->nomor_lambung}}</option>
+                        <option selected> -- Pilih Vendor -- </option>
+                        @foreach ($vendor as $d)
+                            <option value="{{$d->id}}">{{$d->nama}}</option>
                         @endforeach
                     </select>
                 </div>
@@ -58,53 +58,6 @@
                   </div>
             </div>
         </div>
-        <div class="row">
-
-        </div>
-        <hr>
-        <div class="row">
-
-
-        </div>
-        <hr>
-        {{-- <h2>Transfer Ke</h2>
-        <br> --}}
-        {{-- <div class="row">
-
-            <div class="col-md-4 mb-3">
-                <label for="transfer_ke" class="form-label">Nama</label>
-                <input type="text" class="form-control @if ($errors->has('transfer_ke'))
-                    is-invalid
-                @endif" name="transfer_ke" id="transfer_ke" disabled value="{{$rekening->nama_rekening}}">
-                @if ($errors->has('transfer_ke'))
-                <div class="invalid-feedback">
-                    {{$errors->first('transfer_ke')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="bank" class="form-label">Bank</label>
-                <input type="text" class="form-control @if ($errors->has('bank'))
-                    is-invalid
-                @endif" name="bank" id="bank" disabled value="{{$rekening->nama_bank}}">
-                @if ($errors->has('bank'))
-                <div class="invalid-feedback">
-                    {{$errors->first('bank')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="no_rekening" class="form-label">Nomor Rekening</label>
-                <input type="text" class="form-control @if ($errors->has('no_rekening'))
-                    is-invalid
-                @endif" name="no_rekening" id="no_rekening" disabled value="{{$rekening->nomor_rekening}}">
-                @if ($errors->has('no_rekening'))
-                <div class="invalid-feedback">
-                    {{$errors->first('no_rekening')}}
-                </div>
-                @endif
-            </div>
-        </div> --}}
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary">Ok</button>
             <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>

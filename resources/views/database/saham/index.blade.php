@@ -1,5 +1,4 @@
 @extends('layouts.app')
-
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
@@ -20,7 +19,6 @@
                                     src="{{asset('images/persen.svg')}}" alt="add-document" width="30"> Tambah Persen Awal</a>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#createSaham"><img
                                 src="{{asset('images/saham.svg')}}" alt="add-document" width="30"> Tambah Pemegang Saham</a>
-
                     </td>
                 </tr>
             </table>
