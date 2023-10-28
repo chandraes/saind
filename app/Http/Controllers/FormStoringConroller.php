@@ -71,7 +71,9 @@ class FormStoringConroller extends Controller
 
         $plafon = ($vehicle->vendor->plafon_lain * $vehicle->vendor->count()) - $sisa;
 
-        dd($plafon);
+        if ($plafon < ) {
+            # code...
+        }
 
         $simpan = KasVendor::create($vendor);
 

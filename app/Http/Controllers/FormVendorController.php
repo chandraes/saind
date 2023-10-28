@@ -56,8 +56,6 @@ class FormVendorController extends Controller
         $d['no_rekening'] = $v->no_rekening;
         $d['modal_investor_terakhir'] = $last->modal_investor_terakhir;
 
-        // dd($d);
-
         $kas['vendor_id'] = $v->id;
         $kas['tanggal'] = $d['tanggal'];
         // $kas['vehicle_id'] = $data['id'];
