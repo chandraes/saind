@@ -7,6 +7,7 @@ use App\Models\Barang;
 use App\Models\KeranjangBelanja;
 use App\Models\RekapBarang;
 use App\Models\KasVendor;
+use App\Models\Vendor;
 use App\Models\Vehicle;
 use App\Models\KasBesar;
 use App\Models\Transaksi;
@@ -195,8 +196,7 @@ class FormBarangController extends Controller
 
         $sisa = KasVendor::where('vendor_id', $data['vendor_id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
 
-        $plafon = ($vendor->plafon_titipan * $vendor->vehicle->count()) - $kas;
-
+        $plafon = ($vendor->plafon_lain * $vendor->vehicle->count()) - $sisa;
 
 
         $kas['vendor_id'] = $data['vendor_id'];
@@ -222,7 +222,7 @@ class FormBarangController extends Controller
         $data['nama_barang'] = Barang::find($data['barang_id'])->nama;
 
         if ($plafon < $data['total']) {
-            
+            return redirect()->back()->with('error', 'Kas sudah melebihi plafon');
         }
 
         $store = KasVendor::create($kas);
