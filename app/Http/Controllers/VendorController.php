@@ -74,6 +74,8 @@ class VendorController extends Controller
             'ppn' => 'nullable',
             'pph' => 'nullable',
             'pembayaran' => 'required',
+            'plafon_titipan' => 'required',
+            'plafon_lain' => 'required',
         ]);
 
         if (array_key_exists('ppn', $data)) {
@@ -89,7 +91,8 @@ class VendorController extends Controller
             $data['pph'] = 0;
         }
 
-
+        $data['plafon_titipan'] = str_replace('.', '', $data['plafon_titipan']);
+        $data['plafon_lain'] = str_replace('.', '', $data['plafon_lain']);
         // dd($data);
 
         $data['user_id'] = auth()->user()->id;
@@ -151,6 +154,8 @@ class VendorController extends Controller
             'ppn' => 'nullable',
             'pph' => 'nullable',
             'pembayaran' => 'required',
+            'plafon_titipan' => 'required',
+            'plafon_lain' => 'required',
         ]);
 
         if (array_key_exists('ppn', $data)) {
@@ -167,6 +172,9 @@ class VendorController extends Controller
         }
 
         $vendor = Vendor::findOrFail($id);
+
+        $data['plafon_titipan'] = str_replace('.', '', $data['plafon_titipan']);
+        $data['plafon_lain'] = str_replace('.', '', $data['plafon_lain']);
 
         $vendor->update($data);
 

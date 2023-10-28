@@ -143,6 +143,27 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
+                <div class="col-6">
+                    <label for="plafon_titipan" class="form-label">Plafon Titipan</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">Rp</span>
+                        <input type="text" class="form-control @if ($errors->has('plafon_titipan'))
+                        is-invalid
+                    @endif" name="plafon_titipan" id="plafon_titipan" required data-thousands="." value="{{number_format($vendor->plafon_titipan, 0, ',','.')}}">
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label for="plafon_lain" class="form-label">Plafon lain</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">Rp</span>
+                        <input type="text" class="form-control @if ($errors->has('plafon_lain'))
+                            is-invalid
+                        @endif" name="plafon_lain" id="plafon_lain" required data-thousands="." value="{{number_format($vendor->plafon_lain, 0, ',','.')}}">
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="row mt-3 mb-3">
                 <h3 class="mb-3">Rekening Vendor</h3>
                 <div class="col-md-6 mb-3">
                     <label for="no_rekening" class="form-label">No. Rekening</label>
@@ -235,6 +256,9 @@
         $('#sponsor_select').select2({
             theme: 'bootstrap-5'
         });
+
+        $('#plafon_titipan').maskMoney();
+        $('#plafon_lain').maskMoney();
     });
 
     $('#masukForm').submit(function(e){
