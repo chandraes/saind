@@ -24,4 +24,9 @@ class Direksi extends Model
     {
         return $this->hasMany(KasDireksi::class);
     }
+
+    public function kas_direksi_terakhir()
+    {
+        return $this->kas_direksi()->latest()->orderBy('id', 'desc')->first();
+    }
 }

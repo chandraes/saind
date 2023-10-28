@@ -9,33 +9,8 @@ class Karyawan extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'nama',
-        'nickname',
-        'jabatan_id',
-        'gaji_pokok',
-        'tunjangan_jabatan',
-        'tunjangan_keluarga',
-        'nik',
-        'npwp',
-        'bpjs_tk',
-        'bpjs_kesehatan',
-        'tempat_lahir',
-        'tanggal_lahir',
-        'alamat',
-        'no_hp',
-        'no_wa',
-        'bank',
-        'no_rekening',
-        'nama_rekening',
-        'mulai_bekerja',
-        'status',
-        'foto_ktp',
-        'foto_diri',
-        'created_by',
-        'updated_by',
-    ];
-
+    protected $guarded = [];
+    
     public function jabatan()
     {
         return $this->belongsTo(Jabatan::class);

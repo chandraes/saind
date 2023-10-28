@@ -80,7 +80,14 @@
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
-                    <td class="text-center align-middle">{{number_format($d->nominal, 0,',','.')}}</td>
+                    <td class="text-center align-middle">
+                        @if ($d->cicilan == 1)
+                            {{number_format($d->sisa_kas, 0,',','.')}}
+                        @else
+                            {{number_format($d->nominal, 0,',','.')}}
+                        @endif
+
+                    </td>
                     <td class="text-center align-middle">
                         @if ($d->cicilan == 1)
                         <h5><span class="badge bg-warning">Cicilan</span></h5>

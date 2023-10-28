@@ -218,6 +218,10 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('billing/deviden', [App\Http\Controllers\FormDevidenController::class, 'index'])->name('billing.deviden.index');
     Route::post('billing/deviden/store', [App\Http\Controllers\FormDevidenController::class, 'store'])->name('billing.deviden.store');
 
+    // Form Gaji
+    Route::get('billing/gaji', [App\Http\Controllers\FormGajiController::class, 'index'])->name('billing.gaji.index');
+    Route::post('billing/gaji/store', [App\Http\Controllers\FormGajiController::class, 'store'])->name('billing.gaji.store');
+
     Route::get('billing/transaksi', [App\Http\Controllers\TransaksiController::class, 'index'])->name('billing.transaksi.index');
 
     Route::get('billing/transaksi/invoice', [App\Http\Controllers\InvoiceController::class, 'index'])->name('billing.transaksi.invoice.index');

@@ -204,7 +204,7 @@
             </div>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('billing.gaji.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/gaji.svg')}}" alt="" width="100">
                 <h2>FORM GAJI</h2>
             </a>

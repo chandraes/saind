@@ -6,16 +6,7 @@
             <h1><u>Kas Kecil (Keluar)</u></h1>
         </div>
     </div>
-    @if (session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: '{{session('error')}}',
-        })
-    </script>
-    @endif
-
+    @include('swal')
     <form action="{{route('kas-kecil.keluar.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">

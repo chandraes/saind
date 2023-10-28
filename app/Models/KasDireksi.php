@@ -21,5 +21,10 @@ class KasDireksi extends Model
         return Carbon::parse($value)->format('d-m-Y');
     }
 
+    public function sisa_kas_terakhir()
+    {
+        return $this->latest()->orderBy('id', 'desc')->first()->sisa_kas;
+    }
+
 
 }
