@@ -28,12 +28,13 @@ class FormVendorController extends Controller
             'id' => 'required',
             'nilai' => 'required',
         ]);
+
         $data['nilai'] = str_replace('.', '', $data['nilai']);
 
         $v = Vendor::find($data['id']);
-        $kas = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+        $sisa = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
 
-        $plafon = ($v->plafon_titipan * $v->vehicle->count()) - $kas;
+        $plafon = ($v->plafon_titipan * $v->vehicle->count()) - $sisa;
 
         if ($data['nilai'] > $plafon) {
             return redirect()->back()->with('error', 'Nilai melebihi plafon titipan');
@@ -45,33 +46,23 @@ class FormVendorController extends Controller
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
         }
 
-        $vehicle = Vehicle::find($data['id']);
-
-        $vendor = $vehicle->vendor;
-
-        // if ($vendor->pembayaran == 'opname' && $data['nilai'] > 10000000) {
-        //     return redirect()->back()->with('error', 'Vendor Opname Tidak boleh melebihi Rp. 10.000.000,-');
-        // } elseif ($vendor->pembayaran == 'titipan' && $data['nilai'] > 2000000) {
-        //     return redirect()->back()->with('error', 'Vendor Titipan Tidak boleh melebihi Rp. 20.000.000,-');
-        // }
-
         $d['tanggal'] = date('Y-m-d');
         $d['jenis_transaksi_id'] = 2;
         $d['nominal_transaksi'] = $data['nilai'];
         $d['saldo'] = $last->saldo - $d['nominal_transaksi'];
-        $d['uraian'] = "Titipan ".$vehicle->vendor->nama." (".$vehicle->nomor_lambung.")";
-        $d['transfer_ke'] = $vehicle->vendor->nama_rekening;
-        $d['bank'] = $vehicle->vendor->bank;
-        $d['no_rekening'] = $vehicle->vendor->no_rekening;
+        $d['uraian'] = "Titipan ".$v->nama;
+        $d['transfer_ke'] = $v->nama_rekening;
+        $d['bank'] = $v->bank;
+        $d['no_rekening'] = $v->no_rekening;
         $d['modal_investor_terakhir'] = $last->modal_investor_terakhir;
 
-        $kas['vendor_id'] = $vehicle->vendor_id;
+        $kas['vendor_id'] = $v->id;
         $kas['tanggal'] = $d['tanggal'];
-        $kas['vehicle_id'] = $data['id'];
-        $kas['uraian'] = "Titipan "." Nolam ".$vehicle->nomor_lambung;
+        // $kas['vehicle_id'] = $data['id'];
+        $kas['uraian'] = "Titipan ".$v->nama;
         $kas['pinjaman'] = $d['nominal_transaksi'];
 
-        $kasTerakhir = KasVendor::where('vendor_id', $vehicle->vendor_id)->latest()->first();
+        $kasTerakhir = KasVendor::where('vendor_id', $data['id'])->latest()->first();
 
         if ($kasTerakhir) {
             $kas['sisa'] = $kasTerakhir->sisa + $d['nominal_transaksi'];
@@ -88,8 +79,7 @@ class FormVendorController extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Vendor Titipan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "No. Lambung : ".$vehicle->nomor_lambung."\n".
-                    "Vendor : ".$vehicle->vendor->nama."\n\n".
+                    "Vendor : ".$v->nama."\n\n".
                     "Nilai :  *Rp. ".number_format($d['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$d['bank']."\n".

@@ -191,6 +191,14 @@ class FormBarangController extends Controller
             return redirect()->route('billing.index')->with('error', 'Stok barang tidak cukup');
         }
 
+        $vendor = Vendor::find($data['vendor_id']);
+
+        $sisa = KasVendor::where('vendor_id', $data['vendor_id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+
+        $plafon = ($vendor->plafon_titipan * $vendor->vehicle->count()) - $kas;
+
+
+
         $kas['vendor_id'] = $data['vendor_id'];
         $kas['vehicle_id'] = $data['id'];
         $kas['tanggal'] = now();
@@ -212,6 +220,10 @@ class FormBarangController extends Controller
         $data['harga_satuan'] = Barang::find($data['barang_id'])->harga_jual;
         $data['total'] = $data['jumlah'] * $data['harga_satuan'];
         $data['nama_barang'] = Barang::find($data['barang_id'])->nama;
+
+        if ($plafon < $data['total']) {
+            
+        }
 
         $store = KasVendor::create($kas);
 
