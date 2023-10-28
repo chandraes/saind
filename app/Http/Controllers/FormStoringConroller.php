@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
+use App\Models\Vendor;
 use App\Models\BbmStoring;
 use App\Models\KasBesar;
 use App\Models\KasVendor;
@@ -67,12 +68,15 @@ class FormStoringConroller extends Controller
             $vendor['sisa'] = $vendor['pinjaman'];
         }
 
+        $bio = Vendor::find($vendorId);
+        $totalMobil = $bio->vehicle->where('status', 'aktif')->count();
+
         $sisa = KasVendor::where('vendor_id', $vehicle->vendor_id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
 
-        $plafon = ($vehicle->vendor->plafon_lain * $vehicle->vendor->count()) - $sisa;
+        $plafon = ($bio->plafon_lain * $totalMobil) + ($bio->plafon_titipan * $totalMobil) - $sisa;
 
-        if ($plafon < ) {
-            # code...
+        if ($plafon < ($vendor['pinjaman'] + $data['jasa'])) {
+            return redirect()->back()->with('error', 'Nilai melebihi plafon vendor!!');
         }
 
         $simpan = KasVendor::create($vendor);
