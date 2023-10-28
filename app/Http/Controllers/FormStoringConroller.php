@@ -61,12 +61,17 @@ class FormStoringConroller extends Controller
             $vendor['pinjaman'] = $storing->biaya_vendor;
         }
 
-
         if ($last) {
             $vendor['sisa'] = $last->sisa + $vendor['pinjaman'];
         } else {
             $vendor['sisa'] = $vendor['pinjaman'];
         }
+
+        $sisa = KasVendor::where('vendor_id', $vehicle->vendor_id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+
+        $plafon = ($vehicle->vendor->plafon_lain * $vehicle->vendor->count()) - $sisa;
+
+        dd($plafon);
 
         $simpan = KasVendor::create($vendor);
 

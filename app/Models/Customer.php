@@ -9,30 +9,7 @@ class Customer extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'kode_customer',
-        'nama',
-        'singkatan',
-        'npwp',
-        'alamat',
-        'contact_person',
-        'jabatan',
-        'no_hp',
-        'no_wa',
-        'email',
-        'harga_opname',
-        'harga_titipan',
-        'created_by',
-        'edited_by',
-        'tanggal_muat',
-        'nota_muat',
-        'tonase',
-        'tanggal_bongkar',
-        'selisih',
-        'ppn',
-        'pph',
-        'tagihan_dari',
-    ];
+    protected $guarded = [];
 
     public function createdBy()
     {

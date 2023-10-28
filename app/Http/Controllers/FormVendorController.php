@@ -51,10 +51,12 @@ class FormVendorController extends Controller
         $d['nominal_transaksi'] = $data['nilai'];
         $d['saldo'] = $last->saldo - $d['nominal_transaksi'];
         $d['uraian'] = "Titipan ".$v->nama;
-        $d['transfer_ke'] = $v->nama_rekening;
+        $d['transfer_ke'] = substr($v->nama_rekening, 0, 15);
         $d['bank'] = $v->bank;
         $d['no_rekening'] = $v->no_rekening;
         $d['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+
+        // dd($d);
 
         $kas['vendor_id'] = $v->id;
         $kas['tanggal'] = $d['tanggal'];
