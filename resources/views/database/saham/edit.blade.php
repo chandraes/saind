@@ -7,17 +7,32 @@
             </div>
             <form action="{{route('pemegang-saham.update', $k)}}" method="post">
                 @csrf
-                @method('PUT')
+                @method('PATCH')
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-6">
+                        <div class="col-4">
+                            <div class="mb-3">
+                               <div class="mb-3">
+                                <label for="persentase_awal_id" class="form-label">Persentase Awal</label>
+                                <select class="form-select" name="persentase_awal_id" id="persentase_awal_id">
+                                    <option value=""> -- Pilih -- </option>
+                                    @foreach ($persen as $i)
+                                    <option value="{{$i->id}}" @if ($k->persentase_awal_id == $i->id)
+                                        selected
+                                    @endif>{{$i->nama}} ({{$i->persentase}}%)</option>
+                                    @endforeach
+                                </select>
+                               </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
                             <div class="mb-3">
                                 <label for="nama" class="form-label">Nama</label>
                                 <input type="text" class="form-control" name="nama" id="nama" aria-describedby="helpId"
                                     placeholder="" value="{{$k->nama}}" required>
                             </div>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
                             <div class="mb-3">
                                 <label for="persentase" class="form-label">Persentase</label>
                                 <input type="number" class="form-control" name="persentase" id="persentase"
