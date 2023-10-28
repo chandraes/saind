@@ -231,7 +231,7 @@ class FormBarangController extends Controller
         $barang->stok -= $data['jumlah'];
         $barang->save();
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $group = GroupWa::where('untuk', 'team')->first();
 
         $pesan =    "==========================\n".
                     "*Form Jual Barang*\n".
