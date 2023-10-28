@@ -163,7 +163,6 @@
                     barang_id: barang_id
                 },
                 success: function(data){
-                    console.log(data);
                     // maskMoney
                     $('#harga_jual').maskMoney('destroy');
                     $('#harga_jual').maskMoney();

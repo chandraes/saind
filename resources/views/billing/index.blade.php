@@ -7,15 +7,7 @@
         </div>
     </div>
     {{-- if session has success, trigger sweet alert --}}
-    @if (session('success'))
-    <script>
-        Swal.fire(
-                'Berhasil!',
-                '{{session('success')}}',
-                'success'
-            )
-    </script>
-    @endif
+    @include('swal')
     <div class="row justify-content-left">
         <h2>KAS BESAR</h2>
         @if (auth()->user()->role === 'admin')
@@ -76,7 +68,7 @@
             </div>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('billing.deviden.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/dividen.svg')}}" alt="" width="100">
                 <h2>FORM DEVIDEN</h2>
             </a>

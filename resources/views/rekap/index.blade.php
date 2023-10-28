@@ -47,6 +47,18 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/rekap-bonus.svg')}}" alt="" width="100">
+                <h2>Bonus</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/rekap-gaji.svg')}}" alt="" width="100">
+                <h2>Gaji Staff</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKasbon">
                 <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="100">
                 <h2>Kasbon</h2>

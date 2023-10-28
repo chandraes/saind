@@ -17,7 +17,7 @@
                                 <select class="form-select" name="persentase_awal_id" id="persentase_awal_id">
                                     <option value=""> -- Pilih -- </option>
                                     @foreach ($persen as $i)
-                                    <option value="{{$i->id}}">{{$i->nama}}</option>
+                                    <option value="{{$i->id}}">{{$i->nama}} ({{$i->persentase}}%)</option>
                                     @endforeach
                                 </select>
                                </div>
