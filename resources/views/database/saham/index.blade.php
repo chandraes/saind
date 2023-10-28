@@ -9,13 +9,15 @@
     </div>
     @include('swal')
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
+        <div class="col-md-12">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen"
                                 width="30"> Database</a></td>
+                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#persenAwal"><img
+                                    src="{{asset('images/persen.svg')}}" alt="add-document" width="30"> Tambah Persen Awal</a>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#createSaham"><img
                                 src="{{asset('images/saham.svg')}}" alt="add-document" width="30"> Tambah Pemegang Saham</a>
 
@@ -25,12 +27,14 @@
         </div>
     </div>
 </div>
+@include('database.saham.persen-awal')
 @include('database.saham.create')
 <div class="container mt-5 table-responsive ">
     <table class="table table-hover table-bordered" id="karyawan-data">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
+                <th class="text-center align-middle">Persen Awal</th>
                 <th class="text-center align-middle">Nama</th>
                 <th class="text-center align-middle">Persentase</th>
                 <th class="text-center align-middle">Nama Rekening</th>
@@ -43,6 +47,7 @@
             @foreach ($data as $k)
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
+                <td class="text-center align-middle">{{$k->persentase_awal->nama}} ({{$k->persentase_awal->persentase}}%)</td>
                 <td class="text-center align-middle">{{$k->nama}}</td>
                 <td class="text-center align-middle">{{$k->persentase}}%</td>
                 <td class="text-center align-middle">{{$k->nama_rekening}}</td>
@@ -90,6 +95,23 @@
 <script>
     $('#karyawan-data').DataTable({
     });
+
+    function toggleNamaJabatan(id) {
+
+        if ($('#nama-'+id).attr('readonly') && $('#persentase-'+id).attr('readonly')) {
+            // remove readonly
+            $('#nama-'+id).removeAttr('readonly');
+            $('#persentase-'+id).removeAttr('readonly');
+            // show button
+            $('#buttonJabatan-'+id).removeAttr('hidden');
+        } else {
+            // add readonly
+            $('#nama-'+id).attr('readonly', true);
+            $('#persentase-'+id).attr('readonly', true);
+            // hide button
+            $('#buttonJabatan-'+id).attr('hidden', true);
+        }
+        }
 
 </script>
 @endpush

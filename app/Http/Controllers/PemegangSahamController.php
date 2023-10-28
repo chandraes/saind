@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PemegangSaham;
+use App\Models\PersentaseAwal;
 use Illuminate\Http\Request;
 
 class PemegangSahamController extends Controller
@@ -12,8 +13,9 @@ class PemegangSahamController extends Controller
      */
     public function index()
     {
+        $persen = PersentaseAwal::all();
         $data = PemegangSaham::all();
-        return view('database.saham.index', compact('data'));
+        return view('database.saham.index', compact('data', 'persen'));
     }
 
     /**
@@ -31,13 +33,14 @@ class PemegangSahamController extends Controller
     {
         $data = $request->validate([
             'nama' => 'required',
+            'persentase_awal_id' => 'required',
             'persentase' => 'required|integer',
             'nama_rekening' => 'required',
             'nomor_rekening' => 'required',
             'bank' => 'required',
         ]);
 
-        $saham = PemegangSaham::sum('persentase');
+        $saham = PemegangSaham::where('persentase_awal_id', $data['persentase_awal_id'])->sum('persentase');
 
         if ($saham + $data['persentase'] > 100) {
             return redirect()->back()->with('error', 'Persentase pemegang saham tidak boleh lebih dari 100%');
@@ -71,13 +74,14 @@ class PemegangSahamController extends Controller
     {
         $data = $request->validate([
             'nama' => 'required',
+            'persentase_awal_id' => 'required',
             'persentase' => 'required|integer',
             'nama_rekening' => 'required',
             'nomor_rekening' => 'required',
             'bank' => 'required',
         ]);
 
-        $saham = PemegangSaham::sum('persentase');
+        $saham = PemegangSaham::where('persentase_awal_id', $data['persentase_awal_id'])->sum('persentase');
 
         if ($saham - $pemegangSaham->persentase + $data['persentase'] > 100) {
             return redirect()->back()->with('error', 'Persentase pemegang saham tidak boleh lebih dari 100%');
