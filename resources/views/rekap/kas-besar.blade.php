@@ -87,7 +87,6 @@
                 <th class="text-center align-middle">Deposit</th>
                 <th class="text-center align-middle">Kas Kecil</th>
                 <th class="text-center align-middle">Kas Uang Jalan</th>
-                <th class="text-center align-middle">Tagihan</th>
                 <th class="text-center align-middle">Masuk</th>
                 <th class="text-center align-middle">Keluar</th>
                 <th class="text-center align-middle">Saldo</th>
@@ -99,7 +98,7 @@
 
                 <td colspan="6" class="text-center align-middle">Saldo Bulan
                     {{$stringBulan}} {{$tahunSebelumnya}}</td>
-                <td colspan="2"></td>
+                <td></td>
                 <td class="text-center align-middle">Rp. {{$dataSebelumnya ? number_format($dataSebelumnya->saldo,
                     0, ',','.') : ''}}</td>
                 <td></td>
@@ -119,9 +118,6 @@
                         $d->kode_kas_kecil.sprintf("%02d",$d->nomor_kode_kas_kecil) : ''}}</td>
                     <td class="text-center align-middle">{{$d->nomor_kode_kas_uang_jalan ?
                         $d->kode_kas_uang_jalan.sprintf("%02d",$d->nomor_kode_kas_uang_jalan) : ''}}</td>
-                    <td class="text-center align-middle">
-                        {{$d->nomor_kode_tagihan ? $d->kode_tagihan.sprintf("%02d",$d->nomor_kode_tagihan) : ''}}
-                    </td>
                     <td class="text-center align-middle">{{$d->jenis_transaksi->id === 1 ?
                         number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
                     </td>
@@ -146,13 +142,11 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td></td>
                 </tr>
             </tbody>
             <tfoot>
                 <tr>
                     <td colspan="4" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
-                    <td></td>
                     <td></td>
                     <td class="text-center align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
                             1)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
@@ -200,10 +194,7 @@
                 "leftColumns": 4,
                 "rightColumns": 2
             },
-            "columnDefs": [{
-                "targets": [8, 9, 10, 11],
-                "searchable": false
-            }]
+
         });
 
     });
