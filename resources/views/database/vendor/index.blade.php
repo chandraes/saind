@@ -49,6 +49,7 @@
                 <th class="text-center align-middle">Plafon Storing</th>
                 <th class="text-center align-middle">Uang Jalan</th>
                 <th class="text-center align-middle">Status</th>
+                <th class="text-center align-middle">Sponsor</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
@@ -135,6 +136,9 @@
                     @elseif ($d->status === "nonaktif")
                     <span class="badge rounded-pill text-bg-danger">Non Aktif</span>
                     @endif
+                </td>
+                <td class="align-middle text-center">
+                  {{$d->sponsor ? $d->sponsor->nama : ''}}
                 </td>
                 <td class="text-center align-middle">
                     <div class="d-flex justify-content-center">
