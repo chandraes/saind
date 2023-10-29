@@ -286,7 +286,7 @@ class CustomerController extends Controller
                 ]);
             }
             unset($data['rute']);
-            
+
             $customer->update($data);
         });
 
@@ -372,5 +372,16 @@ class CustomerController extends Controller
         ]);
 
         return redirect()->route('customer.index')->with('success', 'Status berhasil diubah');
+    }
+
+    public function preview_customer()
+    {
+        $data = Customer::all();
+
+        $pdf = PDF::loadview('database.customer.preview-customer', [
+            'data' => $data,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Daftar Customer.pdf');
     }
 }

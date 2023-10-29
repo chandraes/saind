@@ -2,7 +2,7 @@
 @section('content')
 <div class="container-fluid">
     <center>
-        <h2>List Vendor</h2>
+        <h2>Daftar Vendor</h2>
     </center>
 </div>
 <div class="container-fluid table-responsive ml-3">

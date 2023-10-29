@@ -16,7 +16,7 @@
         </div>
     </div>
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
@@ -25,6 +25,9 @@
                                 width="30"> Database</a></td>
                     <td><a href="{{route('customer.create')}}"><img src="{{asset('images/company.svg')}}" alt="add-rute"
                                 width="30"> Tambah Customer</a>
+                    </td>
+                    <td><a href="{{route('database.customer.preview-customer')}}" target="_blank"><img src="{{asset('images/document.svg')}}" alt="add-rute"
+                                width="30"> Print Customer</a>
                     </td>
 
                 </tr>
@@ -60,7 +63,6 @@
                     <h5><span class="badge bg-primary">Rp. {{number_format($t->harga_tagihan, 0, ',', '.')}}</span></h5>
                     @endforeach
                 </td>
-
                 <td>
                     @foreach ($d->rute as $r)
                     <h5><span class="badge bg-primary">{{$r->nama}}</span></h5>
