@@ -41,7 +41,7 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('rekap.nota-lunas')}}" class="text-decoration-none">
                 <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="100">
                 <h2>Nota Lunas</h2>
             </a>
