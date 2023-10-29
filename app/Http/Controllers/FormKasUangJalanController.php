@@ -105,7 +105,7 @@ class FormKasUangJalanController extends Controller
     public function keluar()
     {
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->first();
-        $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
+        $vehicle = Vehicle::whereNot('status', 'nonaktif')->whereNot('status', 'proses')->get();
         $customer = Customer::where('status', 1)->get();
 
         if($nomor == null){
@@ -160,7 +160,7 @@ class FormKasUangJalanController extends Controller
             'bank' => 'required',
             'no_rekening' => 'required',
         ]);
-        
+
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');

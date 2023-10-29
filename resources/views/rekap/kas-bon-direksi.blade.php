@@ -75,7 +75,6 @@
                 <th class="text-center align-middle">Bayar Kasbon</th>
             </tr>
             <tr class="table-warning">
-
                 <td class="text-center align-middle">Sisa Hutang Bulan
                     {{$stringBulan}} {{$tahunSebelumnya}}</td>
                 <td ></td>
@@ -116,10 +115,6 @@
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-    // hide alert after 5 seconds
-    setTimeout(function() {
-        $('#alert').fadeOut('slow');
-    }, 5000);
 
     $(document).ready(function() {
         $('#rekapTable').DataTable({
