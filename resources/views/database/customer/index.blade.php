@@ -42,8 +42,9 @@
                 <th class="text-center align-middle">Contact Person</th>
                 <th class="text-center align-middle">Harga Tagihan</th>
                 <th class="text-center align-middle">Rute</th>
+                <th class="text-center align-middle">PPN & PPh</th>
+                <th class="text-center align-middle">Bayar Dari</th>
                 <th class="text-center align-middle">Dokumen</th>
-                <th class="text-center align-middle">Dibuat Oleh</th>
                 <th class="text-center align-middle">Status</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
@@ -59,125 +60,44 @@
                     <h5><span class="badge bg-primary">Rp. {{number_format($t->harga_tagihan, 0, ',', '.')}}</span></h5>
                     @endforeach
                 </td>
+
                 <td>
                     @foreach ($d->rute as $r)
                     <h5><span class="badge bg-primary">{{$r->nama}}</span></h5>
                     @endforeach
                 </td>
+                <td class="text-center align-middle">
+                    @if ($d->ppn == 1)
+                    {{-- fa checklist --}}
+                    <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
+                    @endif
+                </td>
+                <td class="text-center align-middle">
+                    @if ($d->tagihan_dari == 1)
+                    Tonase Muat
+                    @elseif($d->tagihan_dari == 2)
+                    Tonase Bongkar
+                    @endif
+                </td>
                 <td>
                     <!-- Modal trigger button -->
-                    <button type="button" class="btn btn-success" data-bs-toggle="modal"
-                        data-bs-target="#modalTambahDokumen{{$d->id}}">
-                        Tambah Dokumen
-                    </button>
-
-                    <div class="modal fade" id="modalTambahDokumen{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
-                        data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">Tambah Dokumen</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <form action="{{route('customer.document-store', [$d->id])}}" method="post" enctype="multipart/form-data">
-                                    @csrf
-                                    <div class="modal-body">
-                                        <div class="row">
-                                            <div class="mb-3">
-                                                <label for="nama_dokumen" class="form-label">Nama Dokumen</label>
-                                                <input type="text"
-                                                    class="form-control @if ($errors->has('nama_dokumen')) is-invalid @endif"
-                                                    name="nama_dokumen" id="nama_dokumen" required aria-describedby="helpId"
-                                                    placeholder="">
-                                                @if ($errors->has('nama_dokumen'))
-                                                <div class="invalid-feedback">
-                                                    {{$errors->first('nama_dokumen')}}
-                                                </div>
-                                                @endif
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="file" class="form-label">File</label>
-                                                <input type="file"
-                                                    class="form-control @if ($errors->has('file')) is-invalid @endif"
-                                                    name="file" id="file" required aria-describedby="helpId"
-                                                    placeholder="">
-                                                @if ($errors->has('file'))
-                                                <div class="invalid-feedback">
-                                                    {{$errors->first('file')}}
-                                                </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-                                        <button type="submit" class="btn btn-primary">Simpan</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+                    <div class="row m-2">
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                            data-bs-target="#modalTambahDokumen{{$d->id}}">
+                            Tambah Dokumen
+                        </button>
                     </div>
-
-                    <!-- Modal trigger button -->
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#modalDokumen{{$d->id}}">
-                        Lihat Dokumen
-                    </button>
-
-                    <div class="modal fade" id="modalDokumen{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
-                        data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">Dokumen Customer</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <table class="table table-bordered table-hover">
-                                        <thead class="table-success">
-                                            <tr>
-                                                <th class="text-center align-middle">No</th>
-                                                <th class="text-center align-middle">Nama Dokumen</th>
-                                                <th class="text-center align-middle">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($d->document as $doc)
-                                            <tr class="text-center align-middle">
-                                                <td>{{$loop->iteration}}</td>
-                                                <td>{{$doc->nama_dokumen}}</td>
-                                                <td>
-                                                    <a href="{{route('customer.document-download', [$doc->id])}}"
-                                                        class="btn btn-primary m-2" target="_blank">
-                                                        <i class="fa fa-download"></i>
-                                                    </a>
-                                                    <form action="{{route('customer.document-destroy', [$doc->id])}}"
-                                                        method="post" class="d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger m-2"
-                                                            onclick="return confirm('Apakah anda yakin ingin menghapus data ini?')">
-                                                            <i class="fa fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Close</button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="row m-2">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#modalDokumen{{$d->id}}">
+                            Lihat Dokumen
+                        </button>
                     </div>
+                    @include('database.customer.create-dokumen')
+                    @include('database.customer.show-dokumen')
+
                 </td>
-                <td>{{$d->createdBy['name']}}</td>
+
                 <td class="text-center align-middle">
                     <div class="text-center">
                         <button class="btn {{$d->status == 1 ? "btn-success" : "btn-danger"}}" data-bs-toggle="modal"
