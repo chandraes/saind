@@ -160,7 +160,8 @@ class FormKasUangJalanController extends Controller
             'bank' => 'required',
             'no_rekening' => 'required',
         ]);
-
+        
+        $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
         $data['vendor_id'] = $data['p_vendor'];

@@ -63,7 +63,7 @@
             </div>
             <div class="col-4 mb-3">
                 <label for="hk_uang_jalan" class="form-label">Uang Jalan</label>
-                <input type="text" class="form-control" name="nominal_transaksi" id="hk_uang_jalan" required>
+                <input type="text" class="form-control" name="nominal_transaksi" id="hk_uang_jalan" required data-thousands=".">
             </div>
         </div>
         <hr>
@@ -209,6 +209,10 @@
                     },
                     success: function (data) {
                         $('#hk_uang_jalan').val(data.hk_uang_jalan);
+
+                        // maskMonye
+                        $('#hk_uang_jalan').maskMoney();
+                        $('#hk_uang_jalan').maskMoney('mask', data.hk_uang_jalan);
                     }
                 });
 
