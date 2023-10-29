@@ -35,7 +35,7 @@
             <tbody>
                 @foreach ($direksi as $dir)
                 <tr>
-                    <td class="text-center align-middle">{{$dir->nik}}</td>
+                    <td class="text-center align-middle">Direksi</td>
                     <td class="text-center align-middle">{{$dir->nama}}</td>
                     <td class="text-center align-middle">{{$dir->jabatan}}</td>
                     <td class="text-center align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
@@ -56,16 +56,17 @@
                 @foreach ($data as $i)
                 @php
                     $bpjs_tk = $i->gaji_pokok * 0.049;
+                    $bpjs_k = $i->gaji_pokok * 0.04;
                 @endphp
                 <tr>
-                    <td class="text-center align-middle">{{$i->nik}}</td>
+                    <td class="text-center align-middle">{{$i->kode}}{{sprintf("%03d",$i->nomor)}}</td>
                     <td class="text-center align-middle">{{$i->nama}}</td>
                     <td class="text-center align-middle">{{$i->jabatan->nama}}</td>
                     <td class="text-center align-middle">{{number_format($i->gaji_pokok, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($i->tunjangan_jabatan, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($i->tunjangan_keluarga, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($bpjs_tk, 0, ',','.')}}</td>
-                    <td class="text-center align-middle"></td>
+                    <td class="text-center align-middle">{{number_format($bpjs_k, 0, ',','.')}}</td>
                     <td class="text-center align-middle"></td>
                     <td class="text-center align-middle"></td>
                     <td class="text-center align-middle"></td>
