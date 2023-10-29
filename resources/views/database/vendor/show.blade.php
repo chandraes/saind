@@ -83,8 +83,12 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
-                <h3 class="mb-3">Informasi PPN & PPh</h3>
+                <h3 class="mb-3">Informasi SO, PPN & PPh</h3>
                 <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                    <label class="btn btn-success active">
+                        <input type="checkbox" class="me-2" name="support_operational" id="support_operational" {{$vendor->support_operational == 1 ? 'checked' : ''}}
+                        autocomplete="off" disabled> Suport Operational
+                    </label>
                     <label class="btn btn-success active">
                         <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}}
                         autocomplete="off" disabled> PPN

@@ -84,9 +84,6 @@
                     <hr>
                     <div class="row">
                         <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
-                            <label class="btn btn-warning active">
-                                <input type="checkbox" class="me-2" name="support_operational" id="support_operational" {{$d->support_operational == 1 ? 'checked' : ''}} disabled autocomplete="off"> Support Operational
-                            </label>
                             <label class="btn btn-warning">
                                 <input type="checkbox" class="me-2" name="gps" id="gps" {{$d->gps == 1 ? 'checked' : ''}} disabled autocomplete="off"> GPS
                             </label>

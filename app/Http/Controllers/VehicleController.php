@@ -51,18 +51,12 @@ class VehicleController extends Controller
             'transfer_ke' => 'required',
             'bank' => 'required',
             'no_rekening' => 'required',
-            'support_operational'=> 'nullable',
             'gps' => 'nullable',
         ]);
 
         $data['nomor_lambung'] = Vehicle::nextNomorLambung();
-
-        // if $data has support_operational key
-        if (array_key_exists('support_operational', $data)) {
-            $data['support_operational'] = 1;
-        } else {
-            $data['support_operational'] = 0;
-        }
+;
+        $data['support_operational'] = Vendor::find($data['vendor_id'])->support_operational;
 
         if (array_key_exists('gps', $data)) {
             $data['gps'] = 1;
@@ -123,11 +117,7 @@ class VehicleController extends Controller
         ]);
 
         // if $data has support_operational key
-        if (array_key_exists('support_operational', $data)) {
-            $data['support_operational'] = 1;
-        } else {
-            $data['support_operational'] = 0;
-        }
+        $data['support_operational'] = Vendor::find($data['vendor_id'])->support_operational;
 
         if (array_key_exists('gps', $data)) {
             $data['gps'] = 1;
