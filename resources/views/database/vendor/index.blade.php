@@ -68,8 +68,13 @@
                     <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
                     @endif
                 </td>
-                <td class="align-middle text-center">{{number_format($d->plafon_titipan,0,',','.')}}</td>
-                <td class="align-middle text-center">{{number_format($d->plafon_lain,0,',','.')}}</td>
+                <td class="align-middle text-center @if($d->pembayaran == 'titipan' && $d->plafon_titipan > 20000000) text-danger @elseif($d->pembayaran == 'opname' && $d->plafon_titipan > 10000000) text-danger @endif">
+                    {{number_format($d->plafon_titipan,0,',','.')}}
+                </td>
+                <td class="align-middle text-center {{$d->plafon_lain > 10000000 ? 'text-danger' : ''}}">
+
+                    {{number_format($d->plafon_lain,0,',','.')}}
+                </td>
                 {{-- <td class="align-middle">
                     <div class="text-center">
                         <button type="button" class="btn btn-primary text-center" data-bs-toggle="modal" data-bs-target="#modal-pembayaran{{$d->id}}">
