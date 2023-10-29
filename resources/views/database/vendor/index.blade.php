@@ -44,6 +44,8 @@
                 <th class="text-center align-middle">Nickname</th>
                 <th class="text-center align-middle">Pembayaran</th>
                 <th class="text-center align-middle">SO</th>
+                <th class="text-center align-middle">Plafon Cash</th>
+                <th class="text-center align-middle">Plafon Storing</th>
                 <th class="text-center align-middle">Uang Jalan</th>
                 <th class="text-center align-middle">Status</th>
                 <th class="text-center align-middle">Action</th>
@@ -66,6 +68,8 @@
                     <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
                     @endif
                 </td>
+                <td class="align-middle text-center">{{number_format($d->plafon_titipan,0,',','.')}}</td>
+                <td class="align-middle text-center">{{number_format($d->plafon_lain,0,',','.')}}</td>
                 {{-- <td class="align-middle">
                     <div class="text-center">
                         <button type="button" class="btn btn-primary text-center" data-bs-toggle="modal" data-bs-target="#modal-pembayaran{{$d->id}}">
