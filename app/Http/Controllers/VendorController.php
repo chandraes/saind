@@ -430,7 +430,7 @@ class VendorController extends Controller
     {
         $data = Vendor::find($id);
         $customer = Customer::all();
-        $array_vb = $data->vendor_bayar->pluck('customer_id')->toArray();
+        // $array_vb = $data->vendor_bayar->pluck('customer_id')->toArray();
         // make $data->tanggal into local value id with Carbon
         $data->tanggal = Carbon::parse($data->created_at)->locale('id')->isoFormat('LL');
 
@@ -447,5 +447,16 @@ class VendorController extends Controller
         // $pdfmerge->merge();
 
         return $pdf->stream();
+    }
+
+    public function preview_vendor()
+    {
+        $data = Vendor::all();
+
+        $pdf = PDF::loadview('database.vendor.prieview-vendor', [
+            'data' => $data,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Daftar Vendor.pdf');
     }
 }

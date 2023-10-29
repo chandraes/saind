@@ -16,7 +16,7 @@
         </div>
     </div>
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
@@ -25,6 +25,9 @@
                                 width="30"> Database</a></td>
                     <td><a href="{{route('vendor.create')}}"><img
                                 src="{{asset('images/vendor.svg')}}" alt="add-document" width="30"> Tambah Vendor</a>
+                    </td>
+                    <td><a href="{{route('vendor.preview-vendor')}}" target="_blank"><img
+                        src="{{asset('images/document.svg')}}" alt="add-document" width="30"> Print Vendor</a>
                     </td>
                     {{-- <td><a href="{{route('dokumen.sph_doc')}}" target="_blank"><img
                                 src="{{asset('images/document-add.svg')}}" alt="add-document" width="30"> Tambah SPH</a>
