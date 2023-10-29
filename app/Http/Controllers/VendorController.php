@@ -348,11 +348,17 @@ class VendorController extends Controller
                 }
            }
         }
-
+        // dd($data);
         DB::transaction(function () use ($data, $id) {
+            // delete vendor uang jalan
+            VendorUangJalan::where('vendor_id', $id)->delete();
+
             for ($i=0; $i < count($data['rute_id']); $i++) {
-                VendorUangJalan::where('vendor_id', $data['vendor_id'])->where('rute_id', $data['rute_id'][$i],)->update([
+                VendorUangJalan::create([
+                    'vendor_id' => $id,
+                    'rute_id' => $data['rute_id'][$i],
                     'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
+                    'user_id' => auth()->user()->id,
                 ]);
             }
         });
