@@ -6,6 +6,17 @@
             <h1><u>Tambah Vendor</u></h1>
         </div>
     </div>
+    @if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Whoops!</strong> Terjadi kesalahan.<br><br>
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </ul>
+    </div>
+ @endif
     <form action="{{route('vendor.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row mt-3 mb-3">
@@ -161,12 +172,12 @@
                     </div>
                 </div>
                 <div class="col-6">
-                    <label for="Plafon lain" class="form-label">Plafon Storing</label>
+                    <label for="plafon_lain" class="form-label">Plafon Storing</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1">Rp</span>
-                        <input type="text" class="form-control @if ($errors->has('Plafon lain'))
+                        <input type="text" class="form-control @if ($errors->has('plafon_lain'))
                             is-invalid
-                        @endif" name="Plafon lain" id="Plafon lain" required data-thousands=".">
+                        @endif" name="plafon_lain" id="plafon_lain" required data-thousands=".">
                     </div>
                 </div>
             </div>

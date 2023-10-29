@@ -55,13 +55,13 @@ Route::group(['middleware' => ['auth']], function() {
         Route::post('/vendor/pembayaran/{id}/update', [App\Http\Controllers\VendorController::class, 'pembayaran_update'])->name('vendor.pembayaran.update');
 
 
-        Route::get('vendor/{id}/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan'])->name('database.vendor.uang-jalan');
-        Route::post('vendor/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan_store'])->name('database.vendor.uang-jalan.store');
-        Route::get('vendor/uang-jalan/{id}/edit', [App\Http\Controllers\VendorController::class, 'uang_jalan_edit'])->name('database.vendor.uang-jalan.edit');
-        Route::post('vendor/uang-jalan/{id}/update', [App\Http\Controllers\VendorController::class, 'uang_jalan_update'])->name('database.vendor.uang-jalan.update');
-        Route::get('vendro/preview-vendor', [App\Http\Controllers\VendorController::class, 'preview_vendor'])->name('database.vendor.preview-vendor');
+        Route::get('/vendor/{id}/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan'])->name('uj.vendor.uang-jalan');
+        Route::post('/vendor/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan_store'])->name('uj.vendor.uang-jalan.store');
+        Route::get('uj/vendor/uang-jalan/{vendor}/edit', [App\Http\Controllers\VendorController::class, 'uang_jalan_edit'])->name('uj.vendor.uang-jalan.edit');
+        Route::post('/vendor/uang-jalan/{id}/update', [App\Http\Controllers\VendorController::class, 'uang_jalan_update'])->name('uj.vendor.uang-jalan.update');
+        Route::get('/vendor/preview-vendor', [App\Http\Controllers\VendorController::class, 'preview_vendor'])->name('uj.vendor.preview-vendor');
 
-        Route::get('vendor/biodata-vendor/{id}', [App\Http\Controllers\VendorController::class, 'biodata_vendor'])->name('database.vendor.biodata-vendor');
+        Route::get('/vendor/biodata-vendor/{id}', [App\Http\Controllers\VendorController::class, 'biodata_vendor'])->name('uj.vendor.biodata-vendor');
 
         Route::resource('rute', App\Http\Controllers\RuteController::class)->only([
             'index', 'store', 'update', 'destroy'

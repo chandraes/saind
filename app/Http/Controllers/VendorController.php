@@ -103,7 +103,7 @@ class VendorController extends Controller
 
         $id = $store->id;
 
-        return redirect()->route('database.vendor.uang-jalan', $id);
+        return redirect()->route('uj.vendor.uang-jalan', $id);
     }
 
     /**
@@ -206,67 +206,7 @@ class VendorController extends Controller
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil dihapus');
     }
 
-    // public function pembayaran(string $id)
-    // {
-    //     $customers = Customer::all();
-    //     return view('database.vendor.create-pembayaran', [
-    //         'id' => $id,
-    //         'customers' => $customers,
-    //     ]);
-    // }
-
-    // public function pembayaran_store(Request $request)
-    // {
-    //     // dd($request->all());
-    //     $data = $request->validate([
-    //         'vendor_id' => 'required|exists:vendors,id',
-    //         'customer_id' => 'required',
-    //         'customer_id.*' => 'required|exists:customers,id',
-    //         'rute_id' => 'required',
-    //         'rute_id.*' => 'required|exists:rutes,id',
-    //         'hk_opname' => 'nullable',
-    //         'hk_opname.*' => 'nullable',
-    //         'hk_titipan' => 'nullable',
-    //         'hk_titipan.*' => 'nullable',
-    //     ]);
-
-    //     // dd($data);
-
-    //     $id = $data['vendor_id'];
-    //     $checkRole = auth()->user()->role;
-
-    //     if ($checkRole !== 'admin') {
-    //        for ($i=0; $i < count($data['hk_opname']); $i++) {
-    //             if ($data['hk_opname'][$i] != Customer::find($data['customer_id'][$i])->harga_opname) {
-    //                 return redirect()->back()->with('error', 'Harga opname tidak sesuai');
-    //             }
-    //             if ($data['hk_titipan'][$i] != Customer::find($data['customer_id'][$i])->harga_titipan) {
-    //                 return redirect()->back()->with('error', 'Harga titipan tidak sesuai');
-    //             }
-    //        }
-    //     }
-
-    //     DB::transaction(function () use ($data, $id) {
-    //         // Vendor::where('id', $id)->update([
-    //         //     'pembayaran' => $data['pembayaran'],
-    //         // ]);
-    //         for ($i=0; $i < count($data['customer_id']); $i++) {
-    //             VendorBayar::create([
-    //                 'vendor_id' => $id,
-    //                 'customer_id' => $data['customer_id'][$i],
-    //                 'rute_id' => $data['rute_id'][$i],
-    //                 'hk_opname' => $data['hk_opname'][$i],
-    //                 'hk_titipan' => $data['hk_titipan'][$i],
-    //                 'user_id' => auth()->user()->id,
-    //             ]);
-    //         }
-    //     });
-
-    //     return redirect()->route('vendor.uang-jalan', $id);
-
-    // }
-
-    public function uang_jalan(string $id)
+    public function uang_jalan($id)
     {
         $rutes = Rute::all();
 
@@ -314,13 +254,14 @@ class VendorController extends Controller
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil ditambahkan');
     }
 
-    public function uang_jalan_edit(string $id)
+    public function uang_jalan_edit(Vendor $vendor)
     {
-        $data = VendorUangJalan::findOrFail($id);
+
+        // $data = VendorUangJalan::findOrFail($id);
         $rutes = Rute::all();
 
         return view('database.vendor.edit-uangjalan', [
-            'data' => $data,
+            'data' => $vendor,
             'rutes' => $rutes,
         ]);
     }
