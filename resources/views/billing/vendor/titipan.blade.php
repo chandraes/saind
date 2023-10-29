@@ -31,7 +31,7 @@
             </div>
             <div class="col-3">
                 <div class="mb-3">
-                    <label for="id" class="form-label">Nomor Vendor</label>
+                    <label for="id" class="form-label">Nama Vendor</label>
                     <select class="form-select" name="id" id="id" onchange="funGetVendor()" required>
                         <option selected> -- Pilih Vendor -- </option>
                         @foreach ($vendor as $d)
