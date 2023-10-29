@@ -10,7 +10,7 @@ class Karyawan extends Model
     use HasFactory;
 
     protected $guarded = [];
-    
+
     public function jabatan()
     {
         return $this->belongsTo(Jabatan::class);
@@ -29,5 +29,15 @@ class Karyawan extends Model
     public function kas_bon()
     {
         return $this->hasMany(KasBon::class);
+    }
+
+    // last nomor
+    public function getNomor()
+    {
+        $last = $this->latest()->orderBy('id', 'desc')->first();
+        if (!$last) {
+            return 1;
+        }
+        return $last->nomor + 1;
     }
 }

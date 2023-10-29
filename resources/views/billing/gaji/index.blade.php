@@ -54,6 +54,9 @@
                 </tr>
                 @endforeach
                 @foreach ($data as $i)
+                @php
+                    $bpjs_tk = $i->gaji_pokok * 0.049;
+                @endphp
                 <tr>
                     <td class="text-center align-middle">{{$i->nik}}</td>
                     <td class="text-center align-middle">{{$i->nama}}</td>
@@ -61,7 +64,7 @@
                     <td class="text-center align-middle">{{number_format($i->gaji_pokok, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($i->tunjangan_jabatan, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($i->tunjangan_keluarga, 0, ',','.')}}</td>
-                    <td class="text-center align-middle"></td>
+                    <td class="text-center align-middle">{{number_format($bpjs_tk, 0, ',','.')}}</td>
                     <td class="text-center align-middle"></td>
                     <td class="text-center align-middle"></td>
                     <td class="text-center align-middle"></td>
