@@ -97,10 +97,7 @@
                         <input type="checkbox" class="me-2" name="support_operational" id="support_operational" autocomplete="off"> Support Operational
                     </label>
                     <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off"> PPN
-                    </label>
-                    <label class="btn btn-warning">
-                        <input type="checkbox" class="me-2" name="pph" id="pph" autocomplete="off"> PPh
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off" > PPN & PPh
                     </label>
                 </div>
             </div>
@@ -278,6 +275,7 @@
         $('#plafon_lain').maskMoney();
 
     });
+
     $('#masukForm').submit(function(e){
             e.preventDefault();
             Swal.fire({
@@ -294,6 +292,20 @@
             })
         });
 
+        function checkPpnPph() {
+            if ($('#ppn').is(':checked')) {
+                // make pph checked
+                $('#pph').attr('checked', true);
+            } else {
+                $('#pph').attr('checked', false);
+            }
 
+            if ($('#pph').is(':checked')) {
+                // make ppn checked
+                $('#ppn').attr('checked', true);
+            } else {
+                $('#ppn').attr('checked', false);
+            }
+        }
 </script>
 @endpush

@@ -44,6 +44,7 @@
                 <th class="text-center align-middle">Nickname</th>
                 <th class="text-center align-middle">Pembayaran</th>
                 <th class="text-center align-middle">SO</th>
+                <th class="text-center align-middle">PPN & PPh</th>
                 <th class="text-center align-middle">Plafon Cash</th>
                 <th class="text-center align-middle">Plafon Storing</th>
                 <th class="text-center align-middle">Uang Jalan</th>
@@ -64,6 +65,13 @@
                 <td class="text-center align-middle">
                     {{-- icon checklist if support_operational == 1 --}}
                     @if ($d->support_operational == 1)
+                    {{-- fa checklist --}}
+                    <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
+                    @endif
+                </td>
+                <td class="text-center align-middle">
+                    {{-- icon checklist if support_operational == 1 --}}
+                    @if ($d->ppn == 1)
                     {{-- fa checklist --}}
                     <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
                     @endif

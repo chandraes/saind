@@ -81,14 +81,9 @@ class VendorController extends Controller
 
         if (array_key_exists('ppn', $data)) {
             $data['ppn'] = 1;
+            $data['pph'] = 1;
         } else {
             $data['ppn'] = 0;
-        }
-
-        if (array_key_exists('pph', $data)) {
-            $data['pph'] = 1;
-
-        }   else {
             $data['pph'] = 0;
         }
 
@@ -168,14 +163,9 @@ class VendorController extends Controller
 
         if (array_key_exists('ppn', $data)) {
             $data['ppn'] = 1;
+            $data['pph'] = 1;
         } else {
             $data['ppn'] = 0;
-        }
-
-        if (array_key_exists('pph', $data)) {
-            $data['pph'] = 1;
-
-        }   else {
             $data['pph'] = 0;
         }
 

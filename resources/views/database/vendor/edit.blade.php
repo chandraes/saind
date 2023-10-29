@@ -94,10 +94,7 @@
                         <input type="checkbox" class="me-2" name="support_operational" id="support_operational" {{$vendor->support_operational == 1 ? 'checked' : ''}} autocomplete="off"> Support Operational
                     </label>
                     <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}} autocomplete="off"> PPN
-                    </label>
-                    <label class="btn btn-warning">
-                        <input type="checkbox" class="me-2" name="pph" id="pph" {{$vendor->pph == 1 ? 'checked' : ''}} autocomplete="off"> PPh
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}} autocomplete="off"> PPN & PPh
                     </label>
                    </div>
             </div>
