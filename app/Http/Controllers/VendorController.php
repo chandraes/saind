@@ -76,6 +76,7 @@ class VendorController extends Controller
             'pembayaran' => 'required',
             'plafon_titipan' => 'required',
             'plafon_lain' => 'required',
+            'support_operational' => 'nullable',
         ]);
 
         if (array_key_exists('ppn', $data)) {
@@ -89,6 +90,12 @@ class VendorController extends Controller
 
         }   else {
             $data['pph'] = 0;
+        }
+
+        if(array_key_exists('support_operational', $data)){
+            $data['support_operational'] = 1;
+        } else {
+            $data['support_operational'] = 0;
         }
 
         $data['plafon_titipan'] = str_replace('.', '', $data['plafon_titipan']);
@@ -156,6 +163,7 @@ class VendorController extends Controller
             'pembayaran' => 'required',
             'plafon_titipan' => 'required',
             'plafon_lain' => 'required',
+            'support_operational' => 'nullable',
         ]);
 
         if (array_key_exists('ppn', $data)) {
@@ -169,6 +177,12 @@ class VendorController extends Controller
 
         }   else {
             $data['pph'] = 0;
+        }
+
+        if(array_key_exists('support_operational', $data)){
+            $data['support_operational'] = 1;
+        } else {
+            $data['support_operational'] = 0;
         }
 
         $vendor = Vendor::findOrFail($id);

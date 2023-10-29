@@ -95,8 +95,6 @@ class FormStoringConroller extends Controller
             KasVendor::create($jasa);
         }
 
-
-
         $kasArray['tanggal'] = date('Y-m-d');
         $kasArray['uraian'] = 'BBM Storing '. $vehicle->nomor_lambung;
         $kasArray['jenis_transaksi_id'] = 2;
