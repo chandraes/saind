@@ -50,7 +50,7 @@
                                 <div class="col-md-4 text-center mt-5">
                                     <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
                                         <img src="{{asset('images/tambang.svg')}}" alt="" width="100">
-                                        <h2>{{$c->singkatan}}</h2>
+                                        <h2>{{$c->singkatan}}</h2> 
                                     </a>
                                 </div>
                                 @endforeach

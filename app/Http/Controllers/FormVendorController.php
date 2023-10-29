@@ -111,9 +111,11 @@ class FormVendorController extends Controller
     {
         $vendor = Vendor::find($request->id);
         $kas = KasVendor::where('vendor_id', $request->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+        $totalPlafon =$vendor->plafon_titipan * $vendor->vehicle->count();
 
-        $plafon = ($vendor->plafon_titipan * $vendor->vehicle->count()) - $kas;
+        $plafon = $totalPlafon - $kas;
 
+        // dd($plafon);
         return response()->json($plafon);
     }
 

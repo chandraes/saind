@@ -62,4 +62,9 @@ class KasUangJalan extends Model
     {
         return $this->belongsTo(Transaksi::class);
     }
+
+    public function transaksis()
+    {
+        return $this->hasMany(Transaksi::class);
+    }
 }

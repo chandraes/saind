@@ -8,7 +8,7 @@
     </div>
     @include('swal')
     <div class="row justify-content-left">
-        @if (auth()->user()->role === 'admin')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user')
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('rekap.kas-besar')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-besar.svg')}}" alt="" width="100">
@@ -27,7 +27,6 @@
                 <h2>Kas Uang Jalan</h2>
             </a>
         </div>
-        @endif
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('rekap.stock-barang')}}" class="text-decoration-none">
                 <img src="{{asset('images/stock.svg')}}" alt="" width="100">
@@ -116,7 +115,13 @@
                     </div>
                 </div>
             </div>
-
+        </div>
+        @endif
+        <div class="col-md-4 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/statistik.svg')}}" alt="" width="100">
+                <h2>Rekapitulasi Vendor</h2>
+            </a>
         </div>
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">

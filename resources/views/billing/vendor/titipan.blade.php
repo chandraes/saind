@@ -130,7 +130,7 @@
                     id: id
                 },
                 success: function(data){
-                    // console.log(data);
+                    console.log(data);
                     if (data > 0) {
                         $('#nilai').val(data);
                         $('#nilai').maskMoney('mask', data);

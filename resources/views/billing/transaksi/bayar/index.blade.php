@@ -220,12 +220,12 @@
                 <td class="text-center align-middle"
                     colspan="15"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
-                <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
+                <td class="align-middle text-center">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
-                <td>
+                <td class="align-middle text-center">
                     {{number_format($total_uang_jalan, 0, ',', '.')}}
                 </td>
-                <td>
+                <td class="align-middle text-center">
                     {{number_format($total_netto, 0, ',', '.')}}
                 </td>
             </tr>
@@ -233,9 +233,9 @@
                 <td class="text-center align-middle"
                     colspan="15"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
-                <td align="right" class="align-middle"></td>
+                <td class="align-middle"></td>
                 <td></td>
-                <td>
+                <td class="text-center align-middle">
                     {{number_format($ppn, 0, ',', '.')}}
                 </td>
             </tr>
@@ -244,9 +244,9 @@
                     colspan="15">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
-                <td align="right" class="align-middle"></td>
+                <td class="align-middle"></td>
                 <td></td>
-                <td>
+                <td class="align-middle text-center">
                     {{number_format($pph, 0, ',', '.')}}
                 </td>
             </tr>
@@ -255,10 +255,10 @@
                     colspan="15">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
-                <td align="right" class="align-middle">
+                <td class="align-middle">
                 </td>
                 <td></td>
-                <td>
+                <td class="align-middle text-center">
                     <strong>
                         {{number_format($grant_total, 0, ',', '.')}}
                     </strong>
@@ -275,7 +275,7 @@
             <input type="hidden" name="total_bayar" value="{{$total_tagihan-$pph+$ppn}}">
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
         </form>
-        <a class="btn btn-success btn-lg" href="#">Export</a>
+        {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
       </div>
 </div>
 
