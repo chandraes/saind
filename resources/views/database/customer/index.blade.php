@@ -8,13 +8,6 @@
         </div>
     </div>
     @include('swal')
-    <div class="row float-end">
-        <div class="col-md-12">
-            <strong>
-                <span id="clock"></span>
-            </strong>
-        </div>
-    </div>
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">

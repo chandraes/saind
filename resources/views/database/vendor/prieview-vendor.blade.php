@@ -2,7 +2,7 @@
 @section('content')
 <div class="container-fluid">
     <center>
-        <h2>Daftar Vendor</h2>
+        <h2>DAFTAR VENDOR</h2>
     </center>
 </div>
 <div class="container-fluid table-responsive ml-3">
@@ -10,6 +10,7 @@
         <table class="table table-hover table-bordered" ">
             <thead class=" table-success">
             <tr>
+                <th class="text-center align-middle table-pdf text-pdf" style="height: 35px">NO</th>
                 <th class="text-center align-middle table-pdf text-pdf" style="height: 35px">NAMA</th>
                 <th class="text-center align-middle table-pdf text-pdf">PERUSAHAAN</th>
                 <th class="text-center align-middle table-pdf text-pdf">NICKNAME</th>
@@ -25,6 +26,7 @@
             <tbody>
                 @foreach ($data as $d)
                 <tr>
+                    <td class="text-center align-middle table-pdf text-pdf" style="height: 35px">{{$loop->iteration}}</td>
                     <td class="align-middle table-pdf text-pdf">{{$d->nama}}</td>
                     <td class="align-middle table-pdf text-pdf">{{$d->perusahaan}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nickname}}</td>
