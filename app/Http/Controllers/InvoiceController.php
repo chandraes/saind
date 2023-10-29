@@ -195,7 +195,7 @@ class InvoiceController extends Controller
             'lunas' => 1
         ]);
 
-        $last = KasVendor::where('vendor_id', $invoice->vendor_id)->latest()->first();
+        $last = KasVendor::where('vendor_id', $invoice->vendor_id)->latest()->orderBy('id', 'desc')->first();
 
         $data['tanggal'] = now();
         $data['uraian'] = "Pembayaran ".' - '.$invoice->periode;

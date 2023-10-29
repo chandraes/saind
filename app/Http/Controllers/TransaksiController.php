@@ -185,7 +185,7 @@ class TransaksiController extends Controller
 
         $transaksi->update($data);
 
-        $last = KasUangJalan::latest()->first();
+        $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
         $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
 
         $store = KasUangJalan::create([

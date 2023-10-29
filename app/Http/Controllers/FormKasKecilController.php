@@ -15,7 +15,7 @@ class FormKasKecilController extends Controller
 {
     public function masuk()
     {
-        $nomor = KasKecil::whereNotNull('nomor_kode_kas_kecil')->latest()->first();
+        $nomor = KasKecil::whereNotNull('nomor_kode_kas_kecil')->latest()->orderBy('id', 'desc')->first();
 
         if($nomor == null){
             $nomor = 1;
@@ -33,7 +33,7 @@ class FormKasKecilController extends Controller
 
     public function masuk_store()
     {
-        $kk = KasKecil::whereNotNull('nomor_kode_kas_kecil')->latest()->first();
+        $kk = KasKecil::whereNotNull('nomor_kode_kas_kecil')->latest()->orderBy('id', 'desc')->first();
         $kb = KasBesar::latest()->first();
         $rekening = Rekening::where('untuk', 'kas-kecil')->first();
 
@@ -48,7 +48,7 @@ class FormKasKecilController extends Controller
             $data['nomor_kode_kas_kecil']= $kk->nomor_kode_kas_kecil + 1;
         }
 
-        $last = KasKecil::latest()->first();
+        $last = KasKecil::latest()->orderBy('id', 'desc')->first();
 
         if($last == null){
             $data['saldo'] = 1000000;
@@ -118,7 +118,7 @@ class FormKasKecilController extends Controller
         $data['tanggal'] = date('Y-m-d');
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
 
-        $kk = KasKecil::latest()->first();
+        $kk = KasKecil::latest()->orderBy('id', 'desc')->first();
 
         if($kk == null || $kk->saldo < $data['nominal_transaksi']){
             return redirect()->back()->with('error', 'Saldo Kas Kecil Tidak Cukup');
@@ -185,7 +185,7 @@ class FormKasKecilController extends Controller
         $data['uraian'] = 'Void '.$kk->uraian;
         $data['transfer_ke'] = "Void";
 
-        $last = KasKecil::latest()->first();
+        $last = KasKecil::latest()->orderBy('id', 'desc')->first();
 
         if($last == null){
             return redirect()->back()->with('error', 'Data tidak ditemukan');

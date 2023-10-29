@@ -165,7 +165,7 @@ class FormBarangController extends Controller
 
     public function jual()
     {
-        $vehicle = Vehicle::where('status', 'aktif')->get();
+        $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
 
         $kategori = KategoriBarang::all();
 

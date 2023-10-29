@@ -16,7 +16,7 @@ class FormStoringConroller extends Controller
 {
     public function index()
     {
-        $vehicle = Vehicle::where('status', 'aktif')->get();
+        $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
         $storing = BbmStoring::all();
         $rekening = Rekening::where('untuk', 'mekanik')->first();
 
@@ -45,7 +45,7 @@ class FormStoringConroller extends Controller
         // dd($vendorId);
         $storing = BbmStoring::find($request->storing_id);
 
-        $last = KasVendor::where('vendor_id', $vendorId)->latest()->first();
+        $last = KasVendor::where('vendor_id', $vendorId)->latest()->orderBy('id', 'desc')->first();
 
         $vendor['vendor_id'] = $vendorId;
         $vendor['bbm_storing_id'] = $request->storing_id;
@@ -189,7 +189,7 @@ class FormStoringConroller extends Controller
         $storing = KasVendor::where('vendor_id', $vendorId)
                             ->where('vehicle_id', $vehicleId)
                             ->where('storing', 1)
-                            ->latest()->first();
+                            ->latest()->orderBy('id', 'desc')->first();
         $data = [
             'lokasi' => $storing->bbm_storing->km,
             'biaya_mekanik' => $storing->bbm_storing->biaya_mekanik,

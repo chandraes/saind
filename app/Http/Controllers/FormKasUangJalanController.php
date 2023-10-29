@@ -42,7 +42,7 @@ class FormKasUangJalanController extends Controller
 
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
 
-        $kuj = KasUangJalan::latest()->first();
+        $kuj = KasUangJalan::latest()->orderBy('id', 'desc')->first();
         $kb = KasBesar::latest()->first();
         $rekening = Rekening::where('untuk', 'kas-uang-jalan')->first();
 
@@ -105,7 +105,7 @@ class FormKasUangJalanController extends Controller
     public function keluar()
     {
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->first();
-        $vehicle = Vehicle::where('status', 'aktif')->get();
+        $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
         $customer = Customer::all();
 
         if($nomor == null){
@@ -166,7 +166,7 @@ class FormKasUangJalanController extends Controller
         $data['tanggal'] = date('Y-m-d');
         $data['vendor_id'] = $data['p_vendor'];
 
-        $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->first();
+        $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->orderBy('id', 'desc')->first();
 
         if($nomor == null){
             $data['nomor_uang_jalan'] = 1;
@@ -174,7 +174,7 @@ class FormKasUangJalanController extends Controller
             $data['nomor_uang_jalan'] = $nomor->nomor_uang_jalan + 1;
         }
 
-        $last = KasUangJalan::latest()->first();
+        $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
 
         if($last->saldo < $data['nominal_transaksi'] || $last == null){
             return redirect()->back()->with('error', 'Saldo Kas Uang Jalan Tidak Cukup');

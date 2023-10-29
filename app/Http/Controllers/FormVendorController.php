@@ -62,7 +62,7 @@ class FormVendorController extends Controller
         $kas['uraian'] = "Titipan ".$v->nama;
         $kas['pinjaman'] = $d['nominal_transaksi'];
 
-        $kasTerakhir = KasVendor::where('vendor_id', $data['id'])->latest()->first();
+        $kasTerakhir = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first();
 
         if ($kasTerakhir) {
             $kas['sisa'] = $kasTerakhir->sisa + $d['nominal_transaksi'];
@@ -100,7 +100,7 @@ class FormVendorController extends Controller
 
     public function get_vehicle(Request $request)
     {
-        $data = Vehicle::where('vendor_id', $request->id)->where('status', 'aktif')->pluck('nomor_lambung');
+        $data = Vehicle::where('vendor_id', $request->id)->whereNot('status', 'nonaktif')->pluck('nomor_lambung');
         // change data to string with comma separator
         $data = implode(', ', $data->toArray());
 
