@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Rute;
 use App\Models\CustomerRute;
+use App\Models\PasswordKonfirmasi;
 use App\Models\CustomerDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -355,5 +356,28 @@ class CustomerController extends Controller
         }
 
         return response()->file($path);
+    }
+
+    public function ubah_status(Request $request, Customer $customer)
+    {
+        $data = $request->validate([
+            'password' => 'required',
+        ]);
+
+        $password = PasswordKonfirmasi::first();
+
+        if (!$password) {
+            return redirect()->back()->with('error', 'Password belum diatur!!');
+        }
+
+        if ($data['password'] != $password->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        $customer->update([
+            'status' => $customer->status == 0 ? 1 : 0,
+        ]);
+
+        return redirect()->route('customer.index')->with('success', 'Status berhasil diubah');
     }
 }

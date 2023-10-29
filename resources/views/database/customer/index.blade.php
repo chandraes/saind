@@ -44,6 +44,7 @@
                 <th class="text-center align-middle">Rute</th>
                 <th class="text-center align-middle">Dokumen</th>
                 <th class="text-center align-middle">Dibuat Oleh</th>
+                <th class="text-center align-middle">Status</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
@@ -177,9 +178,41 @@
                     </div>
                 </td>
                 <td>{{$d->createdBy['name']}}</td>
+                <td class="text-center align-middle">
+                    <div class="text-center">
+                        <button class="btn {{$d->status == 1 ? "btn-success" : "btn-danger"}}" data-bs-toggle="modal"
+                        data-bs-target="#void-{{$d->id}}">{{$d->status == 1 ? "Aktif" : "Nonaktif"}}</button>
+                    </div>
+                    <div class="modal fade" id="void-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
+                        data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                            role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalTitleId">Ubah Status Customer</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form action="{{route('customer.ubah-status', $d)}}" method="post">
+                                    @csrf
+                                    <div class="modal-body">
+                                        <input type="password" class="form-control" id="password" name="password"
+                                            placeholder="Password" aria-label="Password" aria-describedby="password"
+                                            required>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Tutup</button>
+                                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </td>
                 <td>
                     {{-- edit tagihan button --}}
-                    <a href="{{route('customer.tagihan-edit', $d->id)}}" class="btn btn-success">Edit Tagihan</a>
+                    <a href="{{route('customer.tagihan-edit', $d->id)}}" class="btn btn-info">Edit Tagihan</a>
                     <a href="{{route('customer.edit', $d->id)}}" class="btn btn-primary m-2">
                         <i class="fa fa-edit"></i>
                     </a>

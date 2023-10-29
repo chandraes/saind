@@ -106,14 +106,13 @@ class FormKasUangJalanController extends Controller
     {
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->first();
         $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
-        $customer = Customer::all();
+        $customer = Customer::where('status', 1)->get();
 
         if($nomor == null){
             $nomor = 1;
         }else{
             $nomor = $nomor->nomor_uang_jalan + 1;
         }
-
 
         return view('billing.kas-uang-jalan.keluar', [
             'nomor' => $nomor,
