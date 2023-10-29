@@ -71,14 +71,9 @@ class CustomerController extends Controller
 
         if (array_key_exists('ppn', $data)) {
             $data['ppn'] = 1;
+            $data['pph'] = 1;
         } else {
             $data['ppn'] = 0;
-        }
-
-        if (array_key_exists('pph', $data)) {
-            $data['pph'] = 1;
-
-        }   else {
             $data['pph'] = 0;
         }
 
@@ -227,7 +222,7 @@ class CustomerController extends Controller
                     'email' => 'required',
                     'harga_opname' => 'nullable',
                     'harga_titipan' => 'nullable',
-                    'rute' => 'required',
+                    'rute.*' => 'required',
                     'tanggal_muat' => 'nullable',
                     'nota_muat' => 'nullable',
                     'tonase' => 'nullable',
@@ -244,14 +239,9 @@ class CustomerController extends Controller
 
         if (array_key_exists('ppn', $data)) {
             $data['ppn'] = 1;
+            $data['pph'] = 1;
         } else {
             $data['ppn'] = 0;
-        }
-
-        if (array_key_exists('pph', $data)) {
-            $data['pph'] = 1;
-
-        }   else {
             $data['pph'] = 0;
         }
 
@@ -285,7 +275,7 @@ class CustomerController extends Controller
 
         DB::transaction(function () use($data, $customer) {
 
-            $customer->update($data);
+
 
             CustomerRute::where('customer_id', $customer->id)->delete();
 
@@ -295,6 +285,9 @@ class CustomerController extends Controller
                     'rute_id' => $rute,
                 ]);
             }
+            unset($data['rute']);
+            
+            $customer->update($data);
         });
 
         return redirect()->route('customer.index')->with('success', 'Customer berhasil diupdate');

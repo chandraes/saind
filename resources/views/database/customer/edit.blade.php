@@ -169,12 +169,10 @@
                 <h3 class="mb-3">Informasi PPN & PPh</h3>
                 <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
                     <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$data->ppn == 1 ? 'checked' : ''}} autocomplete="off"> PPN
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$data->ppn == 1 ? 'checked' : ''}}
+                        autocomplete="off"> PPN & PPh
                     </label>
-                    <label class="btn btn-warning">
-                        <input type="checkbox" class="me-2" name="pph" id="pph" {{$data->pph == 1 ? 'checked' : ''}} autocomplete="off"> PPh
-                    </label>
-                   </div>
+                </div>
             </div>
             <hr>
             <div class="row mt-3 mb-3">

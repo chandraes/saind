@@ -159,10 +159,7 @@
             <h3 class="mb-3">Informasi PPN & PPh</h3>
             <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
                 <label class="btn btn-warning active">
-                    <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off"> PPN
-                </label>
-                <label class="btn btn-warning">
-                    <input type="checkbox" class="me-2" name="pph" id="pph" autocomplete="off"> PPh
+                    <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off"> PPN & PPh
                 </label>
                </div>
         </div>
