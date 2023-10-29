@@ -32,6 +32,9 @@
                 <th class="text-center align-middle">Kode Sponsor</th>
                 <th class="text-center align-middle">Nama</th>
                 <th class="text-center align-middle">Nomor WA</th>
+                <th class="text-center align-middle">Bank</th>
+                <th class="text-center align-middle">Nama Rekening</th>
+                <th class="text-center align-middle">Nomor Rekening</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
@@ -48,6 +51,9 @@
                     </td>
                     <td class="text-center align-middle">{{$d->nama}}</td>
                     <td class="text-center align-middle">{{$d->nomor_wa}}</td>
+                    <td class="text-center align-middle">{{$d->nama_bank}}</td>
+                    <td class="text-center align-middle">{{$d->transfer_ke}}</td>
+                    <td class="text-center align-middle">{{$d->nomor_rekening}}</td>
                     <td class="text-center align-middle">
                        {{-- button delete with sweetalert confirmation --}}
                         <form action="{{route('sponsor.destroy',$d->id)}}" method="post">
