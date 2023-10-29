@@ -305,7 +305,7 @@ class VendorController extends Controller
                 VendorUangJalan::create([
                     'vendor_id' => $id,
                     'rute_id' => $data['rute_id'][$i],
-                    'hk_uang_jalan' => $data['uang_jalan'][$i],
+                    'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
                     'user_id' => auth()->user()->id,
                 ]);
             }
@@ -352,7 +352,7 @@ class VendorController extends Controller
         DB::transaction(function () use ($data, $id) {
             for ($i=0; $i < count($data['rute_id']); $i++) {
                 VendorUangJalan::where('vendor_id', $data['vendor_id'])->where('rute_id', $data['rute_id'][$i],)->update([
-                    'hk_uang_jalan' => $data['uang_jalan'][$i],
+                    'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
                 ]);
             }
         });

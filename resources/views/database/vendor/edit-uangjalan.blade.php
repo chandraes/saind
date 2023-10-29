@@ -37,12 +37,20 @@
                             <td>
                                 <input type="hidden" name="vendor_id" value="{{$data->vendor->id}}">
                                 <input type="hidden" name="rute_id[]" value="{{$v->id}}">
-                                <input type="number" class="form-control" name="uang_jalan[]" required id="uang_jalan"
-                                    required aria-describedby="helpId" placeholder="" value="{{$v->uang_jalan}}" @if(auth()->user()->role !== 'admin')
+                                <input type="text" class="form-control" name="uang_jalan[]" required id="uang_jalan-{{$v->id}}"
+                                    required aria-describedby="helpId" placeholder="" @if(auth()->user()->role !== 'admin')
                                     readonly
-                                @endif >
+                                @endif data-thousands=".">
                             </td>
                         </tr>
+                        <script>
+                            // maskMoney uang_jalan-{{$v->id}}
+                            // val
+                            $('#uang_jalan-{{$v->id}}').maskMoney();
+
+                            $('#uang_jalan-{{$v->id}}').maskMoney('mask', {{$v->uang_jalan}});
+
+                        </script>
                         @endforeach
                     </tbody>
                 </table>
