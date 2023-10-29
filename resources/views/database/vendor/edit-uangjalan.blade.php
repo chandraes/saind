@@ -16,7 +16,7 @@
         </div>
     </div>
     @endif
-    <form action="{{route('vendor.uang-jalan.update', $data->id)}}" method="post">
+    <form action="{{route('database.vendor.uang-jalan.update', $data->id)}}" method="post">
         @csrf
         <div class="row mt-3 mb-3">
             <div class="row justify-content-center">

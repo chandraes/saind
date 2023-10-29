@@ -103,7 +103,7 @@ class VendorController extends Controller
 
         $id = $store->id;
 
-        return redirect()->route('vendor.uang-jalan', $id);
+        return redirect()->route('database.vendor.uang-jalan', $id);
     }
 
     /**

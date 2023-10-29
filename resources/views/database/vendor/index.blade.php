@@ -26,7 +26,7 @@
                     <td><a href="{{route('vendor.create')}}"><img
                                 src="{{asset('images/vendor.svg')}}" alt="add-document" width="30"> Tambah Vendor</a>
                     </td>
-                    <td><a href="{{route('vendor.preview-vendor')}}" target="_blank"><img
+                    <td><a href="{{route('database.vendor.preview-vendor')}}" target="_blank"><img
                         src="{{asset('images/document.svg')}}" alt="add-document" width="30"> Print Vendor</a>
                     </td>
                     {{-- <td><a href="{{route('dokumen.sph_doc')}}" target="_blank"><img
@@ -127,7 +127,7 @@
                                   </div>
                                   <div class="modal-footer">
                                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                      <a href="{{route('vendor.uang-jalan.edit', $d->id)}}" class="btn btn-primary">Edit Uang Jalan</a>
+                                      <a href="{{route('database.vendor.uang-jalan.edit', $d->id)}}" class="btn btn-primary">Edit Uang Jalan</a>
                                   </div>
                               </div>
                           </div>
@@ -145,7 +145,7 @@
                 </td>
                 <td class="text-center align-middle">
                     <div class="d-flex justify-content-center">
-                        <a href="{{route('vendor.biodata-vendor', $d->id)}}" target="_blank" class="btn btn-success me-2">PDF</a>
+                        <a href="{{route('database.vendor.biodata-vendor', $d->id)}}" target="_blank" class="btn btn-success me-2">PDF</a>
                         <a href="{{route('vendor.edit', $d->id)}}" class="btn btn-warning me-2">Ubah</a>
                         <form action="{{route('vendor.destroy', $d->id)}}" method="post">
                             @csrf

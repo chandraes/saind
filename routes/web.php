@@ -48,20 +48,20 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('/dokumen', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
 
         Route::get('/database', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
-        Route::resource('vendor', App\Http\Controllers\VendorController::class)->middleware('role:admin,user');
+        Route::resource('vendor', App\Http\Controllers\VendorController::class);
         Route::get('/vendor/{id}/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran'])->name('vendor.pembayaran');
         Route::post('/vendor/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran_store'])->name('vendor.pembayaran.store');
         Route::get('/vendor/pembayaran/{id}/edit', [App\Http\Controllers\VendorController::class, 'pembayaran_edit'])->name('vendor.pembayaran.edit');
         Route::post('/vendor/pembayaran/{id}/update', [App\Http\Controllers\VendorController::class, 'pembayaran_update'])->name('vendor.pembayaran.update');
 
 
-        Route::get('/vendor/{id}/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan'])->name('vendor.uang-jalan');
-        Route::post('/vendor/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan_store'])->name('vendor.uang-jalan.store');
-        Route::get('/vendor/uang-jalan/{id}/edit', [App\Http\Controllers\VendorController::class, 'uang_jalan_edit'])->name('vendor.uang-jalan.edit');
-        Route::post('/vendor/uang-jalan/{id}/update', [App\Http\Controllers\VendorController::class, 'uang_jalan_update'])->name('vendor.uang-jalan.update');
-        Route::get('/vendro/preview-vendor', [App\Http\Controllers\VendorController::class, 'preview_vendor'])->name('vendor.preview-vendor');
+        Route::get('vendor/{id}/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan'])->name('database.vendor.uang-jalan');
+        Route::post('vendor/uang-jalan', [App\Http\Controllers\VendorController::class, 'uang_jalan_store'])->name('database.vendor.uang-jalan.store');
+        Route::get('vendor/uang-jalan/{id}/edit', [App\Http\Controllers\VendorController::class, 'uang_jalan_edit'])->name('database.vendor.uang-jalan.edit');
+        Route::post('vendor/uang-jalan/{id}/update', [App\Http\Controllers\VendorController::class, 'uang_jalan_update'])->name('database.vendor.uang-jalan.update');
+        Route::get('vendro/preview-vendor', [App\Http\Controllers\VendorController::class, 'preview_vendor'])->name('database.vendor.preview-vendor');
 
-        Route::get('/vendor/biodata-vendor/{id}', [App\Http\Controllers\VendorController::class, 'biodata_vendor'])->name('vendor.biodata-vendor');
+        Route::get('vendor/biodata-vendor/{id}', [App\Http\Controllers\VendorController::class, 'biodata_vendor'])->name('database.vendor.biodata-vendor');
 
         Route::resource('rute', App\Http\Controllers\RuteController::class)->only([
             'index', 'store', 'update', 'destroy'
