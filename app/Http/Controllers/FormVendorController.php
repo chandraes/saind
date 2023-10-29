@@ -70,14 +70,14 @@ class FormVendorController extends Controller
             $kas['sisa'] = $d['nominal_transaksi'];
         }
 
-        KasVendor::create($kas);
+        $store2 = KasVendor::create($kas);
 
         $store = KasBesar::create($d);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Form Vendor Titipan*\n".
+                    "*Form Titipan Vendor*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                     "Vendor : ".$v->nama."\n\n".
                     "Nilai :  *Rp. ".number_format($d['nominal_transaksi'], 0, ',', '.')."*\n\n".
@@ -90,6 +90,8 @@ class FormVendorController extends Controller
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Total Kasbon Vendor : \n".
+                    "Rp. ".number_format($store2->sisa, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();

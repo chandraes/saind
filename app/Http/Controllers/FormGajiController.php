@@ -35,6 +35,8 @@ class FormGajiController extends Controller
         $data = $request->validate([
             'total' => 'required',
         ]);
+        
+        $data['total'] = str_replace('.', '', $data['total']);
 
         $data = Karyawan::where('status', 'aktif')->get();
         $direksi = Direksi::where('status', 'aktif')->get();
@@ -42,7 +44,7 @@ class FormGajiController extends Controller
         $rekap = RekapGaji::create([
             'bulan' => date('m'),
             'tahun' => date('Y'),
-            'total' => $request->total,
+            'total' => $data['total'],
         ]);
 
     }
