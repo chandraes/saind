@@ -270,6 +270,8 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::get('rekap/kas-bon/direksi', [App\Http\Controllers\RekapController::class, 'kas_bon_direksi'])->name('rekap.kas-bon.direksi');
     Route::get('rekap/direksi', [App\Http\Controllers\RekapController::class, 'direksi'])->name('rekap.direksi');
+
+    Route::get('rekap/bonus', [App\Http\Controllers\RekapController::class, 'rekap_bonus'])->name('rekap.bonus');
 });
 
 

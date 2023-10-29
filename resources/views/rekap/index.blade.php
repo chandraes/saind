@@ -47,7 +47,7 @@
             </a>
         </div>
         <div class="col-md-4 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('rekap.bonus')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-bonus.svg')}}" alt="" width="100">
                 <h2>Bonus</h2>
             </a>
