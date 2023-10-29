@@ -147,7 +147,7 @@
             <hr>
             <div class="row mt-3 mb-3">
                 <div class="col-6">
-                    <label for="plafon_titipan" class="form-label">Plafon Vendor</label>
+                    <label for="plafon_titipan" class="form-label">Plafon Cash</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1">Rp</span>
                         <input type="text" class="form-control @if ($errors->has('plafon_titipan'))
@@ -156,7 +156,7 @@
                     </div>
                 </div>
                 <div class="col-6">
-                    <label for="plafon_lain" class="form-label">Plafon lain</label>
+                    <label for="plafon_lain" class="form-label">Plafon Storing</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1">Rp</span>
                         <input type="text" class="form-control @if ($errors->has('plafon_lain'))
