@@ -261,7 +261,7 @@ class FormVendorController extends Controller
         $vendor['bayar'] = $data['nominal'];
         $vendor['sisa'] = $sisaTerakhir - $vendor['bayar'];
 
-        KasVendor::create($vendor);
+        $store2 = KasVendor::create($vendor);
 
         $store = KasBesar::create($kas);
 
@@ -282,6 +282,8 @@ class FormVendorController extends Controller
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Total Kasbon Vendor : \n".
+                    "Rp. ".number_format($store2->sisa, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
