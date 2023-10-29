@@ -34,9 +34,13 @@
             <th class="text-center align-middle">No</th>
             <th class="text-center align-middle">Nomor Lambung</th>
             <th class="text-center align-middle">Vendor</th>
+            <th class="text-center align-middle">Nopol</th>
+            <th class="text-center align-middle">No Rangka</th>
+            <th class="text-center align-middle">No Mesin</th>
             <th class="text-center align-middle">Tipe</th>
             <th class="text-center align-middle">Index</th>
             <th class="text-center align-middle">Tahun</th>
+            <th class="text-center align-middle">No. GPS</th>
             <th class="text-center align-middle">Status</th>
             <th class="text-center align-middle">Action</th>
         </tr>
@@ -51,11 +55,15 @@
                 </a>
             </td>
             <td class="align-middle">{{$d->vendor->nama}} {{$d->vendor->perusahaan}}</td>
+            <td class="text-center align-middle">{{$d->nopol}}</td>
+            <td class="text-center align-middle">{{$d->no_rangka}}</td>
+            <td class="text-center align-middle">{{$d->no_mesin}}</td>
             <td class="text-center align-middle">{{$d->tipe}}</td>
             <td class="text-center align-middle @if ($d->no_index < 30)
                 text-danger
             @endif">{{$d->no_index}}</td>
             <td class="text-center align-middle @if ($d->tahun < 2016) text-danger @endif">{{$d->tahun}}</td>
+            <td class="text-center align-middle">{{$d->no_kartu_gps}}</td>
             <td class="text-center align-middle">
                 @if ($d->status == 'aktif')
                 <h5><span class="badge bg-success">Aktif</span></h5>
