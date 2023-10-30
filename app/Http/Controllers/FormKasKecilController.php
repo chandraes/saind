@@ -143,6 +143,36 @@ class FormKasKecilController extends Controller
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
 
+        $group = GroupWa::where('untuk', 'team')->first();
+
+        if ($data['transfer_ke'] == 'Cash') {
+            $pesan =    "==========================\n".
+                    "*Form Pengeluaran Kas Kecil*\n".
+                    "==========================\n\n".
+                    "Nilai : *Rp. ".number_format($data['nominal_transaksi'])."*\n\n".
+                    "Cash\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Kecil : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+        } else {
+            $pesan =    "==========================\n".
+                        "*Form Pengeluaran Kas Kecil*\n".
+                        "==========================\n\n".
+                        "Nilai : *Rp. ".number_format($data['nominal_transaksi'])."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank     : ".$data['bank']."\n".
+                        "Nama    : ".$data['transfer_ke']."\n".
+                        "No. Rek : ".$data['no_rekening']."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Kecil : \n".
+                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+        }
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
+
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
     }
