@@ -162,6 +162,12 @@
                 <h2>INVOICE BONUS SPONSOR <span class="text-danger">{{$bonus > 0 ? "(".$bonus.")" : ''}}</span></h2>
             </a>
         </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('invoice.bonus.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-csr.svg')}}" alt="" width="100">
+                <h2>INVOICE CSR <span class="text-danger">{{$bonus > 0 ? "(".$bonus.")" : ''}}</span></h2>
+            </a>
+        </div>
     </div>
     <div class="row mt-5 justify-content-left">
         <div class="col-md-3 text-center mt-5">
