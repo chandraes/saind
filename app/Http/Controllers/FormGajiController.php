@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Karyawan;
 use App\Models\KasBesar;
 use App\Models\Direksi;
+use App\Models\KasBon;
+use App\Models\KasBonCicilan;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
+use App\Models\GroupWa;
+use App\Services\StarSender;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -53,39 +57,39 @@ class FormGajiController extends Controller
             'total' => $ds['total'],
         ]);
 
-        // foreach ($direksi as $d) {
-        //     $bpjs_tk_direksi = 0;
-        //     $bpjs_k_direksi = 0;
-        //     $potongan_bpjs_tk_direksi = 0;
-        //     $potongan_bpjs_kesehatan_direksi = 0;
-        //     $pendapatan_kotor_direksi = 0;
-        //     $pendapatan_bersih_direksi = 0;
+        foreach ($direksi as $d) {
+            $bpjs_tk_direksi = 0;
+            $bpjs_k_direksi = 0;
+            $potongan_bpjs_tk_direksi = 0;
+            $potongan_bpjs_kesehatan_direksi = 0;
+            $pendapatan_kotor_direksi = 0;
+            $pendapatan_bersih_direksi = 0;
 
-        //     $bpjs_tk_direksi = $d->gaji_pokok * 0.049;
-        //     $bpjs_k_direksi = $d->gaji_pokok * 0.04;
-        //     $potongan_bpjs_tk_direksi = $d->gaji_pokok * 0.02;
-        //     $potongan_bpjs_kesehatan_direksi = $d->gaji_pokok * 0.01;
-        //     $pendapatan_kotor_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
-        //     $pendapatan_bersih_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga - $potongan_bpjs_tk_direksi - $potongan_bpjs_kesehatan_direksi;
+            $bpjs_tk_direksi = $d->gaji_pokok * 0.049;
+            $bpjs_k_direksi = $d->gaji_pokok * 0.04;
+            $potongan_bpjs_tk_direksi = $d->gaji_pokok * 0.02;
+            $potongan_bpjs_kesehatan_direksi = $d->gaji_pokok * 0.01;
+            $pendapatan_kotor_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
+            $pendapatan_bersih_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga - $potongan_bpjs_tk_direksi - $potongan_bpjs_kesehatan_direksi;
 
-        //     RekapGajiDetail::create([
-        //         'rekap_gaji_id' => $rekap->id,
-        //         'nik' => "Direksi",
-        //         'nama' => $d->nama,
-        //         'jabatan' => $d->jabatan,
-        //         'gaji_pokok' => $d->gaji_pokok,
-        //         'tunjangan_jabatan' => $d->tunjangan_jabatan,
-        //         'tunjangan_keluarga' => $d->tunjangan_keluarga,
-        //         'bpjs_tk' => $bpjs_tk_direksi,
-        //         'bpjs_k' => $bpjs_k_direksi,
-        //         'potongan_bpjs_tk' => $potongan_bpjs_tk_direksi,
-        //         'potongan_bpjs_kesehatan' => $potongan_bpjs_kesehatan_direksi,
-        //         'pendapatan_kotor' => $pendapatan_kotor_direksi,
-        //         'pendapatan_bersih' => $pendapatan_bersih_direksi,
-        //         'kasbon' => 0,
-        //         'sisa_gaji_dibayar' => $pendapatan_bersih_direksi,
-        //     ]);
-        // }
+            RekapGajiDetail::create([
+                'rekap_gaji_id' => $rekap->id,
+                'nik' => "Direksi",
+                'nama' => $d->nama,
+                'jabatan' => $d->jabatan,
+                'gaji_pokok' => $d->gaji_pokok,
+                'tunjangan_jabatan' => $d->tunjangan_jabatan,
+                'tunjangan_keluarga' => $d->tunjangan_keluarga,
+                'bpjs_tk' => $bpjs_tk_direksi,
+                'bpjs_k' => $bpjs_k_direksi,
+                'potongan_bpjs_tk' => $potongan_bpjs_tk_direksi,
+                'potongan_bpjs_kesehatan' => $potongan_bpjs_kesehatan_direksi,
+                'pendapatan_kotor' => $pendapatan_kotor_direksi,
+                'pendapatan_bersih' => $pendapatan_bersih_direksi,
+                'kasbon' => 0,
+                'sisa_gaji_dibayar' => $pendapatan_bersih_direksi,
+            ]);
+        }
 
         foreach ($data as $d) {
 
@@ -145,17 +149,13 @@ class FormGajiController extends Controller
 
             if ($kasbon_cicil > 0) {
 
-                $update = $d->kas_bon_cicilan->where('lunas', 0)->update([
-                    'total_bayar' => $cicilan->total_bayar + $kasbon_cicil,
-                    'cicilan_kali' => $cicilan->cicilan_kali-1,
-                    'sisa_kas' => $cicilan->sisa_kas - $kasbon_cicil,
-                ]);
+                $rekapCicilan = KasBonCicilan::where('lunas', 0)->where('karyawan_id', $d->id)->first();
 
-                if ($update->sisa_kas == 0) {
-                    $update->update([
-                        'lunas' => 1,
-                    ]);
-                }
+                $update = $rekapCicilan->update([
+                    'total_bayar' => $rekapCicilan->total_bayar + $kasbon_cicil,
+                    'sisa_kas' => $rekapCicilan->sisa_kas - $kasbon_cicil,
+                    'lunas' => $rekapCicilan->sisa_kas - $kasbon_cicil == 0 ? 1 : 0,
+                ]);
             }
 
             // update kas bon where lunas = 0 and karyawan_id = $d->id and update total_bayar
@@ -165,16 +165,41 @@ class FormGajiController extends Controller
                 $update = $k->update([
                     'total_bayar' => $k->total_bayar + $k->nominal,
                     'sisa_kas' => $k->sisa_kas - $k->nominal,
+                    'lunas' => $k->sisa_kas - $k->nominal == 0 ? 1 : 0,
                 ]);
 
-                if ($update->sisa_kas == 0) {
-                    $update->update([
-                        'lunas' => 1,
-                    ]);
-                }
             }
 
         }
+
+        $k['uraian'] = "Gaji Bulan ".date('F')." ".date('Y');
+        $k['tanggal'] = date('Y-m-d');
+        $k['nominal_transaksi'] = $ds['total'];
+        $k['jenis_transaksi_id'] = 2;
+        $k['saldo'] = $kasBesar->saldo - $ds['total'];
+        $k['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
+        $k['transfer_ke'] = "Msng2 Karyawan";
+        $k['bank'] = 'BCA';
+        $k['no_rekening'] = '-';
+
+        $storeKasBesar = KasBesar::create($k);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Gaji Karyawan*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Nama     : Masing2 Karyawan\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($storeKasBesar->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($storeKasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Form Gaji Berhasil Dibuat');
 

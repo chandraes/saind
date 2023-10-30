@@ -89,11 +89,7 @@
 
                     </td>
                     <td class="text-center align-middle">
-                        @if ($d->cicilan == 1)
-                        <h5><span class="badge bg-warning">Cicilan</span></h5>
-                        @else
                         <h5><span class="badge bg-primary badge-xl">Potong Gaji</span></h5>
-                        @endif
                     <td class="text-center align-middle">
                         @if ($d->lunas == 1)
                         <span class="badge bg-success">Lunas</span>
@@ -137,7 +133,65 @@
                     </td>
                     </td>
                 </tr>
+                @endforeach
+                @foreach ($dataCicilan as $c)
+                <tr>
+                    <td class="text-center align-middle">{{$c->tanggal}}</td>
+                    <td class="text-center align-middle">{{$c->karyawan->nama}}</td>
+                    <td class="text-center align-middle">
+                        @if ($c->cicilan == 1)
+                            {{number_format($c->sisa_kas, 0,',','.')}}
+                        @else
+                            {{number_format($c->nominal, 0,',','.')}}
+                        @endif
 
+                    </td>
+                    <td class="text-center align-middle">
+                        <h5><span class="badge bg-warning">Cicilan</span></h5>
+
+                    <td class="text-center align-middle">
+                        @if ($c->lunas == 1)
+                        <span class="badge bg-success">Lunas</span>
+                        @else
+                        <span class="badge bg-danger">Belum Lunas</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if ($c->void == 0)
+                        <div class="text-center">
+                            <button class="btn btn-danger" data-bs-toggle="modal"
+                            data-bs-target="#void-{{$c->id}}">Void</button>
+                        </div>
+                        <div class="modal fade" id="void-{{$c->id}}" tabindex="-1" data-bs-backdrop="static"
+                            data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                                role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modalTitleId">Void Storing</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <form action="{{route('rekap.kas-bon.void', $c)}}" method="post">
+                                        @csrf
+                                        <div class="modal-body">
+                                            <input type="password" class="form-control" id="password" name="password"
+                                                placeholder="Password" aria-label="Password" aria-describedby="password"
+                                                required>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Tutup</button>
+                                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                    </td>
+                    </td>
+                </tr>
                 @endforeach
             </tbody>
         </table>

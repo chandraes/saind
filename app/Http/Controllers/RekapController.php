@@ -7,6 +7,7 @@ use App\Models\KasBesar;
 use App\Models\Vendor;
 use App\Models\Direksi;
 use App\Models\KasBon;
+use App\Models\KasBonCicilan;
 use App\Models\KasDireksi;
 use App\Models\KasUangJalan;
 use App\Models\InvoiceBonus;
@@ -448,6 +449,7 @@ class RekapController extends Controller
         $dataTahun = KasBon::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
         $data = KasBon::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $dataCicilan = KasBonCicilan::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -459,6 +461,7 @@ class RekapController extends Controller
         // dd($bulan);
         return view('rekap.kas-bon', [
             'data' => $data,
+            'dataCicilan' => $dataCicilan,
             'dataTahun' => $dataTahun,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,

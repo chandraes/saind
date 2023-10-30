@@ -281,17 +281,17 @@ class FormKasbonController extends Controller
             'mulai_tahun' => 'required|integer',
         ]);
 
-
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
 
         $kasBesar = KasBesar::latest()->first();
-
+        
         if ($kasBesar == null || $kasBesar->saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
         }
 
         $karyawan = Karyawan::find($data['karyawan_id']);
 
-        $data['nominal'] = str_replace('.', '', $data['nominal']);
+
         $data['tanggal'] = date('Y-m-d');
         $data['sisa_kas'] = $data['nominal'];
         $data['cicilan_nominal'] = $data['nominal'] / $data['cicil_kali'];

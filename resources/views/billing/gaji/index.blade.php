@@ -96,7 +96,7 @@
 
                             // if true, then $mulai = $now
                             if($mulai < $now){
-                                $kasbon_cicil = $i->kas_bon->where('lunas', 0)->first()->cicilan_nominal;
+                                $kasbon_cicil = $i->kas_bon_cicilan->where('lunas', 0)->first()->cicilan_nominal;
                             }else {
                                 $kasbon_cicil = 0;
                             }
