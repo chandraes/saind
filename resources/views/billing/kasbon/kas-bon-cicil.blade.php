@@ -76,7 +76,7 @@
             </div>
             <div class="col-2">
                 <label for="mulai_bulan" class="form-label">Mulai Bulan</label>
-                <select class="form-select" name="mulai_bulan" id="mulai_bulan"></select>
+                <select class="form-select" name="mulai_bulan" id="mulai_bulan" required></select>
             </div>
             <div class="col-2">
                 <div class="mb-3">

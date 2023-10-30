@@ -7,6 +7,9 @@
             <h1>{{$month}} {{date('Y')}}</h1>
         </div>
     </div>
+    @php
+        $total = 0;
+    @endphp
     @include('swal')
     <div style="font-size:12px">
         <table class="table table-bordered table-hover" id="rekapTable">
@@ -40,6 +43,7 @@
                     $potongan_bpjs_kesehatan_direksi = $dir->gaji_pokok * 0.01;
                     $pendapatan_kotor_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
                     $pendapatan_bersih_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga - $dir->potongan_bpjs_tk - $dir->potongan_bpjs_kesehatan;
+                    $total = $pendapatan_bersih_direksi + $total;
                 @endphp
                 <tr>
                     <td class="text-center align-middle">Direksi</td>
@@ -81,16 +85,28 @@
                     <td class="text-center align-middle">{{number_format($pendapatan_kotor, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($pendapatan_bersih, 0, ',','.')}}</td>
                     <td class="text-center align-middle">
-                        @if ($i->kas_bon->where('cicilan', 1)->where('lunas', 0)->count() > 0)
+                        @if ($i->kas_bon_cicilan->where('lunas', 0)->first())
                         @php
-                            $kasbon_cicil = $i->kas_bon->where('cicilan', 1)->where('lunas', 0)->sum('cicilan_nominal');
-                            $kasbon = $i->kas_bon->where('cicilan', 0)->where('lunas', 0)->sum('nominal');
+                            $cicilan = $i->kas_bon_cicilan->where('lunas', 0)->first();
+                            // create tanggal from $cicilan->mulai_bulan and $cicilan->mulai_tahun
+                            $mulai = $cicilan->mulai_tahun.'-'.$cicilan->mulai_bulan.'-01';
+                            $mulai = date('Y-m-d', strtotime($mulai));
+                            // check if $mulai month and year is > from now
+                            $now = date('Y-m-d');
+
+                            // if true, then $mulai = $now
+                            if($mulai < $now){
+                                $kasbon_cicil = $i->kas_bon->where('lunas', 0)->first()->cicilan_nominal;
+                            }else {
+                                $kasbon_cicil = 0;
+                            }
+                            $kasbon = $i->kas_bon->where('lunas', 0)->sum('nominal');
                             $total_kasbon = $kasbon_cicil + $kasbon;
                         @endphp
                             {{number_format($total_kasbon, 0, ',','.')}}
                         @else
                             @php
-                                $total_kasbon = $i->kas_bon->where('cicilan', 0)->where('lunas', 0)->sum('nominal');
+                                $total_kasbon = $i->kas_bon->where('lunas', 0)->sum('nominal');
                             @endphp
                             {{number_format($total_kasbon, 0, ',','.')}}
                         @endif
@@ -98,6 +114,7 @@
                     <td class="text-center align-middle">
                         @php
                             $sisa_gaji_dibayar = $pendapatan_bersih - $total_kasbon;
+                            $total = $total + $sisa_gaji_dibayar;
                         @endphp
                         {{number_format($sisa_gaji_dibayar, 0, ',','.')}}
                     </td>
@@ -108,9 +125,9 @@
     </div>
     <div class="container-fluid mt-3 mb-3">
         <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-            <form action="#" method="post" id="lanjutForm">
+            <form action="{{route('billing.gaji.store')}}" method="post" id="lanjutForm">
                 @csrf
-                <input type="hidden" name="total_bonus" value="">
+                <input type="hidden" name="total" value="{{$total}}">
                 <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
             </form>
             {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
@@ -139,7 +156,7 @@
             });
         });
         // masukForm on submit, sweetalert confirm
-        $('#masukForm').submit(function(e){
+        $('#lanjutForm').submit(function(e){
             e.preventDefault();
             Swal.fire({
                 title: 'Apakah data sudah benar?',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Karyawan;
 use App\Models\KasBon;
 use App\Models\KasBesar;
+use App\Models\KasBonCicilan;
 use App\Models\KasDireksi;
 use App\Models\Direksi;
 use App\Models\Rekening;
@@ -260,7 +261,7 @@ class FormKasbonController extends Controller
 
     public function kas_bon_cicil()
     {
-        $kasbon = KasBon::where('lunas', 0)->where('cicilan', 1)->pluck('karyawan_id')->unique()->toArray();
+        $kasbon = KasBonCicilan::where('lunas', 0)->pluck('karyawan_id')->unique()->toArray();
 
         // data where not in
         $data = Karyawan::whereNotIn('id', $kasbon)->where('status', 'aktif')->get();
@@ -293,10 +294,9 @@ class FormKasbonController extends Controller
         $data['nominal'] = str_replace('.', '', $data['nominal']);
         $data['tanggal'] = date('Y-m-d');
         $data['sisa_kas'] = $data['nominal'];
-        $data['cicilan'] = 1;
         $data['cicilan_nominal'] = $data['nominal'] / $data['cicil_kali'];
 
-        KasBon::create($data);
+        KasBonCicilan::create($data);
 
         $k['tanggal'] = $data['tanggal'];
         $k['uraian'] = "Kasbon Cicilan ".$karyawan->nama;

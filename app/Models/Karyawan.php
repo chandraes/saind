@@ -31,6 +31,11 @@ class Karyawan extends Model
         return $this->hasMany(KasBon::class);
     }
 
+    public function kas_bon_cicilan()
+    {
+        return $this->hasMany(KasBonCicilan::class);
+    }
+
     // last nomor
     public function getNomor()
     {

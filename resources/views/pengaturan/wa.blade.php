@@ -6,24 +6,7 @@
             <h1><u>PENGATURAN WA</u></h1>
         </div>
     </div>
-    @if (session('error'))
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: '{{session('error')}}',
-            })
-        </script>
-    @endif
-    @if (session('success'))
-    <script>
-        Swal.fire(
-                'Berhasil!',
-                '{{session('success')}}',
-                'success'
-            )
-    </script>
-    @endif
+    @include('swal')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-4">
             <table class="table">
@@ -66,14 +49,6 @@
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
-        $(function() {
-             $('#nominal_transaksi').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
-            });
-        });
-
         // masukForm on submit, sweetalert confirm
         $('#masukForm').submit(function(e){
             e.preventDefault();
