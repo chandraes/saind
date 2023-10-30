@@ -39,10 +39,10 @@ class VehicleController extends Controller
     {
         $data = $request->validate([
             'vendor_id' => 'required|exists:vendors,id',
-            'nopol' => 'required',
+            'nopol' => 'required|unique:vehicles,nopol',
             'nama_stnk' => 'required',
-            'no_rangka' => 'required',
-            'no_mesin' => 'required',
+            'no_rangka' => 'required|unique:vehicles,no_rangka',
+            'no_mesin' => 'required|unique:vehicles,no_mesin',
             'no_index' => 'required|integer',
             'tipe' => 'required',
             'tahun' => 'required',
@@ -127,8 +127,14 @@ class VehicleController extends Controller
         }
 
         $data['updated_by'] = auth()->user()->id;
+        // update data vehicle and if database error, return to previous page with error message
+        try {
+            $vehicle->update($data);
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'Terdapat nopol, no rangka, atau no mesin yang sama');
+        }
+        // $vehicle->update($data);
 
-        $vehicle->update($data);
 
         return redirect()->route('vehicle.index')->with('success', 'Data berhasil diubah');
     }

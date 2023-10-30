@@ -7,6 +7,18 @@
         </div>
     </div>
    @include('swal')
+   {{-- if has any error --}}
+    @if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Whoops!</strong> Ada kesalahan dalam input data:
+        <ul>
+            @foreach ($errors->all() as $error)
+            <li><strong>{{$error}}</strong></li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
