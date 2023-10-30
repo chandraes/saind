@@ -70,7 +70,7 @@
                     <h5 class="">{{$d->nomor_lambung}}</h5>
                 </a>
             </td>
-            <td class="align-middle">{{$d->vendor->nama}} {{$d->vendor->perusahaan}}</td>
+            <td class="align-middle">{{$d->vendor->nama}}</td>
             <td class="text-center align-middle">{{$d->nopol}}</td>
             <td class="text-center align-middle">{{$d->nama_stnk}}</td>
             <td class="text-center align-middle">{{$d->no_rangka}}</td>
