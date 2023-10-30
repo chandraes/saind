@@ -27,6 +27,11 @@ class TransaksiController extends Controller
     {
         $data = Transaksi::all();
         $customer = Customer::all();
+
+        $invoice = InvoiceTagihan::where('lunas', 0)->count();
+        $bayar = InvoiceBayar::where('lunas', 0)->count();
+        $bonus = InvoiceBonus::where('lunas', 0)->count();
+
         $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                                     ->where('status', 3)
                                     ->where('transaksis.bayar', 0)
@@ -46,6 +51,9 @@ class TransaksiController extends Controller
             'customer' => $customer,
             'vendor' => $vendor,
             'sponsor' => $sponsor,
+            'invoice' => $invoice,
+            'bayar' => $bayar,
+            'bonus' => $bonus,
         ]);
     }
 

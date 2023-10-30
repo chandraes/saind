@@ -145,9 +145,21 @@
     <div class="row mt-5 justify-content-left">
         <h2>Cut Off</h2>
         <div class="col-md-3 text-center mt-5">
-            <a href="{{route('billing.transaksi.invoice.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/invoice.svg')}}" alt="" width="100">
-                <h2>Invoice</h2>
+            <a href="{{route('invoice.tagihan.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-tagihan.svg')}}" alt="" width="100">
+                <h2>INVOICE TAGIHAN CUSTOMER <span class="text-danger">{{$invoice > 0 ? "(".$invoice.")" : ''}}</span></h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('invoice.bayar.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-bayar.svg')}}" alt="" width="100">
+                <h2>INVOICE BAYAR VENDOR <span class="text-danger">{{$bayar > 0 ? "(".$bayar.")" : ''}}</span></h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('invoice.bonus.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-bonus.svg')}}" alt="" width="100">
+                <h2>INVOICE BONUS SPONSOR <span class="text-danger">{{$bonus > 0 ? "(".$bonus.")" : ''}}</span></h2>
             </a>
         </div>
     </div>
