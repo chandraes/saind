@@ -81,7 +81,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#harga_satuan').maskMoney();
+             $('#harga_satuan').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
 
         $('#kosongKeranjang').submit(function(e){

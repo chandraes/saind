@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Pembayaran Vendor</u></h1>
+            <h1><u>Kesepakatan Uang Jalan Vendor</u></h1>
         </div>
     </div>
     @if (session('error'))
@@ -40,11 +40,15 @@
                                 <input type="text" class="form-control" name="uang_jalan[]" required id="uang_jalan-{{$v->id}}"
                                     required aria-describedby="helpId" placeholder="" @if(auth()->user()->role !== 'admin')
                                     readonly
-                                @endif data-thousands=".">
+                                @endif data-thousands="." >
                             </td>
                         </tr>
                         <script>
-                            $('#uang_jalan-{{$v->id}}').maskMoney();
+                            $('#uang_jalan-{{$v->id}}').maskMoney({
+                                    thousands: '.',
+                                    decimal: ',',
+                                    precision: 0
+                                });
 
                             $('#uang_jalan-{{$v->id}}').maskMoney('mask', {{$v->uang_jalan}});
 

@@ -211,7 +211,11 @@
                         $('#hk_uang_jalan').val(data.hk_uang_jalan);
 
                         // maskMonye
-                        $('#hk_uang_jalan').maskMoney();
+                        $('#hk_uang_jalan').maskMoney({
+                            thousands: '.',
+                            decimal: ',',
+                            precision: 0
+                        });
                         $('#hk_uang_jalan').maskMoney('mask', data.hk_uang_jalan);
                     }
                 });

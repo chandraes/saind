@@ -71,9 +71,13 @@
 <script src="{{asset('assets/js/moment.min.js')}}"></script>
 <script>
         $(function() {
-            $('#nominal_transaksi').maskMoney();
+            $('#nominal_transaksi').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
-  
+
 
          $('#nominal_transaksi').on('keyup', function(){
              let val = $(this).val();
@@ -83,13 +87,21 @@
             $.each(dataPersen, function(index, value){
                 let persen = value.persentase;
                 let hasil = val * persen / 100;
-                $('#nilai-'+value.id).maskMoney();
+                $('#nilai-'+value.id).maskMoney({
+                    thousands: '.',
+                    decimal: ',',
+                    precision: 0
+                });
                 $('#nilai-'+value.id).maskMoney('mask', hasil);
                 // each pemegang saham
                 $.each(value.pemegang_saham, function(i, v){
                     let persen = v.persentase;
                     let hasil2 = hasil * persen / 100;
-                    $('#nilai-'+value.id+'-'+v.id).maskMoney();
+                    $('#nilai-'+value.id+'-'+v.id).maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#nilai-'+value.id+'-'+v.id).maskMoney('mask', hasil2);
                 });
             });

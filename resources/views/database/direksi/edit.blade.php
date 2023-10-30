@@ -277,7 +277,21 @@
 <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
 <script>
       $(document).ready(function(){
-            $('#gaji_pokok').maskMoney();
+            $('#gaji_pokok').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
+            $('#tunjangan_jabatan').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
+            $('#tunjangan_keluarga').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
 
         $('#masukForm').submit(function(e){

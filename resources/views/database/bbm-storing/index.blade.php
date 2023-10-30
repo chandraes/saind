@@ -108,8 +108,16 @@
     // datatable
     $(document).ready(function() {
         $('#data').DataTable();
-        $('#biaya_vendor').maskMoney();
-        $('#biaya_mekanik').maskMoney();
+        $('#biaya_vendor').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
+        $('#biaya_mekanik').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
     });
 
       // masukForm on submit, sweetalert confirm

@@ -92,6 +92,14 @@
         })
     });
 
-    $('#biaya_vendor-{{$d->id}}').maskMoney();
-    $('#biaya_mekanik-{{$d->id}}').maskMoney();
+    $('#biaya_vendor-{{$d->id}}').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
+    $('#biaya_mekanik-{{$d->id}}').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
 </script>

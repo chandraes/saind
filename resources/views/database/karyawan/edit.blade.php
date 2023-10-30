@@ -58,7 +58,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('gaji_pokok'))
                     is-invalid
-                @endif" name="gaji_pokok" id="gaji_pokok" required data-thousands="." value="{{$karyawan->gaji_pokok}}">
+                @endif" name="gaji_pokok" id="gaji_pokok" required data-thousands="." value="{{number_format($karyawan->gaji_pokok, 0,',','.')}}">
                 </div>
                 @if ($errors->has('gaji_pokok'))
                 <div class="invalid-feedback">
@@ -72,7 +72,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('tunjangan_jabatan'))
                     is-invalid
-                @endif" name="tunjangan_jabatan" id="tunjangan_jabatan" required data-thousands="." value="{{$karyawan->tunjangan_jabatan}}">
+                @endif" name="tunjangan_jabatan" id="tunjangan_jabatan" required data-thousands="." value="{{number_format($karyawan->tunjangan_jabatan,0,',','.')}}">
                 </div>
                 @if ($errors->has('tunjangan_jabatan'))
                 <div class="invalid-feedback">
@@ -282,7 +282,21 @@
 <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
 <script>
       $(document).ready(function(){
-            $('#gaji_pokok').maskMoney();
+            $('#gaji_pokok').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
+            $('#tunjangan_jabatan').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
+            $('#tunjangan_keluarga').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
 
         $('#masukForm').submit(function(e){

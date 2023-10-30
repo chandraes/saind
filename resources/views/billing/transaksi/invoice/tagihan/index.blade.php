@@ -105,7 +105,11 @@
 
                     <!-- Optional: Place to the bottom of scripts -->
                     <script>
-                        $('#cicilanInput-{{$d->id}}').maskMoney();
+                        $('#cicilanInput-{{$d->id}}').maskMoney({
+                            thousands: '.',
+                            decimal: ',',
+                            precision: 0
+                        });
 
                     </script>
                 </td>

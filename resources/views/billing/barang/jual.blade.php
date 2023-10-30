@@ -103,7 +103,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#harga_satuan').maskMoney();
+             $('#harga_satuan').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
 
         $('#masukForm').submit(function(e){
@@ -165,7 +169,11 @@
                 success: function(data){
                     // maskMoney
                     $('#harga_jual').maskMoney('destroy');
-                    $('#harga_jual').maskMoney();
+                    $('#harga_jual').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#harga_jual').maskMoney('mask', (data.harga_jual));
 
                     // $('#harga_jual').val((data.harga_jual));
@@ -183,7 +191,11 @@
             var total = jumlah * harga_jual;
             console.log(total);
             $('#total').maskMoney('destroy');
-            $('#total').maskMoney();
+            $('#total').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
             $('#total').maskMoney('mask', (total));
         }
 

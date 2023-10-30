@@ -93,9 +93,11 @@
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
 
 <script>
-    $(document).ready(function(){
-            $('#nominal_transaksi').maskMoney();
-        });
+            $('#nominal_transaksi').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
 
         function tipeFun()
         {

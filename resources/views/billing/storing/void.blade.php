@@ -87,7 +87,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#jasa').maskMoney();
+             $('#jasa').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
 
         $('#masukForm').submit(function(e){
@@ -151,10 +155,18 @@
                 success: function(data){
                     $('#lokasi').val(data.lokasi);
                     $('#mekanik').maskMoney('destroy');
-                    $('#mekanik').maskMoney();
+                    $('#mekanik').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
                     $('#total_void').maskMoney('destroy');
-                    $('#total_void').maskMoney();
+                    $('#total_void').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#total_void').maskMoney('mask', (data.total));
 
                 }
@@ -175,10 +187,18 @@
 
 
                     $('#mekanik').maskMoney('destroy');
-                    $('#mekanik').maskMoney();
+                    $('#mekanik').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
                     $('#harga_vendor').maskMoney('destroy');
-                    $('#harga_vendor').maskMoney();
+                    $('#harga_vendor').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#harga_vendor').maskMoney('mask', (data.biaya_vendor));
 
                     // call funGetStatusSo

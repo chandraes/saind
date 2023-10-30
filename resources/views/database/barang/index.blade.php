@@ -77,7 +77,11 @@
                             </tr>
                             <script>
                                  $(document).ready(function(){
-                                    $('#harga_jual-{{$b->id}}').maskMoney();
+                                    $('#harga_jual-{{$b->id}}').maskMoney({
+                                        thousands: '.',
+                                        decimal: ',',
+                                        precision: 0
+                                    });
                                     $('#deleteBarang-{{$b->id}}').submit(function(e){
                                         e.preventDefault();
                                         Swal.fire({
@@ -99,43 +103,6 @@
                         </tbody>
                     </table>
                 </td>
-                {{-- @foreach ($k->barang as $b)
-                <td class="text-center align-middle">{{$b->nama}}</td>
-                    <td class="text-center align-middle">{{$b->stok}}</td>
-                    <td class="text-center align-middle">Rp. {{number_format($b->harga_jual, 0, ',', '.')}}</td>
-                    <td class="text-center align-middle">
-                        <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editBarang-{{$b->id}}">Edit</a>
-
-                        @include('database.barang.harga-jual')
-
-                        <form action="{{route('barang.destroy', $b->id)}}" method="post" class="d-inline" id="deleteBarang-{{$b->id}}">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
-                        </form>
-                    </td>
-            </tr>
-            <script>
-                 $(document).ready(function(){
-                    $('#harga_jual-{{$b->id}}').maskMoney();
-                    $('#deleteBarang-{{$b->id}}').submit(function(e){
-                        e.preventDefault();
-                        Swal.fire({
-                            title: 'Apakah anda yakin menghapus data ini?',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Ya, Hapus!'
-                            }).then((result) => {
-                            if (result.isConfirmed) {
-                                this.submit();
-                            }
-                        })
-                    });
-                });
-            </script>
-            @endforeach --}}
             @else
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>

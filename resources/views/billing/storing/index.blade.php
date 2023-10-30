@@ -137,7 +137,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#jasa').maskMoney();
+             $('#jasa').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
 
         $('#masukForm').submit(function(e){
@@ -201,10 +205,18 @@
 
 
                     $('#mekanik').maskMoney('destroy');
-                    $('#mekanik').maskMoney();
+                    $('#mekanik').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#mekanik').maskMoney('mask', (data.biaya_mekanik));
                     $('#harga_vendor').maskMoney('destroy');
-                    $('#harga_vendor').maskMoney();
+                    $('#harga_vendor').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
                     $('#harga_vendor').maskMoney('mask', (data.biaya_vendor));
 
                     // call funGetStatusSo

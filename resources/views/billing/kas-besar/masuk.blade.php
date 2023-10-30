@@ -90,7 +90,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(document).ready(function(){
-            $('#nominal_transaksi').maskMoney();
+            $('#nominal_transaksi').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
         });
 
         // masukForm on submit, sweetalert confirm

@@ -126,7 +126,11 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     $(document).ready(function(){
-            $('#nominal_transaksi').maskMoney();
+            $('#nominal_transaksi').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
             $('#rekapTable').DataTable({
                 "paging": false,
                 "ordering": false,

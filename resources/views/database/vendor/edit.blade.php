@@ -257,8 +257,16 @@
             theme: 'bootstrap-5'
         });
 
-        $('#plafon_titipan').maskMoney();
-        $('#plafon_lain').maskMoney();
+        $('#plafon_titipan').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
+        $('#plafon_lain').maskMoney({
+                thousands: '.',
+                decimal: ',',
+                precision: 0
+            });
     });
 
     $('#masukForm').submit(function(e){
