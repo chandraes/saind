@@ -7,10 +7,12 @@
             <h1>{{$bulan}} {{$tahun}}</h1>
         </div>
     </div>
-    @php
-        $total = 0;
-    @endphp
     @include('swal')
+    <form action="{{route('print-rekap-gaji')}}" method="get">
+        <input type="hidden" name="bulan" value="{{$bulan_angka}}">
+        <input type="hidden" name="tahun" value="{{$tahun}}">
+        <button type="submit" class="btn btn-success mb-3">Cetak Rekap gaji Karyawan</button>
+    </form>
     <div style="font-size:12px">
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
@@ -26,6 +28,9 @@
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Bersih</th>
                     <th rowspan="2" class="text-center align-middle">Kasbon</th>
                     <th rowspan="2" class="text-center align-middle">Sisa Gaji Dibayar</th>
+                    <th rowspan="2" class="text-center align-middle">Rekening</th>
+                    <th rowspan="2" class="text-center align-middle">Nama Rekening</th>
+                    <th rowspan="2" class="text-center align-middle">Bank</th>
                 </tr>
                 <tr>
                     <th class="text-center align-middle">Jabatan</th>
@@ -37,7 +42,7 @@
             <tbody>
                 @foreach ($data->rekap_gaji_detail as $dir)
                 <tr>
-                    <td class="text-center align-middle">Direksi</td>
+                    <td class="text-center align-middle">{{$dir->nik}}</td>
                     <td class="text-center align-middle">{{$dir->nama}}</td>
                     <td class="text-center align-middle">{{$dir->jabatan}}</td>
                     <td class="text-center align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
@@ -47,24 +52,17 @@
                     <td class="text-center align-middle">{{number_format($dir->bpjs_k, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($dir->potongan_bpjs_tk, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($dir->potongan_bpjs_kesehatan, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($pendapatan_kotor_direksi, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($pendapatan_bersih_direksi, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">-</td>
-                    <td class="text-center align-middle">{{number_format($pendapatan_bersih_direksi, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{$dir->no_rekening}}</td>
+                    <td class="text-center align-middle">{{$dir->transfer_ke}}</td>
+                    <td class="text-center align-middle">{{$dir->bank}}</td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
-    </div>
-    <div class="container-fluid mt-3 mb-3">
-        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-            <form action="{{route('billing.gaji.store')}}" method="post" id="lanjutForm">
-                @csrf
-                <input type="hidden" name="total" value="{{$total}}">
-                <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
-            </form>
-            {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
-          </div>
     </div>
 </div>
 @endsection

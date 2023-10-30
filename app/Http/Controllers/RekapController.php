@@ -669,7 +669,29 @@ class RekapController extends Controller
             'data' => $data,
             'bulan' => $bulan,
             'tahun' => $tahun,
+            'bulan_angka' => $v['bulan'],
         ]);
+    }
+
+    public function print_rekap_gaji(Request $request)
+    {
+        $v = $request->validate([
+                'bulan' => 'required',
+                'tahun' => 'required',
+            ]);
+
+        $data = RekapGaji::where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->first();
+
+        $bulan = Carbon::createFromDate($v['tahun'], $v['bulan'])->locale('id')->monthName;
+        $tahun = $v['tahun'];
+
+        $pdf = PDF::loadview('rekap.print-rekap-gaji', [
+            'data' => $data->rekap_gaji_detail,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Rekap Kasbon '.$bulan.' '.$tahun.'.pdf');
     }
 
 }

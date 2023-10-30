@@ -88,6 +88,9 @@ class FormGajiController extends Controller
                 'pendapatan_bersih' => $pendapatan_bersih_direksi,
                 'kasbon' => 0,
                 'sisa_gaji_dibayar' => $pendapatan_bersih_direksi,
+                'transfer_ke' => $d->nama_rekening,
+                'bank' => $d->bank,
+                'no_rekening' => $d->no_rekening,
             ]);
         }
 
@@ -131,7 +134,7 @@ class FormGajiController extends Controller
 
             RekapGajiDetail::create([
                 'rekap_gaji_id' => $rekap->id,
-                'nik' => $d->nik,
+                'nik' => $d->kode.sprintf("%03d", $d->nomor),
                 'nama' => $d->nama,
                 'jabatan' => $d->jabatan->nama,
                 'gaji_pokok' => $d->gaji_pokok,
@@ -145,6 +148,9 @@ class FormGajiController extends Controller
                 'pendapatan_bersih' => $pendapatan_bersih,
                 'kasbon' => $total_kasbon,
                 'sisa_gaji_dibayar' => $pendapatan_bersih-$total_kasbon,
+                'transfer_ke' => $d->nama_rekening,
+                'bank' => $d->bank,
+                'no_rekening' => $d->no_rekening,
             ]);
 
             if ($kasbon_cicil > 0) {
