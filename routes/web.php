@@ -282,6 +282,9 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::get('rekap/bonus', [App\Http\Controllers\RekapController::class, 'rekap_bonus'])->name('rekap.bonus');
     Route::get('rekap/nota-lunas', [App\Http\Controllers\RekapController::class, 'nota_lunas'])->name('rekap.nota-lunas');
+
+    Route::view('rekap-gaji', 'rekap.gaji')->name('rekap-gaji');
+    Route::get('rekap-gaji-detail', [App\Http\Controllers\RekapController::class, 'rekap_gaji_detail'])->name('rekap-gaji-detail');
 });
 
 

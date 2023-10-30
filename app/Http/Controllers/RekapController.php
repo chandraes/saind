@@ -15,12 +15,14 @@ use App\Models\InvoiceTagihan;
 use App\Models\KasVendor;
 use App\Models\Transaksi;
 use App\Models\Rekening;
+use App\Models\RekapGaji;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use App\Models\PasswordKonfirmasi;
 use App\Models\RekapBarang;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class RekapController extends Controller
 {
@@ -646,4 +648,28 @@ class RekapController extends Controller
             'stringBulanNow' => $stringBulanNow,
         ]);
     }
+
+    public function rekap_gaji_detail(Request $request)
+    {
+        $v = $request->validate([
+                'bulan' => 'required',
+                'tahun' => 'required',
+            ]);
+
+        $data = RekapGaji::where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->first();
+
+        if (!$data) {
+            return redirect()->back()->with('error', 'Data tidak ditemukan!!');
+        }
+
+        $bulan = Carbon::createFromDate($v['tahun'], $v['bulan'])->locale('id')->monthName;
+        $tahun = $v['tahun'];
+
+        return view('rekap.gaji-detail', [
+            'data' => $data,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+        ]);
+    }
+
 }

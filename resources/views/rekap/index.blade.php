@@ -76,7 +76,7 @@
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('rekap-gaji')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-gaji.svg')}}" alt="" width="100">
                 <h2>Gaji Karyawan</h2>
             </a>

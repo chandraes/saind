@@ -98,25 +98,28 @@ class FormKasBesarController extends Controller
     {
 
 
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+        $rekening = Rekening::where('untuk', 'withdraw')->first();
 
-        return view('billing.kas-besar.keluar');
+        return view('billing.kas-besar.keluar', [
+            'rekening' => $rekening,
+        ]);
     }
 
     public function keluar_store(Request $request)
     {
         $data = $request->validate([
-            'transfer_ke' => 'required',
-            'bank' => 'required',
-            'no_rekening' => 'required',
             'nominal_transaksi' => 'required',
         ]);
+
+        $rekening = Rekening::where('untuk', 'withdraw')->first();
 
         $data['uraian'] = 'Withdraw';
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
-        $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
+        $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
+        $data['no_rekening'] = $rekening->nomor_rekening;
+        $data['bank'] = $rekening->nama_bank;
 
 
         $last = KasBesar::latest()->first();

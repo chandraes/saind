@@ -43,12 +43,11 @@
         <h3>Transfer Ke</h3>
         <br>
         <div class="row">
-
             <div class="col-md-4 mb-3">
                 <label for="transfer_ke" class="form-label">Nama</label>
                 <input type="text" class="form-control @if ($errors->has('transfer_ke'))
                     is-invalid
-                @endif" name="transfer_ke" id="transfer_ke" value="{{old('transfer_ke')}}">
+                @endif" name="transfer_ke" id="transfer_ke" value="{{$rekening->nama_rekening}}" disabled>
                 @if ($errors->has('transfer_ke'))
                 <div class="invalid-feedback">
                     {{$errors->first('transfer_ke')}}
@@ -59,7 +58,7 @@
                 <label for="bank" class="form-label">Bank</label>
                 <input type="text" class="form-control @if ($errors->has('bank'))
                     is-invalid
-                @endif" name="bank" id="bank" value="{{old('bank')}}">
+                @endif" name="bank" id="bank" value="{{$rekening->nama_bank}}" disabled>
                 @if ($errors->has('bank'))
                 <div class="invalid-feedback">
                     {{$errors->first('bank')}}
@@ -70,7 +69,7 @@
                 <label for="no_rekening" class="form-label">Nomor Rekening</label>
                 <input type="text" class="form-control @if ($errors->has('no_rekening'))
                     is-invalid
-                @endif" name="no_rekening" id="no_rekening" value="{{old('no_rekening')}}">
+                @endif" name="no_rekening" id="no_rekening" value="{{$rekening->nomor_rekening}}" disabled>
                 @if ($errors->has('no_rekening'))
                 <div class="invalid-feedback">
                     {{$errors->first('no_rekening')}}
