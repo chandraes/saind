@@ -228,11 +228,27 @@ class FormKasKecilController extends Controller
         unset($data['kas_kecil_id']);
 
         $store = KasKecil::create($data);
+        
         $kk->update(['void' => 1]);
 
         if(!$store){
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
+
+        $group = GroupWa::where('untuk', 'team')->first();
+
+        $pesan =    "==========================\n".
+                        "*Form Void Kas Kecil*\n".
+                        "==========================\n\n".
+                        "Uraian: ".$data['uraian']."\n\n".
+                        "Nilai : *Rp. ".number_format($data['nominal_transaksi'])."*\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Kecil : \n".
+                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
