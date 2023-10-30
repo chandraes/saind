@@ -42,7 +42,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('nominal_transaksi'))
                     is-invalid
-                @endif" name="nominal_transaksi" id="nominal_transaksi" required data-thousands="." readonly>
+                @endif" name="nominal_transaksi" id="nominal_transaksi" required data-thousands="." disabled>
                 </div>
                 @if ($errors->has('nominal_transaksi'))
                 <div class="invalid-feedback">
@@ -83,6 +83,13 @@
                     console.log(data.data.uraian);
                     $('#uraian').val("Void " + data.data.uraian);
                     $('#nominal_transaksi').val(data.data.nominal_transaksi);
+                    // maskMoney
+                    $('#nominal_transaksi').maskMoney({
+                        thousands: '.',
+                        decimal: ',',
+                        precision: 0
+                    });
+                    $('#nominal_transaksi').maskMoney('mask', data.data.nominal_transaksi);
                 }
             });
         }
