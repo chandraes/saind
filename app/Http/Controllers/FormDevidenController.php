@@ -60,7 +60,9 @@ class FormDevidenController extends Controller
 
             foreach ($persen->pemegang_saham as $v) {
 
-                $last2 = KasBesar::latest()->first();
+                usleep(30000);
+
+                $last2 = KasBesar::latest()->orderBy('id', 'desc')->first();
 
                 $nilai2 = $nilai * $v->persentase / 100;
 
