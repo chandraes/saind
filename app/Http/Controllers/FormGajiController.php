@@ -114,6 +114,7 @@ class FormGajiController extends Controller
                 $mulai = date('Y-m-d', strtotime($mulai));
                 // check if $mulai month and year is > from now
                 $now = date('Y-m-d');
+
                 if($mulai < $now){
                     $kasbon_cicil = $d->kas_bon_cicilan->where('lunas', 0)->first()->cicilan_nominal;
                 }
@@ -128,7 +129,7 @@ class FormGajiController extends Controller
                 'rekap_gaji_id' => $rekap->id,
                 'nik' => $d->nik,
                 'nama' => $d->nama,
-                'jabatan' => $d->jabatan,
+                'jabatan' => $d->jabatan->nama,
                 'gaji_pokok' => $d->gaji_pokok,
                 'tunjangan_jabatan' => $d->tunjangan_jabatan,
                 'tunjangan_keluarga' => $d->tunjangan_keluarga,
@@ -143,7 +144,8 @@ class FormGajiController extends Controller
             ]);
 
             if ($kasbon_cicil > 0) {
-                $update = $d->kas_bon->where('cicilan', 1)->where('lunas', 0)->update([
+
+                $update = $d->kas_bon_cicilan->where('lunas', 0)->update([
                     'total_bayar' => $cicilan->total_bayar + $kasbon_cicil,
                     'cicilan_kali' => $cicilan->cicilan_kali-1,
                     'sisa_kas' => $cicilan->sisa_kas - $kasbon_cicil,
@@ -156,12 +158,21 @@ class FormGajiController extends Controller
                 }
             }
 
-            $d->kas_bon->where('cicilan', 0)->where('lunas', 0)->update([
-                'total_bayar' => $d->kas_bon->where('cicilan', 0)->where('lunas', 0)->sum('nominal'),
-                'sisa_kas' => 0,
-                'lunas' => 1,
-            ]
-            );
+            // update kas bon where lunas = 0 and karyawan_id = $d->id and update total_bayar
+            $kasbon = KasBon::where('lunas', 0)->where('karyawan_id', $d->id)->get();
+
+            foreach ($kasbon as $k) {
+                $update = $k->update([
+                    'total_bayar' => $k->total_bayar + $k->nominal,
+                    'sisa_kas' => $k->sisa_kas - $k->nominal,
+                ]);
+
+                if ($update->sisa_kas == 0) {
+                    $update->update([
+                        'lunas' => 1,
+                    ]);
+                }
+            }
 
         }
 

@@ -3,71 +3,128 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-         <h1><u>REKAP</u></h1>
+            <h1><u>REKAP</u></h1>
         </div>
     </div>
     @include('swal')
     <div class="row justify-content-left">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user')
-        <div class="col-md-4 text-center mt-5">
+        <h2>KAS</h2>
+        <hr>
+        <div class="col-md-3 text-center mt-5">
             <a href="{{route('rekap.kas-besar')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-besar.svg')}}" alt="" width="100">
                 <h2>Kas Besar</h2>
             </a>
         </div>
-        <div class="col-md-4 text-center mt-5">
+        <div class="col-md-3 text-center mt-5">
             <a href="{{route('rekap.kas-kecil')}}" class="text-decoration-none">
                 <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="100">
                 <h2>Kas Kecil</h2>
             </a>
         </div>
-        <div class="col-md-4 text-center mt-5">
+        <div class="col-md-3 text-center mt-5">
             <a href="{{route('rekap.kas-uang-jalan')}}" class="text-decoration-none">
                 <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="100">
                 <h2>Kas Uang Jalan</h2>
             </a>
         </div>
-        <div class="col-md-4 text-center mt-5">
+        <div class="col-md-3 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorModal">
+                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
+                <h2>Kas Vendor</h2>
+            </a>
+
+            <div class="modal fade" id="vendorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="vendorTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="vendorTitle">Pilih Vendor</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{route('rekap.kas-vendor')}}" method="get">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <select class="form-select" name="vendor" id="vendor">
+                                        <option value=""> -- Pilih Vendor -- </option>
+                                        @foreach ($vendor as $v)
+                                        <option value="{{$v->id}}">{{$v->nama}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <br>
+    <div class="row justify-content-left">
+        <h2>NOTA LUNAS</h2>
+        <hr>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('rekap.nota-lunas')}}" class="text-decoration-none">
+                <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="100">
+                <h2>Customer</h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/rekap-gaji.svg')}}" alt="" width="100">
+                <h2>Gaji Karyawan</h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('rekap.bonus')}}" class="text-decoration-none">
+                <img src="{{asset('images/rekap-bonus.svg')}}" alt="" width="100">
+                <h2>Bonus Sponsor</h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{#" class="text-decoration-none">
+                <img src="{{asset('images/rekap-csr.svg')}}" alt="" width="100">
+                <h2>CSR</h2>
+            </a>
+        </div>
+    </div>
+    <br>
+    <br>
+    <div class="row justify-content-left">
+        <h2>OTHERS</h2>
+        <hr>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
+                <img src="{{asset('images/void.svg')}}" alt="" width="100">
+                <h2>Nota Void Transaksi</h2>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
             <a href="{{route('rekap.stock-barang')}}" class="text-decoration-none">
                 <img src="{{asset('images/stock.svg')}}" alt="" width="100">
                 <h2>Stock Barang</h2>
             </a>
         </div>
-        <div class="col-md-4 text-center mt-5">
-            <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
-                <img src="{{asset('images/void.svg')}}" alt="" width="100">
-                <h2>Nota Void</h2>
-            </a>
-        </div>
-        <div class="col-md-4 text-center mt-5">
-            <a href="{{route('rekap.nota-lunas')}}" class="text-decoration-none">
-                <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="100">
-                <h2>Nota Lunas</h2>
-            </a>
-        </div>
-        <div class="col-md-4 text-center mt-5">
-            <a href="{{route('rekap.bonus')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekap-bonus.svg')}}" alt="" width="100">
-                <h2>Bonus</h2>
-            </a>
-        </div>
-        <div class="col-md-4 text-center mt-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/rekap-gaji.svg')}}" alt="" width="100">
-                <h2>Gaji Staff</h2>
-            </a>
-        </div>
-        <div class="col-md-4 text-center mt-5">
+
+
+        <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKasbon">
                 <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="100">
-                <h2>Kasbon</h2>
+                <h2>Kasbon Karyawan</h2>
             </a>
-            <div class="modal fade" id="modalKasbon" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+            <div class="modal fade" id="modalKasbon" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="direksiStafftitle">Pilih Jenis Rekap Kasbon</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <select class="form-select form-select-lg" name="" id="kasbonSelect">
@@ -83,47 +140,14 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorModal">
-                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
-                <h2>Kas Vendor</h2>
-            </a>
-
-            <div class="modal fade" id="vendorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="vendorTitle" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="vendorTitle">Pilih Vendor</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form action="{{route('rekap.kas-vendor')}}" method="get">
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <select class="form-select" name="vendor" id="vendor">
-                                    <option value=""> -- Pilih Vendor -- </option>
-                                    @foreach ($vendor as $v)
-                                    <option value="{{$v->id}}">{{$v->nama}}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                        </div>
-                    </form>
-                    </div>
-                </div>
-            </div>
-        </div>
         @endif
-        <div class="col-md-4 text-center mt-5">
+        <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/statistik.svg')}}" alt="" width="100">
-                <h2>Rekapitulasi Vendor</h2>
+                <h2>Statistik</h2>
             </a>
         </div>
-        <div class="col-md-4 text-center mt-5">
+        <div class="col-md-3 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="100">
                 <h2>Dashboard</h2>
