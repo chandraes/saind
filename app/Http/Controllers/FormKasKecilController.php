@@ -147,18 +147,20 @@ class FormKasKecilController extends Controller
 
         if ($data['transfer_ke'] == 'Cash') {
             $pesan =    "==========================\n".
-                    "*Form Pengeluaran Kas Kecil*\n".
-                    "==========================\n\n".
-                    "Nilai : *Rp. ".number_format($data['nominal_transaksi'])."*\n\n".
-                    "Cash\n\n".
-                    "==========================\n".
-                    "Sisa Saldo Kas Kecil : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
+                        "*Form Pengeluaran Kas Kecil*\n".
+                        "==========================\n\n".
+                        "Uraian: ".$data['uraian']."\n\n".
+                        "Nilai : *Rp. ".number_format($data['nominal_transaksi'])."*\n\n".
+                        "Cash\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Kecil : \n".
+                        "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
         } else {
             $pesan =    "==========================\n".
                         "*Form Pengeluaran Kas Kecil*\n".
                         "==========================\n\n".
+                        "Uraian: ".$data['uraian']."\n\n".
                         "Nilai : *Rp. ".number_format($data['nominal_transaksi'])."*\n\n".
                         "Ditransfer ke rek:\n\n".
                         "Bank     : ".$data['bank']."\n".
