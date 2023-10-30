@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class VehicleController extends Controller
@@ -147,5 +148,16 @@ class VehicleController extends Controller
         $vehicle->delete();
 
         return redirect()->route('vehicle.index')->with('success', 'Data berhasil dihapus');
+    }
+
+    public function print_preview_vehicle()
+    {
+        $data = Vehicle::all();
+
+        $pdf = PDF::loadview('database.vehicle.preview-vehicle', [
+            'data' => $data,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Daftar Vehicle.pdf');
     }
 }

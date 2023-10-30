@@ -307,65 +307,7 @@ class VendorController extends Controller
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');
     }
 
-    // public function pembayaran_edit(string $id)
-    // {
-    //     $data = Vendor::findOrFail($id);
-    //     $customers = Customer::all();
-
-    //     return view('database.vendor.edit-pembayaran', [
-    //         'data' => $data,
-    //         'customers' => $customers,
-    //     ]);
-    // }
-
-    // public function pembayaran_update(Request $request, string $id)
-    // {
-    //     $data = $request->validate([
-    //         'vendor_id' => 'required|exists:vendors,id',
-    //         'customer_id' => 'required',
-    //         'customer_id.*' => 'required|exists:customers,id',
-    //         'rute_id' => 'required',
-    //         'rute_id.*' => 'required|exists:rutes,id',
-    //         'hk_opname' => 'nullable',
-    //         'hk_opname.*' => 'nullable',
-    //         'hk_titipan' => 'nullable',
-    //         'hk_titipan.*' => 'nullable',
-    //     ]);
-
-    //     // dd($data);
-
-    //     $id = $data['vendor_id'];
-    //     $checkRole = auth()->user()->role;
-
-    //     if ($checkRole !== 'admin') {
-    //        for ($i=0; $i < count($data['hk_opname']); $i++) {
-    //             if ($data['hk_opname'][$i] != Customer::find($data['customer_id'][$i])->harga_opname) {
-    //                 return redirect()->back()->with('error', 'Harga opname tidak sesuai');
-    //             }
-    //             if ($data['hk_titipan'][$i] != Customer::find($data['customer_id'][$i])->harga_titipan) {
-    //                 return redirect()->back()->with('error', 'Harga titipan tidak sesuai');
-    //             }
-    //        }
-    //     }
-
-    //     DB::transaction(function () use ($data, $id) {
-    //         VendorBayar::where('vendor_id', $id)->delete();
-    //         for ($i=0; $i < count($data['customer_id']); $i++) {
-    //             VendorBayar::create([
-    //                 'vendor_id' => $id,
-    //                 'customer_id' => $data['customer_id'][$i],
-    //                 'rute_id' => $data['rute_id'][$i],
-    //                 'hk_opname' => $data['hk_opname'][$i],
-    //                 'hk_titipan' => $data['hk_titipan'][$i],
-    //                 'user_id' => auth()->user()->id,
-    //             ]);
-    //         }
-
-    //     });
-
-    //     return redirect()->route('vendor.index')->with('success', 'Vendor pembayaran berhasil diupdate');
-
-    // }
+   
 
     public function biodata_vendor(string $id)
     {

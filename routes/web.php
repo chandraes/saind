@@ -114,6 +114,7 @@ Route::group(['middleware' => ['auth']], function() {
         ]);
 
         Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
+        Route::get('print-preview-vehicle', [App\Http\Controllers\VehicleController::class, 'print_preview_vehicle'])->name('print-preview-vehicle');
 
         Route::view('template', 'dokumen.template.index')->name('template');
         Route::resource('template-spk', App\Http\Controllers\TemplateSpkController::class);

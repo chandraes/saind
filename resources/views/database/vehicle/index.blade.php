@@ -31,6 +31,9 @@
                                 src="{{asset('images/dumptruckempty.svg')}}" alt="add-document" width="30"> Tambah
                             Vehicle</a>
                     </td>
+                    <td><a href="{{route('print-preview-vehicle')}}" target="_blank"><img
+                        src="{{asset('images/document.svg')}}" alt="add-document" width="30"> Print Vehicle</a>
+                    </td>
                 </tr>
             </table>
         </div>
