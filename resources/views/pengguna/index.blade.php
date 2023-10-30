@@ -22,74 +22,9 @@
         </div>
     </div>
     {{-- if has message --}}
-    @if (session('success'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="success-alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('success')}}
-            </strong>
-        </div>
-    </div>
-    @endif
+    @include('swal')
+    @include('pengguna.create')
 
-    <div class="modal fade" id="modalId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog"
-        aria-labelledby="modalTitleId" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-l" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitleId">Tambah Pengguna</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form action="{{route('pengguna.store')}}" method="post">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="name" class="form-label">Nama</label>
-                                <input type="text" class="form-control" name="name" id="name" aria-describedby="name"
-                                    placeholder="">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" name="username" id="username" required
-                                    aria-describedby="username" placeholder="">
-                            </div>
-                        </div>
-                        <div class="row mt-2">
-                            <div class="col-md-12">
-                                <label for="role" class="form-label">Role</label>
-                                <select class="form-select" name="role" id="role">
-                                    <option selected>Pilih Role</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="vendor">Vendor</option>
-                                    <option value="user">User</option>
-                                </select>
-                            </div>
-                            <div class="col-md-12 mt-2">
-                                <label for="email" class="form-label">E-Mail</label>
-                                <input type="email" class="form-control" name="email" id="email"
-                                    aria-describedby="email" placeholder="boleh kosong">
-                                <div class="form-group mt-2">
-                                    <label for="passwordInput">Password</label>
-                                    <div class="input-group">
-                                        <input type="password" name="password" class="form-control" id="passwordInput" required>
-                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                            <i class="fa fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
     <div class="row justify-content-center mt-3">
         <table class="table table-bordered table-hover table-striped table-responsive" id="user">
             <thead class="table-success">
@@ -98,6 +33,7 @@
                     <th class="text-center">Username</th>
                     <th class="text-center">Nama</th>
                     <th class="text-center">Role</th>
+                    <th class="text-center">Vendor</th>
                     <th class="text-center">Action</th>
                 </tr>
             </thead>
@@ -108,6 +44,7 @@
                     <td class="text-center align-middle">{{$d->username}}</td>
                     <td class="text-center align-middle">{{$d->name}}</td>
                     <td class="text-center align-middle">{{$d->role}}</td>
+                    <td class="text-center align-middle">{{$d->vendor ? $d : ''}}</td>
                     <td class="text-center align-middle">
                         {{-- <a href="{{route('pengguna.edit', $d->id)}}" class="btn btn-warning btn-sm">Edit</a> --}}
                         <!-- Modal trigger button -->

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Vendor;
 
 class UserController extends Controller
 {
@@ -12,8 +13,9 @@ class UserController extends Controller
      */
     public function index()
     {
+        $vendor = Vendor::select('id', 'nama')->where('status', 'aktif')->get();
         $data = User::select('id', 'name', 'username', 'role')->get();
-        return view('pengguna.index', compact('data'));
+        return view('pengguna.index', compact('data','vendor'));
     }
 
     /**
@@ -36,6 +38,7 @@ class UserController extends Controller
             "email" => "nullable",
             "password" => "required|min:6",
             "role" => "required",
+            'vendor_id' => 'nullable',
         ]);
 
         $data['password'] = bcrypt($data['password']);
@@ -73,6 +76,7 @@ class UserController extends Controller
             "email" => "nullable",
             "password" => "nullable",
             "role" => "required",
+            'vendor_id' => 'nullable',
         ]);
 
         if ($request->password) {

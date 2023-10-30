@@ -169,6 +169,9 @@
                 <td class="text-center align-middle">{{$d->tonase}}</td>
                 <td class="text-center align-middle">
                     <!-- Modal trigger button -->
+                    @if (auth()->user()->role === 'admin')
+
+                    @endif
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
                       Back
                     </button>

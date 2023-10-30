@@ -156,7 +156,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
+                    <td colspan="4" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
                     <td></td>
                     <td></td>
                     <td class="text-center align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
@@ -173,7 +173,7 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td></td>
+
                 </tr>
             </tfoot>
         </table>
