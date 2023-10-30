@@ -50,6 +50,7 @@
             <th class="text-center align-middle">Nomor Lambung</th>
             <th class="text-center align-middle">Vendor</th>
             <th class="text-center align-middle">Nopol</th>
+            <th class="text-center align-middle">Nama STNK</th>
             <th class="text-center align-middle">No Rangka</th>
             <th class="text-center align-middle">No Mesin</th>
             <th class="text-center align-middle">Tipe</th>
@@ -71,6 +72,7 @@
             </td>
             <td class="align-middle">{{$d->vendor->nama}} {{$d->vendor->perusahaan}}</td>
             <td class="text-center align-middle">{{$d->nopol}}</td>
+            <td class="text-center align-middle">{{$d->nama_stnk}}</td>
             <td class="text-center align-middle">{{$d->no_rangka}}</td>
             <td class="text-center align-middle">{{$d->no_mesin}}</td>
             <td class="text-center align-middle">{{$d->tipe}}</td>

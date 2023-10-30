@@ -172,24 +172,24 @@ class FormGajiController extends Controller
 
         }
 
-        $k['uraian'] = "Gaji Bulan ".date('F')." ".date('Y');
-        $k['tanggal'] = date('Y-m-d');
-        $k['nominal_transaksi'] = $ds['total'];
-        $k['jenis_transaksi_id'] = 2;
-        $k['saldo'] = $kasBesar->saldo - $ds['total'];
-        $k['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
-        $k['transfer_ke'] = "Msng2 Karyawan";
-        $k['bank'] = 'BCA';
-        $k['no_rekening'] = '-';
+        $arrayKasBesar['uraian'] = "Gaji Bulan ".date('F')." ".date('Y');
+        $arrayKasBesar['tanggal'] = date('Y-m-d');
+        $arrayKasBesar['nominal_transaksi'] = $ds['total'];
+        $arrayKasBesar['jenis_transaksi_id'] = 2;
+        $arrayKasBesar['saldo'] = $kasBesar->saldo - $ds['total'];
+        $arrayKasBesar['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
+        $arrayKasBesar['transfer_ke'] = "Msng2 Karyawan";
+        $arrayKasBesar['bank'] = 'BCA';
+        $arrayKasBesar['no_rekening'] = '-';
 
-        $storeKasBesar = KasBesar::create($k);
+        $storeKasBesar = KasBesar::create($arrayKasBesar);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Gaji Karyawan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Nilai :  *Rp. ".number_format($ds['total'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Nama     : Masing2 Karyawan\n\n".
                     "==========================\n".
