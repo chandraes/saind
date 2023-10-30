@@ -29,7 +29,11 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle table-pdf text-pdf" style="height: 35px">{{$loop->iteration}}</td>
-                    <td class="text-center align-middle table-pdf text-pdf">{{$d->nomor_lambung}}</td>
+                    <td class="text-center align-middle table-pdf text-pdf" >
+                        <span @if ($d->no_index < 30 || $d->tahun < 2016) style="color:red" @endif>
+                            {{$d->nomor_lambung}}
+                        </span>
+                    </td>
                     <td class="align-middle table-pdf text-pdf">{{$d->vendor->nama}}</td>
                     <td class="align-middle table-pdf text-pdf">{{$d->vendor->perusahaan}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nopol}}</td>
@@ -37,8 +41,16 @@
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->no_rangka}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->no_mesin}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->tipe}}</td>
-                    <td class="text-center align-middle table-pdf text-pdf">{{$d->no_index}}</td>
-                    <td class="text-center align-middle table-pdf text-pdf">{{$d->tahun}}</td>
+                    <td class="text-center align-middle table-pdf text-pdf">
+                        <span @if ($d->no_index < 30) style="color: red" @endif>
+                            {{$d->no_index}}
+                        </span>
+                    </td>
+                    <td class="text-center align-middle table-pdf text-pdf">
+                        <span @if ($d->tahun < 2016) style="color: red" @endif>
+                            {{$d->tahun}}
+                        </span>
+                    </td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->no_kartu_gps}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{strtoupper($d->status)}}</td>
                 </tr>
