@@ -31,6 +31,7 @@
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nomor_lambung}}</td>
                     <td class="align-middle table-pdf text-pdf">{{$d->vendor->nama}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nopol}}</td>
+                    <td class="text-center align-middle table-pdf text-pdf">{{$d->nama_stnk}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->no_rangka}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->no_mesin}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->tipe}}</td>
