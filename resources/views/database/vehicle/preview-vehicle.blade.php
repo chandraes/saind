@@ -13,6 +13,7 @@
                 <th class="text-center align-middle table-pdf text-pdf" style="height: 35px">NO</th>
                 <th class="text-center align-middle table-pdf text-pdf" style="height: 35px">NOLAM</th>
                 <th class="text-center align-middle table-pdf text-pdf">VENDOR</th>
+                <th class="text-center align-middle table-pdf text-pdf">PERUSAHAAN</th>
                 <th class="text-center align-middle table-pdf text-pdf">NOPOL</th>
                 <th class="text-center align-middle table-pdf text-pdf">NAMA STNK</th>
                 <th class="text-center align-middle table-pdf text-pdf">NO RANGKA</th>
@@ -30,6 +31,7 @@
                     <td class="text-center align-middle table-pdf text-pdf" style="height: 35px">{{$loop->iteration}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nomor_lambung}}</td>
                     <td class="align-middle table-pdf text-pdf">{{$d->vendor->nama}}</td>
+                    <td class="align-middle table-pdf text-pdf">{{$d->vendor->perusahaan}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nopol}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->nama_stnk}}</td>
                     <td class="text-center align-middle table-pdf text-pdf">{{$d->no_rangka}}</td>

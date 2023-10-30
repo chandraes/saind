@@ -49,6 +49,7 @@
             <th class="text-center align-middle">No</th>
             <th class="text-center align-middle">NOLAM</th>
             <th class="text-center align-middle">Vendor</th>
+            <th class="text-center align-middle">Perusahaan</th>
             <th class="text-center align-middle">Nopol</th>
             <th class="text-center align-middle">Nama STNK</th>
             <th class="text-center align-middle">No Rangka</th>
@@ -71,6 +72,7 @@
                 </a>
             </td>
             <td class="align-middle">{{$d->vendor->nama}}</td>
+            <td class="align-middle">{{$d->vendor->perusahaan}}</td>
             <td class="text-center align-middle">{{$d->nopol}}</td>
             <td class="text-center align-middle">{{$d->nama_stnk}}</td>
             <td class="text-center align-middle">{{$d->no_rangka}}</td>
