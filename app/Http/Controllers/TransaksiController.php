@@ -64,6 +64,16 @@ class TransaksiController extends Controller
             'tonase' => 'required|numeric',
         ]);
 
+        $data['harga_customer'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+
+        $vendor = $transaksi->kas_uang_jalan->vendor->pembayaran;
+
+        if ($vendor == 'opname') {
+            $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+        } elseif ($vendor == 'titipan') {
+            $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+        }
+
         $data['status'] = 2;
         $data['tanggal_muat'] = date('Y-m-d');
 
@@ -93,26 +103,26 @@ class TransaksiController extends Controller
         $data['tanggal_bongkar'] = date('Y-m-d');
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
-            $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+            $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
         } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
-            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
         }
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
 
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
 
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
 
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
 
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
-        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'];
+        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'];
 
         $transaksi->update($data);
 
@@ -298,17 +308,17 @@ class TransaksiController extends Controller
         ]);
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
-            $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+            $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
         } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
-            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
+            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
         }
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $transaksi->kas_uang_jalan->customer->id)->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
+            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;

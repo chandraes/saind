@@ -8,25 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Transaksi extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'kas_uang_jalan_id',
-        'tanggal_muat',
-        'tanggal_bongkar',
-        'nota_muat',
-        'tonase',
-        'nota_bongkar',
-        'timbangan_bongkar',
-        'status',
-        'nominal_tagihan',
-        'nominal_bayar',
-        'nominal_bonus',
-        'profit',
-        'tagihan',
-        'bayar',
-        'bonus',
-        'void',
-        'alasan',
-    ];
+    
+    protected $guarded = [];
 
     public function kas_uang_jalan()
     {

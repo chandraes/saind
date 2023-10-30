@@ -168,14 +168,7 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->jarak}}</td>
-                <td class="text-center align-middle">
-                    @if ($d->kas_uang_jalan->vendor->pembayaran == 'opname')
-                    {{number_format($d->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $d->kas_uang_jalan->rute_id)->where('customer_id', $d->kas_uang_jalan->customer_id)->first()->opname, 0, ',', '.')}}
-                    @elseif($d->kas_uang_jalan->vendor->pembayaran == 'titipan')
-                    {{number_format($d->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $d->kas_uang_jalan->rute_id)->where('customer_id', $d->kas_uang_jalan->customer_id)->first()->titipan, 0, ',', '.')}}
-                    @endif
-
-                </td>
+                <td class="text-center align-middle">{{number_format($d->harga_vendor, 0, ',', '.')}}</td>
                 <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
                 <td class="text-center align-middle">{{$d->tonase}}</td>

@@ -162,6 +162,7 @@ class FormKasUangJalanController extends Controller
         ]);
 
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
+        $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
         $data['vendor_id'] = $data['p_vendor'];

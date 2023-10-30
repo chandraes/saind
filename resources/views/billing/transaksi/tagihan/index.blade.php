@@ -85,9 +85,7 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->jarak}}</td>
                 <td class="text-center align-middle">
-                    {{number_format($d->kas_uang_jalan->customer->customer_tagihan->where('customer_id', $d->kas_uang_jalan->customer_id)
-                                                                    ->where('rute_id', $d->kas_uang_jalan->rute_id)
-                                                                    ->first()->harga_tagihan, 0, ',', '.')}}
+                    {{number_format($d->harga_customer, 0, ',', '.')}}
                 </td>
                 @if ($customer->tanggal_muat == 1)
                 <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
