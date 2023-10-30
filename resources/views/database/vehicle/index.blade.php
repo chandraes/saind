@@ -47,7 +47,7 @@
     <thead class="table-success">
         <tr>
             <th class="text-center align-middle">No</th>
-            <th class="text-center align-middle">Nomor Lambung</th>
+            <th class="text-center align-middle">NOLAM</th>
             <th class="text-center align-middle">Vendor</th>
             <th class="text-center align-middle">Nopol</th>
             <th class="text-center align-middle">Nama STNK</th>

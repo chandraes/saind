@@ -14,6 +14,7 @@
                 <th class="text-center align-middle table-pdf text-pdf" style="height: 35px">NOLAM</th>
                 <th class="text-center align-middle table-pdf text-pdf">VENDOR</th>
                 <th class="text-center align-middle table-pdf text-pdf">NOPOL</th>
+                <th class="text-center align-middle table-pdf text-pdf">NAMA STNK</th>
                 <th class="text-center align-middle table-pdf text-pdf">NO RANGKA</th>
                 <th class="text-center align-middle table-pdf text-pdf">NO MESIN</th>
                 <th class="text-center align-middle table-pdf text-pdf">TIPE</th>
