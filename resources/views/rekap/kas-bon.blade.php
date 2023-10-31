@@ -139,7 +139,7 @@
                     <td class="text-center align-middle">{{$c->tanggal}}</td>
                     <td class="text-center align-middle">{{$c->karyawan->nama}}</td>
                     <td class="text-center align-middle">
-                        @if ($c->cicilan == 1)
+                        @if ($c->nomonal != $c->sisa_kas)
                             {{number_format($c->sisa_kas, 0,',','.')}}
                         @else
                             {{number_format($c->nominal, 0,',','.')}}
