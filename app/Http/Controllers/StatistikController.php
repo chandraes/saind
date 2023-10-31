@@ -33,13 +33,18 @@ class StatistikController extends Controller
                             ->where('transaksis.void', 0)
                             ->get();
 
-        $status = ['aktif', 'proses'];
 
-        $vehicle = Vehicle::whereIn('status', $status)->orderBy('nomor_lambung')
+        $vehicle = Vehicle::orderBy('nomor_lambung')
                     ->limit(10)
                     ->offset($offset)
                     ->get();
-
+        if ($vehicle->count() == 0) {
+            $offset = 0;
+            $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->limit(10)
+                    ->offset($offset)
+                    ->get();
+        }
         return view('rekap.statistik.profit-bulanan', [
             'data' => $data,
             'bulan' => $bulan,

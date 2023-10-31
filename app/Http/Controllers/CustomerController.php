@@ -67,6 +67,9 @@ class CustomerController extends Controller
                 'tagihan_dari' => 'required',
         ]);
 
+        $rute = $data['rute'];
+        unset($data['rute']);
+
         $data['created_by'] = auth()->id();
 
         if (array_key_exists('ppn', $data)) {
@@ -106,14 +109,14 @@ class CustomerController extends Controller
         }
 
 
-            $customer = Customer::create($data);
+        $customer = Customer::create($data);
 
-            foreach ($data['rute'] as $rute) {
-                CustomerRute::create([
-                    'customer_id' => $customer->id,
-                    'rute_id' => $rute,
-                ]);
-            }
+        foreach ($rute as $r) {
+            CustomerRute::create([
+                'customer_id' => $customer->id,
+                'rute_id' => $r,
+            ]);
+        }
 
         return redirect()->route('customer.tagihan', $customer->id);
     }

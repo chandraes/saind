@@ -3,19 +3,27 @@
 <div class="container-fluid">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u></u></h1>
+            <h1><u>Statistik Profit</u></h1>
             <h1>{{$nama_bulan}} {{$tahun}}</h1>
         </div>
     </div>
     @include('swal')
-    {{-- <form action="{{route('print-rekap-gaji')}}" method="get">
-        <input type="hidden" name="bulan" value="{{$bulan_angka}}">
-        <input type="hidden" name="tahun" value="{{$tahun}}">
-        {{-- <button type="submit" class="btn btn-success mb-3">Cetak Rekap gaji Karyawan</button> --}}
-
-    {{-- form get offset --}}
+    <div class="flex-row justify-content-between mt-3">
+        <div class="col-md-6">
+            <table class="table">
+                <tr class="text-center">
+                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
+                                width="30"> Dashboard</a></td>
+                    <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
+                                width="30"> REKAP</a></td>
+                    <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/document.svg')}}" alt="dokumen"
+                                    width="30"> Print Rekap</a></td>
+                </tr>
+            </table>
+        </div>
+    </div>
     <div class="row">
-        <div class="col-6">
+        <div class="col-6 ">
             <div class="btn-group" role="group" aria-label="Button group name">
 
                 @if ($offset > 0)
@@ -23,38 +31,45 @@
                     <input type="hidden" name="offset" value="{{$offset-10}}">
                     <input type="hidden" name="bulan" value="{{$bulan_angka}}">
                     <input type="hidden" name="tahun" value="{{$tahun}}">
-                    <button type="submit" class="btn btn-primary m-3">Sebelumnya</button>
+                    <button type="submit" class="btn btn-primary m-3"><i class="fa fa-arrow-left"></i> Sebelumnya</button>
                 </form>
                 @endif
-                <form action="{{route('statisik.profit-bulanan')}}" method="get">
-                    <input type="hidden" name="offset" value="{{$offset+10}}">
-                    <input type="hidden" name="bulan" value="{{$bulan_angka}}">
-                    <input type="hidden" name="tahun" value="{{$tahun}}">
-                    <button type="submit" class="btn btn-success m-3">Selanjutnya</button>
-                </form>
+                @if ($data->count() > 0)
+                    <form action="{{route('statisik.profit-bulanan')}}" method="get">
+                        <input type="hidden" name="offset" value="{{$offset+10}}">
+                        <input type="hidden" name="bulan" value="{{$bulan_angka}}">
+                        <input type="hidden" name="tahun" value="{{$tahun}}">
+                        <button type="submit" class="btn btn-success m-3">Selanjutnya
+                            {{-- fa row right icon --}}
+                            <i class="fa fa-arrow-right"></i>
+                        </button>
+                    </form>
+                @endif
+
             </div>
         </div>
-
-
-
     </div>
 
-    <div style="font-size:12px">
+    <div style="font-size: 15px">
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
                 <tr>
                     <td class="text-center align-middle">Tanggal</td>
                     @foreach ($vehicle as $v)
-                    <td class="text-center align-middle">{{$v->nomor_lambung}}</td>
+                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
+                        style="background-color: red"
+                    @endif>{{$v->nomor_lambung}}</td>
                     @endforeach
                 </tr>
             </thead>
             <tbody>
                 @for ($i = 1; $i <= $date; $i++)
                 <tr>
-                    <td class="text-center align-middle">{{$i}}</td>
+                    <td class="text-center align-middle" style="width: 8%">{{$i}}</td>
                         @foreach ($vehicle as $v)
-                        <td class="text-center align-middle">
+                        <td class="text-center align-middle" @if ($v->status == 'nonaktif')
+                            style="background-color: red"
+                        @endif>
                             @php
                                 $profit = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d', strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->profit ?? 0;
                             @endphp
@@ -64,17 +79,30 @@
                 </tr>
                 @endfor
                 <tr>
-                    <td class="text-center align-middle">Total</td>
+                    <td class="text-center align-middle">
+                        <strong>Total</strong>
+                    </td>
                     @foreach ($vehicle as $v)
                     @php
                     $total = $data->where('nomor_lambung', $v->nomor_lambung)->sum('profit') ;
                     @endphp
-                    <td class="text-center align-middle">
+                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
+                        style="background-color: red"
+                    @endif>
                         <strong>{{number_format($total, 0, ',', '.')}}</strong>
                     </td>
                     @endforeach
                 </tr>
             </tbody>
+            <tfoot>
+                <tr>
+                    <td><strong>Grand Total</strong></td>
+                    <td colspan="{{$vehicle->count()}}">
+                        <strong>Rp. {{$data ? number_format($data->sum('profit'), 0, ',', '.') : 0}}</strong>
+                    </td>
+                </tr>
+
+            </tfoot>
         </table>
     </div>
 </div>

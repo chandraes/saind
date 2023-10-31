@@ -29,6 +29,8 @@ class RuteController extends Controller
             'uang_jalan' => 'required',
         ]);
 
+        $data['uang_jalan'] = str_replace('.', '', $data['uang_jalan']);
+
         $data['user_id'] = auth()->id();
 
         Rute::create($data);
@@ -47,6 +49,8 @@ class RuteController extends Controller
             'jarak' => 'required|numeric',
             'uang_jalan' => 'required',
         ]);
+
+        $data['uang_jalan'] = str_replace('.', '', $data['uang_jalan']);
 
         $data['edited_by'] = auth()->id();
 
