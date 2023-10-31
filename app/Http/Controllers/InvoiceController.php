@@ -75,6 +75,17 @@ class InvoiceController extends Controller
 
             $store = KasBesar::create($data);
 
+            $invoiceSisa = InvoiceTagihan::where('customer_id', $invoice->customer_id)->where('lunas', 0)->get();
+
+            $invoiceSisaString = '';
+
+            if ($invoiceSisa->count() > 0) {
+                foreach ($invoiceSisa as $v) {
+                    $invoiceSisaString .= $v->periode.' : Rp. '.number_format($v->sisa_tagihan, 0, ',', '.');
+                    $invoiceSisaString .= "\n";
+                }
+            }
+
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Invoice Tagihan*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -90,6 +101,7 @@ class InvoiceController extends Controller
                 "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                $invoiceSisaString."\n".
                 "Terima kasih 🙏🙏🙏\n";
             $send = new StarSender($group->nama_group, $pesan);
             $res = $send->sendGroup();
