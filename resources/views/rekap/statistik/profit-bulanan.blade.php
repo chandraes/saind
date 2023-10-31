@@ -16,8 +16,16 @@
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
-                    <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/document.svg')}}" alt="dokumen"
-                                    width="30"> Print Rekap</a></td>
+                    <td>
+                        <form target="_blank" action="{{route('statistik.profit-bulanan.print')}}" method="get" >
+                            <input type="hidden" name="offset" value="{{$offset}}">
+                            <input type="hidden" name="bulan" value="{{$bulan_angka}}">
+                            <input type="hidden" name="tahun" value="{{$tahun}}">
+                            <button class="btn" type="submit">
+                                <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Rekap
+                            </button>
+                        </form>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -25,27 +33,26 @@
     <div class="row">
         <div class="col-6 ">
             <div class="btn-group" role="group" aria-label="Button group name">
-
                 @if ($offset > 0)
                 <form action="{{route('statisik.profit-bulanan')}}" method="get">
                     <input type="hidden" name="offset" value="{{$offset-10}}">
                     <input type="hidden" name="bulan" value="{{$bulan_angka}}">
                     <input type="hidden" name="tahun" value="{{$tahun}}">
-                    <button type="submit" class="btn btn-primary m-3"><i class="fa fa-arrow-left"></i> Sebelumnya</button>
+                    <button type="submit" class="btn btn-primary m-3"><i class="fa fa-arrow-left"></i>
+                        Sebelumnya</button>
                 </form>
                 @endif
                 @if ($data->count() > 0)
-                    <form action="{{route('statisik.profit-bulanan')}}" method="get">
-                        <input type="hidden" name="offset" value="{{$offset+10}}">
-                        <input type="hidden" name="bulan" value="{{$bulan_angka}}">
-                        <input type="hidden" name="tahun" value="{{$tahun}}">
-                        <button type="submit" class="btn btn-success m-3">Selanjutnya
-                            {{-- fa row right icon --}}
-                            <i class="fa fa-arrow-right"></i>
-                        </button>
-                    </form>
+                <form action="{{route('statisik.profit-bulanan')}}" method="get">
+                    <input type="hidden" name="offset" value="{{$offset+10}}">
+                    <input type="hidden" name="bulan" value="{{$bulan_angka}}">
+                    <input type="hidden" name="tahun" value="{{$tahun}}">
+                    <button type="submit" class="btn btn-success m-3">Selanjutnya
+                        {{-- fa row right icon --}}
+                        <i class="fa fa-arrow-right"></i>
+                    </button>
+                </form>
                 @endif
-
             </div>
         </div>
     </div>
@@ -58,41 +65,41 @@
                     @foreach ($vehicle as $v)
                     <td class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red"
-                    @endif>{{$v->nomor_lambung}}</td>
+                        @endif>{{$v->nomor_lambung}}</td>
                     @endforeach
                 </tr>
             </thead>
             <tbody>
-                @for ($i = 1; $i <= $date; $i++)
-                <tr>
+                @for ($i = 1; $i <= $date; $i++) <tr>
                     <td class="text-center align-middle" style="width: 8%">{{$i}}</td>
-                        @foreach ($vehicle as $v)
-                        <td class="text-center align-middle" @if ($v->status == 'nonaktif')
-                            style="background-color: red"
-                        @endif>
-                            @php
-                                $profit = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d', strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->profit ?? 0;
-                            @endphp
-                            {{number_format($profit, 0, ',', '.')}}
-                        </td>
-                        @endforeach
-                </tr>
-                @endfor
-                <tr>
-                    <td class="text-center align-middle">
-                        <strong>Total</strong>
-                    </td>
                     @foreach ($vehicle as $v)
-                    @php
-                    $total = $data->where('nomor_lambung', $v->nomor_lambung)->sum('profit') ;
-                    @endphp
                     <td class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red"
-                    @endif>
-                        <strong>{{number_format($total, 0, ',', '.')}}</strong>
+                        @endif>
+                        @php
+                        $profit = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d',
+                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->profit ?? 0;
+                        @endphp
+                        {{number_format($profit, 0, ',', '.')}}
                     </td>
                     @endforeach
-                </tr>
+                    </tr>
+                    @endfor
+                    <tr>
+                        <td class="text-center align-middle">
+                            <strong>Total</strong>
+                        </td>
+                        @foreach ($vehicle as $v)
+                        @php
+                        $total = $data->where('nomor_lambung', $v->nomor_lambung)->sum('profit') ;
+                        @endphp
+                        <td class="text-center align-middle" @if ($v->status == 'nonaktif')
+                            style="background-color: red"
+                            @endif>
+                            <strong>{{number_format($total, 0, ',', '.')}}</strong>
+                        </td>
+                        @endforeach
+                    </tr>
             </tbody>
             <tfoot>
                 <tr>
@@ -101,7 +108,6 @@
                         <strong>Rp. {{$data ? number_format($data->sum('profit'), 0, ',', '.') : 0}}</strong>
                     </td>
                 </tr>
-
             </tfoot>
         </table>
     </div>
