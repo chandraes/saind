@@ -15,6 +15,7 @@
             </a>
         </div>
         @endif
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('billing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/billing.svg')}}" alt="" width="100">
@@ -27,6 +28,7 @@
                 <h2>Rekap</h2>
             </a>
         </div>
+        @endif
         @if (auth()->user()->role === 'admin')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('dokumen')}}" class="text-decoration-none">
@@ -40,6 +42,12 @@
                 <h2>Pengaturan</h2>
             </a>
         </div>
+        @endif
+        @if (auth()->user()->role === 'vendor')
+        <a href="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
+            <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
+            <h2>Kas Vendor</h2>
+        </a>
         @endif
     </div>
 </div>
