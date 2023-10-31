@@ -44,7 +44,7 @@
                     <td class="text-center align-middle">{{$d->username}}</td>
                     <td class="text-center align-middle">{{$d->name}}</td>
                     <td class="text-center align-middle">{{$d->role}}</td>
-                    <td class="text-center align-middle">{{$d->vendor ? $d : ''}}</td>
+                    <td class="text-center align-middle">{{$d->vendor ? $d->vendor : ''}}</td>
                     <td class="text-center align-middle">
                         {{-- <a href="{{route('pengguna.edit', $d->id)}}" class="btn btn-warning btn-sm">Edit</a> --}}
                         <!-- Modal trigger button -->

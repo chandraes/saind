@@ -19,8 +19,6 @@
             <thead class="table-pdf text-pdf table-success">
                 <tr class="table-pdf text-pdf">
                     <th class="table-pdf text-pdf text-center align-middle">No</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Tanggal UJ</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Kode</th>
                     <th class="table-pdf text-pdf text-center align-middle">Nomor Lambung</th>
                     <th class="table-pdf text-pdf text-center align-middle">Vendor</th>
                     <th class="table-pdf text-pdf text-center align-middle">Rute</th>
@@ -66,11 +64,6 @@
                 <tr>
 
                     <td class="table-pdf text-pdf text-center align-middle">{{$loop->iteration}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">
-                        <strong>UJ{{sprintf("%02d",
-                            $d->kas_uang_jalan->nomor_uang_jalan)}}</strong>
-                    </td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
@@ -110,7 +103,7 @@
             <tfoot>
                 <tr>
                     <td class="text-center align-middle"
-                        colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                        colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                     ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>Total</strong></td>
                     <td align="right" class="table-pdf text-pdf align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
@@ -118,7 +111,7 @@
                 </tr>
                 <tr>
                     <td class="text-center align-middle"
-                        colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                        colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                     ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>PPN</strong></td>
                     <td align="right" class="table-pdf text-pdf align-middle">
@@ -129,7 +122,7 @@
                 </tr>
                 <tr>
                     <td class="align-middle"
-                        colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                        colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                     ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                     </td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>PPh</strong></td>
@@ -141,7 +134,7 @@
                 </tr>
                 <tr>
                     <td class="align-middle"
-                        colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                        colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                     ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                     </td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>Tagihan</strong></td>

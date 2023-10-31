@@ -120,7 +120,7 @@
                     {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
                 </td>
                 <td class="text-center align-middle">
-
+                    @if (auth()->user()->role === 'admin')
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
                         Edit
                       </button>
@@ -173,6 +173,8 @@
                             </div>
                         </div>
                     </div>
+                    @endif
+
                 </td>
             </tr>
             <script>

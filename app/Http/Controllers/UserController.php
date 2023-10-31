@@ -14,7 +14,10 @@ class UserController extends Controller
     public function index()
     {
         $vendor = Vendor::select('id', 'nama')->where('status', 'aktif')->get();
-        $data = User::select('id', 'name', 'username', 'role')->get();
+        $data = User::leftJoin('vendors', 'users.vendor_id', '=', 'vendors.id')
+            ->select('users.*', 'vendors.nama as vendor')
+            ->orderBy('users.role', 'asc')
+            ->get();
         return view('pengguna.index', compact('data','vendor'));
     }
 
