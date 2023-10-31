@@ -24,8 +24,8 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing.transaksi.invoice.index')}}"><img src="{{asset('images/invoice.svg')}}"
-                                alt="dokumen" width="30"> Invoice</a></td>
+                    <td><a href="{{route('billing.transaksi.index')}}"><img src="{{asset('images/transaction.svg')}}"
+                                alt="dokumen" width="30"> Transaksi</a></td>
                 </tr>
             </table>
         </div>

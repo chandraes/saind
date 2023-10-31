@@ -142,7 +142,7 @@
         </div>
         @endif
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="{{route('statisik.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik.svg')}}" alt="" width="100">
                 <h2>Statistik</h2>
             </a>
