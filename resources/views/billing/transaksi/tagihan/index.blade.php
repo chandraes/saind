@@ -76,10 +76,10 @@
                 {{-- check list --}}
                 {{-- <td class="text-center align-middle">
                     {{-- checklist on check push $d->id to $selectedData --}}
-                    <input type="checkbox" name="selectedData[]" id="selectedData" value="{{$d->id}}"
+                    {{-- <input type="checkbox" name="selectedData[]" id="selectedData" value="{{$d->id}}"
                         onclick="checklist(this, {{$d->id}})">
 
-                </td> --}}
+                </td> --}} 
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
