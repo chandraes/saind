@@ -54,6 +54,8 @@ class FormDevidenController extends Controller
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $month = Carbon::now()->locale('id')->monthName;
 
+        $isiPesan = [];
+
         foreach ($persentase as $persen) {
 
             $nilai = $data['nominal_transaksi'] * $persen->persentase / 100;
@@ -94,12 +96,19 @@ class FormDevidenController extends Controller
                             "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
-                $send = new StarSender($group->nama_group, $pesan);
-                $res = $send->sendGroup();
+
+                array_push($isiPesan, $pesan);
 
             }
         }
 
+        // looping $isiPesan
+        foreach ($isiPesan as $pesan) {
+
+            $send = new StarSender($group->nama_group, $pesan);
+            $res = $send->sendGroup();
+            
+        }
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
     }
