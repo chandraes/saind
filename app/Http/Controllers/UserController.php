@@ -90,6 +90,7 @@ class UserController extends Controller
                 "email" => $data['email'],
                 "password" => $data['password'],
                 "role" => $data['role'],
+                "vendor_id" => $data['vendor_id'] ? $data['vendor_id'] : null,
             ]);
         } else {
             User::findOrFail($id)->update([
@@ -97,6 +98,7 @@ class UserController extends Controller
                 "username" => $data['username'],
                 "email" => $data['email'],
                 "role" => $data['role'],
+                "vendor_id" => $data['vendor_id'] ? $data['vendor_id'] : null,
             ]);
         }
 
