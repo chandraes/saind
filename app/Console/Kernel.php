@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('app:loan-vendor')->monthly();
         // inspire every minute
-        $schedule->command('inspire')->everyMinute();
+        $schedule->command('app:kirim-wa')->everyMinute();
     }
 
     /**
