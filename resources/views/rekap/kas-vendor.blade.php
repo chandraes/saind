@@ -144,8 +144,7 @@
                     <td class="text-center align-middle"><strong>Grand Total</strong> </td>
                     <td class="text-center align-middle">{{number_format($data->sum('pinjaman'), 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($data->sum('bayar'), 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman') - $data->sum('bayar'),
-                        0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($sisaTerakhir, 0, ',','.')}}</td>
                     <td></td>
                 </tr>
                 {{-- <tr>

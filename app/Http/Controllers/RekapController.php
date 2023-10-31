@@ -310,6 +310,7 @@ class RekapController extends Controller
         $dataSebelumnya = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
 
         // $data = $vendor->kas_vendor()->get();
+        $sisaTerakhir = $data->last()->sisa ?? 0;
 
         return view('rekap.kas-vendor', [
             'data' => $data,
@@ -321,6 +322,7 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+            'sisaTerakhir' => $sisaTerakhir,
         ]);
     }
 
@@ -341,7 +343,7 @@ class RekapController extends Controller
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
-
+        $sisaTerakhir = $data->last()->sisa ?? 0;
         $pdf = PDF::loadview('rekap.preview-kas-vendor', [
             'data' => $data,
             'vendor' => $vendor,
@@ -352,6 +354,7 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+            'sisaTerakhir' => $sisaTerakhir,
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Rekap Kas Vendor '.$vendor->nama." ".$stringBulanNow.' '.$tahun.'.pdf');

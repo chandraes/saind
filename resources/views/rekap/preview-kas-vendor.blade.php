@@ -56,7 +56,7 @@
                     <td class="table-pdf text-pdf text-center align-middle"><strong>Grand Total</strong> </td>
                     <td class="table-pdf text-pdf text-center align-middle">{{number_format($data->sum('pinjaman'), 0, ',','.')}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{number_format($data->sum('bayar'), 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($data->sum('pinjaman') - $data->sum('bayar'),
+                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($sisaTerakhir,
                         0, ',','.')}}</td>
                 </tr>
             </tfoot>
