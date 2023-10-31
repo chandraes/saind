@@ -7,6 +7,7 @@
         </div>
     </div>
     @php
+        $selectedData = [];
         $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
         $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
         $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
@@ -36,10 +37,11 @@
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
+                {{-- <th class="text-center align-middle">Select</th> --}}
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Tanggal UJ</th>
                 <th class="text-center align-middle">Kode</th>
-                <th class="text-center align-middle">Nomor Lambung</th>
+                <th class="text-center align-middle">NOLAM</th>
                 <th class="text-center align-middle">Vendor</th>
                 <th class="text-center align-middle">Rute</th>
                 <th class="text-center align-middle">Jarak (Km)</th>
@@ -71,6 +73,13 @@
         <tbody>
             @foreach ($data as $d)
             <tr>
+                {{-- check list --}}
+                {{-- <td class="text-center align-middle">
+                    {{-- checklist on check push $d->id to $selectedData --}}
+                    <input type="checkbox" name="selectedData[]" id="selectedData" value="{{$d->id}}"
+                        onclick="checklist(this, {{$d->id}})">
+
+                </td> --}}
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
@@ -258,6 +267,7 @@
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
         <form action="{{route('transaksi.nota-tagihan.lanjut', $customer)}}" method="post" id="lanjutForm">
             @csrf
+            <input type="hidden" name="total_tagihan[]">
             <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}">
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
         </form>
@@ -276,6 +286,8 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     // hide alert after 5 seconds
+
+
 
 
     $(document).ready(function() {

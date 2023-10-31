@@ -78,9 +78,8 @@ class InvoiceController extends Controller
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Invoice Tagihan*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                 "*T".sprintf("%02d",$data['nomor_kode_tagihan'])."*\n\n".
                  "Tambang : ".$invoice->customer->singkatan."\n".
-                "Periode : ".$invoice->periode."\n\n".
+                "Periode : ".$invoice->no_invoice."\n\n".
                  "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                  "Ditransfer ke rek:\n\n".
                 "Bank     : ".$data['bank']."\n".
@@ -107,7 +106,7 @@ class InvoiceController extends Controller
 
         $data['cicilan'] = str_replace('.', '', $data['cicilan']);
 
-          if($data['cicilan'] > $invoice->sisa_tagihan)
+        if($data['cicilan'] > $invoice->sisa_tagihan)
         {
             return redirect()->back()->with('error', 'Cicilan tidak boleh lebih besar dari sisa tagihan');
         }
@@ -201,6 +200,7 @@ class InvoiceController extends Controller
         $data['uraian'] = "Pembayaran ".' - '.$invoice->periode;
         $data['bayar'] = $total_bayar;
         $data['vendor_id'] = $invoice->vendor_id;
+        $data['invoice_bayar_id'] = $invoice->id;
 
         if ($last) {
             $data['sisa'] = $last->sisa - $total_bayar;
@@ -268,7 +268,6 @@ class InvoiceController extends Controller
             $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Invoice Bonus*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "*T".sprintf("%02d",$data['nomor_kode_tagihan'])."*\n\n".
                     "Sponsor : ".$invoice->sponsor->nama."\n".
                     "Periode : ".$invoice->periode."\n\n".
                     "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
