@@ -21,7 +21,7 @@
                 <th class="text-center align-middle table-pdf text-pdf">TIPE</th>
                 <th class="text-center align-middle table-pdf text-pdf">INDEX</th>
                 <th class="text-center align-middle table-pdf text-pdf">TAHUN</th>
-                <th class="text-center align-middle table-pdf text-pdf">NO GPS</th>
+                <th class="text-center align-middle table-pdf text-pdf">GPS</th>
                 <th class="text-center align-middle table-pdf text-pdf">STATUS</th>
             </tr>
             </thead>
@@ -51,7 +51,11 @@
                             {{$d->tahun}}
                         </span>
                     </td>
-                    <td class="text-center align-middle table-pdf text-pdf">{{$d->no_kartu_gps}}</td>
+                    <td class="text-center align-middle table-pdf text-pdf">
+                        @if ($d->gps == 1)
+                        <span>V</span>
+                        @endif
+                    </td>
                     <td class="text-center align-middle table-pdf text-pdf">{{strtoupper($d->status)}}</td>
                 </tr>
                 @endforeach

@@ -57,7 +57,7 @@
             <th class="text-center align-middle">Tipe</th>
             <th class="text-center align-middle">Index</th>
             <th class="text-center align-middle">Tahun</th>
-            <th class="text-center align-middle">No. GPS</th>
+            <th class="text-center align-middle">GPS</th>
             <th class="text-center align-middle">Status</th>
             <th class="text-center align-middle">Action</th>
         </tr>
@@ -82,7 +82,11 @@
                 text-danger
             @endif">{{$d->no_index}}</td>
             <td class="text-center align-middle @if ($d->tahun < 2016) text-danger @endif">{{$d->tahun}}</td>
-            <td class="text-center align-middle">{{$d->no_kartu_gps}}</td>
+            <td class="text-center align-middle">
+                @if ($d->gps == 1)
+                <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
+                @endif
+            </td>
             <td class="text-center align-middle">
                 @if ($d->status == 'aktif')
                 <h5><span class="badge bg-success">Aktif</span></h5>

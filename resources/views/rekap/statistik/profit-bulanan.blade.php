@@ -8,11 +8,37 @@
         </div>
     </div>
     @include('swal')
-    <form action="{{route('print-rekap-gaji')}}" method="get">
+    {{-- <form action="{{route('print-rekap-gaji')}}" method="get">
         <input type="hidden" name="bulan" value="{{$bulan_angka}}">
         <input type="hidden" name="tahun" value="{{$tahun}}">
         {{-- <button type="submit" class="btn btn-success mb-3">Cetak Rekap gaji Karyawan</button> --}}
-    </form>
+
+    {{-- form get offset --}}
+    <div class="row">
+        <div class="col-6">
+            <div class="btn-group" role="group" aria-label="Button group name">
+
+                @if ($offset > 0)
+                <form action="{{route('statisik.profit-bulanan')}}" method="get">
+                    <input type="hidden" name="offset" value="{{$offset-10}}">
+                    <input type="hidden" name="bulan" value="{{$bulan_angka}}">
+                    <input type="hidden" name="tahun" value="{{$tahun}}">
+                    <button type="submit" class="btn btn-primary m-3">Sebelumnya</button>
+                </form>
+                @endif
+                <form action="{{route('statisik.profit-bulanan')}}" method="get">
+                    <input type="hidden" name="offset" value="{{$offset+10}}">
+                    <input type="hidden" name="bulan" value="{{$bulan_angka}}">
+                    <input type="hidden" name="tahun" value="{{$tahun}}">
+                    <button type="submit" class="btn btn-success m-3">Selanjutnya</button>
+                </form>
+            </div>
+        </div>
+
+
+
+    </div>
+
     <div style="font-size:12px">
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
@@ -24,7 +50,6 @@
                 </tr>
             </thead>
             <tbody>
-
                 @for ($i = 1; $i <= $date; $i++)
                 <tr>
                     <td class="text-center align-middle">{{$i}}</td>

@@ -48,6 +48,7 @@ class StatistikController extends Controller
             'vehicle' => $vehicle,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
+            'offset' => $offset,
         ]);
     }
 }
