@@ -106,7 +106,8 @@
              $('#harga_satuan').maskMoney({
                 thousands: '.',
                 decimal: ',',
-                precision: 0
+                precision: 0,
+                allowZero: true,
             });
         });
 
@@ -194,7 +195,8 @@
             $('#total').maskMoney({
                 thousands: '.',
                 decimal: ',',
-                precision: 0
+                precision: 0,
+                allowZero: true,
             });
             $('#total').maskMoney('mask', (total));
         }

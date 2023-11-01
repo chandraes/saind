@@ -284,17 +284,20 @@
             $('#gaji_pokok').maskMoney({
                 thousands: '.',
                 decimal: ',',
-                precision: 0
+                precision: 0,
+                allowZero: true,
             });
             $('#tunjangan_jabatan').maskMoney({
                 thousands: '.',
                 decimal: ',',
-                precision: 0
+                precision: 0,
+                allowZero: true,
             });
             $('#tunjangan_keluarga').maskMoney({
                 thousands: '.',
                 decimal: ',',
-                precision: 0
+                precision: 0,
+                allowZero: true,
             });
         });
 

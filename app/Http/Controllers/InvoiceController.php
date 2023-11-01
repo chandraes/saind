@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvoiceTagihan;
+use App\Models\InvoiceTagihanDetail;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
+use App\Models\Customer;
 use App\Models\KasBesar;
 use App\Models\KasVendor;
 use App\Models\Rekening;
@@ -33,6 +35,19 @@ class InvoiceController extends Controller
 
         return view('billing.transaksi.invoice.tagihan.index', [
             'data' => $invoice
+        ]);
+    }
+
+    public function invoice_tagihan_detail(InvoiceTagihan $invoice)
+    {
+        // $data = InvoiceTagihanDetail::where('invoice_tagihan_id', $invoice->id)->get();
+        $periode = $invoice->periode;
+        $customer = Customer::find($invoice->customer_id);
+
+        return view('billing.transaksi.invoice.tagihan.detail', [
+            'data' => $invoice->transaksi,
+            'customer' => $customer,
+            'periode' => $periode
         ]);
     }
 
@@ -194,6 +209,11 @@ class InvoiceController extends Controller
         return view('billing.transaksi.invoice.invoice-bayar', [
             'data' => $invoice
         ]);
+    }
+
+    public function invoice_bayar_detail(InvoiceBayar $invoiceBayar)
+    {
+
     }
 
     public function invoice_bayar_lunas(InvoiceBayar $invoice)

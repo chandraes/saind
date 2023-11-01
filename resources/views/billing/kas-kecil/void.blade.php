@@ -68,7 +68,8 @@
             $('#nominal_transaksi').maskMoney({
                 thousands: '.',
                 decimal: ',',
-                precision: 0
+                precision: 0,
+                allowZero: true
             });
         });
 

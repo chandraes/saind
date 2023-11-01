@@ -8,25 +8,30 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceTagihan extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'tanggal',
-        'periode',
-        'no_invoice',
-        'customer_id',
-        'total_tagihan',
-        'total_bayar',
-        'sisa_tagihan',
-        'lunas',
-    ];
+    protected $guarded = [];
 
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
-    // has many transaksi through invoice_tagihan_details
+    // has many transaksi from pivot table invoice_tagihan_details
+    public function invoice_tagihan_details()
+    {
+        return $this->hasMany(InvoiceTagihanDetail::class);
+    }
+
+
     public function transaksi()
     {
-        return $this->hasManyThrough(Transaksi::class, InvoiceTagihanDetail::class);
+        return $this->hasManyThrough(
+            Transaksi::class,
+            InvoiceTagihanDetail::class,
+            'invoice_tagihan_id',
+            'id',
+            'id',
+            'transaksi_id'
+        );
     }
+
 }

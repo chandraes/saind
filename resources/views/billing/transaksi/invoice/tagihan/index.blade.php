@@ -51,7 +51,7 @@
                 <td class="text-center align-middle">{{$d->tanggal}}</td>
                 <td class="text-center align-middle">{{$d->customer->singkatan}}</td>
                 <td class="text-center align-middle">
-                    {{$d->periode}}
+                    <a href="{{route('invoice.tagihan.detail', $d)}}"> {{$d->periode}}</a>
                 </td>
                 <td class="text-center align-middle">
                     {{number_format($d->total_tagihan, 0, ',', '.')}}

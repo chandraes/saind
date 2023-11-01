@@ -8,19 +8,28 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceBayar extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'tanggal',
-        'periode',
-        'no_invoice',
-        'vendor_id',
-        'total_bayar',
-        'bayar',
-        'sisa_bayar',
-        'lunas',
-    ];
+    protected $guarded = [];
 
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
+    }
+
+    public function invoice_bayar_details()
+    {
+        return $this->hasMany(InvoiceBayarDetail::class);
+    }
+
+
+    public function transaksi()
+    {
+        return $this->hasManyThrough(
+            Transaksi::class,
+            InvoiceBayarDetail::class,
+            'invoice_bayar_id',
+            'id',
+            'id',
+            'transaksi_id'
+        );
     }
 }

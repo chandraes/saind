@@ -8,8 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceBayarDetail extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'invoice_bayar_id',
-        'transaksi_id',
-    ];
+    protected $guarded = [];
+
+    public function invoice_bayar()
+    {
+        return $this->belongsTo(InvoiceBayar::class);
+    }
+
+    public function transaksi()
+    {
+        return $this->hasMany(Transaksi::class, 'transaksi_id');
+    }
 }

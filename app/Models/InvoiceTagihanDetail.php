@@ -8,8 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceTagihanDetail extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'invoice_tagihan_id',
-        'transaksi_id',
-    ];
+    protected $guarded = [];
+
+    public function invoice_tagihan()
+    {
+        return $this->belongsTo(InvoiceTagihan::class);
+    }
+
+    public function transaksi()
+    {
+        return $this->hasMany(Transaksi::class, 'transaksi_id');
+    }
 }
