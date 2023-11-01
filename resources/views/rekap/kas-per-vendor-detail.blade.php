@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-15 text-center">
-            <h1><u>Invoice Bayar</u></h1>
+            <h1><u>Detail Bayar</u></h1>
             <h1>{{$periode}}</h1>
         </div>
     </div>
@@ -27,10 +27,6 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing.transaksi.index')}}"><img src="{{asset('images/transaction.svg')}}"
-                                alt="dokumen" width="30"> Form Transaksi</a></td>
-                    <td><a href="{{route('invoice.bayar.index')}}"><img src="{{asset('images/invoice-bayar.svg')}}"
-                                    alt="dokumen" width="30"> Invoice Bayar</a></td>
                 </tr>
             </table>
         </div>
@@ -191,24 +187,6 @@
                 </td>
 
             </tr>
-            <script>
-                $('#masukForm{{$d->id}}').submit(function(e){
-                  e.preventDefault();
-
-                  Swal.fire({
-                      title: 'Apakah anda yakin data sudah benar?',
-                      icon: 'warning',
-                      showCancelButton: true,
-                      confirmButtonColor: '#3085d6',
-                      cancelButtonColor: '#6c757d',
-                      confirmButtonText: 'Ya, simpan!'
-                      }).then((result) => {
-                      if (result.isConfirmed) {
-                          this.submit();
-                      }
-                  })
-              });
-            </script>
             @endforeach
         </tbody>
         <tfoot>
@@ -291,30 +269,5 @@
         });
 
     });
-
-    $('#lanjutForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah anda yakin?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submit();
-                }
-            })
-        });
-
-    function toggleInputTambah() {
-        var value = document.getElementById('vendor_id').value;
-        if (value == '') {
-            document.getElementById('row-input').hidden = true;
-        } else {
-            document.getElementById('row-input').hidden = false;
-        }
-    }
 </script>
 @endpush
