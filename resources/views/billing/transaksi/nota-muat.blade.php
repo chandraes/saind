@@ -206,8 +206,6 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     // hide alert after 5 seconds
-
-
     $(document).ready(function() {
         $('#data-table').DataTable();
 

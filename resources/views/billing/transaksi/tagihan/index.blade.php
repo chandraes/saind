@@ -320,7 +320,11 @@
             {{-- <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}"> --}}
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilihan</button>
         </form>
-        <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}" target="_blank">Export</a>
+        <form target="_blank" action="{{route('transaksi.nota-tagihan.export', $customer)}}" method="get">
+            <input type="hidden" name="rute_id" value="{{$rute_id}}">
+            <button class="btn btn-success btn-lg" type="submit">Export</button>
+        </form>
+        {{-- <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}" target="_blank">Export</a> --}}
       </div>
 </div>
 

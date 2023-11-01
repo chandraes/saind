@@ -173,12 +173,27 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function tagihan_export(Customer $customer)
+    public function tagihan_export(Request $request, Customer $customer)
     {
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
+        $req = $request->validate([
+            'rute_id' => 'nullable|exists:rutes,id',
+        ]);
+
+        $rute_id = $req['rute_id'] ?? null;
+
+        if ($rute_id) {
+            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
+                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
+                            ->where('kuj.rute_id', $rute_id)
+                            ->select('transaksis.*')
+                            ->get();
+        } else {
+            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
                             ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
                             ->select('transaksis.*')
                             ->get();
+        }
+
 
         // get latest data from month before current month
         // dd($bulan);
