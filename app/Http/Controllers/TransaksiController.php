@@ -379,6 +379,16 @@ class TransaksiController extends Controller
 
     }
 
+    public function nota_tagihan_lanjut_pilih(Request $request)
+    {
+        $data = $request->validate([
+            'selectedData.*' => 'required',
+        ]);
+
+        dd($data);
+        $tagihan = Transaksi::whereIn('id', $data['selectedData'])->get();
+    }
+
     public function nota_bayar(Request $request)
     {
         $vendorId = $request->vendor_id;

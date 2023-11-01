@@ -37,8 +37,7 @@
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
-                {{-- <th class="text-center align-middle">Select</th> --}}
-                <th class="text-center align-middle">No</th>
+                <th class="text-center align-middle">Select</th>
                 <th class="text-center align-middle">Tanggal UJ</th>
                 <th class="text-center align-middle">Kode</th>
                 <th class="text-center align-middle">NOLAM</th>
@@ -71,16 +70,15 @@
             </tr>
         </thead>
         <tbody>
+            <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
+                @csrf
             @foreach ($data as $d)
             <tr>
                 {{-- check list --}}
-                {{-- <td class="text-center align-middle">
+                <td class="text-center align-middle">
                     {{-- checklist on check push $d->id to $selectedData --}}
-                    {{-- <input type="checkbox" name="selectedData[]" id="selectedData" value="{{$d->id}}"
-                        onclick="checklist(this, {{$d->id}})">
-
-                </td> --}} 
-                <td class="text-center align-middle">{{$loop->iteration}}</td>
+                    <input type="checkbox" name="selectedData[]" id="selectedData" value="{{$d->id}}">
+                </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
                     <div class="text-center">
@@ -265,11 +263,10 @@
 </div>
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-        <form action="{{route('transaksi.nota-tagihan.lanjut', $customer)}}" method="post" id="lanjutForm">
-            @csrf
-            <input type="hidden" name="total_tagihan[]">
-            <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}">
-            <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
+
+            {{-- <input type="hidden" name="total_tagihan[]"> --}}
+            {{-- <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}"> --}}
+            <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilih</button>
         </form>
         <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}" target="_blank">Export</a>
       </div>
@@ -286,9 +283,6 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     // hide alert after 5 seconds
-
-
-
 
     $(document).ready(function() {
         var table = $('#notaTable').DataTable({

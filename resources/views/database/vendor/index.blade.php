@@ -65,7 +65,9 @@
                 <td class="align-middle"><a href="{{route('vendor.show', $d->id)}}"><strong>{{$d->nama}}</strong></a></td>
                 <td class="align-middle">{{$d->perusahaan}}</td>
                 <td class="align-middle">{{$d->nickname}}</td>
-                <td class="text-center align-middle">
+                <td class="text-center align-middle @if ($d->pembayaran == 'titipan')
+                    text-danger
+                @endif">
                     {{strtoupper($d->pembayaran)}}
                 </td>
                 <td class="text-center align-middle">
@@ -82,7 +84,7 @@
                     <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
                     @endif
                 </td>
-                <td class="align-middle text-center @if($d->pembayaran == 'titipan' && $d->plafon_titipan > 20000000) text-danger @elseif($d->pembayaran == 'opname' && $d->plafon_titipan > 10000000) text-danger @endif">
+                <td class="align-middle text-center  @if ($d->pembayaran == 'titipan') text-danger @endif">
                     {{number_format($d->plafon_titipan,0,',','.')}}
                 </td>
                 <td class="align-middle text-center {{$d->plafon_lain > 10000000 ? 'text-danger' : ''}}">
