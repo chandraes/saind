@@ -28,7 +28,7 @@
                             style="background-color: red"
                         @endif>
                             @php
-                                $profit = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d', strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->profit ?? 0;
+                                $profit = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d', strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->sum('profit') ?? 0;
                             @endphp
                             {{number_format($profit, 0, ',', '.')}}
                         </td>
