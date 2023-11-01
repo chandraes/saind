@@ -265,7 +265,7 @@ class RekapController extends Controller
         return $pdf->stream('Rekap Nota Void '.$stringBulanNow.' '.$tahun.'.pdf');
     }
 
-    public function stock_barang()
+    public function stock_barang(Request $request)
     {
          // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
         $bulan = $request->bulan ?? date('m');
@@ -273,19 +273,16 @@ class RekapController extends Controller
         $dataTahun = RekapBarang::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
         $data = RekapBarang::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
-
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = RekapBarang::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
         // dd($bulan);
         return view('rekap.stock-barang', [
             'data' => $data,
             'dataTahun' => $dataTahun,
-            'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
             'tahun' => $tahun,
             'tahunSebelumnya' => $tahunSebelumnya,
@@ -779,7 +776,7 @@ class RekapController extends Controller
     public function kas_per_vendor_detail(Request $request, InvoiceBayar $invoiceBayar)
     {
         $vendor = Vendor::find($invoiceBayar->vendor_id);
-        
+
         if ($vendor->id != auth()->user()->vendor_id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
         }

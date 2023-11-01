@@ -23,10 +23,9 @@
 <div class="container-fluid mt-5">
     <form action="{{route('rekap.stock-barang')}}" method="get">
         <div class="row">
-
             <div class="col-md-3 mb-3">
                 <label for="bulan" class="form-label">Bulan</label>
-                <select class="form-select" name="bulan" id="bulan">
+                <select class="form-select" name="bulan" id="bulan" required>
                     <option value="1" {{$bulan=='01' ? 'selected' : '' }}>Januari</option>
                     <option value="2" {{$bulan=='02' ? 'selected' : '' }}>Februari</option>
                     <option value="3" {{$bulan=='03' ? 'selected' : '' }}>Maret</option>
@@ -43,7 +42,7 @@
             </div>
             <div class="col-md-3 mb-3">
                 <label for="tahun" class="form-label">Tahun</label>
-                <select class="form-select" name="tahun" id="tahun">
+                <select class="form-select" name="tahun" id="tahun" required>
                     @foreach ($dataTahun as $d)
                     <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
                     @endforeach
