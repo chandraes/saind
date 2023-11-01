@@ -143,8 +143,9 @@
                         id: id
                     },
                     success: function (data) {
-                        $('#vendor_id').val(data.nama);
-                        $('#p_vendor').val(data.id);
+                        $('#vendor_id').val(data.nama_vendor);
+                        $('#p_vendor').val(data.id_vendor);
+                        console.log(data);
                         if (data.transfer_ke == null || data.bank == null || data.no_rekening == null) {
                             // sweetalert
                             Swal.fire({

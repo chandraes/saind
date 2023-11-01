@@ -123,7 +123,9 @@ class FormKasUangJalanController extends Controller
 
     public function get_vendor(Request $request)
     {
-        $vehicle = Vehicle::join('vendors', 'vendors.id', 'vehicles.vendor_id')->find($request->id);
+        $vehicle = Vehicle::join('vendors', 'vendors.id', 'vehicles.vendor_id')
+                                ->select('vehicles.*', 'vendors.nama as nama_vendor', 'vendors.id as id_vendor')
+                                ->find($request->id);
         $data = $vehicle;
         return response()->json($data);
     }
