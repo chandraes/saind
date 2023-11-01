@@ -379,14 +379,48 @@ class TransaksiController extends Controller
 
     }
 
-    public function nota_tagihan_lanjut_pilih(Request $request)
+    public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
     {
         $data = $request->validate([
-            'selectedData.*' => 'required',
+            'selectedData' => 'required',
         ]);
+        // trim string selectedData
+        $data['selectedData'] = trim($data['selectedData'], ',');
+        // make string selectedData to array
+        $data['selectedData'] = explode(',', $data['selectedData']);
 
-        dd($data);
+        // dd($data['selectedData']);
+
         $tagihan = Transaksi::whereIn('id', $data['selectedData'])->get();
+
+        $total_tagihan = $tagihan->sum('nominal_tagihan');
+        // dd($customer);
+
+        $invoiceTagihan['tanggal'] = date('Y-m-d');
+        // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
+        $invoiceTagihan['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->max('no_invoice') + 1;
+        $invoiceTagihan['customer_id'] = $customer->id;
+        $invoiceTagihan['total_bayar'] = 0;
+        $invoiceTagihan['sisa_tagihan'] = $total_tagihan;
+        $invoiceTagihan['total_tagihan'] = $total_tagihan;
+        $invoiceTagihan['lunas'] = 0;
+        $invoiceTagihan['periode'] = "Periode ".$invoiceTagihan['no_invoice'];
+
+        $invoice = InvoiceTagihan::create($invoiceTagihan);
+
+        foreach ($tagihan as $key => $value) {
+            $value->update([
+                'tagihan' => 1,
+            ]);
+
+            InvoiceTagihanDetail::create([
+                'invoice_tagihan_id' => $invoice->id,
+                'transaksi_id' => $value->id,
+            ]);
+        }
+
+        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
+
     }
 
     public function nota_bayar(Request $request)

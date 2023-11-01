@@ -7,7 +7,7 @@
         </div>
     </div>
     @php
-        $selectedData = [];
+        // $selectedData = [];
         $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
         $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
         $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
@@ -37,7 +37,12 @@
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
-                <th class="text-center align-middle">Select</th>
+                <th class="text-center align-middle">
+                    Select
+                    {{-- select all --}}
+                    <input type="checkbox" onclick="checkAll(this)" id="checkAll">
+                </th>
+
                 <th class="text-center align-middle">Tanggal UJ</th>
                 <th class="text-center align-middle">Kode</th>
                 <th class="text-center align-middle">NOLAM</th>
@@ -70,14 +75,13 @@
             </tr>
         </thead>
         <tbody>
-            <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
-                @csrf
+
             @foreach ($data as $d)
             <tr>
                 {{-- check list --}}
                 <td class="text-center align-middle">
                     {{-- checklist on check push $d->id to $selectedData --}}
-                    <input type="checkbox" name="selectedData[]" id="selectedData" value="{{$d->id}}">
+                    <input type="checkbox" value="{{$d->id}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}">
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
@@ -263,10 +267,11 @@
 </div>
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-
-            {{-- <input type="hidden" name="total_tagihan[]"> --}}
+        <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
+            @csrf
+            <input type="hidden" name="selectedData">
             {{-- <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}"> --}}
-            <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilih</button>
+            <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilihan</button>
         </form>
         <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}" target="_blank">Export</a>
       </div>
@@ -282,7 +287,60 @@
 <script src="{{asset('assets/js/dt-pdf.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-    // hide alert after 5 seconds
+
+    function check(checkbox, id) {
+        if (checkbox.checked) {
+            $('input[name="selectedData"]').val(function(i, v) {
+                // if end of string, remove comma
+                return v + id + ',';
+
+            });
+        } else {
+            $('input[name="selectedData"]').val(function(i, v) {
+                // remove id from string
+                return v.replace(id + ',', '');
+            });
+        }
+
+        value = $('input[name="selectedData"]').val();
+
+        if(value.slice(-1) == ','){
+            // remove comma from last number
+            value = value.slice(0, -1);
+        }
+        console.log(value);
+    }
+
+    // check all checkbox and push all id to $selectedData and check all checkbox
+    function checkAll(checkbox) {
+        if (checkbox.checked) {
+            $('input[name="selectedData"]').val(function(i, v) {
+                // if end of string, remove comma
+                @foreach ($data as $d)
+                    v = v + {{$d->id}} + ',';
+                    $('#idSelect-{{$d->id}}').prop('checked', true);
+                @endforeach
+                return v;
+            });
+        } else {
+            $('input[name="selectedData"]').val(function(i, v) {
+                // remove id from string
+                @foreach ($data as $d)
+                    v = v.replace({{$d->id}} + ',', '');
+                    $('#idSelect-{{$d->id}}').prop('checked', false);
+                @endforeach
+                return v;
+            });
+        }
+
+        value = $('input[name="selectedData"]').val();
+
+        if(value.slice(-1) == ','){
+            // remove comma from last number
+            value = value.slice(0, -1);
+        }
+        console.log(value);
+    }
 
     $(document).ready(function() {
         var table = $('#notaTable').DataTable({
