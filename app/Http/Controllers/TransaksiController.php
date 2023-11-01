@@ -393,8 +393,11 @@ class TransaksiController extends Controller
 
         $tagihan = Transaksi::whereIn('id', $data['selectedData'])->get();
 
-        $total_tagihan = $tagihan->sum('nominal_tagihan');
-        // dd($customer);
+        $total = $tagihan->sum('nominal_tagihan');
+        $ppn = $customer->ppn == 1 ? $total * 0.11 : 0;
+        $pph = $customer->pph == 1 ? $total * 0.02 : 0;
+        
+        $total_tagihan = $total + $ppn - $pph;
 
         $invoiceTagihan['tanggal'] = date('Y-m-d');
         // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
@@ -421,6 +424,20 @@ class TransaksiController extends Controller
 
         return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
 
+    }
+
+    public function invoice_tagihan_detail_export(InvoiceTagihan $invoice, Customer $customer)
+    {
+        $data = $invoice->invoice_tagihan_detail;
+
+        // get latest data from month before current month
+        // dd($bulan);
+        $pdf = PDF::loadview('billing.transaksi.tagihan.export-detail', [
+            'data' => $data,
+            'invoice' => $invoice,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Invoice Tagihan '.$invoice->customer->singkatan.'.pdf');
     }
 
     public function nota_bayar(Request $request)
