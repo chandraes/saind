@@ -141,16 +141,35 @@ class TransaksiController extends Controller
         return redirect()->back()->with('success', 'Berhasil menyimpan data!!');
     }
 
-    public function nota_tagihan(Customer $customer)
+    public function nota_tagihan(Request $request, Customer $customer)
     {
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
+        $req = $request->validate([
+            'rute_id' => 'nullable|exists:rutes,id',
+        ]);
+
+        $rute_id = $req['rute_id'] ?? null;
+
+        $rute = $customer->rute;
+
+        if ($rute_id) {
+            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
+                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
+                            ->where('kuj.rute_id', $rute_id)
+                            ->select('transaksis.*')
+                            ->get();
+        } else {
+            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
                             ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
                             ->select('transaksis.*')
                             ->get();
+        }
+
 
         return view('billing.transaksi.tagihan.index', [
             'data' => $data,
             'customer' => $customer,
+            'rute' => $rute,
+            'rute_id' => $rute_id,
         ]);
     }
 
@@ -338,46 +357,46 @@ class TransaksiController extends Controller
         return redirect()->route('transaksi.nota-tagihan', $transaksi->kas_uang_jalan->customer_id)->with('success', 'Berhasil menyimpan data!!');
     }
 
-    public function nota_tagihan_lanjut(Request $request, Customer $customer)
-    {
-        $data = $request->validate([
-            'total_tagihan' => 'required|numeric',
-        ]);
+    // public function nota_tagihan_lanjut(Request $request, Customer $customer)
+    // {
+    //     $data = $request->validate([
+    //         'total_tagihan' => 'required|numeric',
+    //     ]);
 
-        $tagihan = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->select('transaksis.id')
-                            ->where('transaksis.status', 3)
-                            ->where('transaksis.void', 0)
-                            ->where('tagihan', 0)
-                            ->where('kuj.customer_id', $customer->id)->get();
+    //     $tagihan = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+    //                         ->select('transaksis.id')
+    //                         ->where('transaksis.status', 3)
+    //                         ->where('transaksis.void', 0)
+    //                         ->where('tagihan', 0)
+    //                         ->where('kuj.customer_id', $customer->id)->get();
 
 
 
-        $data['tanggal'] = date('Y-m-d');
-        // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
-        $data['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->max('no_invoice') + 1;
-        $data['customer_id'] = $customer->id;
-        $data['total_bayar'] = 0;
-        $data['sisa_tagihan'] = $data['total_tagihan'];
-        $data['lunas'] = 0;
-        $data['periode'] = "Periode ".$data['no_invoice'];
+    //     $data['tanggal'] = date('Y-m-d');
+    //     // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
+    //     $data['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->max('no_invoice') + 1;
+    //     $data['customer_id'] = $customer->id;
+    //     $data['total_bayar'] = 0;
+    //     $data['sisa_tagihan'] = $data['total_tagihan'];
+    //     $data['lunas'] = 0;
+    //     $data['periode'] = "Periode ".$data['no_invoice'];
 
-        $invoice = InvoiceTagihan::create($data);
+    //     $invoice = InvoiceTagihan::create($data);
 
-        foreach ($tagihan as $key => $value) {
-            $value->update([
-                'tagihan' => 1,
-            ]);
+    //     foreach ($tagihan as $key => $value) {
+    //         $value->update([
+    //             'tagihan' => 1,
+    //         ]);
 
-            InvoiceTagihanDetail::create([
-                'invoice_tagihan_id' => $invoice->id,
-                'transaksi_id' => $value->id,
-            ]);
-        }
+    //         InvoiceTagihanDetail::create([
+    //             'invoice_tagihan_id' => $invoice->id,
+    //             'transaksi_id' => $value->id,
+    //         ]);
+    //     }
 
-        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
+    //     return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
 
-    }
+    // }
 
     public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
     {

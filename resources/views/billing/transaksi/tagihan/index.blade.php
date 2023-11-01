@@ -20,6 +20,23 @@
         </div>
     </div>
     @include('swal')
+    {{-- if errors has any --}}
+    @if ($errors->any())
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Whoops!</strong> Ada kesalahan saat input data, yaitu:
+                <ul>
+                    @foreach ($errors->all() as $error)
+                    <li><strong>{{$error}}</strong></li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
@@ -33,7 +50,37 @@
         </div>
     </div>
 </div>
-<div class="container-fluid mt-5 table-responsive ">
+<div class="container-fluid">
+    <form action="{{route('transaksi.nota-tagihan', ['customer' => $customer])}}" method="get">
+    <div class="row">
+        <div class="col-2">
+            <div class="mb-3">
+                <label for="rute_id" class="form-label">Filter Rute</label>
+                <select class="form-select" name="rute_id" id="rute_id" required>
+                    <option value=""> -- Pilih Rute -- </option>
+                    @foreach ($rute as $r)
+                    <option value="{{$r->id}}" {{$r->id == $rute_id ? 'selected' : ''}}>{{$r->nama}}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="col-2">
+            <label for="rute_id" class="form-label">&nbsp;</label>
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">Tampilkan</button>
+            </div>
+        </form>
+        </div>
+        <div class="col-2">
+            <label for="rute_id" class="form-label">&nbsp;</label>
+            <div class="d-grid gap-2">
+              <a href="{{route('transaksi.nota-tagihan', ['customer' => $customer])}}" class="btn btn-secondary">Reset Filter</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="container-fluid mt-3 table-responsive ">
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
@@ -269,7 +316,7 @@
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
         <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
             @csrf
-            <input type="hidden" name="selectedData">
+            <input type="hidden" name="selectedData" required>
             {{-- <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}"> --}}
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilihan</button>
         </form>
