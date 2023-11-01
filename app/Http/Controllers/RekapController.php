@@ -18,6 +18,7 @@ use App\Models\KasVendor;
 use App\Models\Transaksi;
 use App\Models\Rekening;
 use App\Models\RekapGaji;
+use App\Models\Sponsor;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use App\Models\PasswordKonfirmasi;
@@ -637,6 +638,19 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+        ]);
+    }
+
+    public function rekap_bonus_detail(InvoiceBonus $invoiceBonus)
+    {
+        $periode = $invoiceBonus->periode;
+        $sponsor = Sponsor::find($invoiceBonus->sponsor_id);
+        // dd($invoiceBayar);
+
+        return view('rekap.rekap-bonus-detail', [
+            'data' => $invoiceBonus->transaksi,
+            'sponsor' => $sponsor,
+            'periode' => $periode,
         ]);
     }
 

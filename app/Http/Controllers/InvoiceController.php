@@ -7,6 +7,7 @@ use App\Models\InvoiceTagihanDetail;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
 use App\Models\Customer;
+use App\Models\Sponsor;
 use App\Models\KasBesar;
 use App\Models\Vendor;
 use App\Models\KasVendor;
@@ -281,6 +282,19 @@ class InvoiceController extends Controller
 
         return view('billing.transaksi.invoice.invoice-bonus', [
             'data' => $invoice
+        ]);
+    }
+
+    public function invoice_bonus_detail(InvoiceBonus $invoiceBonus)
+    {
+        $periode = $invoiceBonus->periode;
+        $sponsor = Sponsor::find($invoiceBonus->sponsor_id);
+        // dd($invoiceBayar);
+
+        return view('billing.transaksi.invoice.invoice-bonus-detail', [
+            'data' => $invoiceBonus->transaksi,
+            'sponsor' => $sponsor,
+            'periode' => $periode,
         ]);
     }
 

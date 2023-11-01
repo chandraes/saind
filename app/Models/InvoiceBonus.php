@@ -14,4 +14,23 @@ class InvoiceBonus extends Model
     {
         return $this->belongsTo(Sponsor::class);
     }
+
+      // has many transaksi from pivot table invoice_tagihan_details
+    public function invoice_bonus_details()
+    {
+        return $this->hasMany(InvoiceBonusDetail::class);
+    }
+
+
+    public function transaksi()
+    {
+        return $this->hasManyThrough(
+            Transaksi::class,
+            InvoiceBonusDetail::class,
+            'invoice_bonus_id',
+            'id',
+            'id',
+            'transaksi_id'
+        );
+    }
 }

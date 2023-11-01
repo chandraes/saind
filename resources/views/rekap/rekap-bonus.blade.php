@@ -80,7 +80,7 @@
                     <td class="text-center align-middle">{{$d->sponsor->nama}}</td>
 
                     <td class="text-center align-middle">
-                        {{$d->periode}}
+                        <a href="{{route('rekap.bonus.detail', ['invoiceBonus' => $d])}}">{{$d->periode}}</a>
                     </td>
                     <td class="text-center align-middle">
                         {{number_format($d->total_bayar, 0,',','.')}}

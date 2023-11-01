@@ -50,7 +50,7 @@
                 <td class="text-center align-middle">{{$d->tanggal}}</td>
                 <td class="text-center align-middle">{{$d->sponsor->nama}}</td>
                 <td class="text-center align-middle">
-                    {{$d->periode}}
+                    <a href="{{route('invoice.bonus.detail', ['invoiceBonus' => $d])}}">{{$d->periode}}</a>
                 </td>
                 <td class="text-center align-middle">
                     {{number_format($d->total_bonus, 0, ',', '.')}}

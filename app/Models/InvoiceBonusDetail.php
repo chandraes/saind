@@ -9,4 +9,14 @@ class InvoiceBonusDetail extends Model
 {
     use HasFactory;
     protected $guarded = [];
+
+    public function invoice_bonus()
+    {
+        return $this->belongsTo(InvoiceBonus::class);
+    }
+
+    public function transaksi()
+    {
+        return $this->hasMany(Transaksi::class, 'transaksi_id');
+    }
 }
