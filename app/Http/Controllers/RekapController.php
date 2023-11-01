@@ -742,6 +742,9 @@ class RekapController extends Controller
 
     public function kas_per_vendor(Request $request, Vendor $vendor)
     {
+        if($vendor->id != auth()->user()->vendor_id){
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
+        }
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $dataTahun = KasVendor::where('vendor_id', $vendor->id)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
@@ -757,6 +760,7 @@ class RekapController extends Controller
         $dataSebelumnya = KasVendor::where('vendor_id', $vendor->id)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
 
         // $data = $vendor->kas_vendor()->get();
+        $sisaTerakhir = $data->last()->sisa ?? 0;
 
         return view('rekap.kas-per-vendor', [
             'data' => $data,
@@ -768,12 +772,35 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+            'sisaTerakhir' => $sisaTerakhir,
+        ]);
+    }
+
+    public function kas_per_vendor_detail(Request $request, InvoiceBayar $invoiceBayar)
+    {
+        $vendor = Vendor::find($invoiceBayar->vendor_id);
+        
+        if ($vendor->id != auth()->user()->vendor_id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
+        }
+
+        $periode = $invoiceBayar->periode;
+
+        return view('rekap.kas-per-vendor-detail', [
+            'data' => $invoiceBayar->transaksi,
+            'vendor' => $vendor,
+            'periode' => $periode,
+            'invoice_id' => $invoiceBayar->id
         ]);
     }
 
     public function print_kas_per_vendor(Request $request)
     {
         $vendor = Vendor::find($request->vendor);
+
+        if($vendor->id != auth()->user()->vendor_id){
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
+        }
 
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
@@ -789,6 +816,8 @@ class RekapController extends Controller
         // get latest data from month before current month
         $dataSebelumnya = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
 
+        $sisaTerakhir = $data->last()->sisa ?? 0;
+
         $pdf = PDF::loadview('rekap.preview-kas-vendor', [
             'data' => $data,
             'vendor' => $vendor,
@@ -799,6 +828,7 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+            'sisaTerakhir' => $sisaTerakhir,
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Rekap Kas Vendor '.$vendor->nama." ".$stringBulanNow.' '.$tahun.'.pdf');

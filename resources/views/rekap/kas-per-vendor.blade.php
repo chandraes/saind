@@ -91,7 +91,13 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->uraian}}</td>
+                    <td class="text-center align-middle">
+                        @if ($d->invoice_bayar_id)
+                        <a href="{{route('kas-per-vendor.detail', ['invoiceBayar'=>$d->invoice_bayar_id])}}">{{$d->uraian}}</a>
+                        @else
+                        {{$d->uraian}}
+                        @endif
+                    </td>
                     <td class="text-center align-middle">{{$d->vehicle_id ? $d->vehicle->nomor_lambung : ''}}</td>
                     <td class="text-center align-middle">{{number_format($d->pinjaman, 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{number_format($d->bayar, 0, ',','.')}}</td>
