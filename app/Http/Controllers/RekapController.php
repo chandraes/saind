@@ -11,6 +11,7 @@ use App\Models\KasBonCicilan;
 use App\Models\KasDireksi;
 use App\Models\KasUangJalan;
 use App\Models\InvoiceBonus;
+use App\Models\Customer;
 use App\Models\InvoiceTagihan;
 use App\Models\KasVendor;
 use App\Models\Transaksi;
@@ -649,6 +650,19 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+        ]);
+    }
+
+    public function nota_lunas_detail(InvoiceTagihan $invoice)
+    {
+        $periode = $invoice->periode;
+        $customer = Customer::find($invoice->customer_id);
+
+        return view('rekap.nota-lunas-detail', [
+            'data' => $invoice->transaksi,
+            'customer' => $customer,
+            'periode' => $periode,
+            'invoice_id' => $invoice->id
         ]);
     }
 

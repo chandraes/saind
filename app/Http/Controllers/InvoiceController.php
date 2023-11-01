@@ -8,6 +8,7 @@ use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
 use App\Models\Customer;
 use App\Models\KasBesar;
+use App\Models\Vendor;
 use App\Models\KasVendor;
 use App\Models\Rekening;
 use App\Models\GroupWa;
@@ -232,7 +233,16 @@ class InvoiceController extends Controller
 
     public function invoice_bayar_detail(InvoiceBayar $invoiceBayar)
     {
+        $periode = $invoiceBayar->periode;
+        $vendor = Vendor::find($invoiceBayar->vendor_id);
+        // dd($invoiceBayar);
 
+        return view('billing.transaksi.invoice.bayar.detail', [
+            'data' => $invoiceBayar->transaksi,
+            'vendor' => $vendor,
+            'periode' => $periode,
+            'invoice_id' => $invoiceBayar->id
+        ]);
     }
 
     public function invoice_bayar_lunas(InvoiceBayar $invoice)

@@ -81,7 +81,7 @@
                     <td class="text-center align-middle">{{$d->customer->singkatan}}</td>
 
                     <td class="text-center align-middle">
-                        {{$d->periode}}
+                        <a href="{{route('rekap.nota-lunas-detail', $d)}}"> {{$d->periode}}</a>
                     </td>
                     <td class="text-center align-middle">
                         {{number_format($d->total_bayar, 0,',','.')}}
