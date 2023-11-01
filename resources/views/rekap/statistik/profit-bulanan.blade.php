@@ -30,6 +30,42 @@
             </table>
         </div>
     </div>
+    <div class="container-fluid mt-5">
+        <form action="{{route('statisik.profit-bulanan')}}" method="get">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="bulan" class="form-label">Bulan</label>
+                    <select class="form-select" name="bulan" id="bulan">
+                        <option value="1" {{$bulan=='01' ? 'selected' : '' }}>Januari</option>
+                        <option value="2" {{$bulan=='02' ? 'selected' : '' }}>Februari</option>
+                        <option value="3" {{$bulan=='03' ? 'selected' : '' }}>Maret</option>
+                        <option value="4" {{$bulan=='04' ? 'selected' : '' }}>April</option>
+                        <option value="5" {{$bulan=='05' ? 'selected' : '' }}>Mei</option>
+                        <option value="6" {{$bulan=='06' ? 'selected' : '' }}>Juni</option>
+                        <option value="7" {{$bulan=='07' ? 'selected' : '' }}>Juli</option>
+                        <option value="8" {{$bulan=='08' ? 'selected' : '' }}>Agustus</option>
+                        <option value="9" {{$bulan=='09' ? 'selected' : '' }}>September</option>
+                        <option value="10" {{$bulan=='10' ? 'selected' : '' }}>Oktober</option>
+                        <option value="11" {{$bulan=='11' ? 'selected' : '' }}>November</option>
+                        <option value="12" {{$bulan=='12' ? 'selected' : '' }}>Desember</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="tahun" class="form-label">Tahun</label>
+                    <select class="form-select" name="tahun" id="tahun">
+                        @foreach ($dataTahun as $d)
+                        <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="tahun" class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <div class="row">
         <div class="col-6 ">
             <div class="btn-group" role="group" aria-label="Button group name">
@@ -78,7 +114,7 @@
                         @endif>
                         @php
                         $profit = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d',
-                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->profit ?? 0;
+                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->sum('profit') ?? 0;
                         @endphp
                         {{number_format($profit, 0, ',', '.')}}
                     </td>

@@ -34,6 +34,11 @@ class StatistikController extends Controller
                             ->where('transaksis.void', 0)
                             ->get();
 
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
 
         $vehicle = Vehicle::orderBy('nomor_lambung')
                     ->limit(10)
@@ -55,6 +60,7 @@ class StatistikController extends Controller
             'nama_bulan' => $nama_bulan,
             'date' => $date,
             'offset' => $offset,
+            'dataTahun' => $dataTahun,
         ]);
     }
 
