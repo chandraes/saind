@@ -11,6 +11,7 @@ use App\Models\KasBonCicilan;
 use App\Models\KasDireksi;
 use App\Models\KasUangJalan;
 use App\Models\InvoiceBonus;
+use App\Models\InvoiceBayar;
 use App\Models\Customer;
 use App\Models\InvoiceTagihan;
 use App\Models\KasVendor;
@@ -324,6 +325,20 @@ class RekapController extends Controller
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
             'sisaTerakhir' => $sisaTerakhir,
+        ]);
+    }
+
+    public function kas_vendor_detail(InvoiceBayar $invoiceBayar)
+    {
+        $periode = $invoiceBayar->periode;
+        $vendor = Vendor::find($invoiceBayar->vendor_id);
+        // dd($invoiceBayar);
+
+        return view('rekap.kas-vendor-detail', [
+            'data' => $invoiceBayar->transaksi,
+            'vendor' => $vendor,
+            'periode' => $periode,
+            'invoice_id' => $invoiceBayar->id
         ]);
     }
 
