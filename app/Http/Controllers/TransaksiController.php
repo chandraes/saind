@@ -394,9 +394,10 @@ class TransaksiController extends Controller
         $tagihan = Transaksi::whereIn('id', $data['selectedData'])->get();
 
         $total = $tagihan->sum('nominal_tagihan');
+
         $ppn = $customer->ppn == 1 ? $total * 0.11 : 0;
         $pph = $customer->pph == 1 ? $total * 0.02 : 0;
-        
+
         $total_tagihan = $total + $ppn - $pph;
 
         $invoiceTagihan['tanggal'] = date('Y-m-d');
@@ -435,6 +436,8 @@ class TransaksiController extends Controller
         $pdf = PDF::loadview('billing.transaksi.tagihan.export-detail', [
             'data' => $data,
             'invoice' => $invoice,
+            'invoice_id' => $invoice->id,
+            'customer' => $customer,
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Invoice Tagihan '.$invoice->customer->singkatan.'.pdf');

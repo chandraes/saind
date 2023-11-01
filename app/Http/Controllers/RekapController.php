@@ -628,9 +628,9 @@ class RekapController extends Controller
     {
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = InvoiceTagihan::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+        $dataTahun = InvoiceTagihan::selectRaw('YEAR(updated_at) tahun')->groupBy('tahun')->get();
 
-        $data = InvoiceTagihan::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('lunas', 1)->get();
+        $data = InvoiceTagihan::whereMonth('updated_at', $bulan)->whereYear('updated_at', $tahun)->where('lunas', 1)->get();
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -638,7 +638,7 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = InvoiceTagihan::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = InvoiceTagihan::whereMonth('updated_at', $bulanSebelumnya)->whereYear('updated_at', $tahun)->latest()->orderBy('id', 'desc')->first();
         // dd($bulan);
         return view('rekap.nota-lunas', [
             'data' => $data,

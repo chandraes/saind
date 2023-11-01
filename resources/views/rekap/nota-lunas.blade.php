@@ -76,7 +76,8 @@
             <tbody>
                 @foreach ($data as $d)
                 <tr>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
+
+                    <td class="text-center align-middle">{{ $d->updated_at->format('d-m-Y') }}</td>
                     <td class="text-center align-middle">{{$d->customer->singkatan}}</td>
 
                     <td class="text-center align-middle">

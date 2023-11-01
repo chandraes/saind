@@ -13,6 +13,7 @@ use App\Models\Rekening;
 use App\Models\GroupWa;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
@@ -47,8 +48,26 @@ class InvoiceController extends Controller
         return view('billing.transaksi.invoice.tagihan.detail', [
             'data' => $invoice->transaksi,
             'customer' => $customer,
-            'periode' => $periode
+            'periode' => $periode,
+            'invoice_id' => $invoice->id
         ]);
+    }
+
+    public function invoice_tagihan_detail_export(InvoiceTagihan $invoice)
+    {
+        $data = $invoice->transaksi;
+        $customer = Customer::find($invoice->customer_id);
+
+        // get latest data from month before current month
+        // dd($bulan);
+        $pdf = PDF::loadview('billing.transaksi.invoice.tagihan.export', [
+            'data' => $data,
+            'invoice' => $invoice,
+            'customer' => $customer,
+            'periode' => $invoice->periode,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Invoice Tagihan '.$invoice->customer->singkatan.'.pdf');
     }
 
     public function tagihan_lunas(InvoiceTagihan $invoice)

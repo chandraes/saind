@@ -9,12 +9,12 @@
         </div>
     </div>
     @php
-        $selectedData = [];
-        $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
-        $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
-        $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
-        $profit = $data->sum('profit');
-        $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
+    // $selectedData = [];
+    $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
+    $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
+    $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
+    $profit = $data->sum('profit');
+    $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
     @endphp
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
@@ -23,13 +23,24 @@
     </div>
     @include('swal')
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('billing.transaksi.index')}}"><img src="{{asset('images/transaction.svg')}}"
                                 alt="dokumen" width="30"> Form Transaksi</a></td>
+                    <td>
+                        <a href="{{route('invoice.tagihan.index')}}"><img src="{{asset('images/invoice-tagihan.svg')}}"
+                                alt="dokumen" width="30">
+                            Invoice Tagihan
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{route('invoice.tagihan-detail.export', ['invoice' => $invoice_id])}}" target="_blank">
+                            <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Export
+                        </a>
+                    </td>
                 </tr>
             </table>
         </div>
@@ -39,7 +50,6 @@
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
-                {{-- <th class="text-center align-middle">Select</th> --}}
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Tanggal UJ</th>
                 <th class="text-center align-middle">Kode</th>
@@ -74,13 +84,6 @@
         <tbody>
             @foreach ($data as $d)
             <tr>
-                {{-- check list --}}
-                {{-- <td class="text-center align-middle">
-                    {{-- checklist on check push $d->id to $selectedData --}}
-                    {{-- <input type="checkbox" name="selectedData[]" id="selectedData" value="{{$d->id}}"
-                        onclick="checklist(this, {{$d->id}})">
-
-                </td> --}}
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
@@ -112,8 +115,10 @@
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
                 @if ($customer->selisih == 1)
-                <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}</td>
-                <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2, ',','.')}}</td>
+                <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}
+                </td>
+                <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2,
+                    ',','.')}}</td>
                 @endif
                 <td class="text-center align-middle">
                     @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
@@ -123,7 +128,7 @@
                     @endif
                 </td>
                 <td class="text-center align-middle">
-                   {{number_format($d->profit, 0, ',', '.')}}
+                    {{number_format($d->profit, 0, ',', '.')}}
 
                 </td>
                 <td class="text-center align-middle">
@@ -177,7 +182,7 @@
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td align="right" class="align-middle"> <strong>
-                    {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
+                        {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
                 <td></td>
@@ -187,8 +192,9 @@
 </div>
 <div class="container-fluid mt-3 mb-3">
     {{-- <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-        <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}" target="_blank">Export</a>
-      </div> --}}
+        <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}"
+            target="_blank">Export</a>
+    </div> --}}
 </div>
 
 @endsection
