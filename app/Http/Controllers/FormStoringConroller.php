@@ -143,6 +143,15 @@ class FormStoringConroller extends Controller
 
     }
 
+    public function get_vendor(Request $request)
+    {
+        $vehicle = Vehicle::find($request->id);
+
+        $vendor = $vehicle->vendor;
+
+        return response()->json($vendor);
+    }
+
     public function get_storing(Request $request)
     {
         $storing = BbmStoring::find($request->id);

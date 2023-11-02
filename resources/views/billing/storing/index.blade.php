@@ -179,7 +179,7 @@
         function funGetVendor() {
             var id = $('#id').val();
             $.ajax({
-                url: "{{route('kas-uang-jalan.get-vendor')}}",
+                url: "{{route('billing.storing.get-vendor')}}",
                 type: "GET",
                 data: {
                     id: id
