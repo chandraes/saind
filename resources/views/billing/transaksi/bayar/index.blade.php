@@ -265,7 +265,7 @@
 
         <form action="{{route('transaksi.nota-bayar.lanjut', $vendor)}}" method="post" id="lanjutForm">
             @csrf
-            <input type="hidden" name="total_bayar" value="{{$total_tagihan-$pph+$ppn}}">
+            <input type="hidden" name="total_bayar" value="{{$grant_total}}">
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
         </form>
         {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
