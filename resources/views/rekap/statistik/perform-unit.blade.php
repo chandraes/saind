@@ -17,12 +17,12 @@
                     <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
                     <td>
-                        <form target="_blank" action="{{route('statistik.profit-bulanan.print')}}" method="get">
+                        <form target="_blank" action="{{route('statistik.perform-unit.print')}}" method="get">
                             <input type="hidden" name="offset" value="{{$offset}}">
                             <input type="hidden" name="bulan" value="{{$bulan_angka}}">
                             <input type="hidden" name="tahun" value="{{$tahun}}">
                             <button class="btn" type="submit">
-                                <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Rekap
+                                <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Perform Unit
                             </button>
                         </form>
                     </td>
@@ -101,7 +101,7 @@
                     @foreach ($vehicle as $v)
                     <th colspan="3" class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red" @endif>{{$v->nomor_lambung}} <br>
-                        {{$v->vendor->nama}} @if ($v->gps == 1) <strong>(GPS)</strong> @endif @if($v->vendor->support_operational == 1)
+                        {{$v->vendor->nama}} <br> @if ($v->gps == 1) <strong>(GPS)</strong> @endif @if($v->vendor->support_operational == 1)
                         <strong>(SO)</strong>
                         @endif
                     </th>
@@ -117,12 +117,12 @@
                     <th class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red"
                         @endif>
-                        <strong>TGL BONGKAR</strong>
+                        <strong>Bongkar</strong>
                     </th>
                     <th class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red"
                         @endif>
-                        <strong>Tonase</strong>
+                        <strong>Ton</strong>
                     </th>
                     @endforeach
                 </tr>
