@@ -40,4 +40,11 @@ class Vehicle extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function kas_uang_jalan()
+    {
+        return $this->hasMany(KasUangJalan::class);
+    }
+
+    
 }

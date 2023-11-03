@@ -65,6 +65,10 @@ class CustomerController extends Controller
                 'ppn' => 'nullable',
                 'pph' => 'nullable',
                 'tagihan_dari' => 'required',
+                'csr' => 'nullable',
+                'csr_transfer_ke' => 'nullable',
+                'csr_bank' => 'nullable',
+                'csr_no_rekening' => 'nullable',
         ]);
 
         $rute = $data['rute'];
@@ -78,6 +82,15 @@ class CustomerController extends Controller
         } else {
             $data['ppn'] = 0;
             $data['pph'] = 0;
+        }
+
+        if (array_key_exists('csr', $data)) {
+            $data['csr'] = 1;
+        } else {
+            $data['csr'] = 0;
+            $data['csr_transfer_ke'] = null;
+            $data['csr_bank'] = null;
+            $data['csr_no_rekening'] = null;
         }
 
         if (array_key_exists('tanggal_muat', $data)) {
@@ -234,6 +247,10 @@ class CustomerController extends Controller
                     'ppn' => 'nullable',
                     'pph' => 'nullable',
                     'tagihan_dari' => 'required',
+                    'csr' => 'nullable',
+                    'csr_transfer_ke' => 'nullable',
+                    'csr_bank' => 'nullable',
+                    'csr_no_rekening' => 'nullable',
                 ]);
 
         // dd($data);
@@ -246,6 +263,15 @@ class CustomerController extends Controller
         } else {
             $data['ppn'] = 0;
             $data['pph'] = 0;
+        }
+
+        if (array_key_exists('csr', $data)) {
+            $data['csr'] = 1;
+        } else {
+            $data['csr'] = 0;
+            $data['csr_transfer_ke'] = null;
+            $data['csr_bank'] = null;
+            $data['csr_no_rekening'] = null;
         }
 
         if (array_key_exists('tanggal_muat', $data)) {
@@ -277,8 +303,6 @@ class CustomerController extends Controller
         }
 
         DB::transaction(function () use($data, $customer) {
-
-
 
             CustomerRute::where('customer_id', $customer->id)->delete();
 

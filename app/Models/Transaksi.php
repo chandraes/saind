@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Transaksi extends Model
 {
     use HasFactory;
-    
+
     protected $guarded = [];
 
     public function kas_uang_jalan()
@@ -21,9 +21,9 @@ class Transaksi extends Model
         return date('d-m-Y', strtotime($value));
     }
 
-    public function getTanggalBongkarAttribute($value)
-    {
-        return date('d-m-Y', strtotime($value));
-    }
+    // public function getTanggalBongkarAttribute($value)
+    // {
+    //     return date('d-m-Y', strtotime($value));
+    // }
 
 }

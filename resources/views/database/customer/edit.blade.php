@@ -192,6 +192,40 @@
             </div>
             <br>
             <hr>
+            <h3>CSR</h3>
+            <div class="row mt-3 mb-3">
+                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                    <label class="btn btn-success active">
+                        <input type="checkbox" class="me-2" name="csr" id="csr" {{$data->csr == 1 ? 'checked' : ''}}
+                        autocomplete="off" > CSR
+                    </label>
+                </div>
+            </div>
+            <div class="row mt-3 mb-3" id="rek_csr" @if($data->csr == 0) hidden @endif>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="csr_bank" class="form-label">BANK CSR</label>
+                        <input type="text" class="form-control" name="csr_bank" id="csr_bank" aria-describedby="helpId"
+                            placeholder="" value="{{$data->csr_bank}}">
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="csr_transfer_ke" class="form-label">NAMA REKENING CSR</label>
+                        <input type="text" class="form-control" name="csr_transfer_ke" id="csr_transfer_ke"
+                            aria-describedby="helpId" placeholder="" value="{{$data->csr_transfer_ke}}">
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="csr_no_rekening" class="form-label">NOMOR REKENING CSR</label>
+                        <input type="text" class="form-control" name="csr_no_rekening" id="csr_no_rekening"
+                            aria-describedby="helpId" placeholder="" value="{{$data->csr_no_rekening}}">
+                    </div>
+                </div>
+            </div>
+            <br>
+            <hr>
             <h3>Pengaturan Tabel Tagihan</h3>
             <div class="row">
                 <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
@@ -237,6 +271,23 @@
 <script src="{{asset('assets/js/jquery.min.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script>
+
+    // csr on change
+    $('#csr').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#rek_csr').removeAttr('hidden');
+
+            $('#csr_transfer_ke').attr('required', true);
+            $('#csr_bank').attr('required', true);
+            $('#csr_no_rekening').attr('required', true);
+        } else {
+            $('#rek_csr').attr('hidden', true);
+            $('#csr_transfer_ke').attr('required', false);
+            $('#csr_bank').attr('required', false);
+            $('#csr_no_rekening').attr('required', false);
+        }
+    });
+
     $(document).ready(function() {
             $('#rute').select2();
         });

@@ -8,25 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class KasUangJalan extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'tanggal',
-        'vendor_id',
-        'vehicle_id',
-        'kode_kas_uang_jalan',
-        'nomor_kode_kas_uang_jalan',
-        'kode_uang_jalan',
-        'nomor_uang_jalan',
-        'jenis_transaksi_id',
-        'nominal_transaksi',
-        'saldo',
-        'customer_id',
-        'rute_id',
-        'transfer_ke',
-        'bank',
-        'no_rekening',
-        'void',
-        'kode_void',
-    ];
+    protected $guarded = [];
 
     public function jenis_transaksi()
     {
@@ -59,11 +41,6 @@ class KasUangJalan extends Model
     }
 
     public function transaksi()
-    {
-        return $this->belongsTo(Transaksi::class);
-    }
-
-    public function transaksis()
     {
         return $this->hasMany(Transaksi::class);
     }
