@@ -117,6 +117,9 @@ class VehicleController extends Controller
             'gps' => 'nullable',
         ]);
 
+        if ($vehicle->status == 'proses') {
+            $data['status'] = 'proses';
+        }
         // if $data has support_operational key
         $data['support_operational'] = Vendor::find($data['vendor_id'])->support_operational;
 
