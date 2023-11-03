@@ -136,7 +136,7 @@
                         @endif>
                         @php
                         $rute = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d',
-                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->kas_uang_jalan->rute->nama ?? '-';
+                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->where('void', 0)->first()->kas_uang_jalan->rute->nama ?? '-';
                         @endphp
                         {{$rute}}
                     </td>
