@@ -133,7 +133,6 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('form-lain-lain/keluar', [App\Http\Controllers\FormLainController::class, 'keluar'])->name('form-lain-lain.keluar');
         Route::post('form-lain-lain/keluar', [App\Http\Controllers\FormLainController::class, 'keluar_store'])->name('form-lain-lain.keluar.store');
 
-        Route::get('statisik', [App\Http\Controllers\StatistikController::class, 'index'])->name('statisik.index');
         Route::get('statisik/profit-bulanan', [App\Http\Controllers\StatistikController::class, 'profit_bulanan'])->name('statisik.profit-bulanan');
         Route::get('statistik/profit-bulanan/print', [App\Http\Controllers\StatistikController::class, 'profit_bulanan_print'])->name('statistik.profit-bulanan.print');
         Route::get('statistik/profit-tahunan', [App\Http\Controllers\StatistikController::class, 'profit_tahunan'])->name('statistik.profit-tahunan');
@@ -142,7 +141,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index')->middleware('role:admin,user');
 
     Route::group(['middleware' => 'role:admin,user'], function() {
-
+        Route::get('statisik', [App\Http\Controllers\StatistikController::class, 'index'])->name('statisik.index');
         // Route::resource('kas-besar', App\Http\Controllers\KasBesarController::class);
         Route::get('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
         Route::post('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
