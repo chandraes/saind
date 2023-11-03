@@ -1,4 +1,4 @@
-@extends('layouts.doc-nologo-2')
+@extends('layouts.doc-nologo-3')
 @section('content')
 <div class="container-fluid">
     <center>
