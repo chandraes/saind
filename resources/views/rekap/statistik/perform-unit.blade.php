@@ -100,7 +100,7 @@
                 <tr>
                     <th rowspan="2" class="text-center align-middle">Tanggal</th>
                     @foreach ($vehicle as $v)
-                    <th colspan="3" class="text-center align-middle" @if ($v->status == 'nonaktif')
+                    <th colspan="2" class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red" @endif>{{$v->nomor_lambung}} <br>
                         {{$v->vendor->nama}} <br> @if ($v->gps == 1) <strong>(GPS)</strong> @endif
                         @if($v->vendor->support_operational == 1)
@@ -115,11 +115,6 @@
                         style="background-color: red"
                         @endif>
                         <strong>Rute</strong>
-                    </th>
-                    <th class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>
-                        <strong>Bongkar</strong>
                     </th>
                     <th class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red"
@@ -141,14 +136,6 @@
                     </td>
                     <td class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif')
                         style="background-color: red" @endif>
-                        @if ($data['tgl_bongkar'] != '-' && $data['tgl_bongkar'] != '0000-00-00')
-                        {{$data['tgl_bongkar']}}
-                        @else
-                        -
-                        @endif
-                    </td>
-                    <td class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif')
-                        style="background-color: red" @endif>
                         {{$data['tonase']}}
                     </td>
                     @endif
@@ -163,7 +150,7 @@
                         <strong>Rute Panjang</strong>
                     </td>
                     @foreach ($statistics as $statistic)
-                        <td colspan="3" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                        <td colspan="2" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
                             <strong>{{ number_format($statistic['long_route_count'], 0, ',', '.') }}</strong>
                         </td>
                     @endforeach
@@ -173,7 +160,7 @@
                         <strong>Rute Pendek</strong>
                     </td>
                     @foreach ($statistics as $statistic)
-                        <td colspan="3" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                        <td colspan="2" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
                             <strong>{{ number_format($statistic['short_route_count'], 0, ',', '.') }}</strong>
                         </td>
                     @endforeach
