@@ -165,6 +165,16 @@
                         </td>
                     @endforeach
                 </tr>
+                <tr>
+                    <td class="text-center align-middle">
+                        <strong>Total</strong>
+                    </td>
+                    @foreach ($statistics as $statistic)
+                        <td colspan="2" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                            <strong>{{ number_format($statistic['short_route_count']+$statistic['long_route_count'], 0, ',', '.') }}</strong>
+                        </td>
+                    @endforeach
+                </tr>
             </tfoot>
         </table>
     </div>
