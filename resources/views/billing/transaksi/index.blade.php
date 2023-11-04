@@ -106,8 +106,6 @@
                         "(".$data->where('status', 3)->where('bonus', 0)->where('void', 0)->count().")" : '' }}</span></h2>
             </a>
 
-            <!-- Modal Body -->
-            <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="sponsorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
                     <div class="modal-content">
@@ -136,10 +134,37 @@
             </div>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
+            <a href="#" class="text-decoration-none"  data-bs-toggle="modal" data-bs-target="#csrModal">
                 <img src="{{asset('images/csr.svg')}}" alt="" width="100">
-                <h2>Nota CSR</h2>
+                <h2>Nota CSR
+                    <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('void', 0)->where('nominal_csr', '>', 0)->count() > 0 ?
+                        "(".$data->where('status', 3)->where('csr', 0)->where('void', 0)->where('nominal_csr', '>', 0)->count().")" : '' }}</span>
+                </h2>
             </a>
+
+            <div class="modal fade" id="csrModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="csrTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="csrTitle">Pilih Customer CSR</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                        @foreach ($customer->where('csr', 1) as $c)
+                            <div class="col-md-3 text-center mt-5">
+                                <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
+                                    <img src="{{asset('images/nota-csr.svg')}}" alt="" width="100">
+                                    <h2>{{$c->singkatan}}</h2>
+                                </a>
+                            </div>
+                        @endforeach
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="row mt-5 justify-content-left">

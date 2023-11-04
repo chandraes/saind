@@ -45,6 +45,15 @@ class TransaksiController extends Controller
                                     ->where('transaksis.status', 3)
                                     ->where('transaksis.void', 0)
                                     ->get()->unique('sponsor_id');
+
+        $csr = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                                    ->join('customers as c', 'kuj.customer_id', 'c.id')
+                                    ->where('transaksis.csr', 0)
+                                    ->where('transaksis.status', 3)
+                                    ->where('transaksis.void', 0)
+                                    ->where('c.csr', 1)
+                                    ->get()->unique('customer_id');
+
         // dd($bayar);
         return view('billing.transaksi.index', [
             'data' => $data,
@@ -54,6 +63,7 @@ class TransaksiController extends Controller
             'invoice' => $invoice,
             'bayar' => $bayar,
             'bonus' => $bonus,
+            'csr' => $csr,
         ]);
     }
 
