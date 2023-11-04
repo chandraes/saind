@@ -9,13 +9,15 @@
     </div>
     @include('swal')
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
+                    <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
+                                    width="30"> STATISTIK</a></td>
                     <td>
                         <form target="_blank" action="{{route('statistik.perform-unit.print')}}" method="get">
                             <input type="hidden" name="offset" value="{{$offset}}">

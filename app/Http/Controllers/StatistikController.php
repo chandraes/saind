@@ -15,6 +15,119 @@ class StatistikController extends Controller
         return view('rekap.statistik.index');
     }
 
+    public function perform_unit_tahunan(Request $request)
+    {
+        $tahun = $request->tahun ?? date('Y');
+
+        $vehicle = Vehicle::orderBy('nomor_lambung')->get();
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+        $statistics = [];
+
+        foreach ($vehicle as $v) {
+            $statistics[$v->nomor_lambung] = [
+                'vehicle' => $v,
+                'monthly' => array_fill(1, 12, ['long_route_count' => 0, 'short_route_count' => 0]),
+            ];
+        }
+
+        for ($bulan = 1; $bulan <= 12; $bulan++) {
+            $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                                ->whereMonth('tanggal', $bulan)
+                                ->whereYear('tanggal', $tahun)
+                                ->where('transaksis.void', 0)
+                                ->get();
+
+            foreach ($data as $transaction) {
+                $v = $transaction->kas_uang_jalan->vehicle;
+
+                $jarak = $transaction->jarak ?? 0;
+
+                if (!isset($statistics[$v->nomor_lambung])) {
+                    continue;
+                }
+
+                if ($jarak > 50) {
+                    $statistics[$v->nomor_lambung]['monthly'][$bulan]['long_route_count']++;
+                } else if ($jarak > 0 && $jarak <= 50) {
+                    $statistics[$v->nomor_lambung]['monthly'][$bulan]['short_route_count']++;
+                }
+            }
+        }
+
+        return view('rekap.statistik.perform-unit-tahunan', [
+            'statistics' => $statistics,
+            'tahun' => $tahun,
+            'vehicle' => $vehicle,
+            'dataTahun' => $dataTahun,
+        ]);
+    }
+
+    public function perform_unit_tahunan_print(Request $request)
+    {
+        $tahun = $request->tahun ?? date('Y');
+
+        $vehicle = Vehicle::orderBy('nomor_lambung')->get();
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+        $statistics = [];
+
+        foreach ($vehicle as $v) {
+            $statistics[$v->nomor_lambung] = [
+                'vehicle' => $v,
+                'monthly' => array_fill(1, 12, ['long_route_count' => 0, 'short_route_count' => 0]),
+            ];
+        }
+
+        for ($bulan = 1; $bulan <= 12; $bulan++) {
+            $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                                ->whereMonth('tanggal', $bulan)
+                                ->whereYear('tanggal', $tahun)
+                                ->where('transaksis.void', 0)
+                                ->get();
+
+            foreach ($data as $transaction) {
+                $v = $transaction->kas_uang_jalan->vehicle;
+
+                $jarak = $transaction->jarak ?? 0;
+
+                if (!isset($statistics[$v->nomor_lambung])) {
+                    continue;
+                }
+
+                if ($jarak > 50) {
+                    $statistics[$v->nomor_lambung]['monthly'][$bulan]['long_route_count']++;
+                } else if ($jarak > 0 && $jarak <= 50) {
+                    $statistics[$v->nomor_lambung]['monthly'][$bulan]['short_route_count']++;
+                }
+            }
+        }
+
+        $pdf = PDF::loadview('rekap.statistik.perform-unit-tahunan-print', [
+            'statistics' => $statistics,
+            'tahun' => $tahun,
+            'vehicle' => $vehicle,
+            'dataTahun' => $dataTahun,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Perform Unit Bulan '.$tahun.'.pdf');
+
+    }
+
     public function perform_unit(Request $request)
     {
         $bulan = $request->bulan ?? date('m');
@@ -307,50 +420,69 @@ class StatistikController extends Controller
 
     public function profit_tahunan(Request $request)
     {
-
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
 
-        // get array list month from $tahun (1-12) with format m and M
-        $nama_bulan = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $nama_bulan[$i] = Carbon::createFromDate($tahun, $i)->locale('id')->monthName;
-        }
+        $nama_bulan = [
+            1 => 'January',
+            2 => 'February',
+            3 => 'March',
+            4 => 'April',
+            5 => 'May',
+            6 => 'June',
+            7 => 'July',
+            8 => 'August',
+            9 => 'September',
+            10 => 'October',
+            11 => 'November',
+            12 => 'December',
+        ];
 
+        // create statistics array
+        $statistics = [];
 
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->get();
+        // get all vehicle
+        $vehicle = Vehicle::orderBy('nomor_lambung')->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->selectRaw('YEAR(tanggal) tahun')
                             ->groupBy('tahun')
                             ->get();
+        // looping sum profit each vehicle for each month
+        for ($bulan = 1; $bulan <= 12; $bulan++) {
+            $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                                ->whereMonth('tanggal', $bulan)
+                                ->whereYear('tanggal', $tahun)
+                                ->where('transaksis.void', 0)
+                                ->get();
 
-        // dd($data);
-        $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+            foreach ($data as $transaction) {
+                $v = $transaction->kas_uang_jalan->vehicle;
 
-        if ($vehicle->count() == 0) {
-            $offset = 0;
-            $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+                if (!isset($statistics[$v->nomor_lambung])) {
+                    $statistics[$v->nomor_lambung] = [
+                        'vehicle' => $v,
+                        'monthly' => array_fill(1, 12, 0),
+                    ];
+                }
+
+                $statistics[$v->nomor_lambung]['monthly'][$bulan] += $transaction->profit;
+            }
         }
 
+        uksort($statistics, function($a, $b) {
+            return $a <=> $b;
+        });
+
         return view('rekap.statistik.profit-tahunan', [
-            'data' => $data,
+            'statistics' => $statistics,
             'tahun' => $tahun,
             'vehicle' => $vehicle,
-            'nama_bulan' => $nama_bulan,
             'offset' => $offset,
             'dataTahun' => $dataTahun,
+            'nama_bulan' => $nama_bulan, // pass the variable to the view
         ]);
     }
 }

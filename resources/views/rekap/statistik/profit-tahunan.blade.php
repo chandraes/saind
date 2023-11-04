@@ -47,7 +47,7 @@
         </form>
     </div>
 
-    <div class="row">
+    {{-- <div class="row">
         <div class="col-6 ">
             <div class="btn-group" role="group" aria-label="Button group name">
                 @if ($offset > 0)
@@ -63,55 +63,70 @@
                     <input type="hidden" name="offset" value="{{$offset+10}}">
                     <input type="hidden" name="tahun" value="{{$tahun}}">
                     <button type="submit" class="btn btn-success m-3">Selanjutnya
-                        {{-- fa row right icon --}}
                         <i class="fa fa-arrow-right"></i>
                     </button>
                 </form>
                 @endif
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <div style="font-size: 15px">
+        @php
+            $totalProfitAll = 0;
+        @endphp
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
                 <tr>
-                    <td class="text-center align-middle">Tanggal</td>
-                    @foreach ($vehicle as $v)
-                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>{{$v->nomor_lambung}}</td>
+                    <td class="text-center align-middle">Vehicle</td>
+                    @foreach($nama_bulan as $bulan)
+                        <td class="text-center align-middle">{{$bulan}}</td>
                     @endforeach
+                    <td class="text-center align-middle">Total</td>
                 </tr>
             </thead>
             <tbody>
-                @for($i = 1; $i <= 12; $i++) <tr>
-                    <td class="text-center align-middle">{{$nama_bulan[$i]}}</td>
-                    @foreach ($vehicle as $v)
-                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>
+                @foreach ($statistics as $nomor_lambung => $stat)
+                    <tr>
+                        <td class="text-center align-middle" @if ($stat['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                            {{$nomor_lambung}}
+                        </td>
                         @php
-                        $profit = $data->where('nomor_lambung', $v->nomor_lambung)->whereRaw('MONTH(tanggal)', $i)->sum('profit');
+                            $totalProfitVehicle = 0;
                         @endphp
-                        @if ($profit > 0)
-                        <a href="#">
-                            Rp. {{number_format($profit, 0, ',', '.')}}
-                        </a>
-                        @else
-                        Rp. {{number_format($profit, 0, ',', '.')}}
-                        @endif
-                    </td>
-                    @endforeach
+                        @foreach($stat['monthly'] as $profit)
+                            <td class="text-center align-middle" @if ($stat['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                                @if ($profit > 0)
+                                    {{number_format($profit, 0, ',', '.')}}
+                                @endif
+                                @php
+                                    $totalProfitVehicle += $profit;
+                                    $totalProfitAll += $profit;
+                                @endphp
+                            </td>
+                        @endforeach
+                        <td class="text-center align-middle">
+                            <strong>{{number_format($totalProfitVehicle, 0, ',', '.')}}</strong>
+                        </td>
                     </tr>
-                    @endfor
-
+                @endforeach
             </tbody>
             <tfoot>
                 <tr>
                     <td><strong>Grand Total</strong></td>
-                    <td colspan="{{$vehicle->count()}}">
-                        <strong>Rp. {{$data ? number_format($data->sum('profit'), 0, ',', '.') : 0}}</strong>
+                    @for($i = 1; $i <= 12; $i++)
+                        <td class="text-center align-middle">
+                            @php
+                                $totalProfit = 0;
+                                foreach ($statistics as $stat) {
+                                    $totalProfit += $stat['monthly'][$i] ?? 0;
+                                }
+                            @endphp
+                            <strong>{{number_format($totalProfit, 0, ',', '.')}}</strong>
+                        </td>
+                    @endfor
+                    <td class="text-center align-middle">
+                        <strong>{{number_format($totalProfitAll, 0, ',', '.')}}</strong>
                     </td>
                 </tr>
             </tfoot>
