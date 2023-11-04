@@ -56,6 +56,7 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle" style="width: 8%">NOLAM</th>
+                    <th class="text-center align-middle" style="width: 10%">Vendor</th>
                     @foreach($nama_bulan as $bulan)
                     <th class="text-center align-middle">{{$bulan}}</th>
                     @endforeach
@@ -68,6 +69,10 @@
                     <td class="text-center align-middle" @if ($stat['vehicle']->status == 'nonaktif')
                         style="background-color: red" @endif>
                         {{$nomor_lambung}}
+                    </td>
+                    <td class="text-center align-middle" @if ($stat['vehicle']->status == 'nonaktif')
+                        style="background-color: red" @endif>
+                        {{$stat['vendor']}}
                     </td>
                     @php
                     $totalProfitVehicle = 0;
@@ -92,7 +97,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td><strong>Grand Total</strong></td>
+                    <td colspan="2"><strong>Grand Total</strong></td>
                     @for($i = 1; $i <= 12; $i++) <td class="text-center align-middle">
                         @php
                         $totalProfit = 0;

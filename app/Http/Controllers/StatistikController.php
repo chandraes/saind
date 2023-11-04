@@ -133,7 +133,7 @@ class StatistikController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
-        
+
         $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
@@ -458,10 +458,12 @@ class StatistikController extends Controller
 
             foreach ($data as $transaction) {
                 $v = $transaction->kas_uang_jalan->vehicle;
+                $vendor = $transaction->kas_uang_jalan->vendor;
 
                 if (!isset($statistics[$v->nomor_lambung])) {
                     $statistics[$v->nomor_lambung] = [
                         'vehicle' => $v,
+                        'vendor' => $vendor->nama,
                         'monthly' => array_fill(1, 12, 0),
                     ];
                 }
@@ -469,6 +471,8 @@ class StatistikController extends Controller
                 $statistics[$v->nomor_lambung]['monthly'][$bulan] += $transaction->profit;
             }
         }
+
+        // dd($statistics);
 
         uksort($statistics, function($a, $b) {
             return $a <=> $b;
