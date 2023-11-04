@@ -152,9 +152,15 @@
                         <div class="modal-body">
                         @foreach ($customer->where('csr', 1) as $c)
                             <div class="col-md-3 text-center mt-5">
-                                <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
-                                    <img src="{{asset('images/nota-csr.svg')}}" alt="" width="100">
-                                    <h2>{{$c->singkatan}}</h2>
+                                <form action="{{route('billing.nota-csr')}}" method="get">
+                                    <input type="hidden" name="customer_id" value="{{$c->id}}">
+                                    <button type="submit" class="text-decoration-none" style="border: none; background: none;">
+                                        <img src="{{asset('images/nota-csr.svg')}}" alt="" width="100">
+                                        <h2>{{$c->singkatan}}</h2>
+                                    </button>
+                                </form>
+                                    {{-- <img src="{{asset('images/nota-csr.svg')}}" alt="" width="100">
+                                    <h2>{{$c->singkatan}}</h2> --}}
                                 </a>
                             </div>
                         @endforeach
@@ -188,9 +194,9 @@
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="{{route('invoice.bonus.index')}}" class="text-decoration-none">
+            <a href="{{route('billing.invoice-csr')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-csr.svg')}}" alt="" width="100">
-                <h2>INVOICE CSR <span class="text-danger">{{$bonus > 0 ? "(".$bonus.")" : ''}}</span></h2>
+                <h2>INVOICE CSR <span class="text-danger">{{$invoice_csr > 0 ? "(".$invoice_csr.")" : ''}}</span></h2>
             </a>
         </div>
     </div>

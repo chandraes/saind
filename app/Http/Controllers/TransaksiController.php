@@ -12,6 +12,8 @@ use App\Models\InvoiceBayar;
 use App\Models\InvoiceBayarDetail;
 use App\Models\InvoiceBonus;
 use App\Models\InvoiceBonusDetail;
+use App\Models\InvoiceCsr;
+use App\Models\InvoiceCsrDetail;
 use App\Models\Sponsor;
 use App\Models\GroupWa;
 use App\Services\StarSender;
@@ -31,6 +33,7 @@ class TransaksiController extends Controller
         $invoice = InvoiceTagihan::where('lunas', 0)->count();
         $bayar = InvoiceBayar::where('lunas', 0)->count();
         $bonus = InvoiceBonus::where('lunas', 0)->count();
+        $invoice_csr = InvoiceCsr::where('lunas', 0)->count();
 
         $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                                     ->where('status', 3)
@@ -64,6 +67,7 @@ class TransaksiController extends Controller
             'bayar' => $bayar,
             'bonus' => $bonus,
             'csr' => $csr,
+            'invoice_csr' => $invoice_csr,
         ]);
     }
 
@@ -619,6 +623,66 @@ class TransaksiController extends Controller
                 'transaksi_id' => $value->id,
             ]);
 
+        }
+
+        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+    }
+
+    public function nota_csr(Request $request)
+    {
+        $customerId = $request->customer_id;
+
+        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                            ->where('kuj.customer_id', $customerId)
+                            ->where('transaksis.status', 3)
+                            ->where('transaksis.void', 0)
+                            ->where('csr', 0)
+                            ->where('nominal_csr', '>', 0)
+                            ->select('transaksis.*')
+                            ->get();
+
+        return view('billing.transaksi.csr.index', [
+            'data' => $data,
+            'customer' => Customer::find($customerId),
+        ]);
+
+    }
+
+    public function nota_csr_lanjut(Request $request)
+    {
+        $data = $request->validate([
+            'total_csr' => 'required',
+            'customer_id' => 'required|exists:customers,id',
+        ]);
+
+        $csr = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->where('kuj.customer_id', $data['customer_id'])
+                            ->where('transaksis.status', 3)
+                            ->where('transaksis.void', 0)
+                            ->where('csr', 0)
+                            ->where('nominal_csr', '>', 0)
+                            ->select('transaksis.id')
+                            ->get();
+
+        $d['tanggal'] = date('Y-m-d');
+        $d['no_invoice'] = InvoiceCsr::where('customer_id', $data['customer_id'])->max('no_invoice') + 1;
+        $d['customer_id'] = $data['customer_id'];
+        $d['total_csr'] = $data['total_csr'];
+        $d['periode'] = "Periode ".$d['no_invoice'];
+        $d['lunas'] = 0;
+
+        $invoice = InvoiceCsr::create($d);
+
+        foreach($csr as $c)
+        {
+            $c->update([
+                'csr' => 1,
+            ]);
+
+            InvoiceCsrDetail::create([
+                'invoice_csr_id' => $invoice->id,
+                'transaksi_id' => $c->id,
+            ]);
         }
 
         return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');

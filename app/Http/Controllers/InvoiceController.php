@@ -6,6 +6,7 @@ use App\Models\InvoiceTagihan;
 use App\Models\InvoiceTagihanDetail;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
+use App\Models\InvoiceCsr;
 use App\Models\Customer;
 use App\Models\Sponsor;
 use App\Models\KasBesar;
@@ -24,11 +25,13 @@ class InvoiceController extends Controller
         $invoice = InvoiceTagihan::where('lunas', 0)->count();
         $bayar = InvoiceBayar::where('lunas', 0)->count();
         $bonus = InvoiceBonus::where('lunas', 0)->count();
+        $csr = InvoiceCsr::where('lunas', 0)->count();
 
         return view('billing.transaksi.invoice.index', [
             'invoice' => $invoice,
             'bayar' => $bayar,
             'bonus' => $bonus,
+            'csr' => $csr
         ]);
     }
 
@@ -363,4 +366,26 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoice.bonus.index')->with('success', 'Invoice berhasil di lunasi');
     }
+
+    public function invoice_csr()
+    {
+        $invoice = InvoiceCsr::where('lunas', 0)->get();
+
+        return view('billing.transaksi.invoice.invoice-csr', [
+            'data' => $invoice
+        ]);
+    }
+
+    public function invoice_csr_detail(InvoiceCsr $invoiceCsr)
+    {
+        $periode = $invoiceCsr->periode;
+        $customer = Customer::find($invoiceCsr->customer_id);
+
+        return view('billing.transaksi.invoice.invoice-csr-detail', [
+            'data' => $invoiceCsr->transaksi,
+            'periode' => $periode,
+            'customer' => $customer
+        ]);
+    }
+
 }

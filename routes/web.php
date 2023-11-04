@@ -143,6 +143,11 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::group(['middleware' => 'role:admin,user'], function() {
         Route::get('statisik', [App\Http\Controllers\StatistikController::class, 'index'])->name('statisik.index');
+
+        Route::get('billing/nota-csr', [App\Http\Controllers\TransaksiController::class, 'nota_csr'])->name('billing.nota-csr');
+        Route::post('billing/nota-csr/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_csr_lanjut'])->name('billing.nota-csr.lanjut');
+        Route::get('billing/invoice-csr', [App\Http\Controllers\InvoiceController::class, 'invoice_csr'])->name('billing.invoice-csr');
+        Route::get('billing/invoice-csr/{invoiceCsr}/detail', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_detail'])->name('billing.invoice-csr.detail');
         // Route::resource('kas-besar', App\Http\Controllers\KasBesarController::class);
         Route::get('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
         Route::post('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
