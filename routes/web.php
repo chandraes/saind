@@ -136,6 +136,7 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('statisik/profit-bulanan', [App\Http\Controllers\StatistikController::class, 'profit_bulanan'])->name('statisik.profit-bulanan');
         Route::get('statistik/profit-bulanan/print', [App\Http\Controllers\StatistikController::class, 'profit_bulanan_print'])->name('statistik.profit-bulanan.print');
         Route::get('statistik/profit-tahunan', [App\Http\Controllers\StatistikController::class, 'profit_tahunan'])->name('statistik.profit-tahunan');
+        Route::get('statistik/profit-tahunan/print', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_print'])->name('statistik.profit-tahunan.print');
     });
 
     Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index')->middleware('role:admin,user');

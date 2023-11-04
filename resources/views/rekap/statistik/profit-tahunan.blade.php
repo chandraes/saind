@@ -18,8 +18,7 @@
                     <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
                                 width="30"> STATISTIK</a></td>
                     <td>
-                        <form target="_blank" action="{{route('statistik.profit-bulanan.print')}}" method="get">
-                            <input type="hidden" name="offset" value="{{$offset}}">
+                        <form target="_blank" action="{{route('statistik.profit-tahunan.print')}}" method="get">
                             <input type="hidden" name="tahun" value="{{$tahun}}">
                             <button class="btn" type="submit">
                                 <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Rekap
@@ -49,30 +48,6 @@
         </form>
     </div>
 
-    {{-- <div class="row">
-        <div class="col-6 ">
-            <div class="btn-group" role="group" aria-label="Button group name">
-                @if ($offset > 0)
-                <form action="{{route('statistik.profit-tahunan')}}" method="get">
-                    <input type="hidden" name="offset" value="{{$offset-10}}">
-                    <input type="hidden" name="tahun" value="{{$tahun}}">
-                    <button type="submit" class="btn btn-primary m-3"><i class="fa fa-arrow-left"></i>
-                        Sebelumnya</button>
-                </form>
-                @endif
-                @if ($data->count() > 0)
-                <form action="{{route('statistik.profit-tahunan')}}" method="get">
-                    <input type="hidden" name="offset" value="{{$offset+10}}">
-                    <input type="hidden" name="tahun" value="{{$tahun}}">
-                    <button type="submit" class="btn btn-success m-3">Selanjutnya
-                        <i class="fa fa-arrow-right"></i>
-                    </button>
-                </form>
-                @endif
-            </div>
-        </div>
-    </div> --}}
-
     <div style="font-size: 15px">
         @php
         $totalProfitAll = 0;
@@ -80,11 +55,11 @@
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
                 <tr>
-                    <td class="text-center align-middle">Vehicle</td>
+                    <th class="text-center align-middle" style="width: 8%">NOLAM</th>
                     @foreach($nama_bulan as $bulan)
-                    <td class="text-center align-middle">{{$bulan}}</td>
+                    <th class="text-center align-middle">{{$bulan}}</th>
                     @endforeach
-                    <td class="text-center align-middle">Total</td>
+                    <th class="text-center align-middle">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -157,23 +132,6 @@
                 "scrollCollapse": true,
                 "scrollY": "550px",
             });
-        });
-        // masukForm on submit, sweetalert confirm
-        $('#lanjutForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah data sudah benar?',
-                text: "Pastikan data sudah benar sebelum disimpan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submit();
-                }
-            })
         });
 </script>
 @endpush
