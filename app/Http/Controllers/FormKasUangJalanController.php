@@ -163,11 +163,15 @@ class FormKasUangJalanController extends Controller
             'no_rekening' => 'required',
         ]);
 
+        $vendor = $data['p_vendor'];
+
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
-        $data['vendor_id'] = $data['p_vendor'];
+        $data['vendor_id'] = $vendor;
+
+        unset($data['p_vendor']);
 
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->orderBy('id', 'desc')->first();
 
@@ -188,6 +192,7 @@ class FormKasUangJalanController extends Controller
 
         $store = KasUangJalan::create($data);
         $transaksi['kas_uang_jalan_id'] = $store->id;
+
         Transaksi::create($transaksi);
         Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
 
@@ -209,6 +214,7 @@ class FormKasUangJalanController extends Controller
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
+
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
