@@ -78,13 +78,12 @@
                         Sebelumnya</button>
                 </form>
                 @endif
-                @if ($data->count() > 0)
+                @if ($vehicle->count() > 0)
                 <form action="{{route('statistik.perform-unit')}}" method="get">
                     <input type="hidden" name="offset" value="{{$offset+10}}">
                     <input type="hidden" name="bulan" value="{{$bulan_angka}}">
                     <input type="hidden" name="tahun" value="{{$tahun}}">
                     <button type="submit" class="btn btn-success m-3">Selanjutnya
-                        {{-- fa row right icon --}}
                         <i class="fa fa-arrow-right"></i>
                     </button>
                 </form>
@@ -101,7 +100,8 @@
                     @foreach ($vehicle as $v)
                     <th colspan="3" class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red" @endif>{{$v->nomor_lambung}} <br>
-                        {{$v->vendor->nama}} <br> @if ($v->gps == 1) <strong>(GPS)</strong> @endif @if($v->vendor->support_operational == 1)
+                        {{$v->vendor->nama}} <br> @if ($v->gps == 1) <strong>(GPS)</strong> @endif
+                        @if($v->vendor->support_operational == 1)
                         <strong>(SO)</strong>
                         @endif
                     </th>
@@ -130,42 +130,27 @@
             <tbody>
                 @for ($i = 1; $i <= $date; $i++) <tr>
                     <td class="text-center align-middle" style="width: 3%">{{$i}}</td>
-                    @foreach ($vehicle as $v)
-                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>
-                        @php
-                        $rute = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d',
-                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->where('void', 0)->first()->kas_uang_jalan->rute->nama ?? '-';
-                        @endphp
-                        {{$rute}}
+                    @foreach ($statistics as $statistic)
+                    @foreach ($statistic['data'] as $data)
+                    @if ($data['day'] == $i)
+                    <td class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif')
+                        style="background-color: red" @endif>
+                        {{$data['rute']}}
                     </td>
-                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>
-                        {{-- check if tanggal bongkar is not null --}}
-                        @php
-                        $tgl_bongkar = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d',
-                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->tanggal_bongkar ?? '-';
-                        @endphp
-                        {{-- {{$tgl_bongkar}} --}}
-                        {{-- only show date day --}}
-                        @if ($tgl_bongkar != '-' && $tgl_bongkar != '0000-00-00')
-                        {{date('d-m', strtotime($tgl_bongkar))}}
+                    <td class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif')
+                        style="background-color: red" @endif>
+                        @if ($data['tgl_bongkar'] != '-' && $data['tgl_bongkar'] != '0000-00-00')
+                        {{$data['tgl_bongkar']}}
                         @else
                         -
                         @endif
-
                     </td>
-                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>
-                        @php
-                        $tonase = $data->where('nomor_lambung', $v->nomor_lambung)->where('tanggal', date('Y-m-d',
-                        strtotime($i.'-'.$bulan_angka.'-'.$tahun)))->first()->timbangan_bongkar ?? "-";
-                        @endphp
-                        {{$tonase}}
+                    <td class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif')
+                        style="background-color: red" @endif>
+                        {{$data['tonase']}}
                     </td>
+                    @endif
+                    @endforeach
                     @endforeach
                     </tr>
                     @endfor
@@ -175,30 +160,20 @@
                     <td class="text-center align-middle">
                         <strong>Rute Panjang</strong>
                     </td>
-                    @foreach ($vehicle as $v)
-                    @php
-                    $total = $data->where('nomor_lambung', $v->nomor_lambung)->where('jarak', '>', 50)->count() ;
-                    @endphp
-                    <td colspan="3" class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>
-                        <strong>{{number_format($total, 0, ',', '.')}}</strong>
-                    </td>
+                    @foreach ($statistics as $statistic)
+                        <td colspan="3" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                            <strong>{{ number_format($statistic['long_route_count'], 0, ',', '.') }}</strong>
+                        </td>
                     @endforeach
                 </tr>
                 <tr>
                     <td class="text-center align-middle">
                         <strong>Rute Pendek</strong>
                     </td>
-                    @foreach ($vehicle as $v)
-                    @php
-                    $total = $data->where('nomor_lambung', $v->nomor_lambung)->where('jarak', '<=', 50)->count() ;
-                    @endphp
-                    <td colspan="3" class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red"
-                        @endif>
-                        <strong>{{number_format($total, 0, ',', '.')}}</strong>
-                    </td>
+                    @foreach ($statistics as $statistic)
+                        <td colspan="3" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                            <strong>{{ number_format($statistic['short_route_count'], 0, ',', '.') }}</strong>
+                        </td>
                     @endforeach
                 </tr>
             </tfoot>

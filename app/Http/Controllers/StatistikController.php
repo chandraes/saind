@@ -52,8 +52,55 @@ class StatistikController extends Controller
                     ->offset($offset)
                     ->get();
         }
+
+        $statistics = [];
+
+        foreach ($vehicle as $v) {
+            $statistics[$v->nomor_lambung] = [
+                'vehicle' => $v,
+                'long_route_count' => 0,
+                'short_route_count' => 0,
+            ];
+        }
+
+        for ($i = 1; $i <= $date; $i++) {
+            foreach ($vehicle as $v) {
+                $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
+
+                $transaction = $data->where('nomor_lambung', $v->nomor_lambung)
+                                    ->where('tanggal', $dateString)
+                                    ->where('void', 0)
+                                    ->first();
+
+                $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
+                $jarak = $transaction->jarak ?? 0;
+
+                if ($jarak > 50) {
+                    $statistics[$v->nomor_lambung]['long_route_count']++;
+                } else if ($jarak > 0 && $jarak <= 50) {
+                    $statistics[$v->nomor_lambung]['short_route_count']++;
+                }
+
+                $tgl_bongkar = $transaction->tanggal_bongkar ?? '-';
+                if ($tgl_bongkar != '-' && $tgl_bongkar != '0000-00-00') {
+                    $tgl_bongkar = date('d-m', strtotime($tgl_bongkar));
+                }
+
+                $tonase = $transaction->timbangan_bongkar ?? "-";
+
+                $statistics[$v->nomor_lambung]['data'][] = [
+                    'day' => $i,
+                    'rute' => $rute,
+                    'tgl_bongkar' => $tgl_bongkar,
+                    'tonase' => $tonase,
+                ];
+            }
+        }
+
+        // dd($statistics);
         return view('rekap.statistik.perform-unit', [
-            'data' => $data,
+            // 'data' => $data,
+            'statistics' => $statistics,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'bulan_angka' => $bulan,
@@ -103,8 +150,53 @@ class StatistikController extends Controller
                     ->get();
         }
 
+        $statistics = [];
+
+        foreach ($vehicle as $v) {
+            $statistics[$v->nomor_lambung] = [
+                'vehicle' => $v,
+                'long_route_count' => 0,
+                'short_route_count' => 0,
+            ];
+        }
+
+        for ($i = 1; $i <= $date; $i++) {
+            foreach ($vehicle as $v) {
+                $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
+
+                $transaction = $data->where('nomor_lambung', $v->nomor_lambung)
+                                    ->where('tanggal', $dateString)
+                                    ->where('void', 0)
+                                    ->first();
+
+                $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
+                $jarak = $transaction->jarak ?? 0;
+
+                if ($jarak > 50) {
+                    $statistics[$v->nomor_lambung]['long_route_count']++;
+                } else if ($jarak > 0 && $jarak <= 50) {
+                    $statistics[$v->nomor_lambung]['short_route_count']++;
+                }
+
+                $tgl_bongkar = $transaction->tanggal_bongkar ?? '-';
+                if ($tgl_bongkar != '-' && $tgl_bongkar != '0000-00-00') {
+                    $tgl_bongkar = date('d-m', strtotime($tgl_bongkar));
+                }
+
+                $tonase = $transaction->timbangan_bongkar ?? "-";
+
+                $statistics[$v->nomor_lambung]['data'][] = [
+                    'day' => $i,
+                    'rute' => $rute,
+                    'tgl_bongkar' => $tgl_bongkar,
+                    'tonase' => $tonase,
+                ];
+            }
+        }
+
         $pdf = PDF::loadview('rekap.statistik.perform-unit-print', [
-            'data' => $data,
+            // 'data' => $data,
+            'statistics' => $statistics,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'bulan_angka' => $bulan,
