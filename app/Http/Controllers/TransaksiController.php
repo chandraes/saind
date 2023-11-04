@@ -82,6 +82,15 @@ class TransaksiController extends Controller
             $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
         }
 
+        if ($transaksi->kas_uang_jalan->customer->csr == 1) {
+            $jarak = $transaksi->kas_uang_jalan->rute->jarak;
+            if ($jarak > 50) {
+                $data['harga_csr'] = $transaksi->kas_uang_jalan->customer->harga_csr_atas;
+            } else {
+                $data['harga_csr'] = $transaksi->kas_uang_jalan->customer->harga_csr_bawah;
+            }
+        }
+
         $data['status'] = 2;
         $data['tanggal_muat'] = date('Y-m-d');
 
@@ -128,9 +137,16 @@ class TransaksiController extends Controller
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
 
+        $data['nominal_csr'] = 0;
+
+        if($transaksi->kas_uang_jalan->customer->csr == 1)
+        {
+            $data['nominal_csr'] = $data['timbangan_bongkar'] * $transaksi->harga_csr;
+        }
+
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
-        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'];
+        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'];
 
         $transaksi->update($data);
 
@@ -313,24 +329,24 @@ class TransaksiController extends Controller
 
     }
 
-    public function back_tagihan(Request $request, Transaksi $transaksi)
-    {
-        $data = $request->validate([
-            'password' => 'required',
-        ]);
+    // public function back_tagihan(Request $request, Transaksi $transaksi)
+    // {
+    //     $data = $request->validate([
+    //         'password' => 'required',
+    //     ]);
 
-        $password = PasswordKonfirmasi::first();
+    //     $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
-            return redirect()->back()->with('error', 'Password belum diatur!!');
-        }
+    //     if (!$password) {
+    //         return redirect()->back()->with('error', 'Password belum diatur!!');
+    //     }
 
-        if ($data['password'] != $password->password) {
-            return redirect()->back()->with('error', 'Password salah!!');
-        }
+    //     if ($data['password'] != $password->password) {
+    //         return redirect()->back()->with('error', 'Password salah!!');
+    //     }
 
-        return redirect()->route('transaksi.nota-tagihan.edit', $transaksi);
-    }
+    //     return redirect()->route('transaksi.nota-tagihan.edit', $transaksi);
+    // }
 
     public function nota_tagihan_edit(Transaksi $transaksi)
     {
@@ -363,9 +379,17 @@ class TransaksiController extends Controller
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
         }
+
+        $data['nominal_csr'] = 0;
+
+        if($transaksi->kas_uang_jalan->customer->csr == 1)
+        {
+            $data['nominal_csr'] = $data['timbangan_bongkar'] * $transaksi->harga_csr;
+        }
+
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
-        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'];
+        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'];
 
         $transaksi->update($data);
 
