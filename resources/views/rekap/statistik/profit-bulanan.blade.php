@@ -99,11 +99,13 @@
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
                 <tr>
-                    <td class="text-center align-middle">Tanggal</td>
+                    <th class="text-center align-middle">Tanggal</th>
                     @foreach ($vehicle as $v)
-                    <td class="text-center align-middle" @if ($v->status == 'nonaktif')
+                    <th class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red"
-                        @endif>{{$v->nomor_lambung}}</td>
+                        @endif>{{$v->nomor_lambung}} <br>
+                        {{$v->vendor->nama}} @if ($v->gps == 1) <strong>(GPS)</strong> @endif @if($v->vendor->support_operational == 1) <strong>(SO)</strong> @endif
+                    </th>
                     @endforeach
                 </tr>
             </thead>

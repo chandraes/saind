@@ -133,6 +133,8 @@ class StatistikController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
+        
+        $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
@@ -158,6 +160,7 @@ class StatistikController extends Controller
                     ->limit(10)
                     ->offset($offset)
                     ->get();
+
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
@@ -194,17 +197,12 @@ class StatistikController extends Controller
                     $statistics[$v->nomor_lambung]['short_route_count']++;
                 }
 
-                $tgl_bongkar = $transaction->tanggal_bongkar ?? '-';
-                if ($tgl_bongkar != '-' && $tgl_bongkar != '0000-00-00') {
-                    $tgl_bongkar = date('d-m', strtotime($tgl_bongkar));
-                }
 
                 $tonase = $transaction->timbangan_bongkar ?? "-";
 
                 $statistics[$v->nomor_lambung]['data'][] = [
                     'day' => $i,
                     'rute' => $rute,
-                    'tgl_bongkar' => $tgl_bongkar,
                     'tonase' => $tonase,
                 ];
             }
