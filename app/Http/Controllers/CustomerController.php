@@ -69,10 +69,15 @@ class CustomerController extends Controller
                 'csr_transfer_ke' => 'nullable',
                 'csr_bank' => 'nullable',
                 'csr_no_rekening' => 'nullable',
+                'harga_csr_atas' => 'nullable',
+                'harga_csr_bawah' => 'nullable',
         ]);
 
         $rute = $data['rute'];
         unset($data['rute']);
+
+        $data['harga_csr_atas'] = str_replace('.', '', $data['harga_csr_atas']);
+        $data['harga_csr_bawah'] = str_replace('.', '', $data['harga_csr_bawah']);
 
         $data['created_by'] = auth()->id();
 
@@ -251,9 +256,13 @@ class CustomerController extends Controller
                     'csr_transfer_ke' => 'nullable',
                     'csr_bank' => 'nullable',
                     'csr_no_rekening' => 'nullable',
+                    'harga_csr_atas' => 'nullable',
+                    'harga_csr_bawah' => 'nullable',
                 ]);
 
-        // dd($data);
+
+        $data['harga_csr_atas'] = str_replace('.', '', $data['harga_csr_atas']);
+        $data['harga_csr_bawah'] = str_replace('.', '', $data['harga_csr_bawah']);
 
         $data['edited_by'] = auth()->id();
 

@@ -113,6 +113,61 @@
         </div>
     </div>
     <hr>
+    <h3>CSR</h3>
+    <div class="row mt-3 mb-3">
+        <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+            <label class="btn btn-success active">
+                <input type="checkbox" class="me-2" name="csr" id="csr" {{$data->csr == 1 ? 'checked' : ''}}
+                autocomplete="off" > CSR
+            </label>
+        </div>
+    </div>
+    <div class="row mt-3 mb-3" id="rek_csr" @if($data->csr == 0) hidden @endif>
+        <div class="col-6">
+            <label for="harga_csr_ata">Harga CSR > 50 km</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1">Rp</span>
+                <input type="text" class="form-control @if ($errors->has('harga_csr_atas'))
+                is-invalid
+            @endif" name="harga_csr_atas" id="harga_csr_atas" data-thousands="."
+                    value="{{number_format($data->harga_csr_atas, 0, ',','.')}}">
+            </div>
+        </div>
+
+        <div class="col-6">
+            <label for="harga_csr_ata">Harga CSR <= 50 km</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">Rp</span>
+                        <input type="text" class="form-control @if ($errors->has('harga_csr_bawah'))
+                is-invalid
+            @endif" name="harga_csr_bawah" id="harga_csr_bawah" data-thousands="."
+                            value="{{number_format($data->harga_csr_bawah, 0, ',','.')}}">
+                    </div>
+        </div>
+        <div class="col-4">
+            <div class="mb-3">
+                <label for="csr_bank" class="form-label">BANK CSR</label>
+                <input type="text" class="form-control" name="csr_bank" id="csr_bank" aria-describedby="helpId"
+                    placeholder="" value="{{$data->csr_bank}}">
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="mb-3">
+                <label for="csr_transfer_ke" class="form-label">NAMA REKENING CSR</label>
+                <input type="text" class="form-control" name="csr_transfer_ke" id="csr_transfer_ke"
+                    aria-describedby="helpId" placeholder="" value="{{$data->csr_transfer_ke}}">
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="mb-3">
+                <label for="csr_no_rekening" class="form-label">NOMOR REKENING CSR</label>
+                <input type="text" class="form-control" name="csr_no_rekening" id="csr_no_rekening"
+                    aria-describedby="helpId" placeholder="" value="{{$data->csr_no_rekening}}">
+            </div>
+        </div>
+    </div>
+    <br>
+    <hr>
     <div class="row mt-3 mb-3">
         <h3 class="mb-3">Tagihan</h3>
         <div class="mb-3">

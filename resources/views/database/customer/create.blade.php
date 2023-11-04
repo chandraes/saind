@@ -163,6 +163,61 @@
                 </label>
                </div>
         </div>
+        <br>
+            <hr>
+            <h3>CSR</h3>
+            <div class="row mt-3 mb-3">
+                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                    <label class="btn btn-success active">
+                        <input type="checkbox" class="me-2" name="csr" id="csr"
+                        autocomplete="off" > CSR
+                    </label>
+                </div>
+            </div>
+            <div class="row mt-3 mb-3" id="rek_csr" hidden >
+                <div class="col-6">
+                    <label for="harga_csr_ata">Harga CSR > 50 km</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">Rp</span>
+                        <input type="text" class="form-control @if ($errors->has('harga_csr_atas'))
+                        is-invalid
+                    @endif" name="harga_csr_atas" id="harga_csr_atas" data-thousands="."
+                            >
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <label for="harga_csr_ata">Harga CSR <= 50 km</label>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1">Rp</span>
+                                <input type="text" class="form-control @if ($errors->has('harga_csr_bawah'))
+                        is-invalid
+                    @endif" name="harga_csr_bawah" id="harga_csr_bawah" data-thousands=".">
+                            </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="csr_bank" class="form-label">BANK CSR</label>
+                        <input type="text" class="form-control" name="csr_bank" id="csr_bank" aria-describedby="helpId"
+                            placeholder="" >
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="csr_transfer_ke" class="form-label">NAMA REKENING CSR</label>
+                        <input type="text" class="form-control" name="csr_transfer_ke" id="csr_transfer_ke"
+                            aria-describedby="helpId" placeholder="" >
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="mb-3">
+                        <label for="csr_no_rekening" class="form-label">NOMOR REKENING CSR</label>
+                        <input type="text" class="form-control" name="csr_no_rekening" id="csr_no_rekening"
+                            aria-describedby="helpId" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <br>
         <hr>
         <div class="row mt-3 mb-3">
             <h3 class="mb-3">Tagihan</h3>
@@ -215,9 +270,40 @@
 @endpush
 @push('js')
 
-<script src="{{asset('assets/js/jquery.min.js')}}"></script>
     <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
     <script>
+
+    $('#harga_csr_atas').maskMoney({
+                    thousands: '.',
+                    decimal: ',',
+                    precision: 0,
+                    allowZero: true,
+                });
+
+        $('#harga_csr_bawah').maskMoney({
+            thousands: '.',
+            decimal: ',',
+            precision: 0,
+            allowZero: true,
+        });
+        $('#csr').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#rek_csr').removeAttr('hidden');
+                $('#csr_transfer_ke').attr('required', true);
+                $('#csr_bank').attr('required', true);
+                $('#csr_no_rekening').attr('required', true);
+                $('#harga_csr_atas').attr('required', true);
+                $('#harga_csr_bawah').attr('required', true);
+            } else {
+                $('#rek_csr').attr('hidden', true);
+                $('#csr_transfer_ke').attr('required', false);
+                $('#csr_bank').attr('required', false);
+                $('#csr_no_rekening').attr('required', false);
+                $('#harga_csr_atas').attr('required', false);
+                $('#harga_csr_bawah').attr('required', false);
+            }
+        });
+
         $(document).ready(function() {
             $('#rute').select2();
         });
