@@ -88,7 +88,7 @@
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="{#" class="text-decoration-none">
+            <a href="{{route('rekap.csr')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-csr.svg')}}" alt="" width="100">
                 <h2>CSR</h2>
             </a>

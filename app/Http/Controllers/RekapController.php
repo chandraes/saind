@@ -14,6 +14,7 @@ use App\Models\InvoiceBonus;
 use App\Models\InvoiceBayar;
 use App\Models\Customer;
 use App\Models\InvoiceTagihan;
+use App\Models\InvoiceCsr;
 use App\Models\KasVendor;
 use App\Models\Transaksi;
 use App\Models\Rekening;
@@ -829,6 +830,28 @@ class RekapController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Rekap Kas Vendor '.$vendor->nama." ".$stringBulanNow.' '.$tahun.'.pdf');
+    }
+
+    public function rekap_csr()
+    {
+        $data = InvoiceCsr::where('lunas', 1)->get();
+
+        return view('rekap.csr.index', [
+            'data' => $data,
+        ]);
+    }
+
+    public function rekap_csr_detail(InvoiceCsr $invoiceCsr)
+    {
+        $periode = $invoiceCsr->periode;
+        $customer = Customer::find($invoiceCsr->customer_id);
+
+        return view('rekap.csr.detail', [
+            'data' => $invoiceCsr->transaksi,
+            'customer' => $customer,
+            'periode' => $periode,
+            'invoice_id' => $invoiceCsr->id
+        ]);
     }
 
 }
