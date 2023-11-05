@@ -193,28 +193,42 @@ class StatistikController extends Controller
             foreach ($vehicle as $v) {
                 $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
 
-                $transaction = $data->where('nomor_lambung', $v->nomor_lambung)
-                                    ->where('tanggal', $dateString)
-                                    ->where('void', 0)
-                                    ->first();
+                $transactions = $data->filter(function ($transaction) use ($v, $dateString) {
+                    return $transaction->nomor_lambung == $v->nomor_lambung && $transaction->tanggal == $dateString && $transaction->void == 0;
+                });
 
-                $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
-                $jarak = $transaction->jarak ?? 0;
+                if ($transactions->isEmpty()) {
+                    $statistics[$v->nomor_lambung]['data'][] = [
+                        'day' => $i,
+                        'rute' => '-',
+                        'tonase' => '-',
+                    ];
+                } else {
+                    $rutes = [];
+                    $tonases = [];
 
-                if ($jarak > 50) {
-                    $statistics[$v->nomor_lambung]['long_route_count']++;
-                } else if ($jarak > 0 && $jarak <= 50) {
-                    $statistics[$v->nomor_lambung]['short_route_count']++;
+                    foreach ($transactions as $transaction) {
+                        $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
+                        $jarak = $transaction->jarak ?? 0;
+
+                        if ($jarak > 50) {
+                            $statistics[$v->nomor_lambung]['long_route_count']++;
+                        } else if ($jarak > 0 && $jarak <= 50) {
+                            $statistics[$v->nomor_lambung]['short_route_count']++;
+                        }
+
+                        $tonase = $transaction->timbangan_bongkar ?? "-";
+
+                        $rutes[] = $rute;
+                        $tonases[] = $tonase;
+                    }
+
+                    $statistics[$v->nomor_lambung]['data'][] = [
+                        'day' => $i,
+                        'rute' => implode(",", $rutes),
+                        'tonase' => implode(",", $tonases),
+                    ];
                 }
-
-
-                $tonase = $transaction->timbangan_bongkar ?? "-";
-
-                $statistics[$v->nomor_lambung]['data'][] = [
-                    'day' => $i,
-                    'rute' => $rute,
-                    'tonase' => $tonase,
-                ];
             }
         }
 
