@@ -8,7 +8,7 @@
     </div>
     <div class="row justify-content-left mt-5">
         <div class="col-md-4 text-center mb-5">
-            <a href="{{route('template-kontrak.index')}}" class="text-decoration-none">
+            <a href="{{route('template-new.kontrak')}}" class="text-decoration-none">
                 <img src="{{asset('images/kontrak.svg')}}" alt="" width="100">
                 <h2>Template Kontrak</h2>
             </a>

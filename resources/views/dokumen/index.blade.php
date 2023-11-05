@@ -14,6 +14,12 @@
                 <h2>Template</h2>
             </a>
         </div>
+        {{-- <div class="col-md-4 text-center mb-5">
+            <a href="{{route('template-new')}}" class="text-decoration-none">
+                <img src="{{asset('images/sph.svg')}}" alt="" width="100">
+                <h2>Template New</h2>
+            </a>
+        </div> --}}
         <div class="col-md-4 text-center mb-5">
             <a href="{{route('kontrak.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/kontrak.svg')}}" alt="" width="100">

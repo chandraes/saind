@@ -69,7 +69,8 @@ class FormStoringConroller extends Controller
         }
 
         $bio = Vendor::find($vendorId);
-        $totalMobil = $bio->vehicle->where('status', 'aktif')->count();
+
+        $totalMobil = Vehicle::where('vendor_id', $vendorId)->whereNot('status', 'nonaktif')->count();
 
         $sisa = KasVendor::where('vendor_id', $vehicle->vendor_id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
 
