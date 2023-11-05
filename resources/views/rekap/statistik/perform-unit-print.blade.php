@@ -42,13 +42,21 @@
                     @foreach ($statistics as $statistic)
                     @foreach ($statistic['data'] as $data)
                     @if ($data['day'] == $i)
-                    <td class="text-pdf table-pdf text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif')
+                    <td class="text-center align-middle table-pdf text-pdf" @if ($statistic['vehicle']->status == 'nonaktif')
                         style="background-color: red" @endif>
-                        {{$data['rute']}}
+                        @if(strpos($data['rute'], ',') !== false)
+                            {!! str_replace(',', '<br>', $data['rute']) !!}
+                        @else
+                            {{$data['rute']}}
+                        @endif
                     </td>
-                    <td class="text-pdf table-pdf text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif')
+                    <td class="text-center align-middle table-pdf text-pdf" @if ($statistic['vehicle']->status == 'nonaktif')
                         style="background-color: red" @endif>
+                        @if(strpos($data['tonase'], ',') !== false)
+                        {!! str_replace(',', '<br>', $data['tonase']) !!}
+                    @else
                         {{$data['tonase']}}
+                    @endif
                     </td>
                     @endif
                     @endforeach

@@ -256,6 +256,7 @@ class StatistikController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
+        $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
@@ -269,6 +270,9 @@ class StatistikController extends Controller
                             ->whereMonth('tanggal', $bulan)
                             ->whereYear('tanggal', $tahun)
                             ->where('transaksis.void', 0)
+                            ->when($vendor, function ($query, $vendor) {
+                                return $query->where('v.vendor_id', $vendor);
+                            })
                             ->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
@@ -278,15 +282,22 @@ class StatistikController extends Controller
 
 
         $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
                     ->limit(10)
                     ->offset($offset)
                     ->get();
+
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+                        ->when($vendor, function ($query, $vendor) {
+                            return $query->where('vendor_id', $vendor);
+                        })
+                        ->limit(10)
+                        ->offset($offset)
+                        ->get();
         }
 
         $statistics = [];
@@ -303,47 +314,60 @@ class StatistikController extends Controller
             foreach ($vehicle as $v) {
                 $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
 
-                $transaction = $data->where('nomor_lambung', $v->nomor_lambung)
-                                    ->where('tanggal', $dateString)
-                                    ->where('void', 0)
-                                    ->first();
+                $transactions = $data->filter(function ($transaction) use ($v, $dateString) {
+                    return $transaction->nomor_lambung == $v->nomor_lambung && $transaction->tanggal == $dateString && $transaction->void == 0;
+                });
 
-                $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
-                $jarak = $transaction->jarak ?? 0;
+                if ($transactions->isEmpty()) {
+                    $statistics[$v->nomor_lambung]['data'][] = [
+                        'day' => $i,
+                        'rute' => '-',
+                        'tonase' => '-',
+                    ];
+                } else {
+                    $rutes = [];
+                    $tonases = [];
 
-                if ($jarak > 50) {
-                    $statistics[$v->nomor_lambung]['long_route_count']++;
-                } else if ($jarak > 0 && $jarak <= 50) {
-                    $statistics[$v->nomor_lambung]['short_route_count']++;
+                    foreach ($transactions as $transaction) {
+                        $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
+                        $jarak = $transaction->jarak ?? 0;
+
+                        if ($jarak > 50) {
+                            $statistics[$v->nomor_lambung]['long_route_count']++;
+                        } else if ($jarak > 0 && $jarak <= 50) {
+                            $statistics[$v->nomor_lambung]['short_route_count']++;
+                        }
+
+                        $tonase = $transaction->timbangan_bongkar ?? "-";
+
+                        $rutes[] = $rute;
+                        $tonases[] = $tonase;
+                    }
+
+                    $statistics[$v->nomor_lambung]['data'][] = [
+                        'day' => $i,
+                        'rute' => implode(",", $rutes),
+                        'tonase' => implode(",", $tonases),
+                    ];
                 }
-
-                $tgl_bongkar = $transaction->tanggal_bongkar ?? '-';
-                if ($tgl_bongkar != '-' && $tgl_bongkar != '0000-00-00') {
-                    $tgl_bongkar = date('d-m', strtotime($tgl_bongkar));
-                }
-
-                $tonase = $transaction->timbangan_bongkar ?? "-";
-
-                $statistics[$v->nomor_lambung]['data'][] = [
-                    'day' => $i,
-                    'rute' => $rute,
-                    'tgl_bongkar' => $tgl_bongkar,
-                    'tonase' => $tonase,
-                ];
             }
         }
+
+        $vendors = Vendor::all();
 
         $pdf = PDF::loadview('rekap.statistik.perform-unit-print', [
             // 'data' => $data,
             'statistics' => $statistics,
             'bulan' => $bulan,
             'tahun' => $tahun,
+            'vendor' => $vendor,
             'bulan_angka' => $bulan,
             'vehicle' => $vehicle,
-            'vendor' => $vendor,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
+            'vendors' => $vendors,
             'offset' => $offset,
+            'dataTahun' => $dataTahun,
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Perform Unit Bulan '.$nama_bulan.' '.$tahun.'.pdf');
