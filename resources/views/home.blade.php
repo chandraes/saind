@@ -43,12 +43,25 @@
             </a>
         </div>
         @endif
-        @if (auth()->user()->role === 'vendor')
-        <a href="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
-            <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
-            <h2>Kas Vendor</h2>
-        </a>
-        @endif
+
     </div>
+    @if (auth()->user()->role === 'vendor')
+    <div class="row justify-content-left mt-5">
+        <div class="col-3 text-center mb-5">
+            <a href="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
+                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
+                <h2>Kas Vendor</h2>
+            </a>
+        </div>
+        <div class="col-3 text-center mb-5">
+            <a href="{{route('perform-unit-pervendor.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/perform-unit.svg')}}" alt="" width="100">
+                <h2>Perform Unit</h2>
+            </a>
+        </div>
+
+
+    </div>
+    @endif
 </div>
 @endsection
