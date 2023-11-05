@@ -388,4 +388,57 @@ class InvoiceController extends Controller
         ]);
     }
 
+    public function invoice_csr_lunas(InvoiceCsr $invoiceCsr)
+    {
+        $total_bayar = $invoiceCsr->total_csr;
+
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
+
+        if($last == null || $last->saldo < $total_bayar)
+        {
+            return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
+        }
+
+        $kasBesar['tanggal'] = date('Y-m-d');
+        $kasBesar['uraian'] = "CSR ".$invoiceCsr->customer->singkatan.' - '.$invoiceCsr->periode;
+        $kasBesar['jenis_transaksi_id'] = 2;
+        $kasBesar['nominal_transaksi'] = $total_bayar;
+        $kasBesar['saldo'] = $last->saldo - $total_bayar;
+        $kasBesar['transfer_ke'] = substr($invoiceCsr->customer->csr_transfer_ke, 0, 15);
+        $kasBesar['no_rekening'] = $invoiceCsr->customer->csr_no_rekening;
+        $kasBesar['bank'] = $invoiceCsr->customer->csr_bank;
+        $kasBesar['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+
+        $invoiceCsr->update([
+            'lunas' => 1
+        ]);
+
+        $store = KasBesar::create($kasBesar);
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Invoice CSR*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "CSR : ".$invoiceCsr->customer->singkatan."\n".
+                    "Periode : ".$invoiceCsr->periode."\n\n".
+                    "Nilai :  *Rp. ".number_format($kasBesar['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$kasBesar['bank']."\n".
+                    "Nama    : ".$kasBesar['transfer_ke']."\n".
+                    "No. Rek : ".$kasBesar['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
+
+        return redirect()->route('billing.invoice-csr')->with('success', 'Invoice berhasil di lunasi');
+
+    }
+
 }

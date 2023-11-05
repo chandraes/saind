@@ -54,7 +54,7 @@
                     {{number_format($d->total_csr, 0, ',', '.')}}
                 </td>
                 <td class="text-center align-middle">
-                    <form action="{{route('invoice.bonus.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
+                    <form action="{{route('invoice.csr.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
                     @csrf
                         <button type="submit" class="btn btn-success">Pembayaran </button>
                     </form>
