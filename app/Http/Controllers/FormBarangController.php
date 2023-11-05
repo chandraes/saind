@@ -196,7 +196,9 @@ class FormBarangController extends Controller
 
         $sisa = KasVendor::where('vendor_id', $data['vendor_id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
 
-        $plafon = ($vendor->plafon_lain * $vendor->vehicle->count()) + ($vendor->plafon_titipan * $vendor->vehicle->count()) - $sisa;
+        $totalMobil = Vehicle::where('vendor_id', $data['vendor_id'])->whereNot('status', 'nonaktif')->count();
+
+        $plafon = ($vendor->plafon_lain * $totalMobil) + ($vendor->plafon_titipan * $totalMobil) - $sisa;
 
         $kas['vendor_id'] = $data['vendor_id'];
         $kas['vehicle_id'] = $data['id'];
