@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
 use App\Models\Vehicle;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -148,6 +149,9 @@ class StatistikController extends Controller
                             ->whereMonth('tanggal', $bulan)
                             ->whereYear('tanggal', $tahun)
                             ->where('transaksis.void', 0)
+                            ->when($vendor, function ($query, $vendor) {
+                                return $query->where('v.vendor_id', $vendor);
+                            })
                             ->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
@@ -157,6 +161,9 @@ class StatistikController extends Controller
 
 
         $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
                     ->limit(10)
                     ->offset($offset)
                     ->get();
@@ -164,9 +171,12 @@ class StatistikController extends Controller
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+                        ->when($vendor, function ($query, $vendor) {
+                            return $query->where('vendor_id', $vendor);
+                        })
+                        ->limit(10)
+                        ->offset($offset)
+                        ->get();
         }
 
         $statistics = [];
@@ -208,16 +218,20 @@ class StatistikController extends Controller
             }
         }
 
+        $vendors = Vendor::all();
+
         // dd($statistics);
         return view('rekap.statistik.perform-unit', [
             // 'data' => $data,
             'statistics' => $statistics,
             'bulan' => $bulan,
             'tahun' => $tahun,
+            'vendor' => $vendor,
             'bulan_angka' => $bulan,
             'vehicle' => $vehicle,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
+            'vendors' => $vendors,
             'offset' => $offset,
             'dataTahun' => $dataTahun,
         ]);
@@ -312,6 +326,7 @@ class StatistikController extends Controller
             'tahun' => $tahun,
             'bulan_angka' => $bulan,
             'vehicle' => $vehicle,
+            'vendor' => $vendor,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
             'offset' => $offset,
@@ -530,10 +545,12 @@ class StatistikController extends Controller
 
             foreach ($data as $transaction) {
                 $v = $transaction->kas_uang_jalan->vehicle;
+                $vendor = $transaction->kas_uang_jalan->vendor;
 
                 if (!isset($statistics[$v->nomor_lambung])) {
                     $statistics[$v->nomor_lambung] = [
                         'vehicle' => $v,
+                        'vendor' => $vendor->nama,
                         'monthly' => array_fill(1, 12, 0),
                     ];
                 }
