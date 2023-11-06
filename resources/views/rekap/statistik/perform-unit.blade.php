@@ -201,7 +201,7 @@
                 </tr>
                 <tr>
                     <td class="text-center align-middle">
-                        <strong>Total</strong>
+                        <strong>Total Rute</strong>
                     </td>
                     @foreach ($statistics as $statistic)
                         <td colspan="2" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
