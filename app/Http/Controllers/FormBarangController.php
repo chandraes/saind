@@ -244,6 +244,7 @@ class FormBarangController extends Controller
                     "Jumlah : ".$data['jumlah']."\n".
                     "Total :  *Rp. ".number_format($data['total'], 0, ',', '.')."*\n".
                     "==========================\n\n".
+                    "Total Kasbon: Rp. ".number_format($store->sisa, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
