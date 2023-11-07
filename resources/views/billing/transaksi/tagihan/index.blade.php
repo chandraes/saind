@@ -192,7 +192,7 @@
                                       <h5 class="modal-title" id="Title-{{$d->id}}">Masukkan Password</h5>
                                           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                   </div>
-                                  <form action="{{route('transaksi.back-tagihan', $d)}}" method="post">
+                                  <form action="{{route('transaksi.nota-tagihan.edit', $d)}}" method="post">
                                       @csrf
                                   <div class="modal-body">
                                       <input type="password" class="form-control" id="password" name="password"
