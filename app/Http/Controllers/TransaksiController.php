@@ -93,7 +93,7 @@ class TransaksiController extends Controller
         if ($vendor == 'opname') {
             $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
         } elseif ($vendor == 'titipan') {
-            $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
+            $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
         }
 
         if ($transaksi->kas_uang_jalan->customer->csr == 1) {
