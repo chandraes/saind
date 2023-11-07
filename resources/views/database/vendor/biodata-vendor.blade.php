@@ -1,10 +1,9 @@
 @extends('layouts.doc-layout')
 @section('title', 'Biodata Vendor')
 @section('content')
-<hr style="border-bottom: 1.4px solid;">
 <div class="container-fluid justify-content-center">
     <center>
-        <h2>Biodata Vendor {{$data->tipe == 'perusahaan' ? $data->perusahaan : $data->nama}}</h2></center>
+        <h2>Biodata Vendor</h2></center>
 </div>
 <div class="container-fluid">
     <div class="row col-12 mt-3">
@@ -73,11 +72,23 @@
                 <td class="text-pdf">11</td>
                 <td class="text-pdf">Sistem Pembayaran</td>
                 <td class="text-pdf">:</td>
-                <td class="text-pdf"></td>
+                <td class="text-pdf">{{ucfirst($data->pembayaran)}}</td>
+            </tr>
+            <tr class="">
+                <td class="text-pdf">12</td>
+                <td class="text-pdf">Daftar Mobil</td>
+                <td class="text-pdf">:</td>
+                <td class="text-pdf">
+                    <ul class="list-group list-group-numbered">
+                    @foreach ($data->vehicle as $m)
+                    <li class="">{{$m->nomor_lambung}} (INDEX {{$m->no_index}}) ({{$m->tahun}}) </li>
+                    @endforeach
+                </ul>
+                </td>
             </tr>
         </table>
     </div>
-    <div class="row">
+    {{-- <div class="row">
         <table class="table table-pdf">
             <thead>
                 <tr class="text-center align-middle text-pdf">
@@ -95,8 +106,8 @@
                     @foreach ($customer as $c)
                     <td class="table-pdf"></td>
                     @endforeach
-                </tr>
-                <tr class="table-pdf text-pdf">
+                </tr> --}}
+                {{-- <tr class="table-pdf text-pdf">
                     <td class="table-pdf text-center"></td>
                     <td class="table-pdf">* Harga :</td>
 
@@ -108,8 +119,8 @@
                     @endif
                     @endforeach
 
-                </tr>
-                <tr class="table-pdf text-pdf">
+                </tr> --}}
+                {{-- <tr class="table-pdf text-pdf">
                     <td class="table-pdf text-center">2</td>
                     <td class="table-pdf"><strong>TITIPAN</strong></td>
                     @foreach ($customer as $c)
@@ -126,11 +137,11 @@
                     <td class="table-pdf"></td>
                     @endif
                     @endforeach
-                </tr>
-            </tbody>
+                </tr> --}}
+            {{-- </tbody>
         </table>
-    </div>
-    <div class="row">
+    </div> --}}
+    {{-- <div class="row">
         <span class="text-pdf"><strong>12. Mekanisme Uang Jalan</strong></span>
         <table class="table table-pdf text-pdf">
             <thead>
@@ -171,8 +182,8 @@
                 @endforeach
             </tbody>
         </table>
-    </div>
-    <span class="text-pdf"><strong>* Untuk sistem titipan tidak perlu mengisi poin 12 (mekanisme uang jalan)</strong></span><br>
+    </div> --}}
+    {{-- <span class="text-pdf"><strong>* Untuk sistem titipan tidak perlu mengisi poin 12 (mekanisme uang jalan)</strong></span><br> --}}
     <span class="text-pdf"><strong>* Sponsor : {{$data->sponsor->nama}}</strong></span>
     <br><br><br>
     <div class="row text-pdf">
