@@ -98,6 +98,24 @@
                         </td>
                     @endforeach
                 </tr>
+                <tr>
+                    <td class="text-center align-middle text-pdf table-pdf">
+                        <strong>Total Tonase</strong>
+                    </td>
+                    @foreach ($statistics as $statistic)
+                        <td colspan="2" class="text-center align-middle text-pdf table-pdf" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                            <strong>{{ number_format($statistic['total_tonase'], 2, ',', '.') }}</strong>
+                        </td>
+                    @endforeach
+                </tr>
+                <tr>
+                    <td class="text-center align-middle text-pdf table-pdf">
+                        <strong>Grand Total Tonase</strong>
+                    </td>
+                    <td colspan="{{count($statistics) * 2}}" class="align-middle">
+                        <strong>{{ number_format($grand_total_tonase, 2, ',', '.') }}</strong>
+                    </td>
+                </tr>
             </tfoot>
         </table>
     </div>

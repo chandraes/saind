@@ -154,6 +154,11 @@ class StatistikController extends Controller
                             })
                             ->get();
 
+        $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
+                            $tonase = $transaction->timbangan_bongkar ?? 0;
+                            return $carry + $tonase;
+                        }, 0);
+
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->selectRaw('YEAR(tanggal) tahun')
                             ->groupBy('tahun')
@@ -197,6 +202,8 @@ class StatistikController extends Controller
                     return $transaction->nomor_lambung == $v->nomor_lambung && $transaction->tanggal == $dateString && $transaction->void == 0;
                 });
 
+                $total_tonase = 0; // reset total tonase for each vehicle
+
                 if ($transactions->isEmpty()) {
                     $statistics[$v->nomor_lambung]['data'][] = [
                         'day' => $i,
@@ -217,7 +224,8 @@ class StatistikController extends Controller
                             $statistics[$v->nomor_lambung]['short_route_count']++;
                         }
 
-                        $tonase = $transaction->timbangan_bongkar ?? "-";
+                        $tonase = $transaction->timbangan_bongkar ?? 0;
+                        $total_tonase += $tonase; // add tonase to total
 
                         $rutes[] = $rute;
                         $tonases[] = $tonase;
@@ -229,12 +237,31 @@ class StatistikController extends Controller
                         'tonase' => implode(",", $tonases),
                     ];
                 }
+
+                $statistics[$v->nomor_lambung]['total_tonase'] = $total_tonase; // store total tonase for each vehicle
             }
         }
 
+
+
+        foreach ($statistics as $nomor_lambung => $statistic) {
+            $total_tonase = array_reduce($statistic['data'], function ($carry, $item) {
+                if (strpos($item['tonase'], ',') !== false) {
+                    $tonases = explode(',', $item['tonase']);
+                    $tonase_sum = array_sum(array_map('floatval', $tonases));
+                } else {
+                    $tonase_sum = is_numeric($item['tonase']) ? $item['tonase'] : 0;
+                }
+
+                return $carry + $tonase_sum;
+            }, 0);
+
+            $statistics[$nomor_lambung]['total_tonase'] = $total_tonase;
+        }
+        // dd($statistics);
         $vendors = Vendor::all();
 
-        // dd($statistics);
+
         return view('rekap.statistik.perform-unit', [
             // 'data' => $data,
             'statistics' => $statistics,
@@ -248,6 +275,7 @@ class StatistikController extends Controller
             'vendors' => $vendors,
             'offset' => $offset,
             'dataTahun' => $dataTahun,
+            'grand_total_tonase' => $grand_total_tonase,
         ]);
     }
 
@@ -275,6 +303,11 @@ class StatistikController extends Controller
                             })
                             ->get();
 
+        $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
+                                    $tonase = $transaction->timbangan_bongkar ?? 0;
+                                    return $carry + $tonase;
+                                }, 0);
+
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->selectRaw('YEAR(tanggal) tahun')
                             ->groupBy('tahun')
@@ -318,6 +351,8 @@ class StatistikController extends Controller
                     return $transaction->nomor_lambung == $v->nomor_lambung && $transaction->tanggal == $dateString && $transaction->void == 0;
                 });
 
+                $total_tonase = 0; // reset total tonase for each vehicle
+
                 if ($transactions->isEmpty()) {
                     $statistics[$v->nomor_lambung]['data'][] = [
                         'day' => $i,
@@ -338,7 +373,8 @@ class StatistikController extends Controller
                             $statistics[$v->nomor_lambung]['short_route_count']++;
                         }
 
-                        $tonase = $transaction->timbangan_bongkar ?? "-";
+                        $tonase = $transaction->timbangan_bongkar ?? 0;
+                        $total_tonase += $tonase; // add tonase to total
 
                         $rutes[] = $rute;
                         $tonases[] = $tonase;
@@ -350,7 +386,26 @@ class StatistikController extends Controller
                         'tonase' => implode(",", $tonases),
                     ];
                 }
+
+                $statistics[$v->nomor_lambung]['total_tonase'] = $total_tonase; // store total tonase for each vehicle
             }
+        }
+
+
+
+        foreach ($statistics as $nomor_lambung => $statistic) {
+            $total_tonase = array_reduce($statistic['data'], function ($carry, $item) {
+                if (strpos($item['tonase'], ',') !== false) {
+                    $tonases = explode(',', $item['tonase']);
+                    $tonase_sum = array_sum(array_map('floatval', $tonases));
+                } else {
+                    $tonase_sum = is_numeric($item['tonase']) ? $item['tonase'] : 0;
+                }
+
+                return $carry + $tonase_sum;
+            }, 0);
+
+            $statistics[$nomor_lambung]['total_tonase'] = $total_tonase;
         }
 
         $vendors = Vendor::all();
@@ -368,6 +423,7 @@ class StatistikController extends Controller
             'vendors' => $vendors,
             'offset' => $offset,
             'dataTahun' => $dataTahun,
+            'grand_total_tonase' => $grand_total_tonase,
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Perform Unit Bulan '.$nama_bulan.' '.$tahun.'.pdf');
@@ -467,7 +523,7 @@ class StatistikController extends Controller
                     ->limit(10)
                     ->offset($offset)
                     ->get();
-                    
+
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
