@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Models\KasVendor;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -812,5 +813,110 @@ class StatistikController extends Controller
             'offset' => $offset,
             'dataTahun' => $dataTahun,
         ]);
+    }
+
+    public function perform_vendor(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        // nama bulan dalam indonesia berdasarkan $bulan
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date vrom $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        // get data all vendor
+        $vendors = Vendor::all();
+
+        $dataTahun = KasVendor::selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+        $statistics = [];
+
+        foreach ($vendors as $v) {
+            $statistics[$v->nickname] = [
+                'vendor_id' => $v->id,
+                'vendor' => $v,
+            ];
+        }
+
+        for ($day = 1; $day <= $date; $day++) {
+            foreach ($statistics as $vendor_name => $statistic) {
+                $sisa = KasVendor::where('vendor_id', $statistic['vendor_id'])
+                        ->whereYear('tanggal', $tahun)
+                        ->whereMonth('tanggal', $bulan)
+                        ->whereDay('tanggal', $day)
+                        ->orderBy('id', 'desc') // order by 'tanggal' in descending order
+                        ->first()
+                        ->sisa ?? '-';
+
+                $statistics[$vendor_name]['sisa'][$day] = $sisa; // store 'sisa' value for each day
+            }
+        }
+
+
+        return view('rekap.statistik.perform-vendor', [
+            'statistics' => $statistics,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'bulan_angka' => $bulan,
+            'vendors' => $vendors,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'dataTahun' => $dataTahun,
+        ]);
+
+    }
+
+    public function perform_vendor_print(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        // nama bulan dalam indonesia berdasarkan $bulan
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date vrom $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        // get data all vendor
+        $vendors = Vendor::all();
+
+        $dataTahun = KasVendor::selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+        $statistics = [];
+
+        foreach ($vendors as $v) {
+            $statistics[$v->nickname] = [
+                'vendor_id' => $v->id,
+                'vendor' => $v,
+            ];
+        }
+
+        for ($day = 1; $day <= $date; $day++) {
+            foreach ($statistics as $vendor_name => $statistic) {
+                $sisa = KasVendor::where('vendor_id', $statistic['vendor_id'])
+                        ->whereYear('tanggal', $tahun)
+                        ->whereMonth('tanggal', $bulan)
+                        ->whereDay('tanggal', $day)
+                        ->orderBy('id', 'desc') // order by 'tanggal' in descending order
+                        ->first()
+                        ->sisa ?? '-';
+
+                $statistics[$vendor_name]['sisa'][$day] = $sisa; // store 'sisa' value for each day
+            }
+        }
+
+        $pdf = PDF::loadview('rekap.statistik.perform-vendor-print', [
+            'statistics' => $statistics,
+            'date' => $date,
+            'tahun' => $tahun,
+            'dataTahun' => $dataTahun,
+            'nama_bulan' => $nama_bulan,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Perform Vendor '.$nama_bulan.' '.$tahun.'.pdf');
     }
 }

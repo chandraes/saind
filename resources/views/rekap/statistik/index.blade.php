@@ -43,6 +43,14 @@
     <hr>
     <div class="row justify-content-left mt-5">
         <h1>OTHERS</h1>
+        @if (auth()->user()->role == 'admin')
+        <div class="col-md-4 text-center mt-5">
+            <a href="{{route('statistik.perform-vendor')}}" class="text-decoration-none">
+                <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="100">
+                <h2>STATISTIK VENDOR</h2>
+            </a>
+        </div>
+        @endif
         <div class="col-md-4 text-center mt-5">
             <a href="{{route('rekap.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="100">
