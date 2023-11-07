@@ -850,17 +850,28 @@ class StatistikController extends Controller
             ];
         }
 
-        for ($day = 1; $day <= $date; $day++) {
-            foreach ($statistics as $vendor_name => $statistic) {
-                $sisa = KasVendor::where('vendor_id', $statistic['vendor_id'])
-                        ->whereYear('tanggal', $tahun)
-                        ->whereMonth('tanggal', $bulan)
-                        ->whereDay('tanggal', $day)
-                        ->orderBy('id', 'desc') // order by 'tanggal' in descending order
-                        ->first()
-                        ->sisa ?? '-';
+        $kasVendors = KasVendor::whereYear('tanggal', $tahun)
+            ->whereMonth('tanggal', $bulan)
+            ->orderBy('id', 'desc')
+            ->get();
 
-                $statistics[$vendor_name]['sisa'][$day] = $sisa; // store 'sisa' value for each day
+        // Group the records by vendor and day
+        $groupedKasVendors = $kasVendors->groupBy([
+            'vendor_id',
+            function ($kasVendor) {
+                return Carbon::parse($kasVendor->tanggal)->day;
+            },
+        ]);
+
+        // Calculate 'sisa' value for each day for each vendor
+        foreach ($statistics as $vendor_name => $statistic) {
+            for ($day = 1; $day <= $date; $day++) {
+                if (isset($groupedKasVendors[$statistic['vendor_id']]) && isset($groupedKasVendors[$statistic['vendor_id']][$day])) {
+                    $sisa = $groupedKasVendors[$statistic['vendor_id']][$day]->first()->sisa ?? '-';
+                } else {
+                    $sisa = '-';
+                }
+                $statistics[$vendor_name]['sisa'][$day] = $sisa;
             }
         }
 
@@ -912,17 +923,28 @@ class StatistikController extends Controller
             ];
         }
 
-        for ($day = 1; $day <= $date; $day++) {
-            foreach ($statistics as $vendor_name => $statistic) {
-                $sisa = KasVendor::where('vendor_id', $statistic['vendor_id'])
-                        ->whereYear('tanggal', $tahun)
-                        ->whereMonth('tanggal', $bulan)
-                        ->whereDay('tanggal', $day)
-                        ->orderBy('id', 'desc') // order by 'tanggal' in descending order
-                        ->first()
-                        ->sisa ?? '-';
+        $kasVendors = KasVendor::whereYear('tanggal', $tahun)
+            ->whereMonth('tanggal', $bulan)
+            ->orderBy('id', 'desc')
+            ->get();
 
-                $statistics[$vendor_name]['sisa'][$day] = $sisa; // store 'sisa' value for each day
+        // Group the records by vendor and day
+        $groupedKasVendors = $kasVendors->groupBy([
+            'vendor_id',
+            function ($kasVendor) {
+                return Carbon::parse($kasVendor->tanggal)->day;
+            },
+        ]);
+
+        // Calculate 'sisa' value for each day for each vendor
+        foreach ($statistics as $vendor_name => $statistic) {
+            for ($day = 1; $day <= $date; $day++) {
+                if (isset($groupedKasVendors[$statistic['vendor_id']]) && isset($groupedKasVendors[$statistic['vendor_id']][$day])) {
+                    $sisa = $groupedKasVendors[$statistic['vendor_id']][$day]->first()->sisa ?? '-';
+                } else {
+                    $sisa = '-';
+                }
+                $statistics[$vendor_name]['sisa'][$day] = $sisa;
             }
         }
 
