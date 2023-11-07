@@ -49,6 +49,14 @@
                     </th>
                     @endforeach
                 </tr>
+                <tr>
+                    <th class="text-center align-middle text-pdf table-pdf">
+                        Total Kasbon
+                    </th>
+                    <th colspan="{{count($statistics)}}" class="text-pdf table-pdf">
+                        Rp. {{number_format($grand_total, 0, ',', '.')}}
+                    </th>
+                </tr>
             </tfoot>
         </table>
     </div>
