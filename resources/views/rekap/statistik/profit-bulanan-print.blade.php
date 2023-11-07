@@ -15,8 +15,8 @@
                     @foreach ($vehicle as $v)
                     <td class="text-center align-middle table-pdf text-pdf" style="font-size: 14px; font-weight: bold" @if ($v->status == 'nonaktif')
                         style="background-color: red; font-size: 14px; font-weight: bold"
-                    @endif>{{$v->nomor_lambung}}  <br>
-                    {{$v->vendor->nama}} @if ($v->gps == 1) <strong>(GPS)</strong> @endif @if($v->vendor->support_operational == 1) <strong>(SO)</strong> @endif
+                        @endif>{{$v->nomor_lambung}} <br>
+                        {{$v->vendor->nickname}} @if ($v->gps == 1) <strong>(GPS)</strong> @endif @if($v->vendor->support_operational == 1) <strong>(SO)</strong> @endif
                 </td>
                     @endforeach
                 </tr>

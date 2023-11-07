@@ -378,6 +378,7 @@ class StatistikController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
+        $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
@@ -390,6 +391,9 @@ class StatistikController extends Controller
                             ->whereMonth('tanggal', $bulan)
                             ->whereYear('tanggal', $tahun)
                             ->where('transaksis.void', 0)
+                            ->when($vendor, function ($query, $vendor) {
+                                return $query->where('v.vendor_id', $vendor);
+                            })
                             ->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
@@ -399,16 +403,25 @@ class StatistikController extends Controller
 
 
         $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
                     ->limit(10)
                     ->offset($offset)
                     ->get();
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
                     ->limit(10)
                     ->offset($offset)
                     ->get();
         }
+
+        $vendors = Vendor::all();
+
         return view('rekap.statistik.profit-bulanan', [
             'data' => $data,
             'bulan' => $bulan,
@@ -419,6 +432,8 @@ class StatistikController extends Controller
             'date' => $date,
             'offset' => $offset,
             'dataTahun' => $dataTahun,
+            'vendors' => $vendors,
+            'vendor' => $vendor,
         ]);
     }
 
@@ -427,6 +442,7 @@ class StatistikController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
+        $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
@@ -439,22 +455,29 @@ class StatistikController extends Controller
                             ->whereMonth('tanggal', $bulan)
                             ->whereYear('tanggal', $tahun)
                             ->where('transaksis.void', 0)
+                            ->when($vendor, function ($query, $vendor) {
+                                return $query->where('v.vendor_id', $vendor);
+                            })
                             ->get();
 
-
         $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
                     ->limit(10)
                     ->offset($offset)
                     ->get();
-
+                    
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
                     ->limit(10)
                     ->offset($offset)
                     ->get();
         }
-
         $pdf = PDF::loadview('rekap.statistik.profit-bulanan-print', [
             'data' => $data,
             'bulan' => $bulan,
