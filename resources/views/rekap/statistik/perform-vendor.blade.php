@@ -106,6 +106,14 @@
                     </th>
                     @endforeach
                 </tr>
+                <tr>
+                    <th class="text-center align-middle">
+                        Total Kas Vendor
+                    </th>
+                    <th colspan="{{count($statistics)}}">
+                        Rp. {{number_format($grand_total, 0, ',', '.')}}
+                    </th>
+                </tr>
             </tfoot>
         </table>
 

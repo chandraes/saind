@@ -834,6 +834,15 @@ class StatistikController extends Controller
 
         $statistics = [];
 
+        $grand_total = 0;
+
+        foreach ($vendors as $v) {
+
+            $sisa = KasVendor::where('vendor_id', $v->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+
+            $grand_total += $sisa;
+        }
+
         foreach ($vendors as $v) {
             $statistics[$v->nickname] = [
                 'vendor_id' => $v->id,
@@ -864,6 +873,7 @@ class StatistikController extends Controller
             'vendors' => $vendors,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
+            'grand_total' => $grand_total,
             'dataTahun' => $dataTahun,
         ]);
 
@@ -885,6 +895,13 @@ class StatistikController extends Controller
         $dataTahun = KasVendor::selectRaw('YEAR(tanggal) tahun')
                             ->groupBy('tahun')
                             ->get();
+
+        $grand_total = 0;
+
+        foreach ($vendors as $v) {
+            $sisa = KasVendor::where('vendor_id', $v->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+            $grand_total += $sisa;
+        }
 
         $statistics = [];
 
@@ -912,6 +929,7 @@ class StatistikController extends Controller
         $pdf = PDF::loadview('rekap.statistik.perform-vendor-print', [
             'statistics' => $statistics,
             'date' => $date,
+            'grand_total' => $grand_total,
             'tahun' => $tahun,
             'dataTahun' => $dataTahun,
             'nama_bulan' => $nama_bulan,
