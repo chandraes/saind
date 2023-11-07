@@ -167,22 +167,22 @@ class StatistikController extends Controller
 
 
         $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('vendor_id', $vendor);
+            })
+            ->limit(10)
+            ->offset($offset)
+            ->get();
 
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
-                        ->when($vendor, function ($query, $vendor) {
-                            return $query->where('vendor_id', $vendor);
-                        })
-                        ->limit(10)
-                        ->offset($offset)
-                        ->get();
+                ->when($vendor, function ($query, $vendor) {
+                    return $query->where('vendor_id', $vendor);
+                })
+                ->limit(10)
+                ->offset(0)
+                ->get();
         }
 
         $statistics = [];
