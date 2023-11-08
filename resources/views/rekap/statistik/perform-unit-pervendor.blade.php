@@ -90,11 +90,13 @@
                     <th rowspan="2" class="text-center align-middle">Tanggal</th>
                     @foreach ($vehicle as $v)
                     <th colspan="2" class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red" @endif>{{$v->nomor_lambung}} <br>
-                        {{$v->vendor->nama}} <br> @if ($v->gps == 1) <strong>(GPS)</strong> @endif
+                        style="background-color: red" @endif>{{$v->nomor_lambung}} ({{$v->nopol}}) <br>
+                        {{$v->vendor->nickname}}
+                        @if ($v->gps == 1) <strong>(GPS)</strong> @endif
                         @if($v->vendor->support_operational == 1)
                         <strong>(SO)</strong>
-                        @endif
+                        @endif <br>
+                        INDEX {{$v->no_index}} ({{$v->tahun}})
                     </th>
                     @endforeach
                 </tr>
@@ -171,6 +173,24 @@
                             <strong>{{ number_format($statistic['short_route_count']+$statistic['long_route_count'], 0, ',', '.') }}</strong>
                         </td>
                     @endforeach
+                </tr>
+                <tr>
+                    <td class="text-center align-middle">
+                        <strong>Total Tonase</strong>
+                    </td>
+                    @foreach ($statistics as $statistic)
+                        <td colspan="2" class="text-center align-middle" @if ($statistic['vehicle']->status == 'nonaktif') style="background-color: red" @endif>
+                            <strong>{{ number_format($statistic['total_tonase'], 2, ',', '.') }}</strong>
+                        </td>
+                    @endforeach
+                </tr>
+                <tr>
+                    <td class="text-center align-middle">
+                        <strong>Grand Total Tonase</strong>
+                    </td>
+                    <td colspan="{{count($statistics) * 2}}" class="align-middle">
+                        <strong>{{ number_format($grand_total_tonase, 2, ',', '.') }}</strong>
+                    </td>
                 </tr>
             </tfoot>
         </table>
