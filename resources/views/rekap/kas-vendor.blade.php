@@ -81,9 +81,19 @@
 
                     <td colspan="3" class="text-center align-middle">
                         {{$stringBulan}} {{$tahunSebelumnya}}</td>
-                    <td class="text-center align-middle"></td>
-                    <td></td>
-                    <td>
+                    <td class="text-center align-middle">
+                        @if ($dataSebelumnya->sisa > 0)
+                        Rp. {{$dataSebelumnya ?
+                            number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
+                        @endif
+                    </td>
+                    <td class="text-center align-middle">
+                        @if ($dataSebelumnya->sisa < 0)
+                        Rp. {{$dataSebelumnya ?
+                            number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
+                        @endif
+                    </td>
+                    <td class="text-center align-middle">
                         Rp. {{$dataSebelumnya ?
                             number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
                     </td>
@@ -146,9 +156,9 @@
                     <td></td>
                     <td></td>
                     <td class="text-center align-middle"><strong>Grand Total</strong> </td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman'), 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$dataSebelumnya->sisa, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($data->sum('bayar'), 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($sisaTerakhir, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$dataSebelumnya->sisa-$data->sum('bayar'), 0, ',','.')}}</td>
                     <td></td>
                 </tr>
                 {{-- <tr>
