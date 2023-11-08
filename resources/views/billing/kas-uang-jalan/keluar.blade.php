@@ -215,7 +215,8 @@
                         $('#hk_uang_jalan').maskMoney({
                             thousands: '.',
                             decimal: ',',
-                            precision: 0
+                            precision: 0,
+                            allowZero: true,
                         });
                         $('#hk_uang_jalan').maskMoney('mask', data.hk_uang_jalan);
                     }
