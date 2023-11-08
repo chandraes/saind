@@ -23,6 +23,9 @@
         </div>
     </div>
 </div>
+@php
+    $sisaSebelumnya = $dataSebelumnya ? $dataSebelumnya->sisa : 0;
+@endphp
 <div class="container-fluid mt-5">
     <form action="{{route('rekap.kas-vendor')}}" method="get">
         <div class="row">
@@ -82,20 +85,20 @@
                     <td colspan="3" class="text-center align-middle">
                         {{$stringBulan}} {{$tahunSebelumnya}}</td>
                     <td class="text-center align-middle">
-                        @if ($dataSebelumnya->sisa > 0)
+                        @if ($sisaSebelumnya > 0)
                         Rp. {{$dataSebelumnya ?
-                            number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
+                            number_format($sisaSebelumnya, 0,',','.') : ''}}
                         @endif
                     </td>
                     <td class="text-center align-middle">
-                        @if ($dataSebelumnya->sisa < 0)
+                        @if ($dataSebelumnya && $sisaSebelumnya < 0)
                         Rp. {{$dataSebelumnya ?
-                            number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
+                            number_format($sisaSebelumnya, 0,',','.') : ''}}
                         @endif
                     </td>
                     <td class="text-center align-middle">
                         Rp. {{$dataSebelumnya ?
-                            number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
+                            number_format($sisaSebelumnya, 0,',','.') : ''}}
                     </td>
                     <td class="text-center align-middle"></td>
                 </tr>
@@ -156,26 +159,11 @@
                     <td></td>
                     <td></td>
                     <td class="text-center align-middle"><strong>Grand Total</strong> </td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$dataSebelumnya->sisa, 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$sisaSebelumnya, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($data->sum('bayar'), 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$dataSebelumnya->sisa-$data->sum('bayar'), 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$sisaSebelumnya-$data->sum('bayar'), 0, ',','.')}}</td>
                     <td></td>
                 </tr>
-                {{-- <tr>
-                    <td colspan="3" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
-                    <td class="text-center align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
-                            1)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
-                    <td class="text-center align-middle text-danger">
-                        <strong>{{number_format($data->where('jenis_transaksi_id',
-                            2)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
-                    <td class="text-center align-middle">
-                        <strong>
-                            {{$data->last() ? number_format($data->last()->saldo, 0, ',', '.') : ''}}
-                        </strong>
-                    </td>
-                    <td></td>
-                    <td></td>
-                </tr> --}}
             </tfoot>
         </table>
     </div>
@@ -185,13 +173,8 @@
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
-<script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-    // hide alert after 5 seconds
-    setTimeout(function() {
-        $('#alert').fadeOut('slow');
-    }, 5000);
 
     $(document).ready(function() {
         $('#rekapTable').DataTable({
