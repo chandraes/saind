@@ -125,7 +125,7 @@
                     <th rowspan="2" class="text-center align-middle">Tanggal</th>
                     @foreach ($vehicle as $v)
                     <th colspan="2" class="text-center align-middle" @if ($v->status == 'nonaktif')
-                        style="background-color: red" @endif>{{$v->nomor_lambung}} <br>
+                        style="background-color: red" @endif>{{$v->nomor_lambung}} ({{$v->nopol}}) <br>
                         {{$v->vendor->nickname}}
                         @if ($v->gps == 1) <strong>(GPS)</strong> @endif
                         @if($v->vendor->support_operational == 1)
@@ -253,23 +253,6 @@
                 "scrollCollapse": true,
                 "scrollY": "550px",
             });
-        });
-        // masukForm on submit, sweetalert confirm
-        $('#lanjutForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah data sudah benar?',
-                text: "Pastikan data sudah benar sebelum disimpan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    this.submit();
-                }
-            })
         });
 </script>
 @endpush
