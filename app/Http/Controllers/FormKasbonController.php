@@ -225,7 +225,7 @@ class FormKasbonController extends Controller
         $kas['nominal_transaksi'] = $data['nominal'];
         $kas['saldo'] = $last->saldo - $data['nominal'];
         $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
-        $kas['transfer_ke'] = $karyawan->nama_rekening;
+        $kas['transfer_ke'] = substr($karyawan->nama_rekening, 0, 15);
         $kas['bank'] = $karyawan->bank;
         $kas['no_rekening'] = $karyawan->no_rekening;
 
@@ -284,7 +284,7 @@ class FormKasbonController extends Controller
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
         $kasBesar = KasBesar::latest()->first();
-        
+
         if ($kasBesar == null || $kasBesar->saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
         }
