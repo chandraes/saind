@@ -29,7 +29,7 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Customer</th>
-                    <th class="text-center align-middle">Total Tagihan</th>
+                    <th class="text-center align-middle">Total Tagihan Sebelum PPn & Pph</th>
                     <th class="text-center align-middle">Total Invoice</th>
                     <th class="text-center align-middle">Total</th>
                 </tr>
@@ -74,7 +74,6 @@
             $('#rekapTable').DataTable({
                 "searching": false,
                 "paging": false,
-                "ordering": false,
                 "scrollCollapse": true,
                 "scrollY": "550px",
             });

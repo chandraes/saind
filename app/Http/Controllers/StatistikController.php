@@ -847,75 +847,34 @@ class StatistikController extends Controller
 
     public function perform_vendor(Request $request)
     {
-        $bulan = $request->bulan ?? date('m');
-        $tahun = $request->tahun ?? date('Y');
-        // nama bulan dalam indonesia berdasarkan $bulan
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-
-        // get array list date vrom $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
-
-        // get data all vendor
         $vendors = Vendor::all();
 
-        $dataTahun = KasVendor::selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
-
+        $sum_nominal_bayar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                        ->where('transaksis.bayar', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
+                                        ->groupBy('kuj.vendor_id')
+                                        ->selectRaw('kuj.vendor_id, sum(nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_kas_uang_jalan')
+                                        ->get()
+                                        ->keyBy('vendor_id');
         $statistics = [];
 
-        $grand_total = 0;
-
         foreach ($vendors as $v) {
-
+            $nominal_uang_jalan =  $sum_nominal_bayar[$v->id]->total_kas_uang_jalan ?? 0;
+            $nominal_bayar = $sum_nominal_bayar[$v->id]->total_nominal_bayar  ?? 0;
             $sisa = KasVendor::where('vendor_id', $v->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
-
-            $grand_total += $sisa;
-        }
-
-        foreach ($vendors as $v) {
+            $total_bayar = $nominal_bayar - $nominal_uang_jalan;
+            
             $statistics[$v->nickname] = [
-                'vendor_id' => $v->id,
                 'vendor' => $v,
+                'total_nominal_bayar' => $total_bayar,
+                'total_sisa' => $sisa,
+                'total' => $sisa-$total_bayar,
             ];
-        }
-
-        $kasVendors = KasVendor::whereYear('tanggal', $tahun)
-            ->whereMonth('tanggal', $bulan)
-            ->orderBy('id', 'desc')
-            ->get();
-
-        // Group the records by vendor and day
-        $groupedKasVendors = $kasVendors->groupBy([
-            'vendor_id',
-            function ($kasVendor) {
-                return Carbon::parse($kasVendor->tanggal)->day;
-            },
-        ]);
-
-        // Calculate 'sisa' value for each day for each vendor
-        foreach ($statistics as $vendor_name => $statistic) {
-            for ($day = 1; $day <= $date; $day++) {
-                if (isset($groupedKasVendors[$statistic['vendor_id']]) && isset($groupedKasVendors[$statistic['vendor_id']][$day])) {
-                    $sisa = $groupedKasVendors[$statistic['vendor_id']][$day]->first()->sisa ?? '-';
-                } else {
-                    $sisa = '-';
-                }
-                $statistics[$vendor_name]['sisa'][$day] = $sisa;
-            }
         }
 
 
         return view('rekap.statistik.perform-vendor', [
-            'statistics' => $statistics,
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'bulan_angka' => $bulan,
             'vendors' => $vendors,
-            'nama_bulan' => $nama_bulan,
-            'date' => $date,
-            'grand_total' => $grand_total,
-            'dataTahun' => $dataTahun,
+            'statistics' => $statistics,
         ]);
 
     }
