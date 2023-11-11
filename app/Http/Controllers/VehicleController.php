@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Models\KasUangJalan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
@@ -56,7 +57,7 @@ class VehicleController extends Controller
         ]);
 
         $data['nomor_lambung'] = Vehicle::nextNomorLambung();
-;
+
         $data['support_operational'] = Vendor::find($data['vendor_id'])->support_operational;
 
         if (array_key_exists('gps', $data)) {
@@ -120,6 +121,13 @@ class VehicleController extends Controller
         if ($vehicle->status == 'proses') {
             return redirect()->back()->with('error', 'Data tidak dapat diubah karena status sedang jalan');
         }
+
+        $checker = KasUangJalan::where('vehicle_id', $vehicle->id)->first();
+
+        if ($checker) {
+            return redirect()->back()->with('error', 'Data tidak dapat diubah karena sudah ada transaksi');
+        }
+
         // if $data has support_operational key
         $data['support_operational'] = Vendor::find($data['vendor_id'])->support_operational;
 
