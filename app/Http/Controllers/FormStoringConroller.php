@@ -100,7 +100,7 @@ class FormStoringConroller extends Controller
         $kasArray['uraian'] = 'BBM Storing '. $vehicle->nomor_lambung;
         $kasArray['jenis_transaksi_id'] = 2;
         $kasArray['nominal_transaksi'] = $storing->biaya_mekanik;
-        $kasArray['transfer_ke'] = $rekening->nama_rekening;
+        $kasArray['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
         $kasArray['bank'] = $rekening->nama_bank;
         $kasArray['no_rekening'] = $rekening->nomor_rekening;
 

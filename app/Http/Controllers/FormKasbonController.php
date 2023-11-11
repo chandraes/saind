@@ -71,7 +71,7 @@ class FormKasbonController extends Controller
         $kas['nominal_transaksi'] = $data['nominal'];
         $kas['saldo'] = $last->saldo - $data['nominal'];
         $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
-        $kas['transfer_ke'] = $d->nama_rekening;
+        $kas['transfer_ke'] = substr($d->nama_rekening, 0, 15);
         $kas['bank'] = $d->bank;
         $kas['no_rekening'] = $d->no_rekening;
 
@@ -158,7 +158,7 @@ class FormKasbonController extends Controller
         $kas['nominal_transaksi'] = $data['nominal'];
         $kas['saldo'] = $lastKasBesar->saldo + $data['nominal'];
         $kas['modal_investor_terakhir'] = $lastKasBesar->modal_investor_terakhir;
-        $kas['transfer_ke'] = $rekening->nama_rekening;
+        $kas['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
         $kas['bank'] = $rekening->nama_bank;
         $kas['no_rekening'] = $rekening->nomor_rekening;
 
@@ -304,7 +304,7 @@ class FormKasbonController extends Controller
         $k['nominal_transaksi'] = $data['nominal'];
         $k['saldo'] = $kasBesar->saldo - $data['nominal'];
         $k['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
-        $k['transfer_ke'] = $karyawan->nama_rekening;
+        $k['transfer_ke'] = substr($karyawan->nama_rekening, 0, 15);
         $k['bank'] = $karyawan->bank;
         $k['no_rekening'] = $karyawan->no_rekening;
 

@@ -73,7 +73,7 @@ class FormDevidenController extends Controller
                 $k['uraian'] = "Bagi Deviden ".$v->nama;
                 $k['nominal_transaksi'] = $nilai2;
                 $k['saldo'] = $last2->saldo - $nilai2;
-                $k['transfer_ke'] = $v->nama_rekening;
+                $k['transfer_ke'] = substr($v->nama_rekening, 0, 15);
                 $k['bank'] = $v->bank;
                 $k['no_rekening'] = $v->nomor_rekening;
                 $k['modal_investor_terakhir'] = $last2->modal_investor_terakhir;
@@ -107,7 +107,7 @@ class FormDevidenController extends Controller
 
             $send = new StarSender($group->nama_group, $pesan);
             $res = $send->sendGroup();
-            
+
         }
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');

@@ -104,7 +104,7 @@ class FormBarangController extends Controller
         $kas['saldo'] = $last->saldo - $total;
         $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
         $kas['uraian'] = $data['uraian'];
-        $kas['transfer_ke'] = $data['transfer_ke'];
+        $kas['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
         $kas['bank'] = $data['bank'];
         $kas['no_rekening'] = $data['no_rekening'];
 
