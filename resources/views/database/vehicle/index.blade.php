@@ -64,7 +64,7 @@
     </thead>
     <tbody>
         @foreach ($data as $d)
-        <tr>
+        <tr class="@if ($d->kas_uang_jalan->first() == null) table-success @endif" >
             <td class="text-center align-middle">{{$loop->iteration}}</td>
             <td class="text-center align-middle">
                 <a href="#" class="@if ($d->no_index < 30 || $d->tahun < 2016) text-danger @endif" data-bs-toggle="modal" data-bs-target="#modalShow{{$d->id}}">
