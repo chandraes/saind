@@ -118,7 +118,7 @@ class VehicleController extends Controller
         ]);
 
         if ($vehicle->status == 'proses') {
-            $data['status'] = 'proses';
+            return redirect()->back()->with('error', 'Data tidak dapat diubah karena status sedang jalan');
         }
         // if $data has support_operational key
         $data['support_operational'] = Vendor::find($data['vendor_id'])->support_operational;
