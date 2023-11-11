@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Form Lain-lain Keluar</u></h1>
+            <h1><u>Form Edit Tagihan</u></h1>
         </div>
     </div>
     @include('swal')
@@ -108,14 +108,6 @@
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
-        $(function() {
-             $('#nominal_transaksi').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
-            });
-        });
-
         // masukForm on submit, sweetalert confirm
         $('#masukForm').submit(function(e){
             e.preventDefault();

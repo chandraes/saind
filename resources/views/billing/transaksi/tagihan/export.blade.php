@@ -43,20 +43,6 @@
                     <th class="table-pdf text-pdf text-center align-middle">Selisih (%)</th>
                     @endif
                     <th class="table-pdf text-pdf text-center align-middle">Tagihan</th>
-
-{{--
-                    <th class="table-pdf text-pdf text-center align-middle" style="height: 35px">Tanggal</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Uraian</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Deposit</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Kas Kecil</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Kas Uang Jalan</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Tagihan</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Masuk</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Keluar</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Saldo</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Transfer Ke Rekening</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Bank</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Modal Investor</th> --}}
                 </tr>
             </thead>
             <tbody>

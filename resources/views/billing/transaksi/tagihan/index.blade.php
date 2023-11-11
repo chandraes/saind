@@ -210,7 +210,6 @@
 
                     <button class="btn btn-warning btn-block m-2" type="button" data-bs-toggle="modal" data-bs-target="#modalVoid-{{$d->id}}">Void</button>
 
-                    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
                     <div class="modal fade" id="modalVoid-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
                             <div class="modal-content">
@@ -317,14 +316,12 @@
         <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
             @csrf
             <input type="hidden" name="selectedData" required>
-            {{-- <input type="hidden" name="total_tagihan" value="{{$total_tagihan-$pph+$ppn}}"> --}}
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilihan</button>
         </form>
         <form target="_blank" action="{{route('transaksi.nota-tagihan.export', $customer)}}" method="get">
             <input type="hidden" name="rute_id" value="{{$rute_id}}">
             <button class="btn btn-success btn-lg" type="submit">Export</button>
         </form>
-        {{-- <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}" target="_blank">Export</a> --}}
       </div>
 </div>
 
