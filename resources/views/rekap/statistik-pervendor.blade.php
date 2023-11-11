@@ -22,7 +22,7 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Kas Vendor</th>
-                    <th class="text-center align-middle">Bayar</th>
+                    <th class="text-center align-middle">Nota Bayar</th>
                     <th class="text-center align-middle">Total</th>
 
                 </tr>
