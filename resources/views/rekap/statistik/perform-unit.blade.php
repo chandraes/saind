@@ -126,7 +126,7 @@
                     @foreach ($vehicle as $v)
                     <th colspan="2" class="text-center align-middle" @if ($v->status == 'nonaktif')
                         style="background-color: red" @endif>{{$v->nomor_lambung}} ({{$v->nopol}}) <br>
-                        {{$v->vendor->nickname}}
+                        {{$v->vendor->nickname}} ({{strtoupper($v->vendor->pembayaran)}})
                         @if ($v->gps == 1) <strong>(GPS)</strong> @endif
                         @if($v->vendor->support_operational == 1)
                         <strong>(SO)</strong>
