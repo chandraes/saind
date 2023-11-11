@@ -316,6 +316,8 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('statistik/perform-unit-tahunan', [App\Http\Controllers\StatistikController::class, 'perform_unit_tahunan'])->name('statistik.perform-unit-tahunan');
         Route::get('statistik/perform-unit-tahunan/print', [App\Http\Controllers\StatistikController::class, 'perform_unit_tahunan_print'])->name('statistik.perform-unit-tahunan.print');
 
+        Route::get('statistik/customer', [App\Http\Controllers\StatistikController::class, 'statistik_customer'])->name('statistik.customer');
+
 
         Route::get('dokumen/template-new', [App\Http\Controllers\DokumenNewController::class, 'index'])->name('template-new');
         Route::get('dokumen/template-new/kontrak', [App\Http\Controllers\DokumenNewController::class, 'kontrak_new'])->name('template-new.kontrak');

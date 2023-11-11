@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Models\Customer;
 use App\Models\KasVendor;
+use App\Models\InvoiceTagihan;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -986,5 +988,42 @@ class StatistikController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Perform Vendor '.$nama_bulan.' '.$tahun.'.pdf');
+    }
+
+    public function statistik_customer()
+    {
+        $customers = Customer::all();
+
+        $sum_nominal_tagihan = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                        ->where('transaksis.tagihan', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
+                                        ->groupBy('kuj.customer_id')
+                                        ->selectRaw('kuj.customer_id, sum(nominal_tagihan) as total_nominal_tagihan')
+                                        ->get()
+                                        ->keyBy('customer_id');
+
+        $sum_sisa_tagihan = InvoiceTagihan::groupBy('customer_id')
+                                        ->where('lunas', 0)
+                                        ->selectRaw('customer_id, sum(sisa_tagihan) as total_sisa_tagihan')
+                                        ->get()
+                                        ->keyBy('customer_id');
+        $statistics = [];
+
+        foreach ($customers as $c) {
+            $nominal_tagihan = $sum_nominal_tagihan[$c->id]->total_nominal_tagihan ?? 0;
+            $sisa_tagihan = $sum_sisa_tagihan[$c->id]->total_sisa_tagihan ?? 0;
+
+            $statistics[$c->singkatan] = [
+                'customer' => $c,
+                'total_nominal_tagihan' => $nominal_tagihan,
+                'total_sisa_tagihan' => $sisa_tagihan,
+                'total' => $nominal_tagihan + $sisa_tagihan,
+            ];
+        }
+
+
+        return view('rekap.statistik.statistik-customer', [
+            'customers' => $customers,
+            'statistics' => $statistics,
+        ]);
     }
 }
