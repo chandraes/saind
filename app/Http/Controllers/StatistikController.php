@@ -862,7 +862,7 @@ class StatistikController extends Controller
             $nominal_bayar = $sum_nominal_bayar[$v->id]->total_nominal_bayar  ?? 0;
             $sisa = KasVendor::where('vendor_id', $v->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
             $total_bayar = $nominal_bayar - $nominal_uang_jalan;
-            
+
             $statistics[$v->nickname] = [
                 'vendor' => $v,
                 'total_nominal_bayar' => $total_bayar,
@@ -984,5 +984,34 @@ class StatistikController extends Controller
             'customers' => $customers,
             'statistics' => $statistics,
         ]);
+    }
+
+    public function statistik_pervendor()
+    {
+        $vendorId = auth()->user()->vendor_id;
+
+        $sums = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                        ->where('kuj.vendor_id', $vendorId)
+                        ->where('transaksis.bayar', 0)
+                        ->where('transaksis.void', 0)
+                        ->where('transaksis.status', 3)
+                        ->selectRaw('sum(transaksis.nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_uang_jalan')
+                        ->first();
+
+        $latest_sisa = KasVendor::where('vendor_id', $vendorId)
+                                ->latest()
+                                ->orderBy('id', 'desc')
+                                ->first()
+                                ->sisa ?? 0;
+        $total_bayar = $sums->total_nominal_bayar - $sums->total_uang_jalan;
+        $statistics = [
+            'total_nominal_bayar' => $total_bayar,
+            'latest_sisa' => $latest_sisa,
+        ];
+
+        return view('rekap.statistik-pervendor', [
+            'statistics' => $statistics,
+        ]);
+
     }
 }

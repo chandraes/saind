@@ -59,6 +59,12 @@
                 <h2>Perform Unit</h2>
             </a>
         </div>
+        <div class="col-3 text-center mb-5">
+            <a href="{{route('statistik-pervendor.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="100">
+                <h2>Statistik Vendor</h2>
+            </a>
+        </div>
 
 
     </div>

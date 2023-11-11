@@ -21,6 +21,9 @@
         </div>
     </div>
 </div>
+@php
+    $sisaSebelumnya = $dataSebelumnya ? $dataSebelumnya->sisa : 0;
+@endphp
 <div class="container-fluid mt-5">
     <form action="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" method="get">
         <div class="row">
@@ -77,11 +80,21 @@
 
                     <td colspan="3" class="text-center align-middle">
                         {{$stringBulan}} {{$tahunSebelumnya}}</td>
-                    <td class="text-center align-middle"></td>
-                    <td></td>
-                    <td>
+                    <td class="text-center align-middle">
+                        @if ($sisaSebelumnya > 0)
                         Rp. {{$dataSebelumnya ?
-                            number_format($dataSebelumnya->sisa, 0,',','.') : ''}}
+                            number_format($sisaSebelumnya, 0,',','.') : ''}}
+                        @endif
+                    </td>
+                    <td class="text-center align-middle">
+                        @if ($dataSebelumnya && $sisaSebelumnya < 0)
+                        Rp. {{$dataSebelumnya ?
+                            number_format($sisaSebelumnya, 0,',','.') : ''}}
+                        @endif
+                    </td>
+                    <td class="text-center align-middle">
+                        Rp. {{$dataSebelumnya ?
+                            number_format($sisaSebelumnya, 0,',','.') : ''}}
                     </td>
                 </tr>
             </thead>
@@ -91,7 +104,7 @@
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoice_bayar_id)
-                        <a href="{{route('kas-per-vendor.detail', ['invoiceBayar'=>$d->invoice_bayar_id])}}">{{$d->uraian}}</a>
+                        <a href="{{route('rekap.kas-vendor.detail', ['invoiceBayar' => $d->invoice_bayar_id])}}">{{$d->uraian}}</a>
                         @else
                         {{$d->uraian}}
                         @endif
@@ -108,10 +121,9 @@
                     <td></td>
                     <td></td>
                     <td class="text-center align-middle"><strong>Grand Total</strong> </td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman'), 0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$sisaSebelumnya, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($data->sum('bayar'), 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman') - $data->sum('bayar'),
-                        0, ',','.')}}</td>
+                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$sisaSebelumnya-$data->sum('bayar'), 0, ',','.')}}</td>
                 </tr>
             </tfoot>
         </table>
