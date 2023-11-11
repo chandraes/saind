@@ -21,7 +21,7 @@
             </table>
         </div>
     </div>
-    <div style="font-size: 11px" class="table-responsive">
+    <div class="table-responsive">
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class="table-success">
                 <tr>

@@ -21,7 +21,7 @@
             </table>
         </div>
     </div>
-    <div style="font-size: 15px">
+    <div >
         @php
         $totalProfitAll = 0;
         @endphp
