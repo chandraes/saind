@@ -54,7 +54,7 @@
                 <label for="transfer_ke" class="form-label">Nama</label>
                 <input type="text" class="form-control @if ($errors->has('transfer_ke'))
                     is-invalid
-                @endif" name="transfer_ke" id="transfer_ke" required>
+                @endif" name="transfer_ke" id="transfer_ke" required maxlength="15">
                 @if ($errors->has('transfer_ke'))
                 <div class="invalid-feedback">
                     {{$errors->first('transfer_ke')}}
@@ -65,7 +65,7 @@
                 <label for="bank" class="form-label">Bank</label>
                 <input type="text" class="form-control @if ($errors->has('bank'))
                     is-invalid
-                @endif" name="bank" id="bank" required>
+                @endif" name="bank" id="bank" required maxlength="10">
                 @if ($errors->has('bank'))
                 <div class="invalid-feedback">
                     {{$errors->first('bank')}}
