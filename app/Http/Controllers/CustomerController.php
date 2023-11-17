@@ -76,8 +76,14 @@ class CustomerController extends Controller
         $rute = $data['rute'];
         unset($data['rute']);
 
-        $data['harga_csr_atas'] = str_replace('.', '', $data['harga_csr_atas']);
-        $data['harga_csr_bawah'] = str_replace('.', '', $data['harga_csr_bawah']);
+        if ($data['harga_csr_atas'] != null && $data['harga_csr_bawah'] != null) {
+            $data['harga_csr_atas'] = str_replace('.', '', $data['harga_csr_atas']);
+            $data['harga_csr_bawah'] = str_replace('.', '', $data['harga_csr_bawah']);
+        } else {
+            $data['harga_csr_atas'] = 0;
+            $data['harga_csr_bawah'] = 0;
+        }
+
 
         $data['created_by'] = auth()->id();
 

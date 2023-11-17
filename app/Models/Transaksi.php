@@ -21,9 +21,4 @@ class Transaksi extends Model
         return date('d-m-Y', strtotime($value));
     }
 
-    // public function getTanggalBongkarAttribute($value)
-    // {
-    //     return date('d-m-Y', strtotime($value));
-    // }
-
 }
