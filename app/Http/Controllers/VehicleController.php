@@ -124,7 +124,7 @@ class VehicleController extends Controller
 
         $checker = KasUangJalan::where('vehicle_id', $vehicle->id)->first();
 
-        if ($checker) {
+        if ($checker && $data['vendor_id'] != $vehicle->vendor_id) {
             return redirect()->back()->with('error', 'Data tidak dapat diubah karena sudah ada transaksi');
         }
 
