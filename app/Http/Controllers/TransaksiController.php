@@ -108,7 +108,11 @@ class TransaksiController extends Controller
         $data['status'] = 2;
         $data['tanggal_muat'] = date('Y-m-d');
 
-        $transaksi->update($data);
+        try {
+            $transaksi->update($data);
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'Terdapat nota yang sama!!');
+        }
 
         return redirect()->back()->with('success', 'Berhasil menyimpan data!!');
     }
@@ -162,7 +166,11 @@ class TransaksiController extends Controller
 
         $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'];
 
-        $transaksi->update($data);
+        try {
+            $transaksi->update($data);
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'Terdapat nota yang sama!!');
+        }
 
         $transaksi->kas_uang_jalan->vehicle->update([
             'status' => 'aktif',
@@ -193,7 +201,6 @@ class TransaksiController extends Controller
                             ->select('transaksis.*')
                             ->get();
         }
-
 
         return view('billing.transaksi.tagihan.index', [
             'data' => $data,
@@ -405,7 +412,13 @@ class TransaksiController extends Controller
 
         $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'];
 
-        $transaksi->update($data);
+        try {
+            $transaksi->update($data);
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'Terdapat nota yang sama!!');
+        }
+
+
 
         return redirect()->route('transaksi.nota-tagihan', $transaksi->kas_uang_jalan->customer_id)->with('success', 'Berhasil menyimpan data!!');
     }
