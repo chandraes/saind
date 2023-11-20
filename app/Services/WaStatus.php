@@ -101,8 +101,8 @@ class WaStatus
         curl_close($curl);
 
         $result = json_decode($response, true);
-
-        if ($result['status'] == true) {
+        // dd($result);
+        if ($result['success'] == true) {
             return $result;
         } else {
             return false;

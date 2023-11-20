@@ -24,11 +24,12 @@
                 <input type="text" class="form-control" name="untuk" id="untuk" aria-describedby="helpId" placeholder=""
                     disabled value="{{$data->untuk}}">
             </div>
+            <input type="hidden" name="group_id">
             <div class="col-3 mb-3">
                 <label for="" class="form-label">Nama Group</label>
-                <select class="form-select" name="nama_group" id="nama_group" required>
+                <select class="form-select" name="nama_group" id="nama_group" required onchange="funGroup()">
                     @foreach ($group as $g)
-                    <option value="{{$g}}" {{$data->nama_group == $g ? 'selected' : ''}}>{{$g}}</option>
+                    <option value="{{$g['id']}}" {{$data->nama_group == $g['name'] ? 'selected' : ''}}>{{$g['name']}}</option>
                     @endforeach
                 </select>
             </div>
@@ -57,6 +58,14 @@
         $('#nama_group').select2({
             theme: 'bootstrap-5'
         });
+
+        function funGroup(){
+            // var group_id = $('#nama_group').val();
+            // get name from select2
+            var group_id = $('#nama_group option:selected').text();
+            console.log(group_id);
+            $('input[name="group_id"]').val(group_id);
+        }
 
         // masukForm on submit, sweetalert confirm
         $('#masukForm').submit(function(e){

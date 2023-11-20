@@ -22,7 +22,7 @@ class WaController extends Controller
 
         $wa = new WaStatus();
         $group = $wa->getGroup();
-
+        // dd($group['data']);
         return view('pengaturan.wa-edit', [
             'data' => $data,
             'group' => $group['data']
@@ -32,11 +32,14 @@ class WaController extends Controller
     public function update(Request $request, $id)
     {
         $data = $request->validate([
-            'nama_group' => 'required'
+            'nama_group' => 'required',
+            'group_id' => 'required'
         ]);
 
+
         $update = GroupWa::where('id', $id)->update([
-            'nama_group' => $data['nama_group']
+            'nama_group' => $data['nama_group'],
+            'group_id' => $data['group_id']
         ]);
 
         if ($update) {

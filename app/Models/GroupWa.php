@@ -8,8 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class GroupWa extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'untuk',
-        'nama_grup',
-    ];
+    protected $guarded = [];
 }

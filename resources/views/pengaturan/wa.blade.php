@@ -34,7 +34,7 @@
                 <tr>
                     <td class="text-center align-middle">{{$loop->iteration}}</td>
                     <td class="text-center align-middle">{{$d->untuk}}</td>
-                    <td class="text-center align-middle">{{$d->nama_group}}</td>
+                    <td class="text-center align-middle">{{$d->group_id}}</td>
                     <td class="text-center align-middle">
                         <a href="{{route('pengaturan.wa.edit', $d->id)}}" class="btn btn-warning btn-sm">Edit</a>
                     </td>
