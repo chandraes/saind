@@ -33,10 +33,10 @@ class LoanVendor extends Command
 
         foreach ($vendor as $v) {
             $last = KasVendor::where('vendor_id', $v->id)->latest()->orderBy('id', 'desc')->first();
-
+            $vehicle = Vehicle::where('vendor_id', $v->id)->whereNot('status', 'nonaktif')->count();
             $data = [];
             $data['vendor_id'] = $v->id;
-            $data['pinjaman'] = 1500000;
+            $data['pinjaman'] = 1500000 * $vehicle;
             $data['bayar'] = 0;
             $data['sisa'] = $last ? $last->sisa+$data['pinjaman'] : $data['pinjaman'];
             $data['tanggal'] = date('Y-m-d');
