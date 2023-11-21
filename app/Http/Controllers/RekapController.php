@@ -390,6 +390,9 @@ class RekapController extends Controller
         if ($data['password'] != $password->password) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
+        
+        unset($data['password']);
+
         $kasVendorLast = KasVendor::where('vendor_id', '=', $kas_vendor->vendor_id)->latest()->orderBy('id', 'desc')->first()->sisa;
 
         $kas_vendor->update([
