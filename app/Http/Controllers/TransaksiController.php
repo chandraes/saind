@@ -271,6 +271,8 @@ class TransaksiController extends Controller
         ]);
 
         $data['void'] = 1;
+        $data['nota_muat'] = null;
+        $data['nota_bongkar'] = null;
 
         $transaksi->update($data);
 
