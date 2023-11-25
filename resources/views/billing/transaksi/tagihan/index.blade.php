@@ -128,7 +128,7 @@
                 {{-- check list --}}
                 <td class="text-center align-middle">
                     {{-- checklist on check push $d->id to $selectedData --}}
-                    <input type="checkbox" value="{{$d->id}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}">
+                    <input type="checkbox" value="{{$d->id}}" data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}">
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
@@ -256,14 +256,26 @@
         </tbody>
         <tfoot>
             <tr>
-                <td class="text-center align-middle"
+                <td class=""
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
-                <td class="text-center align-middle"><strong>Total</strong></td>
-                <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                    <div class="row text-center">
+                        <div class="col-md-4 mt-2">
+                            <label for="" class="form-label">Total Tagihan Dipilih : </label>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text" id="basic-addon1">Rp</span>
+                                <input type="text" class="form-control text-bold" name="total_tagih_diplay" id="total_tagihan_display">
+                            </div>
+                        </div>
+                    </div>
                 </td>
-                <td>{{number_format($profit, 0, ',', '.')}}</td>
-                <td>{{number_format($profit_persen, 2, ',', '.')}}%</td>
+                <td class="text-center align-middle"><strong>Total</strong></td>
+                <td class="text-end align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
+                </td>
+                <td class="text-end align-middle">{{number_format($profit, 0, ',', '.')}}</td>
+                <td class="text-end align-middle">{{number_format($profit_persen, 2, ',', '.')}}%</td>
                 <td></td>
             </tr>
             <tr>
@@ -271,7 +283,7 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
-                <td align="right" class="align-middle">
+                <td class="text-end align-middle">
 
                     {{number_format($ppn, 0, ',', '.')}}
 
@@ -286,7 +298,7 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
-                <td align="right" class="align-middle">
+                <td class="text-end align-middle">
 
                     {{number_format($pph, 0, ',', '.')}}
 
@@ -301,7 +313,7 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
-                <td align="right" class="align-middle"> <strong>
+                <td class="text-end align-middle"> <strong>
                     {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
@@ -311,6 +323,7 @@
         </tfoot>
     </table>
 </div>
+<input type="hidden" name="total_tagihan" id="total_tagihan" value="0">
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
         <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
@@ -337,18 +350,27 @@
 <script>
 
     function check(checkbox, id) {
+        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
+        var tagihan = parseFloat($(checkbox).data('tagihan'));
+
         if (checkbox.checked) {
+            totalTagihan += tagihan;
             $('input[name="selectedData"]').val(function(i, v) {
                 // if end of string, remove comma
                 return v + id + ',';
 
             });
         } else {
+            totalTagihan -= tagihan;
+
             $('input[name="selectedData"]').val(function(i, v) {
                 // remove id from string
                 return v.replace(id + ',', '');
             });
         }
+
+        $('#total_tagihan').val(totalTagihan);
+        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
 
         value = $('input[name="selectedData"]').val();
 
@@ -360,11 +382,18 @@
     }
 
     // check all checkbox and push all id to $selectedData and check all checkbox
-    function checkAll(checkbox) {
+    function checkAll(checkbox, id) {
+        $('#total_tagihan').val(0);
+        $('#total_tagihan_display').val(0);
+        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
+
         if (checkbox.checked) {
             $('input[name="selectedData"]').val(function(i, v) {
                 // if end of string, remove comma
                 @foreach ($data as $d)
+                var tagihan = parseFloat($('#idSelect-{{$d->id}}').data('tagihan'));
+                totalTagihan += tagihan;
+
                     v = v + {{$d->id}} + ',';
                     $('#idSelect-{{$d->id}}').prop('checked', true);
                 @endforeach
@@ -379,8 +408,12 @@
                 @endforeach
                 return v;
             });
+            totalTagihan = 0;
         }
 
+        $('#total_tagihan').val(totalTagihan);
+        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
+        
         value = $('input[name="selectedData"]').val();
 
         if(value.slice(-1) == ','){
