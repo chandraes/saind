@@ -34,6 +34,8 @@
             <tbody>
                 @php
                     $grandTotal = 0;
+                    $grandTotalNominalBayar = 0;
+                    $grandTotalSisa = 0;
                 @endphp
                 @foreach($statistics as $statistic)
                     <tr @if ($statistic['vendor']->status == 'nonaktif')
@@ -47,12 +49,16 @@
                     </tr>
                     @php
                         $grandTotal += $statistic['total'];
+                        $grandTotalNominalBayar += $statistic['total_nominal_bayar'];
+                        $grandTotalSisa += $statistic['total_sisa'];
                     @endphp
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="3" class="text-center align-middle">Grand Total</th>
+                    <th class="text-center align-middle">Grand Total</th>
+                    <th class="text-end align-middle">{{ number_format($grandTotalSisa, 0, ',', '.') }}</th>
+                    <th class="text-end align-middle">{{ number_format($grandTotalNominalBayar, 0, ',', '.') }}</th>
                     <th class="text-end align-middle">{{ number_format($grandTotal, 0, ',', '.') }}</th>
                 </tr>
             </tfoot>
