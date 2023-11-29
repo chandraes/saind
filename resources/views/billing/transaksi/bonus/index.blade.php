@@ -265,6 +265,7 @@
                 confirmButtonText: 'Ya, simpan!'
                 }).then((result) => {
                 if (result.isConfirmed) {
+                    $('#spinner').show();
                     this.submit();
                 }
             })
