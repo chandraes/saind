@@ -120,8 +120,7 @@
                                             </div>
                                             <div class="col-4 mb-3">
                                                 <label for="tanggal_muat" class="form-label">Tanggal Muat</label>
-                                                <input type="text" class="form-control" name="tanggal_muat" id="tanggal_muat" value="{{date('d M Y')}}"
-                                                    placeholder="" required readonly>
+                                                <input type="text" class="form-control" name="tanggal_muat" id="tanggal_muat-{{$d->id}}" required >
                                             </div>
                                         </div>
 
@@ -175,6 +174,12 @@
                 </td>
             </tr>
             <script>
+               $( function() {
+                    $( "#tanggal_muat-{{$d->id}}" ).datepicker({
+                        dateFormat: "dd-mm-yy"
+                    });
+
+                });
 
                 $('#masukForm{{$d->id}}').submit(function(e){
                   e.preventDefault();
@@ -199,6 +204,9 @@
 </div>
 @endsection
 @push('css')
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')

@@ -120,7 +120,7 @@
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Tanggal Muat</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{$d->tanggal_muat}}" readonly>
+                                                    placeholder="" value="{{$d->id_tanggal_muat}}" readonly>
                                             </div>
                                         </div>
                                         <hr>
@@ -174,10 +174,10 @@
                         @endif
                     @endif
                 </td>
-                <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal_muat}}</td>
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
                 <td class="text-center align-middle">{{$d->tonase}}</td>
-                <td class="text-center align-middle">{{$d->tanggal_bongkar}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
                 <td class="text-center align-middle">

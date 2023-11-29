@@ -146,7 +146,7 @@
                     {{number_format($d->harga_customer, 0, ',', '.')}}
                 </td>
                 @if ($customer->tanggal_muat == 1)
-                <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal_muat}}</td>
                 @endif
                 @if ($customer->nota_muat == 1)
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
@@ -155,7 +155,7 @@
                 <td class="text-center align-middle">{{$d->tonase}}</td>
                 @endif
                 @if ($customer->tanggal_bongkar == 1)
-                <td class="text-center align-middle">{{$d->tanggal_bongkar}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal_bongkar}}</td>
                 @endif
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
@@ -413,7 +413,7 @@
 
         $('#total_tagihan').val(totalTagihan);
         $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
-        
+
         value = $('input[name="selectedData"]').val();
 
         if(value.slice(-1) == ','){

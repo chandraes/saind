@@ -62,7 +62,7 @@
                         <div class="col-4 mb-3">
                             <label for="tonase" class="form-label">Tanggal Muat</label>
                             <input type="text" class="form-control" name="tonase" id="tonase"
-                                placeholder="" value="{{$d->tanggal_muat}}" readonly>
+                                placeholder="" value="{{$d->id_tanggal_muat}}" readonly>
                         </div>
                     </div>
                     <hr>

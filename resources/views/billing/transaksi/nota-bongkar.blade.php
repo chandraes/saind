@@ -122,7 +122,7 @@
                                             <div class="col-4 mb-3">
                                                 <label for="tonase" class="form-label">Tanggal Muat</label>
                                                 <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{$d->tanggal_muat}}" readonly>
+                                                    placeholder="" value="{{$d->id_tanggal_muat}}" readonly>
                                             </div>
                                         </div>
                                         <hr>
@@ -139,9 +139,9 @@
                                                     <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
                                             </div>
                                             <div class="col-4 mb-3">
-                                                <label for="tonase" class="form-label">Tanggal Bongkar</label>
-                                                <input type="text" class="form-control" name="tonase" id="tonase"
-                                                    placeholder="" value="{{date('d M Y')}}" required>
+                                                <label for="tanggal_bongkar" class="form-label">Tanggal Bongkar</label>
+                                                <input type="text" class="form-control" name="tanggal_bongkar" id="tanggal_bongkar-{{$d->id}}"
+                                                    placeholder="" required>
                                             </div>
                                         </div>
                                     </div>
@@ -164,7 +164,7 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->customer->singkatan}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
-                <td class="text-center align-middle">{{$d->tanggal_muat}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal_muat}}</td>
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
                 <td class="text-center align-middle">{{$d->tonase}}</td>
                 <td class="text-center align-middle">
@@ -228,6 +228,12 @@
                 </td>
             </tr>
             <script>
+                 $( function() {
+                    $( "#tanggal_bongkar-{{$d->id}}" ).datepicker({
+                        dateFormat: "dd-mm-yy"
+                    });
+
+                });
                 $('#masukForm{{$d->id}}').submit(function(e){
                   e.preventDefault();
 
@@ -251,6 +257,9 @@
 </div>
 @endsection
 @push('css')
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')

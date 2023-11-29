@@ -84,6 +84,7 @@ class TransaksiController extends Controller
         $data = $request->validate([
             'nota_muat' => 'required',
             'tonase' => 'required|numeric',
+            'tanggal_muat' => 'required',
         ]);
 
         $data['harga_customer'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
@@ -104,9 +105,8 @@ class TransaksiController extends Controller
                 $data['harga_csr'] = $transaksi->kas_uang_jalan->customer->harga_csr_bawah;
             }
         }
-
+        $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
         $data['status'] = 2;
-        $data['tanggal_muat'] = date('Y-m-d');
 
         try {
             $transaksi->update($data);
@@ -132,10 +132,15 @@ class TransaksiController extends Controller
         $data = $request->validate([
             'nota_bongkar' => 'required',
             'timbangan_bongkar' => 'required|numeric',
+            'tanggal_bongkar' => 'required',
         ]);
 
         $data['status'] = 3;
-        $data['tanggal_bongkar'] = date('Y-m-d');
+        $data['tanggal_bongkar'] = date('Y-m-d', strtotime($data['tanggal_bongkar']));
+
+        if ($transaksi->tanggal_muat < $data['tanggal_bongkar']) {
+            return redirect()->back()->with('error', 'Tanggal bongkar tidak boleh lebih kecil dari tanggal muat!!');
+        }
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
@@ -189,18 +194,7 @@ class TransaksiController extends Controller
 
         $rute = $customer->rute;
 
-        if ($rute_id) {
-            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
-                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
-                            ->where('kuj.rute_id', $rute_id)
-                            ->select('transaksis.*')
-                            ->get();
-        } else {
-            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
-                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
-                            ->select('transaksis.*')
-                            ->get();
-        }
+        $data = Transaksi::getTagihanData($customer->id, $rute_id);
 
         return view('billing.transaksi.tagihan.index', [
             'data' => $data,
@@ -218,19 +212,7 @@ class TransaksiController extends Controller
 
         $rute_id = $req['rute_id'] ?? null;
 
-        if ($rute_id) {
-            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
-                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
-                            ->where('kuj.rute_id', $rute_id)
-                            ->select('transaksis.*')
-                            ->get();
-        } else {
-            $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
-                            ->where('tagihan', 0)->where('kuj.customer_id', $customer->id)
-                            ->select('transaksis.*')
-                            ->get();
-        }
-
+        $data = Transaksi::getTagihanData($customer->id, $rute_id);
 
         // get latest data from month before current month
         // dd($bulan);
@@ -386,7 +368,13 @@ class TransaksiController extends Controller
             'timbangan_bongkar' => 'required|numeric',
             'nota_muat' => 'required',
             'nota_bongkar' => 'required',
+            'tanggal_muat' => 'required',
+            'tanggal_bongkar' => 'required',
         ]);
+
+        $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
+
+        $data['tanggal_bongkar'] = date('Y-m-d', strtotime($data['tanggal_bongkar']));
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;

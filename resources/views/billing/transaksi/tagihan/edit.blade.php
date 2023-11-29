@@ -21,15 +21,15 @@
         @csrf
         <div class="row">
             <div class="col-4 mb-3">
-                <label for="tanggal_muat" class="form-label">Kode</label>
-                <input type="text" class="form-control" name="tanggal_muat"
-                    id="tanggal_muat" placeholder="" value="UJ{{sprintf("%02d",
+                <label for="kode" class="form-label">Kode</label>
+                <input type="text" class="form-control" name="kode"
+                    id="kode" placeholder="" value="UJ{{sprintf("%02d",
                     $d->kas_uang_jalan->nomor_uang_jalan)}}" readonly>
             </div>
             <div class="col-4 mb-3">
-                <label for="tanggal_muat" class="form-label">Tanggal</label>
+                <label for="tanggal_uang_jalan" class="form-label">Tanggal</label>
                 <input type="text" class="form-control" name="tanggal_uang_jalan"
-                    id="tanggal_muat" placeholder="" value="{{$d->kas_uang_jalan->tanggal}}" readonly>
+                    id="tanggal_uang_jalan" placeholder="" value="{{$d->kas_uang_jalan->tanggal}}" readonly>
             </div>
             <div class="col-4 mb-3">
                 <label for="no_lambung" class="form-label">Nomor Lambung</label>
@@ -61,7 +61,7 @@
             <div class="col-4 mb-3">
                 <label for="tanggal_muat" class="form-label">Tanggal Muat</label>
                 <input type="text" class="form-control" name="tanggal_muat" id="tanggal_muat"
-                    placeholder="" value="{{$d->tanggal_muat}}" disabled>
+                    placeholder="" value="{{$d->id_tanggal_muat}}" required>
             </div>
             <div class="col-4 mb-3">
                 <label for="nota_muat" class="form-label">Nota Muat</label>
@@ -81,7 +81,7 @@
             <div class="col-4 mb-3">
                 <label for="tanggal_bongkar" class="form-label">Tanggal Bongkar</label>
                 <input type="text" class="form-control" name="tanggal_bongkar" id="tanggal_bongkar"
-                    placeholder="" value="{{date('d M Y')}}" disabled>
+                    placeholder="" value="{{$d->id_tanggal_bongkar}}" required>
             </div>
             <div class="col-4 mb-3">
                 <label for="nota_bongkar" class="form-label">Nota Bongkar</label>
@@ -104,10 +104,26 @@
     </form>
 </div>
 @endsection
+@push('css')
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+@endpush
 @push('js')
-{{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-    <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
+
     <script>
+            $( function() {
+
+                $( "#tanggal_muat" ).datepicker({
+                    dateFormat: "dd-mm-yy"
+                });
+
+                $( "#tanggal_bongkar" ).datepicker({
+                    dateFormat: "dd-mm-yy"
+                });
+
+            });
+
         // masukForm on submit, sweetalert confirm
         $('#masukForm').submit(function(e){
             e.preventDefault();

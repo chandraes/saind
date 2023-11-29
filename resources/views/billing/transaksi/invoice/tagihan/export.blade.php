@@ -61,7 +61,7 @@
                                                                         ->first()->harga_tagihan, 0, ',', '.')}}
                     </td>
                     @if ($customer->tanggal_muat == 1)
-                    <td class="table-pdf text-pdf text-center align-middle">{{$d->tanggal_muat}}</td>
+                    <td class="table-pdf text-pdf text-center align-middle">{{$d->id_tanggal_muat}}</td>
                     @endif
                     @if ($customer->nota_muat == 1)
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->nota_muat}}</td>
@@ -70,7 +70,7 @@
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->tonase}}</td>
                     @endif
                     @if ($customer->tanggal_bongkar == 1)
-                    <td class="table-pdf text-pdf text-center align-middle">{{$d->tanggal_bongkar}}</td>
+                    <td class="table-pdf text-pdf text-center align-middle">{{$d->id_tanggal_bongkar}}</td>
                     @endif
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->nota_bongkar}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->timbangan_bongkar}}</td>
