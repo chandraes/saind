@@ -32,9 +32,12 @@ class FormVendorController extends Controller
         $data['nilai'] = str_replace('.', '', $data['nilai']);
 
         $v = Vendor::find($data['id']);
+
         $sisa = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
 
-        $plafon = ($v->plafon_titipan * $v->vehicle->count()) - $sisa;
+        $mobil = Vehicle::where('vendor_id', $data['id'])->whereNot('status', 'nonaktif')->count();
+
+        $plafon = ($v->plafon_titipan * $mobil) - $sisa;
 
         if ($data['nilai'] > $plafon) {
             return redirect()->back()->with('error', 'Nilai melebihi plafon titipan');
@@ -112,8 +115,12 @@ class FormVendorController extends Controller
     public function get_plafon_titipan(Request $request)
     {
         $vendor = Vendor::find($request->id);
+        
         $kas = KasVendor::where('vendor_id', $request->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
-        $totalPlafon =$vendor->plafon_titipan * $vendor->vehicle->count();
+
+        $mobil = Vehicle::where('vendor_id', $request->id)->whereNot('status', 'nonaktif')->count();
+
+        $totalPlafon =$vendor->plafon_titipan * $mobil;
 
         $plafon = $totalPlafon - $kas;
 
