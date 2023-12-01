@@ -9,6 +9,11 @@
     </div>
     @php
         $total = 0;
+        $grandTotalPotonganBpjsTk = 0;
+        $grandTotalPotonganBpjsKesehatan = 0;
+        $grandTotalPendapatanKotor = 0;
+        $grandTotalPendapatanBersih = 0;
+        $grandTotalKasbon = 0;
     @endphp
     @include('swal')
     <div style="font-size:12px">
@@ -40,9 +45,13 @@
                     $bpjs_tk_direksi = $dir->gaji_pokok * 0.049;
                     $bpjs_k_direksi = $dir->gaji_pokok * 0.04;
                     $potongan_bpjs_tk_direksi = $dir->gaji_pokok * 0.02;
+                    $grandTotalPotonganBpjsTk = $grandTotalPotonganBpjsTk + $potongan_bpjs_tk_direksi;
                     $potongan_bpjs_kesehatan_direksi = $dir->gaji_pokok * 0.01;
+                    $grandTotalPotonganBpjsKesehatan = $grandTotalPotonganBpjsKesehatan + $potongan_bpjs_kesehatan_direksi;
                     $pendapatan_kotor_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
+                    $grandTotalPendapatanKotor = $grandTotalPendapatanKotor + $pendapatan_kotor_direksi;
                     $pendapatan_bersih_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga - $potongan_bpjs_tk_direksi - $potongan_bpjs_kesehatan_direksi;
+                    $grandTotalPendapatanBersih = $grandTotalPendapatanBersih + $pendapatan_bersih_direksi;
                     $total = $pendapatan_bersih_direksi + $total;
                 @endphp
                 <tr>
@@ -67,9 +76,13 @@
                     $bpjs_tk = $i->gaji_pokok * 0.049;
                     $bpjs_k = $i->gaji_pokok * 0.04;
                     $potongan_bpjs_tk = $i->gaji_pokok * 0.02;
+                    $grandTotalPotonganBpjsTk = $grandTotalPotonganBpjsTk + $potongan_bpjs_tk;
                     $potongan_bpjs_kesehatan = $i->gaji_pokok * 0.01;
+                    $grandTotalPotonganBpjsKesehatan = $grandTotalPotonganBpjsKesehatan + $potongan_bpjs_kesehatan;
                     $pendapatan_kotor = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
+                    $grandTotalPendapatanKotor = $grandTotalPendapatanKotor + $pendapatan_kotor;
                     $pendapatan_bersih = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga - $potongan_bpjs_tk - $potongan_bpjs_kesehatan;
+                    $grandTotalPendapatanBersih = $grandTotalPendapatanBersih + $pendapatan_bersih;
                 @endphp
                 <tr>
                     <td class="text-center align-middle">{{$i->kode}}{{sprintf("%03d",$i->nomor)}}</td>
@@ -115,12 +128,24 @@
                         @php
                             $sisa_gaji_dibayar = $pendapatan_bersih - $total_kasbon;
                             $total = $total + $sisa_gaji_dibayar;
+                            $grandTotalKasbon = $grandTotalKasbon + $total_kasbon;
                         @endphp
                         {{number_format($sisa_gaji_dibayar, 0, ',','.')}}
                     </td>
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="8" class="text-end align-middle">Grand Total : </th>
+                    <th class="text-center align-middle">{{number_format($grandTotalPotonganBpjsTk, 0, ',','.')}}</th>
+                    <th class="text-center align-middle">{{number_format($grandTotalPotonganBpjsKesehatan, 0, ',','.')}}</th>
+                    <th class="text-center align-middle">{{number_format($grandTotalPendapatanKotor, 0, ',','.')}}</th>
+                    <th class="text-center align-middle">{{number_format($grandTotalPendapatanBersih, 0, ',','.')}}</th>
+                    <th class="text-center align-middle">{{number_format($grandTotalKasbon, 0, ',','.')}}</th>
+                    <th class="text-center align-middle">{{number_format($total, 0, ',','.')}}</th>
+                </tr>
+            </tfoot>
         </table>
     </div>
     <div class="container-fluid mt-3 mb-3">
@@ -130,6 +155,7 @@
                 <input type="hidden" name="total" value="{{$total}}">
                 <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
             </form>
+            <a href="{{route('billing.index')}}" class="btn btn-secondary btn-lg">Batalkan</a>
             {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
           </div>
     </div>
