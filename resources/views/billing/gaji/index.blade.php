@@ -42,7 +42,7 @@
                     $potongan_bpjs_tk_direksi = $dir->gaji_pokok * 0.02;
                     $potongan_bpjs_kesehatan_direksi = $dir->gaji_pokok * 0.01;
                     $pendapatan_kotor_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
-                    $pendapatan_bersih_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga - $dir->potongan_bpjs_tk - $dir->potongan_bpjs_kesehatan;
+                    $pendapatan_bersih_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga - $potongan_bpjs_tk_direksi - $potongan_bpjs_kesehatan_direksi;
                     $total = $pendapatan_bersih_direksi + $total;
                 @endphp
                 <tr>
@@ -69,7 +69,7 @@
                     $potongan_bpjs_tk = $i->gaji_pokok * 0.02;
                     $potongan_bpjs_kesehatan = $i->gaji_pokok * 0.01;
                     $pendapatan_kotor = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
-                    $pendapatan_bersih = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga - $i->potongan_bpjs_tk - $i->potongan_bpjs_kesehatan;
+                    $pendapatan_bersih = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga - $potongan_bpjs_tk - $potongan_bpjs_kesehatan;
                 @endphp
                 <tr>
                     <td class="text-center align-middle">{{$i->kode}}{{sprintf("%03d",$i->nomor)}}</td>
