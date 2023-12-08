@@ -53,8 +53,8 @@ class Transaksi extends Model
                             'kas_uang_jalan.vehicle',
                             'kas_uang_jalan.customer',
                             'kas_uang_jalan.rute'])
-                        ->whereYear('tanggal_bongkar', $tahun)
-                        ->whereMonth('tanggal_bongkar', $bulan)
+                        ->whereYear('tanggal_muat', $tahun)
+                        ->whereMonth('tanggal_muat', $bulan)
                         ->where('status', 3)
                         ->where('void', 0)
                         ->where('bonus', 0)
@@ -70,7 +70,7 @@ class Transaksi extends Model
                             ->join('vendors as v', 'kuj.vendor_id', 'v.id')
                             ->join('sponsors as s', 'v.sponsor_id', 's.id')
                             ->select('transaksis.id')
-                            ->whereYear('transaksis.tanggal_bongkar', $tahun)->whereMonth('transaksis.tanggal_bongkar', $bulan)
+                            ->whereYear('transaksis.tanggal_muat', $tahun)->whereMonth('transaksis.tanggal_muat', $bulan)
                             ->where('transaksis.status', 3)
                             ->where('transaksis.void', 0)
                             ->where('bonus', 0)
