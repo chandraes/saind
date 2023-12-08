@@ -22,6 +22,7 @@ use App\Models\PasswordKonfirmasi;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\TransaksiExport;
+use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
 {
@@ -573,20 +574,23 @@ class TransaksiController extends Controller
 
     public function nota_bonus(Request $request)
     {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        $db = new Transaksi;
+
+        $dataTahun = $db->dataTahun();
+
         $sponsorId = $request->sponsor_id;
         $sponsor = Sponsor::find($sponsorId);
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                            ->join('vendors as v', 'kuj.vendor_id', 'v.id')
-                            ->join('sponsors as s', 'v.sponsor_id', 's.id')
-                            ->where('transaksis.status', 3)->where('transaksis.void', 0)
-                            ->where('bonus', 0)
-                            ->where('s.id', $sponsorId)
-                            ->select('transaksis.*')
-                            ->get();
+        $data = $db->notaBonus($sponsorId, $bulan, $tahun);
 
         return view('billing.transaksi.bonus.index', [
             'data' => $data,
             'sponsor' => $sponsor,
+            'bulan' => $bulan,
+            'dataTahun' => $dataTahun,
+            'tahun' => $tahun
         ]);
     }
 
@@ -594,16 +598,16 @@ class TransaksiController extends Controller
     {
         $data = $request->validate([
             'total_bonus' => 'required|numeric',
+            'bulan' => 'required',
+            'tahun' => 'required',
         ]);
 
-        $bonus = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vendors as v', 'kuj.vendor_id', 'v.id')
-                            ->join('sponsors as s', 'v.sponsor_id', 's.id')
-                            ->select('transaksis.id')
-                            ->where('transaksis.status', 3)
-                            ->where('transaksis.void', 0)
-                            ->where('bonus', 0)
-                            ->where('s.id', $sponsor->id)->get();
+        $db = new Transaksi;
+
+        $bonus = $db->getIdNotaBonus($sponsor->id, $data['bulan'], $data['tahun']);
+
+        unset($data['bulan']);
+        unset($data['tahun']);
 
         $data['tanggal'] = date('Y-m-d');
         // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
@@ -613,6 +617,8 @@ class TransaksiController extends Controller
         $data['sisa_bonus'] = $data['total_bonus'];
         $data['lunas'] = 0;
         $data['periode'] = "Periode ".$data['no_invoice'];
+
+        DB::beginTransaction();
 
         $invoice = InvoiceBonus::create($data);
 
@@ -627,6 +633,8 @@ class TransaksiController extends Controller
             ]);
 
         }
+
+        DB::commit();
 
         return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
     }
