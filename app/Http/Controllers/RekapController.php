@@ -223,7 +223,7 @@ class RekapController extends Controller
         $tahun = $request->tahun ?? date('Y');
 
         $db = new Transaksi;
-        
+
         $dataTahun = $db->dataTahun();
 
         $data = $db->getNotaVoid($bulan, $tahun);
@@ -490,9 +490,10 @@ class RekapController extends Controller
         // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
+
         $dataTahun = KasBon::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = KasBon::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $data = KasBon::with('karyawan')->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
         $dataCicilan = KasBonCicilan::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
 
         $bulanSebelumnya = $bulan - 1;
