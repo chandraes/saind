@@ -390,7 +390,7 @@ class RekapController extends Controller
         if ($data['password'] != $password->password) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
-        
+
         unset($data['password']);
 
         $kasVendorLast = KasVendor::where('vendor_id', '=', $kas_vendor->vendor_id)->latest()->orderBy('id', 'desc')->first()->sisa;
@@ -589,9 +589,11 @@ class RekapController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
 
-        $dataTahun = KasDireksi::where('direksi_id', $request->direksi_id)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+        $db = new KasDireksi;
 
-        $data = KasDireksi::where('direksi_id', $request->direksi_id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $dataTahun = $db->dataTahun();
+
+        $data = $db->kas_now($request->direksi_id, $bulan, $tahun);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -599,7 +601,9 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasDireksi::where('direksi_id', $request->direksi_id)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = $db->lastKas($request->direksi_id, $bulanSebelumnya, $tahunSebelumnya);
+        
+        $sisa = $db->total_kas($request->direksi_id, $bulan, $tahun);
 
         return view('rekap.kas-bon-direksi', [
             'data' => $data,
@@ -611,6 +615,7 @@ class RekapController extends Controller
             'tahunSebelumnya' => $tahunSebelumnya,
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
+            'sisa' => $sisa,
         ]);
     }
 

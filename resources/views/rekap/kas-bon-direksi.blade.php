@@ -85,7 +85,7 @@
             <tbody>
                 @foreach ($data as $d)
                 <tr>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
+                    <td class="text-center align-middle">{{$d->id_tanggal}}</td>
                     <td class="text-center align-middle">{{$d->uraian}}</td>
                     <td class="text-center align-middle">{{number_format($d->total_kas, 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{number_format($d->total_bayar, 0, ',', '.')}}</td>
@@ -101,7 +101,7 @@
                 <tr>
                     <td colspan="2" class="text-center align-middle"><strong>Sisa Kasbon
                           </strong></td>
-                    <td colspan="2" class="text-center align-middle text-danger"><strong>Rp. {{number_format($data->sum('total_kas')-$data->sum('total_bayar'), 0, ',', '.')}}</strong></td>
+                    <td colspan="2" class="text-center align-middle text-danger"><strong>Rp. {{number_format($sisa, 0, ',', '.')}}</strong></td>
                 </tr>
             </tfoot>
         </table>
