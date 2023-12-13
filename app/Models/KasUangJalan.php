@@ -44,4 +44,20 @@ class KasUangJalan extends Model
     {
         return $this->hasMany(Transaksi::class);
     }
+
+    public function getKasUangJalan($month, $year)
+    {
+        return $this->with(['jenis_transaksi', 'vendor', 'vehicle', 'customer', 'rute'])
+                    ->whereMonth('tanggal', $month)->whereYear('tanggal', $year)->get();
+    }
+
+    public function getLatest($month, $year)
+    {
+        return $this->whereMonth('tanggal', $month)->whereYear('tanggal', $year)->latest()->orderBy('id', 'desc')->first();
+    }
+
+    public function dataTahun()
+    {
+        return $this->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->orderBy('tahun', 'desc')->get();
+    }
 }

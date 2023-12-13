@@ -161,9 +161,12 @@ class RekapController extends Controller
     {
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = KasUangJalan::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = KasUangJalan::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $db = new KasUangJalan;
+
+        $dataTahun = $db->dataTahun();
+
+        $data = $db->getKasUangJalan($bulan, $tahun);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -171,7 +174,7 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasUangJalan::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = $db->getLatest($bulanSebelumnya, $tahunSebelumnya);
 
         return view('rekap.kas-uang-jalan', [
             'data' => $data,
@@ -189,16 +192,18 @@ class RekapController extends Controller
     {
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $data = KasUangJalan::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+
+        $db = new KasUangJalan;
+        $data = $db->getKasUangJalan($bulan, $tahun);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-        // get latest data from month before current month
-        $dataSebelumnya = KasUangJalan::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
-        // dd($bulan);
+
+        $dataSebelumnya = $db->getLatest($bulanSebelumnya, $tahunSebelumnya);
+
         $pdf = PDF::loadview('rekap.preview-kas-uang-jalan', [
             'data' => $data,
             'dataSebelumnya' => $dataSebelumnya,
@@ -271,9 +276,13 @@ class RekapController extends Controller
          // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = RekapBarang::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = RekapBarang::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $db = new RekapBarang;
+
+        $dataTahun = $db->dataTahun();
+
+        $data = $db->getRekapBarang($bulan, $tahun);
+
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
@@ -298,9 +307,12 @@ class RekapController extends Controller
 
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = KasVendor::where('vendor_id', $request->vendor)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $db = new KasVendor;
+
+        $dataTahun = $db->dataTahun();
+
+        $data = $db->getKasVendor($vendor->id, $bulan, $tahun);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -308,7 +320,7 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = $db->getLatest($vendor->id, $bulanSebelumnya, $tahunSebelumnya);
 
         // $data = $vendor->kas_vendor()->get();
         $sisaTerakhir = $data->last()->sisa ?? 0;
@@ -331,10 +343,14 @@ class RekapController extends Controller
     {
         $periode = $invoiceBayar->periode;
         $vendor = Vendor::find($invoiceBayar->vendor_id);
-        // dd($invoiceBayar);
+
+        $data = $invoiceBayar->load(['transaksi', 'transaksi.kas_uang_jalan',
+                                    'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute',
+                                    'transaksi.kas_uang_jalan.vehicle', 'transaksi.kas_uang_jalan.vendor'])
+                            ->transaksi;
 
         return view('rekap.kas-vendor-detail', [
-            'data' => $invoiceBayar->transaksi,
+            'data' => $data,
             'vendor' => $vendor,
             'periode' => $periode,
             'invoice_id' => $invoiceBayar->id
@@ -347,9 +363,11 @@ class RekapController extends Controller
 
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = KasVendor::where('vendor_id', $request->vendor)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+        $db = new KasVendor;
 
-        $data = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $dataTahun = $db->dataTahun();
+
+        $data = $db->getKasVendor($vendor->id, $bulan, $tahun);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -357,8 +375,10 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = $db->getLatest($vendor->id, $bulanSebelumnya, $tahunSebelumnya);
+
         $sisaTerakhir = $data->last()->sisa ?? 0;
+
         $pdf = PDF::loadview('rekap.preview-kas-vendor', [
             'data' => $data,
             'vendor' => $vendor,
@@ -666,9 +686,10 @@ class RekapController extends Controller
     {
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
+
         $dataTahun = InvoiceTagihan::selectRaw('YEAR(updated_at) tahun')->groupBy('tahun')->get();
 
-        $data = InvoiceTagihan::whereMonth('updated_at', $bulan)->whereYear('updated_at', $tahun)->where('lunas', 1)->get();
+        $data = InvoiceTagihan::with('customer')->whereMonth('updated_at', $bulan)->whereYear('updated_at', $tahun)->where('lunas', 1)->get();
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -694,6 +715,8 @@ class RekapController extends Controller
     {
         $periode = $invoice->periode;
         $customer = Customer::find($invoice->customer_id);
+        $data = $invoice->load(['transaksi', 'transaksi.kas_uang_jalan', 'transaksi.kas_uang_jalan.vehicle',
+                                'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute'])->transaksi;
 
         return view('rekap.nota-lunas-detail', [
             'data' => $invoice->transaksi,

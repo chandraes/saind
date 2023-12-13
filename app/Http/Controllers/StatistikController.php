@@ -40,7 +40,8 @@ class StatistikController extends Controller
         }
 
         for ($bulan = 1; $bulan <= 12; $bulan++) {
-            $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                                 ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
                                 ->join('rutes as r', 'r.id', 'kuj.rute_id')
                                 ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
@@ -145,7 +146,8 @@ class StatistikController extends Controller
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute'])
+                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
                             ->join('rutes as r', 'r.id', 'kuj.rute_id')
                             ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
@@ -168,7 +170,7 @@ class StatistikController extends Controller
                             ->get();
 
 
-        $vehicle = Vehicle::orderBy('nomor_lambung')
+        $vehicle = Vehicle::with('vendor')->orderBy('nomor_lambung')
             ->when($vendor, function ($query, $vendor) {
                 return $query->where('vendor_id', $vendor);
             })
@@ -444,7 +446,8 @@ class StatistikController extends Controller
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+        $data = Transaksi::with(['kas_uang_jalan','kas_uang_jalan.vendor'])
+                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
                             ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
                             ->whereMonth('tanggal', $bulan)
@@ -461,7 +464,7 @@ class StatistikController extends Controller
                             ->get();
 
 
-        $vehicle = Vehicle::orderBy('nomor_lambung')
+        $vehicle = Vehicle::with(['vendor'])->orderBy('nomor_lambung')
                     ->when($vendor, function ($query, $vendor) {
                         return $query->where('vendor_id', $vendor);
                     })
@@ -583,7 +586,8 @@ class StatistikController extends Controller
                             ->get();
         // looping sum profit each vehicle for each month
         for ($bulan = 1; $bulan <= 12; $bulan++) {
-            $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                                 ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
                                 ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
                                 ->whereMonth('tanggal', $bulan)

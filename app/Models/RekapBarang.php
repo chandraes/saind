@@ -23,5 +23,15 @@ class RekapBarang extends Model
         return $this->belongsTo(Barang::class);
     }
 
-    
+    public function dataTahun()
+    {
+        return $this->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->orderBy('tahun', 'desc')->get();
+    }
+
+    public function getRekapBarang($month, $year)
+    {
+        return $this->with(['barang', 'barang.kategori_barang'])
+                    ->whereMonth('tanggal', $month)->whereYear('tanggal', $year)->get();
+    }
+
 }
