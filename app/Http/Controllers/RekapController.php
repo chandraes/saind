@@ -221,11 +221,12 @@ class RekapController extends Controller
     {
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
-                            ->select('transaksis.*')
-                            ->whereMonth('kuj.tanggal', $bulan)->whereYear('kuj.tanggal', $tahun)->where('transaksis.void', 1)->get();
+        $db = new Transaksi;
+        
+        $dataTahun = $db->dataTahun();
+
+        $data = $db->getNotaVoid($bulan, $tahun);
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -878,9 +879,12 @@ class RekapController extends Controller
     {
         $periode = $invoiceCsr->periode;
         $customer = Customer::find($invoiceCsr->customer_id);
+        $data = $invoiceCsr->load(['transaksi', 'transaksi.kas_uang_jalan', 'transaksi.kas_uang_jalan.rute',
+                                    'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.vehicle',
+                                    'transaksi.kas_uang_jalan.customer'])->transaksi;
 
         return view('rekap.csr.detail', [
-            'data' => $invoiceCsr->transaksi,
+            'data' => $data,
             'customer' => $customer,
             'periode' => $periode,
             'invoice_id' => $invoiceCsr->id

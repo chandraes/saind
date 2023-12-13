@@ -106,4 +106,12 @@ class Transaksi extends Model
                     ->get();
     }
 
+    public function getNotaVoid($month, $year)
+    {
+        return self::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle'])
+                        ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
+                        ->select('transaksis.*')
+                        ->whereMonth('kuj.tanggal', $month)->whereYear('kuj.tanggal', $year)->where('transaksis.void', 1)->get();
+    }
+
 }
