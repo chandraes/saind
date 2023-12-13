@@ -120,7 +120,7 @@ class TransaksiController extends Controller
 
     public function nota_bongkar()
     {
-        $data = Transaksi::where('status', 2)->where('void', 0)->get();
+        $data = Transaksi::getNotaBongkar();
 
         return view('billing.transaksi.nota-bongkar', [
             'data' => $data,
@@ -523,8 +523,7 @@ class TransaksiController extends Controller
     {
         $vendorId = $request->vendor_id;
         $vendor = Vendor::find($vendorId);
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('status', 3)->where('transaksis.void', 0)
-                            ->where('bayar', 0)->where('kuj.vendor_id', $vendorId)->get();
+        $data = Transaksi::getNotaBayar($vendorId);
 
         return view('billing.transaksi.bayar.index', [
             'data' => $data,
@@ -643,14 +642,7 @@ class TransaksiController extends Controller
     {
         $customerId = $request->customer_id;
 
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                            ->where('kuj.customer_id', $customerId)
-                            ->where('transaksis.status', 3)
-                            ->where('transaksis.void', 0)
-                            ->where('csr', 0)
-                            ->where('nominal_csr', '>', 0)
-                            ->select('transaksis.*')
-                            ->get();
+        $data = Transaksi::getNotaCsr($customerId);
 
         return view('billing.transaksi.csr.index', [
             'data' => $data,

@@ -33,7 +33,8 @@ class Transaksi extends Model
 
     public static function getTagihanData($customerId, $ruteId = null)
     {
-        return self::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+        return self::with('kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute')
+                    ->join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                     ->where('status', 3)
                     ->where('transaksis.void', 0)
                     ->where('tagihan', 0)
@@ -76,6 +77,33 @@ class Transaksi extends Model
                             ->where('bonus', 0)
                             ->where('s.id', $sponsorId)
                             ->get();
+    }
+
+    public static function getNotaBayar($vendorId)
+    {
+        return self::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle'])
+                    ->join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                    ->where('status', 3)->where('transaksis.void', 0)
+                    ->where('bayar', 0)->where('kuj.vendor_id', $vendorId)->get();
+    }
+
+    public static function getNotaBongkar()
+    {
+        return self::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle'])
+                    ->where('status', 2)->where('void', 0)->get();
+    }
+
+    public static function getNotaCsr($customerId)
+    {
+        return self::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle'])
+                    ->join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                    ->where('kuj.customer_id', $customerId)
+                    ->where('transaksis.status', 3)
+                    ->where('transaksis.void', 0)
+                    ->where('csr', 0)
+                    ->where('nominal_csr', '>', 0)
+                    ->select('transaksis.*')
+                    ->get();
     }
 
 }
