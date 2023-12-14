@@ -139,7 +139,12 @@ class TransaksiController extends Controller
         $data['status'] = 3;
         $data['tanggal_bongkar'] = date('Y-m-d', strtotime($data['tanggal_bongkar']));
 
-        if ($transaksi->tanggal_muat < $data['tanggal_bongkar']) {
+        $muat = $transaksi->tanggal_muat;
+        // change bongkar to unix timestamp
+        $muat = strtotime($muat);
+        $bongkar = strtotime($data['tanggal_bongkar']);
+
+        if ($bongkar < $muat) {
             return redirect()->back()->with('error', 'Tanggal bongkar tidak boleh lebih kecil dari tanggal muat!!');
         }
 
