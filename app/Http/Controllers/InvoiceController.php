@@ -17,6 +17,7 @@ use App\Models\GroupWa;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -439,6 +440,30 @@ class InvoiceController extends Controller
 
         return redirect()->route('billing.invoice-csr')->with('success', 'Invoice berhasil di lunasi');
 
+    }
+
+    public function invoice_tagihan_back(InvoiceTagihan $invoice)
+    {
+
+        if ($invoice->total_bayar != 0) {
+            return redirect()->back()->with('error', 'Invoice sudah ada pembayaran');
+        }
+
+        DB::beginTransaction();
+
+        $transaksi = $invoice->transaksi;
+        // update tagihan in each transaksi
+        foreach ($transaksi as $v) {
+            $v->update([
+                'tagihan' => 0
+            ]);
+        }
+
+        $invoice->delete();
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Invoice berhasil di batalkan');
     }
 
 }

@@ -45,6 +45,9 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('spk/hapus-file/{spk}', [App\Http\Controllers\SpkController::class, 'delete_file'])->name('spk.hapus-file')->middleware('role:admin,user');
 
     Route::group(['middleware' => 'role:admin'], function() {
+
+        Route::get('/invoice-tagihan-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_back'])->name('invoice.tagihan-back.execute');
+
         Route::get('/dokumen', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
 
         Route::get('/database', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');

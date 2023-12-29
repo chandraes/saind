@@ -43,6 +43,9 @@
                 <th class="text-center align-middle">Sisa Tagihan</th>
                 <th class="text-center align-middle">Lunas</th>
                 <th class="text-center align-middle">Cicil</th>
+                @if (auth()->user()->username === 'admin')
+                <th class="text-center align-middle">Action</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -113,7 +116,13 @@
 
                     </script>
                 </td>
+                @if (auth()->user()->username === 'admin')
+                <td class="text-center align-middle">
+                    <a class="btn btn-danger" href="{{route('invoice.tagihan-back.execute', $d)}}">Kembalikan</a>
+                </td>
+                @endif
             </tr>
+            {{-- <button class="btn btn-primary">Test</button> --}}
             <script>
                  $('#lunasForm-{{$d->id}}').submit(function(e){
                     e.preventDefault();
