@@ -25,9 +25,9 @@ class KasVendor extends Model
         return $this->belongsTo(BbmStoring::class);
     }
 
-    public function sisa_terakhir()
+    public function sisa_terakhir($vendorId)
     {
-        return $this->latest()->orderBy('id', 'desc')->first()->sisa;
+        return $this->where('vendor_id', $vendorId)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
     }
 
     public function dataTahun()

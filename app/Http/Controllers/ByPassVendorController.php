@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Vendor;
+use App\Models\KasVendor;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class ByPassVendorController extends Controller
+{
+    public function index()
+    {
+        $vendors = Vendor::all();
+        return view('admin.bypass-vendor', ['vendors' => $vendors]);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'tipe' => 'required',
+            'vendor_id' => 'required|exists:vendors,id',
+            'uraian' => 'required',
+            'nominal' => 'required',
+        ]);
+
+        $db = new KasVendor;
+
+        $data['tanggal'] = date('Y-m-d');
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
+
+        if($data['tipe'] == 0){
+            $data['pinjaman'] = $data['nominal'];
+            $data['sisa'] = $db->sisa_terakhir($data['vendor_id']) + $data['pinjaman'];
+        } elseif($data['tipe'] == 1){
+            $data['bayar'] = $data['nominal'];
+            $data['sisa'] = $db->sisa_terakhir($data['vendor_id']) - $data['bayar'];
+        }
+
+        unset($data['nominal'], $data['tipe']);
+
+        DB::beginTransaction();
+
+        try {
+            $db->create($data);
+            DB::commit();
+            return redirect()->back()->with('success', 'Berhasil menambahkan data');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Gagal menambahkan data');
+        }
+
+    }
+
+}

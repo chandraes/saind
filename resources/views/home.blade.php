@@ -36,6 +36,14 @@
                 <h2>Dokumen</h2>
             </a>
         </div>
+        @if (auth()->user()->id === 1)
+        <div class="col-md-3 text-center mb-5">
+            <a href="{{route('bypass-kas-vendor.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/admin.svg')}}" alt="" width="100">
+                <h2>By Pass Kas Vendor</h2>
+            </a>
+        </div>
+        @endif
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('pengaturan')}}" class="text-decoration-none">
                 <img src="{{asset('images/pengaturan.svg')}}" alt="" width="100">
@@ -65,8 +73,6 @@
                 <h2>Statistik Vendor</h2>
             </a>
         </div>
-
-
     </div>
     @endif
 </div>

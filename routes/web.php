@@ -48,6 +48,9 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::get('/invoice-tagihan-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_back'])->name('invoice.tagihan-back.execute');
 
+        Route::get('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'index'])->name('bypass-kas-vendor.index');
+        Route::post('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'store'])->name('bypass-kas-vendor.store');
+
         Route::get('/dokumen', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
 
         Route::get('/database', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
