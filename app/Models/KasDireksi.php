@@ -16,7 +16,7 @@ class KasDireksi extends Model
         return $this->belongsTo(Direksi::class);
     }
 
-    public function getIdTanggalAttribute($value)
+    public function getIdTanggalAttribute()
     {
         return date('d-m-Y', strtotime($this->tanggal));
     }
