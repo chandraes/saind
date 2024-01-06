@@ -18,7 +18,7 @@ class KasDireksi extends Model
 
     public function getIdTanggalAttribute($value)
     {
-        return Carbon::parse($value)->format('d-m-Y');
+        return date('d-m-Y', strtotime($this->tanggal));
     }
 
     public function dataTahun()
