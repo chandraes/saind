@@ -36,17 +36,21 @@ class KasDireksi extends Model
         return $this->where('direksi_id', $direksi_id)->whereMonth('tanggal', $month)->whereYear('tanggal', $year)->get();
     }
 
-    public function sisa_kas_terakhir()
+    public function sisa_kas_terakhir($direksiId)
     {
-        return $this->latest()->orderBy('id', 'desc')->first()->sisa_kas;
+        return $this->where('direksi_id', $direksiId)->latest()->orderBy('id', 'desc')->first()->sisa_kas ?? 0;
     }
 
     public function total_kas($direksi_id, $month, $year)
     {
         // sum total kas - sum total bayar in <= this month
-        $total_kas = $this->where('direksi_id', $direksi_id)->whereMonth('tanggal', '<=', $month)->whereYear('tanggal', $year)->sum('total_kas');
-        $total_bayar = $this->where('direksi_id', $direksi_id)->whereMonth('tanggal', '<=', $month)->whereYear('tanggal', $year)->sum('total_bayar');
-        return $total_kas - $total_bayar;
+        $date = $year . '-' . $month . '-31';
+
+        return $this->where('direksi_id', $direksi_id)
+                    ->whereDate('tanggal', '<=', $date)
+                    ->selectRaw('sum(total_kas) - sum(total_bayar) as total')
+                    ->pluck('total')
+                    ->first() ?? 0;
     }
 
 }

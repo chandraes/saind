@@ -48,8 +48,14 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::get('/invoice-tagihan-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_back'])->name('invoice.tagihan-back.execute');
 
-        Route::get('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'index'])->name('bypass-kas-vendor.index');
-        Route::post('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'store'])->name('bypass-kas-vendor.store');
+        Route::prefix('bypass')->group(function(){
+            Route::get('/', [App\Http\Controllers\ByPassVendorController::class, 'index'])->name('bypass.index');
+            Route::get('/kas-direksi', [App\Http\Controllers\ByPassVendorController::class, 'kas_direksi'])->name('bypass-kas-direksi.index');
+            Route::post('/kas-direksi', [App\Http\Controllers\ByPassVendorController::class, 'kas_direksi_store'])->name('bypass-kas-direksi.store');
+        });
+
+        Route::get('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor'])->name('bypass-kas-vendor.index');
+        Route::post('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor_store'])->name('bypass-kas-vendor.store');
 
         Route::get('/dokumen', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
 

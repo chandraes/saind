@@ -626,7 +626,7 @@ class RekapController extends Controller
         $dataSebelumnya = $db->lastKas($request->direksi_id, $bulanSebelumnya, $tahunSebelumnya);
 
         $sisa = $db->total_kas($request->direksi_id, $bulan, $tahun);
-
+        // dd($sisa);
         return view('rekap.kas-bon-direksi', [
             'data' => $data,
             'direksi' => $direksi,
