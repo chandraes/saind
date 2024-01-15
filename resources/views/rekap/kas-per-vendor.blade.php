@@ -104,7 +104,7 @@
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">
                         @if ($d->invoice_bayar_id)
-                        <a href="{{route('rekap.kas-vendor.detail', ['invoiceBayar' => $d->invoice_bayar_id])}}">{{$d->uraian}}</a>
+                        <a href="{{route('kas-per-vendor.detail', ['invoiceBayar' => $d->invoice_bayar_id])}}">{{$d->uraian}}</a>
                         @else
                         {{$d->uraian}}
                         @endif
