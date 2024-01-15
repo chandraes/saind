@@ -60,9 +60,14 @@
     </form>
 </div>
 @endsection
+@push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+@endpush
 @push('js')
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-
+<script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script>
             $('#nominal').maskMoney({
                 thousands: '.',
@@ -71,29 +76,11 @@
                 allowZero: true,
             });
 
-        function tipeFun()
-        {
-            var tipe = $('#tipe').val();
-            if(tipe == 1){
-                // show fieldTransfer
-                $('#fieldTransfer').attr('hidden', true);
-
-                $('#transfer_ke').attr('disabled', true);
-                $('#bank').attr('disabled', true);
-                $('#no_rekening').attr('disabled', true);
-            }else if(tipe == 2){
-                // hide fieldTransfer
-                $('#fieldTransfer').attr('hidden', false);
-                $('#transfer_ke').val('');
-                $('#bank').val('');
-                $('#no_rekening').val('');
-                $('#transfer_ke').attr('disabled', false);
-                $('#bank').attr('disabled', false);
-                $('#no_rekening').attr('disabled', false);
-            } else {
-                $('#fieldTransfer').attr('hidden', true);
-            }
-        }
+            $('#direksi_id').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Pilih Vendor',
+                allowClear: true,
+            });
 
         // masukForm on submit, sweetalert confirm
         $('#masukForm').submit(function(e){

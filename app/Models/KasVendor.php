@@ -10,6 +10,11 @@ class KasVendor extends Model
     use HasFactory;
     protected $guarded = [];
 
+    public function getIdTanggalAttribute()
+    {
+        return date('d-m-Y', strtotime($this->tanggal));
+    }
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);

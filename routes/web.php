@@ -90,6 +90,8 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('pengaturan/wa', [App\Http\Controllers\WaController::class, 'wa'])->name('pengaturan.wa');
         Route::get('pengaturan/wa/edit/{id}', [App\Http\Controllers\WaController::class, 'edit'])->name('pengaturan.wa.edit');
         Route::patch('pengaturan/wa/update/{id}', [App\Http\Controllers\WaController::class, 'update'])->name('pengaturan.wa.update');
+        Route::get('pengaturan/nota-transaksi', [App\Http\Controllers\KonfigurasiController::class, 'index'])->name('pengaturan.nota-transaksi');
+        Route::patch('pengaturan/nota-transaksi/update/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update'])->name('pengaturan.konfigurasi-transaksi.update');
 
         Route::resource('direksi', App\Http\Controllers\DireksiController::class);
 

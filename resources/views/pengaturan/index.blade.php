@@ -69,6 +69,12 @@ $password = \App\Models\PasswordKonfirmasi::first();
             </div>
         </div>
     </div>
+    <div class="col-md-3 text-center mb-5">
+        <a href="{{route('pengaturan.nota-transaksi')}}" class="text-decoration-none">
+            <img src="{{asset('images/konfigurasi.svg')}}" alt="" width="100">
+            <h2>Konfigurasi Nota Transaksi</h2>
+        </a>
+    </div>
     @endif
     <div class="col-md-3 text-center">
         <a href="{{route('home')}}" class="text-decoration-none">
