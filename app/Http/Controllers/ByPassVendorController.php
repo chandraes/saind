@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Vendor;
 use App\Models\KasVendor;
+use App\Models\KasBesar;
 use App\Models\Direksi;
 use App\Models\KasDireksi;
 use Illuminate\Http\Request;
@@ -99,6 +100,39 @@ class ByPassVendorController extends Controller
             DB::rollback();
             return redirect()->back()->with('error', 'Gagal menambahkan data');
         }
+    }
+
+    public function by_pass_kas_besar()
+    {
+        return view('admin.bypass-kas-besar');
+    }
+
+    public function by_pass_kas_besar_store(Request $request)
+    {
+        $val = $request->validate([
+            'tipe' => 'required',
+            'uraian' => 'required',
+            'nominal' => 'required',
+        ]);
+
+        $data['jenis_transaksi_id'] = $val['tipe'];
+        $data['nominal_transaksi'] = $val['nominal'];
+        $data['uraian'] = $val['uraian'];
+
+        $db = new KasBesar;
+
+        DB::beginTransaction();
+
+        try {
+            $db->insert_bypass($data);
+            DB::commit();
+            return redirect()->back()->with('success', 'Berhasil menambahkan data');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Gagal menambahkan data');
+        }
+
+
     }
 
 }
