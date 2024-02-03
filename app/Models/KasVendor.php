@@ -48,11 +48,20 @@ class KasVendor extends Model
 
     public function getLatest($vendorId, $month, $year)
     {
-        return $this->where('vendor_id', $vendorId)
+        $record = $this->where('vendor_id', $vendorId)
                     ->whereMonth('tanggal', $month)
                     ->whereYear('tanggal', $year)
                     ->latest()
                     ->orderBy('id', 'desc')
                     ->first();
+                    
+        if (!$record) {
+            $record = $this->where('vendor_id', $vendorId)
+                            ->whereDate('tanggal', '<', "$year-$month-01")
+                            ->latest()
+                            ->first();
+        }
+
+        return $record;
     }
 }
