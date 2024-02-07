@@ -10,6 +10,8 @@ class InvoiceTagihan extends Model
     use HasFactory;
     protected $guarded = [];
 
+    protected $appends = ['id_tanggal'];
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);

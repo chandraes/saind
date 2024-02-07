@@ -99,9 +99,9 @@
             </a>
         </div>
         <div class="col-md-4 text-center mb-5">
-            <a href="{{route('rekap.nota-lunas')}}" class="text-decoration-none">
+            <a href="{{route('per-customer.nota-lunas')}}" class="text-decoration-none">
                 <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="100">
-                <h2>NOTA LUNAS</h2>
+                <h2>REKAP NOTA LUNAS</h2>
             </a>
         </div>
     </div>

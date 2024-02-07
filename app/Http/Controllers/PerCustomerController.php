@@ -49,7 +49,7 @@ class PerCustomerController extends Controller
             'customer' => $customer,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
+        return $pdf->download('Nota Tagihan '.$customer->singkatan.'.pdf');
     }
 
     public function invoice()
@@ -89,6 +89,79 @@ class PerCustomerController extends Controller
             'periode' => $invoice->periode,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->stream('Invoice Tagihan '.$invoice->customer->singkatan.'.pdf');
+        return $pdf->download('Invoice Tagihan '.$invoice->customer->singkatan.'.pdf');
+    }
+
+    public function nota_lunas()
+    {
+        return view('per-customer.nota-lunas.index');
+    }
+
+    public function nota_lunas_detail(InvoiceTagihan $invoice)
+    {
+        $periode = $invoice->periode;
+        $customer = Customer::find($invoice->customer_id);
+        $data = $invoice->load(['transaksi', 'transaksi.kas_uang_jalan', 'transaksi.kas_uang_jalan.vehicle',
+                                'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute'])->transaksi;
+
+        return view('per-customer.nota-lunas.detail', [
+            'data' => $invoice->transaksi,
+            'customer' => $customer,
+            'periode' => $periode,
+            'invoice_id' => $invoice->id
+        ]);
+    }
+
+    public function nota_lunas_data(Request $request)
+    {
+
+        $searchValue = $request->input('search.value');
+
+        $query = InvoiceTagihan::where('customer_id', auth()->user()->customer_id)->where('lunas', 1);
+
+        if ($searchValue) {
+            $query = $query->where('periode', 'like', '%' . $searchValue . '%');
+        }
+
+        // if ($request->has('prodi') && !empty($request->prodi)) {
+        //     $filter = $request->prodi;
+        //     $query->whereIn('id_prodi', $filter);
+        // }
+
+        $recordsFiltered = $query->count();
+
+        // $limit = (int) $request->input('length');
+        // $offset = (int) $request->input('start');
+
+        // Define the column names that correspond to the DataTables column indices
+        if ($request->has('order')) {
+            $orderColumn = $request->input('order.0.column');
+            $orderDirection = $request->input('order.0.dir');
+
+            // Define the column names that correspond to the DataTables column indices
+            $columns = ['tanggal', 'no_invoice', 'total_tagihan'];
+
+            // if ($columns[$orderColumn] == 'prodi') {
+            //     $query = $query->join('program_studis as prodi', 'mata_kuliahs.id_prodi', '=', 'prodi.id')
+            //         ->orderBy('prodi.nama_jenjang_pendidikan', $orderDirection)
+            //         ->orderBy('prodi.nama_program_studi', $orderDirection)
+            //         ->select('mata_kuliahs.*', 'prodi.nama_jenjang_pendidikan', 'prodi.nama_program_studi'); // Avoid column name conflicts
+            // } else {
+                $query = $query->orderBy($columns[$orderColumn], $orderDirection);
+            // }
+        }
+        $data = $query->get();
+        // $data = $query->skip($offset)->take($limit)->get();
+        // dd($data);
+        $recordsTotal = InvoiceTagihan::where('customer_id', auth()->user()->customer_id)->where('lunas', 1)->count();
+
+        $response = [
+            'draw' => $request->input('draw'),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $data,
+        ];
+
+        return response()->json($response);
     }
 }
