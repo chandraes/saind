@@ -21,7 +21,6 @@ use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Exports\TransaksiExport;
 use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller

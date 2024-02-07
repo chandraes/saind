@@ -114,4 +114,12 @@ class Transaksi extends Model
                         ->whereMonth('kuj.tanggal', $month)->whereYear('kuj.tanggal', $year)->where('transaksis.void', 1)->get();
     }
 
+    public function countNotaTagihan($customerId)
+    {
+        return self::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                    ->where('kuj.customer_id', $customerId)
+                    ->where('transaksis.status', 3)->where('transaksis.tagihan', 0)->where('transaksis.void', 0)
+                    ->count();
+    }
+
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -23,6 +24,18 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+        if (auth()->user()->role == 'customer') {
+
+            $db = new Transaksi();
+            $tagihan = $db->countNotaTagihan(auth()->user()->customer_id);
+
+            return view('home', [
+                'tagihan' => $tagihan
+            ]);
+
+        } else {
+            return view('home');
+        }
+
     }
 }

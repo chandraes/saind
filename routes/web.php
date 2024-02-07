@@ -352,7 +352,10 @@ Route::group(['middleware' => ['auth']], function() {
     });
 
     Route::group(['middleware' => 'role:customer'], function() {
-        
+        Route::prefix('per-customer')->group(function() {
+            Route::get('nota-tagihan', [App\Http\Controllers\PerCustomerController::class, 'nota_tagihan'])->name('per-customer.nota-tagihan');
+            Route::get('nota-tagihan/print', [App\Http\Controllers\PerCustomerController::class, 'nota_tagihan_print'])->name('per-customer.nota-tagihan.print');
+        });
     });
 
 });

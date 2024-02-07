@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-         <h1><u>DASHBOARD</u></h1>
+            <h1><u>DASHBOARD</u></h1>
         </div>
     </div>
     <div class="row justify-content-left mt-5">
@@ -55,19 +55,19 @@
     </div>
     @if (auth()->user()->role === 'vendor')
     <div class="row justify-content-left mt-5">
-        <div class="col-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5">
             <a href="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
                 <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
                 <h2>Kas Vendor</h2>
             </a>
         </div>
-        <div class="col-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5">
             <a href="{{route('perform-unit-pervendor.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/perform-unit.svg')}}" alt="" width="100">
                 <h2>Perform Unit</h2>
             </a>
         </div>
-        <div class="col-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5">
             <a href="{{route('statistik-pervendor.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="100">
                 <h2>Statistik Vendor</h2>
@@ -77,7 +77,30 @@
     @endif
 
     @if (auth()->user()->role === 'customer')
-
+    <div class="row justify-content-left mt-5">
+        <div class="col-md-4 text-center mb-5">
+            <a href="{{route('per-customer.nota-tagihan')}}" class="text-decoration-none" >
+                <img src="{{asset('images/tagihan.svg')}}" alt="" width="100">
+                <h2>NOTA TAGIHAN
+                    @if ($tagihan > 0)
+                    <span class="text-danger">({{$tagihan}})</span>
+                    @endif
+                </h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mb-5">
+            <a href="{{route('invoice.tagihan.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-tagihan.svg')}}" alt="" width="100">
+                <h2>INVOICE TAGIHAN</h2>
+            </a>
+        </div>
+        <div class="col-md-4 text-center mb-5">
+            <a href="{{route('rekap.nota-lunas')}}" class="text-decoration-none">
+                <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="100">
+                <h2>NOTA LUNAS</h2>
+            </a>
+        </div>
+    </div>
     @endif
 </div>
 @endsection
