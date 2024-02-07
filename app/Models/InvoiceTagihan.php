@@ -15,6 +15,11 @@ class InvoiceTagihan extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function getIdTanggalAttribute()
+    {
+        return date('d-m-Y', strtotime($this->tanggal));
+    }
+
     // has many transaksi from pivot table invoice_tagihan_details
     public function invoice_tagihan_details()
     {

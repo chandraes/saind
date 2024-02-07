@@ -89,9 +89,13 @@
             </a>
         </div>
         <div class="col-md-4 text-center mb-5">
-            <a href="{{route('invoice.tagihan.index')}}" class="text-decoration-none">
+            <a href="{{route('per-customer.invoice-tagihan')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-tagihan.svg')}}" alt="" width="100">
-                <h2>INVOICE TAGIHAN</h2>
+                <h2>INVOICE TAGIHAN
+                    @if ($invoice > 0)
+                    <span class="text-danger">({{$invoice}})</span>
+                    @endif
+                </h2>
             </a>
         </div>
         <div class="col-md-4 text-center mb-5">

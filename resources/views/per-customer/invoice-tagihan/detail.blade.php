@@ -3,7 +3,9 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Nota Tagihan</u></h1>
+            <h1><u>Invoice Tagihan</u></h1>
+            <h1>{{$periode}}</h1>
+
         </div>
     </div>
     @php
@@ -19,78 +21,33 @@
         </div>
     </div>
     @include('swal')
-    {{-- if errors has any --}}
-    @if ($errors->any())
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Whoops!</strong> Ada kesalahan saat input data, yaitu:
-                <ul>
-                    @foreach ($errors->all() as $error)
-                    <li><strong>{{$error}}</strong></li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    </div>
-    @endif
-
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td>
-                        <form target="_blank" action="{{route('per-customer.nota-tagihan.print')}}" method="get" id="form-print">
-                            <input type="hidden" name="rute_id" value="{{$rute_id}}">
-
-                            <a href="#" onclick="document.getElementById('form-print').submit();">
-                                <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Export
-                            </a>
-                        </form>
+                        <a href="{{route('per-customer.invoice-tagihan')}}"><img src="{{asset('images/invoice-tagihan.svg')}}"
+                                alt="dokumen" width="30">
+                            Invoice Tagihan
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{route('per-customer.invoice-tagihan.export', ['invoice' => $invoice_id])}}" target="_blank">
+                            <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Export
+                        </a>
                     </td>
                 </tr>
             </table>
         </div>
     </div>
 </div>
-<div class="container-fluid">
-    <form action="{{route('per-customer.nota-tagihan')}}" method="get">
-        <div class="row">
-            <div class="col-2">
-                <div class="mb-3">
-                    <label for="rute_id" class="form-label">Filter Rute</label>
-                    <select class="form-select" name="rute_id" id="rute_id" required>
-                        <option value=""> -- Pilih Rute -- </option>
-                        @foreach ($rute as $r)
-                        <option value="{{$r->id}}" {{$r->id == $rute_id ? 'selected' : ''}}>{{$r->nama}}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="col-2">
-                <label for="rute_id" class="form-label">&nbsp;</label>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">Tampilkan</button>
-                </div>
-    </form>
-</div>
-<div class="col-2">
-    <label for="rute_id" class="form-label">&nbsp;</label>
-    <div class="d-grid gap-2">
-        <a href="{{route('per-customer.nota-tagihan')}}" class="btn btn-secondary">Reset
-            Filter</a>
-    </div>
-</div>
-</div>
-
-</div>
-<div class="container-fluid mt-3 table-responsive ">
+<div class="container-fluid mt-5">
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
+                <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">NOLAM</th>
                 <th class="text-center align-middle">Rute</th>
                 <th class="text-center align-middle">Jarak (Km)</th>
@@ -114,13 +71,12 @@
                 <th class="text-center align-middle">Selisih (%)</th>
                 @endif
                 <th class="text-center align-middle">Tagihan</th>
-
             </tr>
         </thead>
         <tbody>
-
             @foreach ($data as $d)
             <tr>
+                <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->jarak}}</td>
@@ -159,20 +115,16 @@
         </tbody>
         <tfoot>
             <tr>
-                <td class=""
-                    colspan="{{5 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
-
-                </td>
+                <td class="text-center align-middle"
+                    colspan="{{6 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td class="text-end align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
-
-
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{5 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{6 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td class="text-end align-middle">
@@ -180,37 +132,31 @@
                     {{number_format($ppn, 0, ',', '.')}}
 
                 </td>
-
-
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{5 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{6 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
                 <td class="text-end align-middle">
-
                     {{number_format($pph, 0, ',', '.')}}
-
                 </td>
-
-
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{5 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{6 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td class="text-end align-middle"> <strong>
                         {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
-
             </tr>
         </tfoot>
     </table>
 </div>
+
 
 @endsection
 @push('css')
@@ -221,6 +167,8 @@
 <script src="{{asset('assets/js/dt-pdf.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
+    // hide alert after 5 seconds
+
 
     $(document).ready(function() {
         var table = $('#notaTable').DataTable({
