@@ -44,6 +44,17 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-md-12 mt-3" id="divCustomer-{{$d->id}}">
+                                <div class="mb-3">
+                                    <label for="customer_id" class="form-label">Customer</label>
+                                    <select class="form-select" name="customer_id" id="customer_id-{{$d->id}}">
+                                        <option value=""> -- Pilih Customer -- </option>
+                                        @foreach ($customer as $c)
+                                        <option value="{{$c->id}}" {{$d->customer_id == $c->id ? 'selected' : ''}}>{{$c->nama}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                             <div class="col-md-12 mt-2">
                                 <label for="email" class="form-label">E-Mail</label>
                                 <input type="email" class="form-control" name="email" id="email"

@@ -29,6 +29,7 @@
                                     <option value="admin">Admin</option>
                                     <option value="vendor">Vendor</option>
                                     <option value="user">User</option>
+                                    <option value="customer">Customer</option>
                                 </select>
                             </div>
                             <div class="col-md-12 mt-3" id="divVendor" hidden>
@@ -38,6 +39,17 @@
                                         <option value=""> -- Pilih Vendor -- </option>
                                         @foreach ($vendor as $v)
                                         <option value="{{$v->id}}">{{$v->nama}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mt-3" id="divCustomer" hidden>
+                                <div class="mb-3">
+                                    <label for="customer_id" class="form-label">Customer</label>
+                                    <select class="form-select" name="customer_id" id="customer_id">
+                                        <option value=""> -- Pilih Customer -- </option>
+                                        @foreach ($customer as $c)
+                                        <option value="{{$c->id}}">{{$c->nama}}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -72,11 +84,30 @@
             var role = document.getElementById('role').value;
             if (role == 'vendor') {
                 document.getElementById('divVendor').hidden = false;
+                document.getElementById('divCustomer').hidden = true;
                 // vendor_id required
+                document.getElementById('vendor_id').disabled = false;
                 document.getElementById('vendor_id').required = true;
+                document.getElementById('customer_id').required = false;
+            } else if(role == 'customer') {
+                document.getElementById('divCustomer').hidden = false;
+                document.getElementById('divVendor').hidden = true;
+                // vendor_id required
+                document.getElementById('customer_id').disabled = false;
+                document.getElementById('customer_id').required = true;
+                document.getElementById('vendor_id').required = false;
+
+
             } else {
                 document.getElementById('divVendor').hidden = true;
+                document.getElementById('divCustomer').hidden = true;
                 // vendor_id not required
+                // disable vendor_id and customer_id
+
+                document.getElementById('customer_id').disabled = true;
+                document.getElementById('vendor_id').disabled = true;
+
+                document.getElementById('customer_id').required = false;
                 document.getElementById('vendor_id').required = false;
             }
         }

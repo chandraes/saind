@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Vendor;
@@ -14,11 +15,13 @@ class UserController extends Controller
     public function index()
     {
         $vendor = Vendor::select('id', 'nama')->where('status', 'aktif')->get();
-        $data = User::leftJoin('vendors', 'users.vendor_id', '=', 'vendors.id')
+        $customer = Customer::select('id', 'nama')->where('status', true)->get();
+
+        $data = User::with('customer')->leftJoin('vendors', 'users.vendor_id', '=', 'vendors.id')
             ->select('users.*', 'vendors.nama as vendor')
             ->orderBy('users.role', 'asc')
             ->get();
-        return view('pengguna.index', compact('data','vendor'));
+        return view('pengguna.index', compact('data','vendor', 'customer'));
     }
 
     /**
@@ -34,7 +37,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->password);
+        // dd($request->all());
         $data = $request->validate([
             "name" => "required|min:3",
             "username" => "required|unique:users",
@@ -42,6 +45,7 @@ class UserController extends Controller
             "password" => "required|min:6",
             "role" => "required",
             'vendor_id' => 'nullable',
+            'customer_id' => 'nullable',
         ]);
 
         $data['password'] = bcrypt($data['password']);

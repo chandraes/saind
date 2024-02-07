@@ -75,5 +75,9 @@
         </div>
     </div>
     @endif
+
+    @if (auth()->user()->role === 'customer')
+
+    @endif
 </div>
 @endsection

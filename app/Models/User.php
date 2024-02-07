@@ -24,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'vendor_id',
+        'customer_id',
     ];
 
     /**
@@ -45,5 +46,15 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
 }

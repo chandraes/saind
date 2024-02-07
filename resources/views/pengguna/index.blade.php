@@ -33,7 +33,7 @@
                     <th class="text-center">Username</th>
                     <th class="text-center">Nama</th>
                     <th class="text-center">Role</th>
-                    <th class="text-center">Vendor</th>
+                    <th class="text-center">Vendor/Customer</th>
                     <th class="text-center">Action</th>
                 </tr>
             </thead>
@@ -44,7 +44,7 @@
                     <td class="text-center align-middle">{{$d->username}}</td>
                     <td class="text-center align-middle">{{$d->name}}</td>
                     <td class="text-center align-middle">{{$d->role}}</td>
-                    <td class="text-center align-middle">{{$d->vendor ? $d->vendor : ''}}</td>
+                    <td class="text-center align-middle">{{ $d->vendor ? $d->vendor : ($d->customer ? $d->customer->nama : '') }}</td>
                     <td class="text-center align-middle">
                         {{-- <a href="{{route('pengguna.edit', $d->id)}}" class="btn btn-warning btn-sm">Edit</a> --}}
                         <!-- Modal trigger button -->
