@@ -15,7 +15,7 @@ class VehicleController extends Controller
      */
     public function index()
     {
-        $data = Vehicle::all();
+        $data = Vehicle::with(['vendor', 'kas_uang_jalan'])->get();
         $vendors = Vendor::where('status', 'aktif')->get();
         $nomor_lambung = Vehicle::nextNomorLambung();
         // dd($nomor_lambung);

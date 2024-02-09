@@ -105,7 +105,7 @@ class FormKasUangJalanController extends Controller
     public function keluar()
     {
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->first();
-        $vehicle = Vehicle::where('status', 'aktif')->get();
+        $vehicle = Vehicle::where('status', 'aktif')->where('do_count', '<', 2)->get();
         $customer = Customer::where('status', 1)->get();
 
         if($nomor == null){

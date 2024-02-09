@@ -14,7 +14,7 @@ class PemegangSahamController extends Controller
     public function index()
     {
         $persen = PersentaseAwal::all();
-        $data = PemegangSaham::all();
+        $data = PemegangSaham::with('persentase_awal')->get();
         return view('database.saham.index', compact('data', 'persen'));
     }
 

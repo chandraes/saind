@@ -16,15 +16,15 @@
         <div class="col-md-3 text-center mt-5">
             <a href="{{route('transaksi.nota-muat')}}" class="text-decoration-none">
                 <img src="{{asset('images/muat.svg')}}" alt="" width="100">
-                <h2>Nota Muat <span class="text-danger">{{$data->where('status', 1)->where('void',0)->count() > 0 ?
-                        "(".$data->where('status', 1)->where('void', 0)->count().")" : '' }}</span></h2>
+                <h2>Nota Muat <span class="text-danger">{{$data->where('status', 1)->count() > 0 ?
+                        "(".$data->where('status', 1)->count().")" : '' }}</span></h2>
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
                 <img src="{{asset('images/bongkar.svg')}}" alt="" width="100">
-                <h2>Nota Bongkar <span class="text-danger">{{$data->where('status', 2)->where('void', 0)->count() > 0 ?
-                        "(".$data->where('status', 2)->where('void', 0)->count().")" : '' }}</span></h2>
+                <h2>Nota Bongkar <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
+                        "(".$data->where('status', 2)->count().")" : '' }}</span></h2>
             </a>
         </div>
     </div>
@@ -33,8 +33,8 @@
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
                 <img src="{{asset('images/tagihan.svg')}}" alt="" width="100">
-                <h2>Nota Tagihan Customer <span class="text-danger">{{$data->where('status', 3)->where('tagihan', 0)->where('void', 0)->count() > 0
-                        ? "(".$data->where('status', 3)->where('tagihan', 0)->where('void', 0)->count().")" : '' }}</span></h2>
+                <h2>Nota Tagihan Customer <span class="text-danger">{{$data->where('status', 3)->where('tagihan', 0)->count() > 0
+                        ? "(".$data->where('status', 3)->where('tagihan', 0)->count().")" : '' }}</span></h2>
             </a>
             <div class="modal fade" id="customerId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="customerTitleId" aria-hidden="true">
@@ -50,7 +50,11 @@
                                 <div class="col-md-3 text-center mt-5">
                                     <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
                                         <img src="{{asset('images/tambang.svg')}}" alt="" width="100">
-                                        <h2>{{$c->singkatan}}</h2>
+                                        <h2>{{$c->singkatan}}
+                                        @if ($data->where('status', 3)->where('tagihan', 0)->where('customer_id', $c->id)->count() > 0)
+                                            <span class="text-danger">({{$data->where('status', 3)->where('tagihan', 0)->where('customer_id', $c->id)->count()}})</span>
+                                        @endif
+                                        </h2>
                                     </a>
                                 </div>
                                 @endforeach
@@ -67,8 +71,8 @@
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
                 <img src="{{asset('images/bayar.svg')}}" alt="" width="100">
-                <h2>Nota Bayar Vendor <span class="text-danger">{{$data->where('status', 3)->where('bayar', 0)->where('void', 0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('bayar', 0)->where('void', 0)->count().")" : '' }}</span></h2>
+                <h2>Nota Bayar Vendor <span class="text-danger">{{$data->where('status', 3)->where('bayar', 0)->count() > 0 ?
+                        "(".$data->where('status', 3)->where('bayar', 0)->count().")" : '' }}</span></h2>
             </a>
 
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
@@ -85,7 +89,12 @@
                                 <select class="form-select" name="vendor_id" id="vendorSelect">
                                     <option selected>Select one</option>
                                     @foreach ($vendor as $v)
-                                    <option value="{{$v->kas_uang_jalan->vendor->id}}">{{$v->kas_uang_jalan->vendor->nama}}</option>
+                                    <option value="{{$v->kas_uang_jalan->vendor->id}}">
+                                        {{$v->kas_uang_jalan->vendor->nama}}
+                                        @if ($data->where('status', 3)->where('bayar', 0)->where('vendor_id', $v->kas_uang_jalan->vendor->id)->count() > 0)
+                                        <span class="text-danger">({{$data->where('status', 3)->where('bayar', 0)->where('vendor_id', $v->kas_uang_jalan->vendor->id)->count()}})</span>
+                                        @endif
+                                    </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -102,8 +111,8 @@
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sponsorModal">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="100">
-                <h2>Nota Bonus Sponsor <span class="text-danger">{{$data->where('status', 3)->where('bonus', 0)->where('void', 0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('bonus', 0)->where('void', 0)->count().")" : '' }}</span></h2>
+                <h2>Nota Bonus Sponsor <span class="text-danger">{{$data->where('status', 3)->where('bonus', 0)->count() > 0 ?
+                        "(".$data->where('status', 3)->where('bonus', 0)->count().")" : '' }}</span></h2>
             </a>
 
             <div class="modal fade" id="sponsorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
@@ -137,8 +146,8 @@
             <a href="#" class="text-decoration-none"  data-bs-toggle="modal" data-bs-target="#csrModal">
                 <img src="{{asset('images/csr.svg')}}" alt="" width="100">
                 <h2>Nota CSR
-                    <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('void', 0)->where('nominal_csr', '>', 0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('csr', 0)->where('void', 0)->where('nominal_csr', '>', 0)->count().")" : '' }}</span>
+                    <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>', 0)->count() > 0 ?
+                        "(".$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>', 0)->count().")" : '' }}</span>
                 </h2>
             </a>
 
@@ -216,11 +225,20 @@
     </div>
 </div>
 @endsection
+@push('css')
+    <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+    <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
+
+@endpush
 @push('js')
-    <script src="{{asset('js/select2.min.js')}}"></script>
+<script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
     <script>
         $(document).ready(function() {
-            $('#vendorSelect').select2();
+            $('#vendorSelect').select2({
+                placeholder: 'Pilih Vendor',
+                width: '100%',
+                dropdownParent: $('#vendorBayar')
+            });
         });
     </script>
 @endpush

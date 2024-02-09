@@ -14,13 +14,17 @@ class PerCustomerController extends Controller
     {
         $req = $request->validate([
             'rute_id' => 'nullable|exists:rutes,id',
+            'filter_date' => 'nullable|in:tanggal_muat,tanggal_bongkar',
+            'tanggal_filter' => 'nullable|required_if:filter_date,tanggal_muat,tanggal_bongkar',
         ]);
 
         $rute_id = $req['rute_id'] ?? null;
+        $filter_date = $req['filter_date'] ?? null;
+        $tanggal_filter = $req['tanggal_filter'] ?? null;
 
         $rute = auth()->user()->customer->rute;
 
-        $data = Transaksi::getTagihanData(auth()->user()->customer_id, $rute_id);
+        $data = Transaksi::getTagihanData(auth()->user()->customer_id, $rute_id, $filter_date, $tanggal_filter);
         $customer = Customer::find(auth()->user()->customer_id);
 
         return view('per-customer.nota-tagihan.index', [
@@ -28,6 +32,9 @@ class PerCustomerController extends Controller
             'rute' => $rute,
             'customer' => $customer,
             'rute_id' => $rute_id,
+            'filter_date' => $req['filter_date'] ?? null,
+            'tanggal_filter' => $req['tanggal_filter'] ?? null,
+
         ]);
     }
 
@@ -35,13 +42,16 @@ class PerCustomerController extends Controller
     {
         $req = $request->validate([
             'rute_id' => 'nullable|exists:rutes,id',
+            'filter_date' => 'nullable|in:tanggal_muat,tanggal_bongkar',
+            'tanggal_filter' => 'nullable|required_if:filter_date,tanggal_muat,tanggal_bongkar',
         ]);
 
         $rute_id = $req['rute_id'] ?? null;
+        $filter_date = $req['filter_date'] ?? null;
+        $tanggal_filter = $req['tanggal_filter'] ?? null;
 
-        $rute = auth()->user()->customer->rute;
 
-        $data = Transaksi::getTagihanData(auth()->user()->customer_id, $rute_id);
+        $data = Transaksi::getTagihanData(auth()->user()->customer_id, $rute_id, $filter_date, $tanggal_filter);
         $customer = Customer::find(auth()->user()->customer_id);
 
         $pdf = PDF::loadview('per-customer.nota-tagihan.print', [

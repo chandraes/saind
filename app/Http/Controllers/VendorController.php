@@ -22,7 +22,7 @@ class VendorController extends Controller
     public function index()
     {
         if (auth()->user()->role == 'admin') {
-            $vendors = Vendor::all();
+            $vendors = Vendor::with(['sponsor', 'vendor_uang_jalan', 'vendor_uang_jalan.rute'])->get();
         }
         if(auth()->user()->role == 'vendor') {
             $vendors = Vendor::where('vendor_id', auth()->user()->vendor_id)->get();
@@ -307,7 +307,7 @@ class VendorController extends Controller
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');
     }
 
-   
+
 
     public function biodata_vendor(string $id)
     {

@@ -35,7 +35,6 @@
         </div>
     </div>
     @endif
-
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
@@ -43,9 +42,11 @@
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
                     <td>
-                        <form target="_blank" action="{{route('per-customer.nota-tagihan.print')}}" method="get" id="form-print">
+                        <form target="_blank" action="{{route('per-customer.nota-tagihan.print')}}" method="get"
+                            id="form-print">
                             <input type="hidden" name="rute_id" value="{{$rute_id}}">
-
+                            <input type="hidden" name="filter_date" value="{{$filter_date}}">
+                            <input type="hidden" name="tanggal_filter" value="{{$tanggal_filter}}">
                             <a href="#" onclick="document.getElementById('form-print').submit();">
                                 <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Export
                             </a>
@@ -56,37 +57,7 @@
         </div>
     </div>
 </div>
-<div class="container-fluid">
-    <form action="{{route('per-customer.nota-tagihan')}}" method="get">
-        <div class="row">
-            <div class="col-2">
-                <div class="mb-3">
-                    <label for="rute_id" class="form-label">Filter Rute</label>
-                    <select class="form-select" name="rute_id" id="rute_id" required>
-                        <option value=""> -- Pilih Rute -- </option>
-                        @foreach ($rute as $r)
-                        <option value="{{$r->id}}" {{$r->id == $rute_id ? 'selected' : ''}}>{{$r->nama}}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="col-2">
-                <label for="rute_id" class="form-label">&nbsp;</label>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">Tampilkan</button>
-                </div>
-    </form>
-</div>
-<div class="col-2">
-    <label for="rute_id" class="form-label">&nbsp;</label>
-    <div class="d-grid gap-2">
-        <a href="{{route('per-customer.nota-tagihan')}}" class="btn btn-secondary">Reset
-            Filter</a>
-    </div>
-</div>
-</div>
-
-</div>
+@include('per-customer.nota-tagihan.filter')
 <div class="container-fluid mt-3 table-responsive ">
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
@@ -215,13 +186,14 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
 @endpush
 @push('js')
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script src="{{asset('assets/js/dt-font.js')}}"></script>
 <script src="{{asset('assets/js/dt-pdf.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-
     $(document).ready(function() {
         var table = $('#notaTable').DataTable({
             "paging": false,
@@ -234,6 +206,18 @@
                 "rightColumns": 1
             },
         });
+        document.getElementById('filter_date').onchange = function() {
+                document.getElementById('tanggal_filter').required = this.value !== '';
+            };
+        document.getElementById('tanggal_filter').oninput = function() {
+            document.getElementById('filter_date').required = this.value !== '';
+        };
+
+        flatpickr("#tanggal_filter", {
+            mode: "range",
+            dateFormat: "d-m-Y",
+        });
+
 
     });
 

@@ -13,7 +13,7 @@ class KategoriBarangController extends Controller
      */
     public function index()
     {
-        $kategori = KategoriBarang::all();
+        $kategori = KategoriBarang::with(['barang'])->get();
 
         return view('database.barang.index', [
             'kategori' => $kategori,

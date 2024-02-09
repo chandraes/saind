@@ -869,7 +869,7 @@ class RekapController extends Controller
 
     public function rekap_csr()
     {
-        $data = InvoiceCsr::where('lunas', 1)->get();
+        $data = InvoiceCsr::with(['customer'])->where('lunas', 1)->get();
 
         return view('rekap.csr.index', [
             'data' => $data,

@@ -50,36 +50,8 @@
         </div>
     </div>
 </div>
-<div class="container-fluid">
-    <form action="{{route('transaksi.nota-tagihan', ['customer' => $customer])}}" method="get">
-    <div class="row">
-        <div class="col-2">
-            <div class="mb-3">
-                <label for="rute_id" class="form-label">Filter Rute</label>
-                <select class="form-select" name="rute_id" id="rute_id" required>
-                    <option value=""> -- Pilih Rute -- </option>
-                    @foreach ($rute as $r)
-                    <option value="{{$r->id}}" {{$r->id == $rute_id ? 'selected' : ''}}>{{$r->nama}}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-        <div class="col-2">
-            <label for="rute_id" class="form-label">&nbsp;</label>
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary">Tampilkan</button>
-            </div>
-        </form>
-        </div>
-        <div class="col-2">
-            <label for="rute_id" class="form-label">&nbsp;</label>
-            <div class="d-grid gap-2">
-              <a href="{{route('transaksi.nota-tagihan', ['customer' => $customer])}}" class="btn btn-secondary">Reset Filter</a>
-            </div>
-        </div>
-    </div>
-
-</div>
+@include('billing.transaksi.tagihan.filter')
+@include('billing.transaksi.tagihan.show-new')
 <div class="container-fluid mt-3 table-responsive ">
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
@@ -87,7 +59,7 @@
                 <th class="text-center align-middle">
                     Select
                     {{-- select all --}}
-                    <input type="checkbox" onclick="checkAll(this)" id="checkAll">
+                    <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
                 </th>
 
                 <th class="text-center align-middle">Tanggal UJ</th>
@@ -118,25 +90,27 @@
                 <th class="text-center align-middle">Tagihan</th>
                 <th class="text-center align-middle">Profit</th>
                 <th class="text-center align-middle">Profit (%)</th>
+                <th class="text-center align-middle">DO Fisik</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
         <tbody>
-
             @foreach ($data as $d)
             <tr>
                 {{-- check list --}}
                 <td class="text-center align-middle">
                     {{-- checklist on check push $d->id to $selectedData --}}
-                    <input type="checkbox" value="{{$d->id}}" data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}">
+                    <input style="height: 25px; width:25px" type="checkbox" value="{{$d->id}}" data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
                     <div class="text-center">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#uj{{$d->id}}"> <strong>UJ{{sprintf("%02d",
-                                $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a>
+                        {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#uj{{$d->id}}"> <strong>UJ{{sprintf("%02d",
+                                $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a> --}}
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#showModal" onclick="updateShow({{$d}})"> <strong>UJ{{sprintf("%02d",
+                            $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a>
                     </div>
-                    @include('billing.transaksi.tagihan.show')
+                    {{-- @include('billing.transaksi.tagihan.show') --}}
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
@@ -163,19 +137,24 @@
                 <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}</td>
                 <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2, ',','.')}}</td>
                 @endif
-                <td class="text-center align-middle">
+                <td class="text-end align-middle">
                     @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
                     {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
                     @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
                     {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
                     @endif
                 </td>
-                <td class="text-center align-middle">
+                <td class="text-end align-middle">
                    {{number_format($d->profit, 0, ',', '.')}}
 
                 </td>
                 <td class="text-center align-middle">
                     {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
+                </td>
+                <td class="text-center align-middle">
+                    <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
+                        <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }} onchange="this.form.submit()">
+                    </form>
                 </td>
                 <td class="text-center align-middle">
                     @if (auth()->user()->role === 'admin')
@@ -217,7 +196,7 @@
                                     <h5 class="modal-title" id="modalTitleId">Masukan Password </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <form action="{{route('transaksi.void-masuk', $d->id)}}" method="post">
+                                <form action="{{route('transaksi.tagihan.void', $d->id)}}" method="post">
                                     @csrf
                                 <div class="modal-body">
                                     <input type="password" class="form-control" id="password" name="password" placeholder="Password" aria-label="Password" aria-describedby="password" required>
@@ -277,6 +256,7 @@
                 <td class="text-end align-middle">{{number_format($profit, 0, ',', '.')}}</td>
                 <td class="text-end align-middle">{{number_format($profit_persen, 2, ',', '.')}}%</td>
                 <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
@@ -288,6 +268,7 @@
                     {{number_format($ppn, 0, ',', '.')}}
 
                 </td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -306,6 +287,7 @@
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
@@ -316,6 +298,7 @@
                 <td class="text-end align-middle"> <strong>
                     {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -341,13 +324,29 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
 @endpush
 @push('js')
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt-font.js')}}"></script>
-<script src="{{asset('assets/js/dt-pdf.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
+
+
+$(document).ready(function() {
+        var table = $('#notaTable').DataTable({
+            "paging": false,
+            "ordering": false,
+            "scrollCollapse": true,
+            "scrollY": "550px",
+            "fixedColumns": {
+                "leftColumns": 3,
+                "rightColumns": 1
+            },
+        });
+
+    });
 
     function check(checkbox, id) {
         var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
@@ -391,11 +390,13 @@
             $('input[name="selectedData"]').val(function(i, v) {
                 // if end of string, remove comma
                 @foreach ($data as $d)
+                if({{$d->nota_fisik}} == 1) {
                 var tagihan = parseFloat($('#idSelect-{{$d->id}}').data('tagihan'));
                 totalTagihan += tagihan;
 
                     v = v + {{$d->id}} + ',';
                     $('#idSelect-{{$d->id}}').prop('checked', true);
+                }
                 @endforeach
                 return v;
             });
@@ -423,20 +424,6 @@
         console.log(value);
     }
 
-    $(document).ready(function() {
-        var table = $('#notaTable').DataTable({
-            "paging": false,
-            "ordering": false,
-            "searching": false,
-            "scrollCollapse": true,
-            "scrollY": "550px",
-            "fixedColumns": {
-                "leftColumns": 3,
-                "rightColumns": 1
-            },
-        });
-
-    });
 
     $('#lanjutForm').submit(function(e){
             e.preventDefault();
@@ -455,13 +442,38 @@
             })
         });
 
-    function toggleInputTambah() {
-        var value = document.getElementById('vendor_id').value;
-        if (value == '') {
-            document.getElementById('row-input').hidden = true;
-        } else {
-            document.getElementById('row-input').hidden = false;
+        document.getElementById('filter_date').onchange = function() {
+                document.getElementById('tanggal_filter').required = this.value !== '';
+            };
+        document.getElementById('tanggal_filter').onchange = function() {
+            document.getElementById('filter_date').required = this.value !== '';
+        };
+
+        flatpickr("#tanggal_filter", {
+            mode: "range",
+            dateFormat: "d-m-Y",
+        });
+
+        function updateShow(data) {
+        // Update the content of the 'show.blade.php' with the data
+            document.getElementById('modalTitleId').innerText = `Nota Tagihan NOLAM ${data.kas_uang_jalan.vehicle.nomor_lambung}`;
+            document.getElementById('kode').value = `UJ${(data.kas_uang_jalan.nomor_uang_jalan)}`;
+            document.getElementById('tanggal_uang_jalan').value = data.kas_uang_jalan.tanggal;
+            document.getElementById('no_lambung').value = data.kas_uang_jalan.vehicle.nomor_lambung;
+            document.getElementById('vendor').value = data.kas_uang_jalan.vendor.nickname;
+            document.getElementById('tambang').value = data.kas_uang_jalan.customer.singkatan;
+            document.getElementById('rute').value = data.kas_uang_jalan.rute.nama;
+            document.getElementById('nota_muat').value = data.nota_muat;
+            document.getElementById('tonase').value = data.tonase;
+            document.getElementById('id_tanggal_muat').value = data.id_tanggal_muat;
+            document.getElementById('nota_bongkar').value = data.nota_bongkar;
+            document.getElementById('timbangan_bongkar').value = data.timbangan_bongkar;
+            document.getElementById('id_tanggal_bongkar').value = data.id_tanggal_bongkar;
+            // More fields...
+
+            // // Show the modal
+            // var myModal = new bootstrap.Modal(document.getElementById('showModal'));
+            // myModal.show();
         }
-    }
 </script>
 @endpush

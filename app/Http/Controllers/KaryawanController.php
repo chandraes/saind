@@ -17,7 +17,7 @@ class KaryawanController extends Controller
      */
     public function index()
     {
-        $karyawans = Karyawan::all();
+        $karyawans = Karyawan::with(['jabatan'])->get();
         $jabatan = Jabatan::select('id', 'nama')->get();
 
         return view('database.karyawan.index', [
@@ -71,7 +71,7 @@ class KaryawanController extends Controller
         $last = Karyawan::latest()->orderBy('id', 'desc')->first();
 
         $data['nomor'] = $last ? $last->nomor + 1 : 1;
-        
+
         $data['bank'] = "BCA";
 
         $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
