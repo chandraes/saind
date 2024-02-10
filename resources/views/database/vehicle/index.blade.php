@@ -59,6 +59,7 @@
             <th class="text-center align-middle">Tahun</th>
             <th class="text-center align-middle">GPS</th>
             <th class="text-center align-middle">Status</th>
+            <th class="text-center align-middle">DO Count</th>
             <th class="text-center align-middle">Action</th>
         </tr>
     </thead>
@@ -95,6 +96,9 @@
                 @elseif($d->status == 'proses')
                 <h5><span class="badge bg-warning">Sedang Jalan</span></h5>
                 @endif
+            </td>
+            <td class="text-center align-middle">
+                {{$d->do_count}}
             </td>
             <td class="text-center align-middle">
                 <form action="{{route('vehicle.destroy', $d->id)}}" method="post">
