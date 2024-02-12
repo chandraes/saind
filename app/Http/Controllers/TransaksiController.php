@@ -397,9 +397,17 @@ class TransaksiController extends Controller
             'no_rekening' => $rek->nomor_rekening,
         ]);
 
-        $transaksi->kas_uang_jalan->vehicle->update([
-            'status' => 'aktif',
-        ]);
+        $cekMobil = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                            ->where('kuj.vehicle_id', $transaksi->kas_uang_jalan->vehicle_id)
+                            ->where('transaksis.status', '<', 3)
+                            ->where('transaksis.void', 0)
+                            ->first();
+
+        if (!$cekMobil) {
+            $transaksi->kas_uang_jalan->vehicle->update([
+                'status' => 'aktif',
+            ]);
+        }
 
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
 

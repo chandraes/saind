@@ -13,7 +13,7 @@
             @csrf
 
             <div class="row">
-                <div class="col-2">
+                <div class="col-lg-2 col-md-4">
                     <label for="kode" class="form-label">Kode</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1">UJ</span>
@@ -21,28 +21,28 @@
                             value="{{ sprintf(' %02d', $data->kas_uang_jalan->nomor_uang_jalan) }}" disabled>
                     </div>
                 </div>
-                <div class="col-2">
+                <div class="col-lg-2 col-md-4">
                     <div class="mb-3">
                         <label for="nomor_lambung" class="form-label">Nomor Lambung</label>
                         <input type="text" class="form-control" name="nomor_lambung" id="nomor_lambung"
                             value="{{ $data->kas_uang_jalan->vehicle->nomor_lambung }}" disabled>
                     </div>
                 </div>
-                <div class="col-3">
+                <div class="col-lg-3 col-md-4">
                     <div class="mb-3">
                         <label for="nomor_lambung" class="form-label">Vendor</label>
                         <input type="text" class="form-control" name="nomor_lambung" id="nomor_lambung"
                             value="{{ $data->kas_uang_jalan->vendor->nama }}" disabled>
                     </div>
                 </div>
-                <div class="col-2">
+                <div class="col-lg-2 col-md-4">
                     <div class="mb-3">
                         <label for="nomor_lambung" class="form-label">Tambang</label>
                         <input type="text" class="form-control" name="nomor_lambung" id="nomor_lambung"
                             value="{{ $data->kas_uang_jalan->customer->singkatan }}" disabled>
                     </div>
                 </div>
-                <div class="col-2">
+                <div class="col-lg-2 col-md-4">
                     <div class="mb-3">
                         <label for="nomor_lambung" class="form-label">Rute</label>
                         <input type="text" class="form-control" name="nomor_lambung" id="nomor_lambung"
@@ -51,7 +51,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-4">
+                <div class="col-lg-4">
                     <label for="nominal_transaksi" class="form-label">Uang Jalan</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="basic-addon1">Rp</span>
@@ -60,7 +60,7 @@
                             value="{{ number_format($data->kas_uang_jalan->nominal_transaksi, 0, ',', '.') }}">
                     </div>
                 </div>
-                <div class="col-5">
+                <div class="col-lg-5">
                     <div class="mb-3">
                         <label for="alasan" class="form-label">Alasan Void</label>
                         <input type="text" class="form-control" name="alasan" id="alasan" aria-describedby="helpId"
