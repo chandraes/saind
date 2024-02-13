@@ -228,7 +228,6 @@
 @push('css')
     <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
     <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
-
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>

@@ -99,9 +99,8 @@
 </div>
 @endsection
 @push('css')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
-<link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
+<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
@@ -126,6 +125,7 @@
                 }
             })
         });
+
         $(document).ready(function () {
         // Jalankan fungsi changeTipe saat halaman dimuat
             $('#vehicle_id').select2({
