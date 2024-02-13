@@ -155,6 +155,9 @@
                     <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
                         <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }} onchange="this.form.submit()">
                     </form>
+                    @if ($d->nota_fisik == 1 && $d->do_checker_id != null)
+                    Checker: <strong>{{$d->do_checker->name}}</strong>
+                    @endif
                 </td>
                 <td class="text-center align-middle">
                     @if (auth()->user()->role === 'admin')

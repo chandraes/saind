@@ -50,9 +50,9 @@ class InvoiceController extends Controller
         // $data = InvoiceTagihanDetail::where('invoice_tagihan_id', $invoice->id)->get();
         $periode = $invoice->periode;
         $customer = Customer::find($invoice->customer_id);
-
+        $data = $invoice->transaksi->load(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer','do_checker']);
         return view('billing.transaksi.invoice.tagihan.detail', [
-            'data' => $invoice->transaksi,
+            'data' => $data,
             'customer' => $customer,
             'periode' => $periode,
             'invoice_id' => $invoice->id
@@ -61,7 +61,7 @@ class InvoiceController extends Controller
 
     public function invoice_tagihan_detail_export(InvoiceTagihan $invoice)
     {
-        $data = $invoice->transaksi;
+        $data = $invoice->transaksi->load(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer','do_checker']);
         $customer = Customer::find($invoice->customer_id);
 
         // get latest data from month before current month

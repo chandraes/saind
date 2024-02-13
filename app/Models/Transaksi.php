@@ -15,6 +15,11 @@ class Transaksi extends Model
 
     protected $appends = ['id_tanggal_muat', 'id_tanggal_bongkar'];
 
+    public function do_checker()
+    {
+        return $this->belongsTo(User::class, 'do_checker_id', 'id');
+    }
+
     public function kas_uang_jalan()
     {
         return $this->belongsTo(KasUangJalan::class);
@@ -37,7 +42,7 @@ class Transaksi extends Model
 
     public static function getTagihanData($customerId, $ruteId = null, $filter = null, $tanggalFilter = null)
     {
-        $query = self::with('kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute')
+        $query = self::with('kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'do_checker')
                 ->join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                 ->where('status', 3)
                 ->where('transaksis.void', 0)
@@ -149,6 +154,12 @@ class Transaksi extends Model
         $transaksi = self::findOrFail($id);
         // if $transaksi->nota_fisik is 0, then change it to 1, and vice versa
         $transaksi->nota_fisik = !$transaksi->nota_fisik;
+
+        if ($transaksi->nota_fisik) {
+            $transaksi->do_checker_id = auth()->user()->id;
+        } else {
+            $transaksi->do_checker_id = null;
+        }
 
         $vehicle = $transaksi->kas_uang_jalan->vehicle;
 

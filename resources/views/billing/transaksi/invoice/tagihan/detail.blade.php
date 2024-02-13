@@ -9,7 +9,6 @@
         </div>
     </div>
     @php
-    // $selectedData = [];
     $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
     $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
     $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
@@ -79,6 +78,7 @@
                 <th class="text-center align-middle">Tagihan</th>
                 <th class="text-center align-middle">Profit</th>
                 <th class="text-center align-middle">Profit (%)</th>
+                <th class="text-center align-middle">DO CHECKER</th>
             </tr>
         </thead>
         <tbody>
@@ -134,6 +134,12 @@
                 <td class="text-center align-middle">
                     {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
                 </td>
+                <td class="text-center align-middle">
+                    @if ($d->do_checker)
+                    <strong>{{$d->do_checker->name}}</strong>
+                    @endif
+
+                </td>
             </tr>
             @endforeach
         </tbody>
@@ -147,6 +153,7 @@
                 </td>
                 <td>{{number_format($profit, 0, ',', '.')}}</td>
                 <td>{{number_format($profit_persen, 2, ',', '.')}}%</td>
+                <td></td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
@@ -158,6 +165,7 @@
                     {{number_format($ppn, 0, ',', '.')}}
 
                 </td>
+                <td></td>
                 <td></td>
                 <td></td>
             </tr>
@@ -174,6 +182,7 @@
                 </td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
@@ -186,32 +195,21 @@
                 </td>
                 <td></td>
                 <td></td>
+                <td></td>
             </tr>
         </tfoot>
     </table>
 </div>
-<div class="container-fluid mt-3 mb-3">
-    {{-- <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-        <a class="btn btn-success btn-lg" href="{{route('transaksi.nota-tagihan.export', $customer)}}"
-            target="_blank">Export</a>
-    </div> --}}
-</div>
-
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
-<script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt-font.js')}}"></script>
 <script src="{{asset('assets/js/dt-pdf.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     // hide alert after 5 seconds
-
-
-
-
     $(document).ready(function() {
         var table = $('#notaTable').DataTable({
             "paging": false,
@@ -219,35 +217,13 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
-            "scrollX": true,
+            "fixedColumns": {
+                "leftColumns": 4,
+                "rightColumns": 2
+            },
         });
 
     });
 
-    $('#lanjutForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah anda yakin?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    this.submit();
-                }
-            })
-        });
-
-    function toggleInputTambah() {
-        var value = document.getElementById('vendor_id').value;
-        if (value == '') {
-            document.getElementById('row-input').hidden = true;
-        } else {
-            document.getElementById('row-input').hidden = false;
-        }
-    }
 </script>
 @endpush
