@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InvoiceTagihan;
 use App\Models\Transaksi;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -25,7 +26,9 @@ class HomeController extends Controller
      */
     public function index()
     {
-        if (auth()->user()->role == 'customer') {
+        $user = auth()->user();
+
+        if ($user->role == 'customer') {
 
             $db = new Transaksi();
             $tagihan = $db->countNotaTagihan(auth()->user()->customer_id);
@@ -35,9 +38,15 @@ class HomeController extends Controller
                 'invoice' => $invoice
             ]);
 
-        } else {
-            return view('home');
         }
+        
+        if ($user->role == 'operasional') {
+            $db = Vendor::all();
+            return view('home', ['vendor' => $db]);
+        }
+
+        return view('home');
+
 
     }
 }
