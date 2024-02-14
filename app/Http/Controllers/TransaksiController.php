@@ -244,6 +244,31 @@ class TransaksiController extends Controller
         return redirect()->back()->with('success', 'Berhasil menyimpan data!!');
     }
 
+    public function nota_tagihan_unchecked(Transaksi $transaksi, Request $request)
+    {
+        $data = $request->validate([
+            'password' => 'required',
+        ]);
+
+        $password = PasswordKonfirmasi::first();
+
+        if (!$password) {
+            return response()->json(['message' => 'Password not found'], 404);
+        }
+
+        if ($data['password'] != $password->password) {
+            return response()->json(['message' => 'Password yang anda masukan Salah'], 400);
+        }
+
+        $db = new Transaksi;
+
+        $db->changeStateNotaFisik($transaksi->id);
+
+        return response()->json(['message' => 'Berhasil menyimpan data!!'], 200);
+
+
+    }
+
     public function tagihan_export(Request $request, Customer $customer)
     {
         $req = $request->validate([

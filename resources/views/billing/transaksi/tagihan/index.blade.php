@@ -152,10 +152,15 @@
                     {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
                 </td>
                 <td class="text-center align-middle">
-                    <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
-                        <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }} onchange="this.form.submit()">
-                    </form>
+                    @if ($d->nota_fisik == 0)
+                        <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
+                            <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }} onchange="this.form.submit()">
+                        </form>
+                    @else
+                    <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }} onclick="event.preventDefault(); showUncheckModal({{$d}}).catch(() => this.checked = true)">
+                    @endif
                     @if ($d->nota_fisik == 1 && $d->do_checker_id != null)
+                    <br>
                     Checker: <strong>{{$d->do_checker->name}}</strong>
                     @endif
                 </td>
@@ -472,11 +477,53 @@ $(document).ready(function() {
             document.getElementById('nota_bongkar').value = data.nota_bongkar;
             document.getElementById('timbangan_bongkar').value = data.timbangan_bongkar;
             document.getElementById('id_tanggal_bongkar').value = data.id_tanggal_bongkar;
-            // More fields...
 
-            // // Show the modal
-            // var myModal = new bootstrap.Modal(document.getElementById('showModal'));
-            // myModal.show();
+        }
+
+        function showUncheckModal(data) {
+            Swal.fire({
+                title: "Masukan Password",
+                input: "password",
+                inputAttributes: {
+                    autocapitalize: "off"
+                },
+                showCancelButton: true,
+                confirmButtonText: "Lanjutkan",
+                showLoaderOnConfirm: true,
+                preConfirm: async (password) => {
+                    const response = await fetch(`/transaksi/nota-tagihan/${data.id}/uncheck`, { // replace with your endpoint
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}' // for CSRF protection in Laravel
+                        },
+                        body: JSON.stringify({
+                            password: password,
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || response.statusText);
+                    }
+
+                    return response.json();
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Data Berhasil disimpan.',
+                        icon: 'success'
+                    }).then(() => {
+                        $('#spinner').show();
+                        location.reload();
+                    });
+                }
+            }).catch(error => {
+                Swal.fire('Error!', error.message, 'error');
+            });
         }
 </script>
 @endpush
