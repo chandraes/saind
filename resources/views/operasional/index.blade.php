@@ -1,5 +1,5 @@
 <div class="row justify-content-left mt-5">
-    <div class="col-md-3 text-center mb-5">
+    {{-- <div class="col-md-3 text-center mb-5">
         <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorModal">
             <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
             <h2>Kas Vendor</h2>
@@ -35,17 +35,17 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
     <div class="col-md-3 text-center mb-5">
         <a href="{{route('operasional.perform-unit')}}" class="text-decoration-none">
             <img src="{{asset('images/perform-unit.svg')}}" alt="" width="100">
             <h2>Perform Unit</h2>
         </a>
     </div>
-    <div class="col-md-3 text-center mb-5">
+    {{-- <div class="col-md-3 text-center mb-5">
         <a href="{{route('operasional.statistik-vendor')}}" class="text-decoration-none">
             <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="100">
             <h2>Statistik Vendor</h2>
         </a>
-    </div>
+    </div> --}}
 </div>
