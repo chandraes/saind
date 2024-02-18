@@ -95,6 +95,22 @@ class TransaksiController extends Controller
             'tanggal_muat' => 'required',
         ]);
 
+        $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
+
+        if ($konfigurasi == 1) {
+            // check if tanggal muat is older than 2 day from today, if true then return error
+            $tanggalMuat = strtotime($data['tanggal_muat']);
+            $today = strtotime(date('Y-m-d'));
+
+            $diff = $today - $tanggalMuat;
+            $diff = $diff / (60 * 60 * 24);
+
+            if ($diff > 2) {
+                return redirect()->back()->with('error', 'Tanggal muat tidak boleh lebih dari H-2 dari hari ini!!');
+            }
+
+        }
+
         $data['harga_customer'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->harga_tagihan;
 
         $vendor = $transaksi->kas_uang_jalan->vendor->pembayaran;
