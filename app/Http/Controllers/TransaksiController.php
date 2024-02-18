@@ -16,6 +16,7 @@ use App\Models\InvoiceCsr;
 use App\Models\InvoiceCsrDetail;
 use App\Models\Sponsor;
 use App\Models\GroupWa;
+use App\Models\Konfigurasi;
 use App\Services\StarSender;
 use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
@@ -78,8 +79,11 @@ class TransaksiController extends Controller
     public function nota_muat()
     {
         $data = Transaksi::where('status', 1)->where('void', 0)->get();
-        return view('billing.transaksi.nota-muat', [
+        $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
+        return view('billing.transaksi.nota-muat.index', [
             'data' => $data,
+            'konfigurasi' => $konfigurasi,
+
         ]);
     }
 
@@ -109,6 +113,7 @@ class TransaksiController extends Controller
                 $data['harga_csr'] = $transaksi->kas_uang_jalan->customer->harga_csr_bawah;
             }
         }
+
         $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
         $data['status'] = 2;
 

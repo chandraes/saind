@@ -230,8 +230,9 @@
             <script>
                  $( function() {
                     $( "#tanggal_bongkar-{{$d->id}}" ).datepicker({
-                        dateFormat: "dd-mm-yy"
-                    });
+                        dateFormat: "dd-mm-yy",
+                        maxDate: 0 // today
+                    }).attr('readonly', 'readonly');
 
                 });
                 $('#masukForm{{$d->id}}').submit(function(e){

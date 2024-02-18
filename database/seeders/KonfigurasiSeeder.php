@@ -14,8 +14,7 @@ class KonfigurasiSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            ['kode' => 'nota-muat', 'nama' => 'Nota Muat'],
-            ['kode' => 'nota-bongkar', 'nama' => 'Nota Bongkar'],
+            ['kode' => 'nota-muat', 'nama' => 'Limit Nota Muat'],
         ];
 
         foreach ($data as $key => $value) {
