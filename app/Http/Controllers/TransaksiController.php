@@ -241,7 +241,7 @@ class TransaksiController extends Controller
         $rute_id = $req['rute_id'] ?? null;
         $filter_date = $req['filter_date'] ?? null;
         $tanggal_filter = $req['tanggal_filter'] ?? null;
-        
+
         /** @var \Illuminate\Routing\UrlGenerator */
         $url = url();
 
@@ -396,8 +396,11 @@ class TransaksiController extends Controller
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
+        $previousUrl = session('previous_url');
+                // dd($previousUrl);
 
-        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+                // Redirect to previous URL
+        return redirect()->to($previousUrl)->with('success', 'Berhasil menyimpan data!!');
     }
 
 
