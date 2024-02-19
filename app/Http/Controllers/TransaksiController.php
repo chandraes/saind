@@ -241,6 +241,12 @@ class TransaksiController extends Controller
         $rute_id = $req['rute_id'] ?? null;
         $filter_date = $req['filter_date'] ?? null;
         $tanggal_filter = $req['tanggal_filter'] ?? null;
+        
+        /** @var \Illuminate\Routing\UrlGenerator */
+        $url = url();
+
+        // Store current URL in session
+        session(['previous_url' => $url->full()]);
 
         $rute = $customer->rute;
 
@@ -581,9 +587,12 @@ class TransaksiController extends Controller
             return redirect()->back()->with('error', 'Terdapat nota yang sama!!');
         }
 
+        $previousUrl = session('previous_url');
+        // dd($previousUrl);
 
+        // Redirect to previous URL
+        return redirect()->to($previousUrl)->with('success', 'Berhasil menyimpan data!!');
 
-        return redirect()->route('transaksi.nota-tagihan', $transaksi->kas_uang_jalan->customer_id)->with('success', 'Berhasil menyimpan data!!');
     }
 
     public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
