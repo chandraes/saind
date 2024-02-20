@@ -36,10 +36,14 @@ class AuthController extends BaseController
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\RedirectResponse
    */
-    public function destroy(Request $request)
-    {
-        if (Auth::user()) {
-            $request->user()->token()->revoke();
+   public function destroy(Request $request)
+{
+    if (Auth::check()) {
+        $user = Auth::user();
+        $accessToken = $user->token();
+
+        if ($accessToken) {
+            $accessToken->revoke();
 
             return response()->json([
                 'success' => true,
@@ -47,4 +51,10 @@ class AuthController extends BaseController
             ], 200);
         }
     }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Failed to log out',
+    ], 400);
+}
 }
