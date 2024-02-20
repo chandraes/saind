@@ -324,6 +324,8 @@
         </form>
         <form target="_blank" action="{{route('transaksi.nota-tagihan.export', $customer)}}" method="get">
             <input type="hidden" name="rute_id" value="{{$rute_id}}">
+            <input type="hidden" name="tanggal_filter" value="{{$tanggal_filter}}">
+            <input type="hidden" name="filter_date" value="{{$filter_date}}">
             <button class="btn btn-success btn-lg" type="submit">Export</button>
         </form>
       </div>

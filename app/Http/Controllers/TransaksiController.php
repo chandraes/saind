@@ -300,18 +300,30 @@ class TransaksiController extends Controller
     {
         $req = $request->validate([
             'rute_id' => 'nullable|exists:rutes,id',
+            'filter_date' => 'nullable|required_if:tanggal_filter,!=, null|in:tanggal_muat,tanggal_bongkar,tanggal',
+            'tanggal_filter' => 'nullable|required_if:filter_date,tanggal_muat,tanggal_bongkar,tanggal',
         ]);
 
         $rute_id = $req['rute_id'] ?? null;
+        $filter_date = $req['filter_date'] ?? null;
+        $tanggal_filter = $req['tanggal_filter'] ?? null;
 
-        $data = Transaksi::getTagihanData($customer->id, $rute_id);
+        $data = Transaksi::getTagihanData($customer->id, $rute_id, $filter_date, $tanggal_filter);
 
         // get latest data from month before current month
         // dd($bulan);
-        $pdf = PDF::loadview('billing.transaksi.tagihan.export', [
-            'data' => $data,
-            'customer' => $customer,
-        ])->setPaper('a4', 'landscape');
+        if (auth()->user()->role == 'admin') {
+            $pdf = PDF::loadview('billing.transaksi.tagihan.export-admin', [
+                'data' => $data,
+                'customer' => $customer,
+            ])->setPaper('a4', 'landscape');
+        } else{
+            $pdf = PDF::loadview('billing.transaksi.tagihan.export', [
+                'data' => $data,
+                'customer' => $customer,
+            ])->setPaper('a4', 'landscape');
+        }
+
 
         return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
     }
