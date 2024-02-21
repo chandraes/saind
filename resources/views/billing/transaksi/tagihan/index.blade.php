@@ -70,7 +70,7 @@
                 <th class="text-center align-middle">Jarak (Km)</th>
                 <th class="text-center align-middle">Harga</th>
                 @if ($customer->tanggal_muat == 1)
-                <th class="text-center align-middle">Tanggal Muat</th>
+                <th class="text-center align-middle" id="tanggal_muat_column">Tanggal Muat</th>
                 @endif
                 @if ($customer->nota_muat == 1)
                 <th class="text-center align-middle">Nota Muat</th>
@@ -79,7 +79,7 @@
                 <th class="text-center align-middle">Tonase Muat</th>
                 @endif
                 @if ($customer->tanggal_bongkar == 1)
-                <th class="text-center align-middle">Tanggal Bongkar</th>
+                <th class="text-center align-middle" id="tanggal_bongkar_column">Tanggal Bongkar</th>
                 @endif
                 <th class="text-center align-middle">Nota Bongkar</th>
                 <th class="text-center align-middle">Tonase Bongkar</th>
@@ -341,19 +341,49 @@
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt-font.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.22/sorting/datetime-moment.js"></script>
 <script>
 
 
 $(document).ready(function() {
+        $.fn.dataTable.moment('DD-MM-YYYY');
+
         var table = $('#notaTable').DataTable({
+            // ... your DataTable options ...
+        });
+
+        var columnIndexSort = [1]; // Default column index
+
+        // Check if tanggal_muat_column is visible
+        var tanggalMuatColumn = table.column('#tanggal_muat_column');
+        if (tanggalMuatColumn.visible()) {
+            var tanggalMuatColumnIndex = tanggalMuatColumn.index();
+            columnIndexSort.push(tanggalMuatColumnIndex);
+        }
+
+        // Check if tanggal_bongkar_column is visible
+        var tanggalBongkarColumn = table.column('#tanggal_bongkar_column');
+        if (tanggalBongkarColumn.visible()) {
+            var tanggalBongkarColumnIndex = tanggalBongkarColumn.index();
+            columnIndexSort.push(tanggalBongkarColumnIndex);
+        }
+
+        table.destroy(); // Destroy the initial DataTable
+
+        // Create a new DataTable with the updated columnDefs
+        table = $('#notaTable').DataTable({
             "paging": false,
-            "ordering": false,
+            "ordering": true,
             "scrollCollapse": true,
             "scrollY": "550px",
             "fixedColumns": {
                 "leftColumns": 3,
                 "rightColumns": 1
             },
+            "columnDefs": [
+                { "type": "date", "targets": columnIndexSort }
+            ]
         });
 
     });

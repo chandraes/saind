@@ -62,8 +62,8 @@
                                 <div class="form-group mt-2">
                                     <label for="passwordInput">Password</label>
                                     <div class="input-group">
-                                        <input type="password" name="password" class="form-control" id="passwordInput" placeholder="Kosongkan Jika Tidak Mengganti">
-                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <input type="password" name="password" class="form-control" id="passwordInput{{$d->id}}" placeholder="Kosongkan Jika Tidak Mengganti">
+                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword{{$d->id}}">
                                             <i class="fa fa-eye"></i>
                                         </button>
                                     </div>
@@ -80,6 +80,19 @@
     </div>
 </div>
 <script>
+   const passwordInput{{$d->id}} = document.getElementById("passwordInput{{$d->id}}");
+    const togglePasswordButton{{$d->id}} = document.getElementById("togglePassword{{$d->id}}");
+
+    togglePasswordButton{{$d->id}}.addEventListener("click", function () {
+    if (passwordInput{{$d->id}}.type === "password") {
+        passwordInput{{$d->id}}.type = "text";
+        togglePasswordButton{{$d->id}}.innerHTML = '<i class="fa fa-eye-slash"></i>';
+    } else {
+        passwordInput{{$d->id}}.type = "password";
+        togglePasswordButton{{$d->id}}.innerHTML = '<i class="fa fa-eye"></i>';
+    }
+    });
+
     function roleChangeEdit() {
 
         var role = document.getElementById('role-{{$d->id}}').value;
