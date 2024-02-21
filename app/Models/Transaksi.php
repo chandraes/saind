@@ -72,7 +72,7 @@ class Transaksi extends Model
 
          // If $filter is not null, order by the $filter column
         if ($filter) {
-            $query->orderBy($filter);
+            $query->orderBy($filter)->orderBy('kas_uang_jalan_id');
         }
 
         return $query->select('transaksis.*', 'kuj.tanggal as tanggal')->get();
