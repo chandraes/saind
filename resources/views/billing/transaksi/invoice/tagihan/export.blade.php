@@ -19,32 +19,46 @@
         <table class="table table-hover table-bordered text-pdf">
             <thead class="table-pdf text-pdf table-success">
                 <tr class="table-pdf text-pdf">
-                    <th class="table-pdf text-pdf text-center align-middle">No</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Nomor Lambung</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Vendor</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Rute</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Jarak (Km)</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Harga</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">No</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Nomor Lambung</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Vendor</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Rute</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Jarak (Km)</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Harga</th>
                     @if ($customer->tanggal_muat == 1)
-                    <th class="table-pdf text-pdf text-center align-middle">Tanggal Muat</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Tanggal Muat</th>
                     @endif
                     @if ($customer->nota_muat == 1)
-                    <th class="table-pdf text-pdf text-center align-middle">Nota Muat</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Nota Muat</th>
                     @endif
                     @if ($customer->tonase == 1)
-                    <th class="table-pdf text-pdf text-center align-middle">Tonase Muat</th>
+                    <th @if($customer->gt_muat == 1) colspan="3" @elseif($customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Tonase Muat</th>
                     @endif
                     @if ($customer->tanggal_bongkar == 1)
-                    <th class="table-pdf text-pdf text-center align-middle">Tanggal Bongkar</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Tanggal Bongkar</th>
                     @endif
-                    <th class="table-pdf text-pdf text-center align-middle">Nota Bongkar</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Tonase Bongkar</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Nota Bongkar</th>
+                    <th @if($customer->gt_bongkar == 1) colspan="3" @elseif($customer->gt_muat == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Tonase Bongkar</th>
                     @if ($customer->selisih == 1)
-                    <th class="table-pdf text-pdf text-center align-middle">Selisih (Ton)</th>
-                    <th class="table-pdf text-pdf text-center align-middle">Selisih (%)</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Selisih (Ton)</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Selisih (%)</th>
                     @endif
-                    <th class="table-pdf text-pdf text-center align-middle">Tagihan</th>
+                    <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="table-pdf text-pdf text-center align-middle">Tagihan</th>
                 </tr>
+                @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1)
+                <tr>
+                    @if ($customer->gt_muat == 1)
+                    <th class="table-pdf text-pdf text-center align-middle">Gross</th>
+                    <th class="table-pdf text-pdf text-center align-middle">Tarra</th>
+                    <th class="table-pdf text-pdf text-center align-middle">Netto</th>
+                    @endif
+                    @if ($customer->gt_bongkar == 1)
+                    <th class="table-pdf text-pdf text-center align-middle">Gross</th>
+                    <th class="table-pdf text-pdf text-center align-middle">Tarra</th>
+                    <th class="table-pdf text-pdf text-center align-middle">Netto</th>
+                    @endif
+                </tr>
+                @endif
             </thead>
             <tbody>
                 @foreach ($data as $d)
@@ -67,12 +81,20 @@
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->nota_muat}}</td>
                     @endif
                     @if ($customer->tonase == 1)
+                    @if ($customer->gt_muat == 1)
+                    <td class="table-pdf text-pdf text-center align-middle">{{$d->gross_muat}}</td>
+                    <td class="table-pdf text-pdf text-center align-middle">{{$d->tarra_muat}}</td>
+                    @endif
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->tonase}}</td>
                     @endif
                     @if ($customer->tanggal_bongkar == 1)
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->id_tanggal_bongkar}}</td>
                     @endif
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->nota_bongkar}}</td>
+                    @if ($customer->gt_bongkar == 1)
+                    <td class="table-pdf text-pdf text-center align-middle">{{$d->gross_bongkar}}</td>
+                    <td class="table-pdf text-pdf text-center align-middle">{{$d->tarra_bongkar}}</td>
+                    @endif
                     <td class="table-pdf text-pdf text-center align-middle">{{$d->timbangan_bongkar}}</td>
                     @if ($customer->selisih == 1)
                     <td class="table-pdf text-pdf text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}</td>
@@ -89,17 +111,17 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td class="text-center align-middle"
+                    <td class="table-pdf text-pdf text-center align-middle"
                         colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
+                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>Total</strong></td>
                     <td align="right" class="table-pdf text-pdf align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                     </td>
                 </tr>
                 <tr>
-                    <td class="text-center align-middle"
+                    <td class="table-pdf text-pdf text-center align-middle"
                         colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
+                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>PPN</strong></td>
                     <td align="right" class="table-pdf text-pdf align-middle">
 
@@ -110,7 +132,7 @@
                 <tr>
                     <td class="align-middle"
                         colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                     </td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>PPh</strong></td>
                     <td align="right" class="table-pdf text-pdf align-middle">
@@ -122,7 +144,7 @@
                 <tr>
                     <td class="align-middle"
                         colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                                                                    ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                     </td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>Tagihan</strong></td>
                     <td align="right" class="table-pdf text-pdf align-middle"> <strong>
