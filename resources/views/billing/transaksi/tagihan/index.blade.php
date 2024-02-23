@@ -114,7 +114,10 @@
                         data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})"
                         id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
                 </td>
-                <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
+                <td class="text-center align-middle">
+                    {{$d->kas_uang_jalan->tanggal}} <br>
+                    ({{$d->kas_uang_jalan->created_at->format('H:i:s')}})
+                </td>
                 <td class="align-middle">
                     <div class="text-center">
                         {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#uj{{$d->id}}">
