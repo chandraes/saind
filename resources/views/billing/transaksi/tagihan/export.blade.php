@@ -25,6 +25,10 @@
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">RUTE</th>
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">SJB PENERIMAAN</th>
                     <th colspan="3" class="table-pdf text-pdf text-center align-middle">TONASE</th>
+                    @if ($customer->selisih == 1)
+                    <th rowspan="2" class="table-pdf text-pdf text-center align-middle">SELISIH</th>
+                    <th rowspan="2" class="table-pdf text-pdf text-center align-middle">SELISIH (%)</th>
+                    @endif
                 </tr>
                 <tr>
                     <th class="table-pdf text-pdf text-center align-middle">GROSS</th>
@@ -62,7 +66,7 @@
                     <th class="table-pdf text-pdf text-center align-middle"></th>
                     <th class="table-pdf text-pdf text-center align-middle">{{$customer->tagihan_dari == 1 ? $data->sum('tonase') : $data->sum('timbangan_bongkar')}}</th>
                     @if ($customer->selisih == 1)
-                    <td class="table-pdf text-pdf text-center align-middle">**}</td>
+                    <td class="table-pdf text-pdf text-center align-middle">**</td>
                     <td class="table-pdf text-pdf text-center align-middle">**</td>
                     @endif
                 </tr>

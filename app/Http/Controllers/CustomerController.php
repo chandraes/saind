@@ -71,76 +71,51 @@ class CustomerController extends Controller
                 'csr_no_rekening' => 'nullable',
                 'harga_csr_atas' => 'nullable',
                 'harga_csr_bawah' => 'nullable',
+                'gt_muat' => 'nullable',
+                'gt_bongkar' => 'nullable',
         ]);
 
         $rute = $data['rute'];
         unset($data['rute']);
 
-        if ($data['harga_csr_atas'] != null && $data['harga_csr_bawah'] != null) {
-            $data['harga_csr_atas'] = str_replace('.', '', $data['harga_csr_atas']);
-            $data['harga_csr_bawah'] = str_replace('.', '', $data['harga_csr_bawah']);
-        } else {
-            $data['harga_csr_atas'] = 0;
-            $data['harga_csr_bawah'] = 0;
-        }
-
+        $data['harga_csr_atas'] = $data['harga_csr_atas'] ? str_replace('.', '', $data['harga_csr_atas']) : 0;
+        $data['harga_csr_bawah'] = $data['harga_csr_bawah'] ? str_replace('.', '', $data['harga_csr_bawah']) : 0;
 
         $data['created_by'] = auth()->id();
 
-        if (array_key_exists('ppn', $data)) {
-            $data['ppn'] = 1;
-            $data['pph'] = 1;
-        } else {
-            $data['ppn'] = 0;
-            $data['pph'] = 0;
+        $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
+        foreach ($checkboxFields as $field) {
+            $data[$field] = array_key_exists($field, $data) ? 1 : 0;
         }
 
-        if (array_key_exists('csr', $data)) {
-            $data['csr'] = 1;
-        } else {
-            $data['csr'] = 0;
+        if (!$data['csr']) {
+            $data['harga_csr_atas'] = 0;
+            $data['harga_csr_bawah'] = 0;
             $data['csr_transfer_ke'] = null;
             $data['csr_bank'] = null;
             $data['csr_no_rekening'] = null;
         }
 
-        if (array_key_exists('tanggal_muat', $data)) {
-            $data['tanggal_muat'] = 1;
-        } else {
-            $data['tanggal_muat'] = 0;
-        }
-        if (array_key_exists('nota_muat', $data)) {
-            $data['nota_muat'] = 1;
-        } else {
-            $data['nota_muat'] = 0;
-        }
-        if (array_key_exists('tonase', $data)) {
-            $data['tonase'] = 1;
-        } else {
-            $data['tonase'] = 0;
+        DB::beginTransaction();
+
+        try {
+
+            $customer = Customer::create($data);
+
+            foreach ($rute as $r) {
+                CustomerRute::create([
+                    'customer_id' => $customer->id,
+                    'rute_id' => $r,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollback();
+            return redirect()->back()->with('error', 'Terjadi kesalahan');
         }
 
-        if (array_key_exists('tanggal_bongkar', $data)) {
-            $data['tanggal_bongkar'] = 1;
-        } else {
-            $data['tanggal_bongkar'] = 0;
-        }
-
-        if (array_key_exists('selisih', $data)) {
-            $data['selisih'] = 1;
-        } else {
-            $data['selisih'] = 0;
-        }
-
-
-        $customer = Customer::create($data);
-
-        foreach ($rute as $r) {
-            CustomerRute::create([
-                'customer_id' => $customer->id,
-                'rute_id' => $r,
-            ]);
-        }
 
         return redirect()->route('customer.tagihan', $customer->id);
     }
@@ -264,57 +239,26 @@ class CustomerController extends Controller
                     'csr_no_rekening' => 'nullable',
                     'harga_csr_atas' => 'nullable',
                     'harga_csr_bawah' => 'nullable',
+                    'gt_muat' => 'nullable',
+                    'gt_bongkar' => 'nullable',
                 ]);
 
-
-        $data['harga_csr_atas'] = str_replace('.', '', $data['harga_csr_atas']);
-        $data['harga_csr_bawah'] = str_replace('.', '', $data['harga_csr_bawah']);
+        $data['harga_csr_atas'] = $data['harga_csr_atas'] ? str_replace('.', '', $data['harga_csr_atas']) : 0;
+        $data['harga_csr_bawah'] = $data['harga_csr_bawah'] ? str_replace('.', '', $data['harga_csr_bawah']) : 0;
 
         $data['edited_by'] = auth()->id();
 
-        if (array_key_exists('ppn', $data)) {
-            $data['ppn'] = 1;
-            $data['pph'] = 1;
-        } else {
-            $data['ppn'] = 0;
-            $data['pph'] = 0;
+        $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
+        foreach ($checkboxFields as $field) {
+            $data[$field] = array_key_exists($field, $data) ? 1 : 0;
         }
 
-        if (array_key_exists('csr', $data)) {
-            $data['csr'] = 1;
-        } else {
-            $data['csr'] = 0;
+        if (!$data['csr']) {
+            $data['harga_csr_atas'] = 0;
+            $data['harga_csr_bawah'] = 0;
             $data['csr_transfer_ke'] = null;
             $data['csr_bank'] = null;
             $data['csr_no_rekening'] = null;
-        }
-
-        if (array_key_exists('tanggal_muat', $data)) {
-            $data['tanggal_muat'] = 1;
-        } else {
-            $data['tanggal_muat'] = 0;
-        }
-        if (array_key_exists('nota_muat', $data)) {
-            $data['nota_muat'] = 1;
-        } else {
-            $data['nota_muat'] = 0;
-        }
-        if (array_key_exists('tonase', $data)) {
-            $data['tonase'] = 1;
-        } else {
-            $data['tonase'] = 0;
-        }
-
-        if (array_key_exists('tanggal_bongkar', $data)) {
-            $data['tanggal_bongkar'] = 1;
-        } else {
-            $data['tanggal_bongkar'] = 0;
-        }
-
-        if (array_key_exists('selisih', $data)) {
-            $data['selisih'] = 1;
-        } else {
-            $data['selisih'] = 0;
         }
 
         DB::transaction(function () use($data, $customer) {

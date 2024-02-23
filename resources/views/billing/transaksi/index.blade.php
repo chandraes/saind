@@ -27,6 +27,13 @@
                         "(".$data->where('status', 2)->count().")" : '' }}</span></h2>
             </a>
         </div>
+        {{-- <div class="col-md-3 text-center mt-5">
+            <a href="{{route('transaksi.sales-order')}}" class="text-decoration-none">
+                <img src="{{asset('images/sales-order.svg')}}" alt="" width="100">
+                <h2>Sales Order <span class="text-danger">{{$data->whereIn('status', [1,2])->count() > 0
+                        ? "(".$data->whereIn('status', [1,2])->count().")" : '' }}</span></h2>
+            </a>
+        </div> --}}
     </div>
     <div class="row justify-content-left mt-5">
         <h2>Pembayaran</h2>

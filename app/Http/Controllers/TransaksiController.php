@@ -78,7 +78,7 @@ class TransaksiController extends Controller
 
     public function nota_muat()
     {
-        $data = Transaksi::where('status', 1)->where('void', 0)->get();
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer', 'kas_uang_jalan.vehicle'])->where('status', 1)->where('void', 0)->get();
         $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
         return view('billing.transaksi.nota-muat.index', [
             'data' => $data,
@@ -93,6 +93,8 @@ class TransaksiController extends Controller
             'nota_muat' => 'required',
             'tonase' => 'required|numeric',
             'tanggal_muat' => 'required',
+            'gross_muat' => 'nullable|numeric',
+            'tarra_muat' => 'nullable|numeric',
         ]);
 
         $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
@@ -146,7 +148,7 @@ class TransaksiController extends Controller
     {
         $data = Transaksi::getNotaBongkar();
 
-        return view('billing.transaksi.nota-bongkar', [
+        return view('billing.transaksi.nota-bongkar.index', [
             'data' => $data,
         ]);
     }
@@ -158,6 +160,8 @@ class TransaksiController extends Controller
             'nota_bongkar' => 'required',
             'timbangan_bongkar' => 'required|numeric',
             'tanggal_bongkar' => 'required',
+            'gross_bongkar' => 'nullable|numeric',
+            'tarra_bongkar' => 'nullable|numeric',
         ]);
 
         $data['status'] = 3;
@@ -207,7 +211,6 @@ class TransaksiController extends Controller
 
         try {
 
-
             $transaksi->update($data);
 
             $vehicle->update([
@@ -221,9 +224,9 @@ class TransaksiController extends Controller
 
             DB::rollBack();
 
-            dd($th);
+            $message = $th->getMessage();
 
-            return redirect()->back()->with('error', 'Terdapat nota yang sama!!');
+            return redirect()->back()->with('error', $message);
         }
 
 
@@ -841,6 +844,11 @@ class TransaksiController extends Controller
         }
 
         return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+    }
+
+    public function sales_order(Request $request)
+    {
+
     }
 
 
