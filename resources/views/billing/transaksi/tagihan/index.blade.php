@@ -7,12 +7,12 @@
         </div>
     </div>
     @php
-        // $selectedData = [];
-        $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
-        $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
-        $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
-        $profit = $data->sum('profit');
-        $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
+    // $selectedData = [];
+    $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
+    $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
+    $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
+    $profit = $data->sum('profit');
+    $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
     @endphp
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
@@ -52,7 +52,17 @@
 </div>
 @include('billing.transaksi.tagihan.filter')
 @include('billing.transaksi.tagihan.show-new')
+
 <div class="container-fluid mt-3 table-responsive ">
+    <div class="dropdown open">
+        <button class="btn btn-success dropdown-toggle" type="button" id="triggerId" data-bs-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false">
+            Filter Kolom
+        </button>
+        <div class="dropdown-menu" aria-labelledby="triggerId" id="columnFilter">
+
+        </div>
+    </div>
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
@@ -100,15 +110,19 @@
                 {{-- check list --}}
                 <td class="text-center align-middle">
                     {{-- checklist on check push $d->id to $selectedData --}}
-                    <input style="height: 25px; width:25px" type="checkbox" value="{{$d->id}}" data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})" id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
+                    <input style="height: 25px; width:25px" type="checkbox" value="{{$d->id}}"
+                        data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})"
+                        id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
                     <div class="text-center">
-                        {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#uj{{$d->id}}"> <strong>UJ{{sprintf("%02d",
+                        {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#uj{{$d->id}}">
+                            <strong>UJ{{sprintf("%02d",
                                 $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a> --}}
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#showModal" onclick="updateShow({{$d}})"> <strong>UJ{{sprintf("%02d",
-                            $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#showModal" onclick="updateShow({{$d}})">
+                            <strong>UJ{{sprintf("%02d",
+                                $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a>
                     </div>
                     {{-- @include('billing.transaksi.tagihan.show') --}}
                 </td>
@@ -134,8 +148,10 @@
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
                 @if ($customer->selisih == 1)
-                <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}</td>
-                <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2, ',','.')}}</td>
+                <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}
+                </td>
+                <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2,
+                    ',','.')}}</td>
                 @endif
                 <td class="text-end align-middle">
                     @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
@@ -145,7 +161,7 @@
                     @endif
                 </td>
                 <td class="text-end align-middle">
-                   {{number_format($d->profit, 0, ',', '.')}}
+                    {{number_format($d->profit, 0, ',', '.')}}
 
                 </td>
                 <td class="text-center align-middle">
@@ -153,11 +169,13 @@
                 </td>
                 <td class="text-center align-middle">
                     @if ($d->nota_fisik == 0)
-                        <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
-                            <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }} onchange="this.form.submit()">
-                        </form>
+                    <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
+                        <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : ''
+                        }} onchange="this.form.submit()">
+                    </form>
                     @else
-                    <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }} onclick="event.preventDefault(); showUncheckModal({{$d}}).catch(() => this.checked = true)">
+                    <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }}
+                    onclick="event.preventDefault(); showUncheckModal({{$d}}).catch(() => this.checked = true)">
                     @endif
                     @if ($d->nota_fisik == 1 && $d->do_checker_id != null)
                     <br>
@@ -166,54 +184,65 @@
                 </td>
                 <td class="text-center align-middle">
                     @if (auth()->user()->role === 'admin')
-                    <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal" data-bs-target="#backModal-{{$d->id}}">
+                    <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
+                        data-bs-target="#backModal-{{$d->id}}">
                         Edit
-                      </button>
+                    </button>
 
-                      <!-- Modal Body -->
-                      <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-                      <div class="modal fade" id="backModal-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="Title-{{$d->id}}" aria-hidden="true">
-                          <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                              <div class="modal-content">
-                                  <div class="modal-header">
-                                      <h5 class="modal-title" id="Title-{{$d->id}}">Masukkan Password</h5>
-                                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                  </div>
-                                  <form action="{{route('transaksi.nota-tagihan.edit', $d)}}" method="post">
-                                      @csrf
-                                  <div class="modal-body">
-                                      <input type="password" class="form-control" id="password" name="password"
-                                          placeholder="Password" aria-label="Password" aria-describedby="password"
-                                          required>
-                                  </div>
-                                  <div class="modal-footer">
-                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                                      <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                                  </div>
-                              </form>
-                              </div>
-                          </div>
-                      </div>
+                    <!-- Modal Body -->
+                    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+                    <div class="modal fade" id="backModal-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
+                        data-bs-keyboard="false" role="dialog" aria-labelledby="Title-{{$d->id}}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="Title-{{$d->id}}">Masukkan Password</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form action="{{route('transaksi.nota-tagihan.edit', $d)}}" method="post">
+                                    @csrf
+                                    <div class="modal-body">
+                                        <input type="password" class="form-control" id="password" name="password"
+                                            placeholder="Password" aria-label="Password" aria-describedby="password"
+                                            required>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Tutup</button>
+                                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
 
-                    <button class="btn btn-warning btn-block m-2" type="button" data-bs-toggle="modal" data-bs-target="#modalVoid-{{$d->id}}">Void</button>
+                    <button class="btn btn-warning btn-block m-2" type="button" data-bs-toggle="modal"
+                        data-bs-target="#modalVoid-{{$d->id}}">Void</button>
 
-                    <div class="modal fade" id="modalVoid-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
+                    <div class="modal fade" id="modalVoid-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
+                        data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+                            role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="modalTitleId">Masukan Password </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                                 </div>
                                 <form action="{{route('transaksi.tagihan.void', $d->id)}}" method="post">
                                     @csrf
-                                <div class="modal-body">
-                                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" aria-label="Password" aria-describedby="password" required>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    <button type="submit" class="btn btn-primary">Save</button>
-                                </div>
-                            </form>
+                                    <div class="modal-body">
+                                        <input type="password" class="form-control" id="password" name="password"
+                                            placeholder="Password" aria-label="Password" aria-describedby="password"
+                                            required>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary">Save</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -253,7 +282,8 @@
                         <div class="col-md-8">
                             <div class="input-group">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
-                                <input type="text" class="form-control text-bold" name="total_tagih_diplay" id="total_tagihan_display">
+                                <input type="text" class="form-control text-bold" name="total_tagih_diplay"
+                                    id="total_tagihan_display">
                             </div>
                         </div>
                     </div>
@@ -304,7 +334,7 @@
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td class="text-end align-middle"> <strong>
-                    {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
+                        {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
                 <td></td>
@@ -328,13 +358,14 @@
             <input type="hidden" name="filter_date" value="{{$filter_date}}">
             <button class="btn btn-success btn-lg" type="submit">Export</button>
         </form>
-      </div>
+    </div>
 </div>
 
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 <link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
+<link rel="stylesheet" href="{{asset('assets/js/dt/dt-button.css')}}">
 @endpush
 @push('js')
 <script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
@@ -344,46 +375,113 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script src="https://cdn.datatables.net/plug-ins/1.10.22/sorting/datetime-moment.js"></script>
 <script>
+    $(document).ready(function() {
+    $.fn.dataTable.moment('DD-MM-YYYY');
 
+    var table = $('#notaTable').DataTable({
+        // ... your DataTable options ...
+    });
 
-$(document).ready(function() {
-        $.fn.dataTable.moment('DD-MM-YYYY');
+    var tanggalMuatColumnIndex = -1;
+    var tanggalBongkarColumnIndex = -1;
 
-        var table = $('#notaTable').DataTable({
-            // ... your DataTable options ...
-        });
+    // Check if tanggal_muat_column is visible
+    var tanggalMuatColumn = table.column('#tanggal_muat_column');
+    if (tanggalMuatColumn.visible()) {
+        tanggalMuatColumnIndex = tanggalMuatColumn.index();
+    }
 
-        var columnIndexSort = [1]; // Default column index
+    // Check if tanggal_bongkar_column is visible
+    var tanggalBongkarColumn = table.column('#tanggal_bongkar_column');
+    if (tanggalBongkarColumn.visible()) {
+        tanggalBongkarColumnIndex = tanggalBongkarColumn.index();
+    }
 
-        // Check if tanggal_muat_column is visible
-        var tanggalMuatColumn = table.column('#tanggal_muat_column');
-        if (tanggalMuatColumn.visible()) {
-            var tanggalMuatColumnIndex = tanggalMuatColumn.index();
-            columnIndexSort.push(tanggalMuatColumnIndex);
+    table.destroy(); // Destroy the initial DataTable
+
+    $.extend($.fn.dataTableExt.oSort, {
+        "date-eu-pre": function(date) {
+            date = date.replace(" ", "");
+            if (!date) {
+                return 0;
+            }
+            var parts = date.split('-');
+            return (parts[2] + parts[1] + parts[0]) * 1;
+        },
+        "date-eu-asc": function(a, b) {
+            return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+        },
+        "date-eu-desc": function(a, b) {
+            return ((a < b) ? 1 : ((a > b) ? -1 : 0));
         }
+    });
 
-        // Check if tanggal_bongkar_column is visible
-        var tanggalBongkarColumn = table.column('#tanggal_bongkar_column');
-        if (tanggalBongkarColumn.visible()) {
-            var tanggalBongkarColumnIndex = tanggalBongkarColumn.index();
-            columnIndexSort.push(tanggalBongkarColumnIndex);
-        }
+    table = $('#notaTable').DataTable({
+        "paging": false,
+        "ordering": true,
+        "scrollCollapse": true,
+        "scrollY": "550px",
+        "fixedColumns": {
+            "leftColumns": 3,
+            "rightColumns": 1
+        },
+        "columnDefs": [
+            { "type": "date-eu", "targets": [tanggalMuatColumnIndex, tanggalBongkarColumnIndex] }
+        ]
+    });
 
-        table.destroy(); // Destroy the initial DataTable
+        var dropdownMenu = $('#columnFilter');
 
-        // Create a new DataTable with the updated columnDefs
-        table = $('#notaTable').DataTable({
-            "paging": false,
-            "ordering": true,
-            "scrollCollapse": true,
-            "scrollY": "550px",
-            "fixedColumns": {
-                "leftColumns": 3,
-                "rightColumns": 1
-            },
-            "columnDefs": [
-                { "type": "date", "targets": columnIndexSort }
-            ]
+        // Clear the existing dropdown menu
+        dropdownMenu.empty();
+
+        table.columns().every(function(index) {
+            // Exclude the first column and the last column
+            if (index === 0 || index === table.columns().count() - 1) {
+                return;
+            }
+
+            var column = this;
+            var columnName = $(column.header()).text();
+
+            // Create a dropdown item for each column
+            var dropdownItem = $('<a class="dropdown-item d-flex justify-content-between" href="#">' + columnName + '<span class="checkmark"><i class="fa fa-check"></i></span></a>');
+
+            // Initially hide the checkmark if the column is not visible
+            if (!column.visible()) {
+                dropdownItem.find('.checkmark').hide();
+            }
+
+            // If the column visibility is saved in the session, restore it
+            if (sessionStorage.getItem('columnVisibility' + index) !== null) {
+                var isVisible = sessionStorage.getItem('columnVisibility' + index) === 'true';
+                column.visible(isVisible);
+                if (isVisible) {
+                    dropdownItem.find('.checkmark').show();
+                } else {
+                    dropdownItem.find('.checkmark').hide();
+                }
+            }
+
+            dropdownItem.on('click', function(e) {
+                e.preventDefault();
+
+                // Toggle the column visibility
+                var isVisible = column.visible();
+                column.visible(!isVisible);
+
+                // Toggle the checkmark
+                if (isVisible) {
+                    $(this).find('.checkmark').hide();
+                } else {
+                    $(this).find('.checkmark').show();
+                }
+
+                // Save the column visibility in the session
+                sessionStorage.setItem('columnVisibility' + index, !isVisible);
+            });
+
+            dropdownMenu.append(dropdownItem);
         });
 
     });
