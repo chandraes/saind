@@ -66,43 +66,57 @@
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
-                <th class="text-center align-middle">
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">
                     Select
                     {{-- select all --}}
                     <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
                 </th>
 
-                <th class="text-center align-middle">Tanggal UJ</th>
-                <th class="text-center align-middle">Kode</th>
-                <th class="text-center align-middle">NOLAM</th>
-                <th class="text-center align-middle">Vendor</th>
-                <th class="text-center align-middle">Rute</th>
-                <th class="text-center align-middle">Jarak (Km)</th>
-                <th class="text-center align-middle">Harga</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tanggal UJ</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Kode</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">NOLAM</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Vendor</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Rute</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Jarak (Km)</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Harga</th>
                 @if ($customer->tanggal_muat == 1)
-                <th class="text-center align-middle" id="tanggal_muat_column">Tanggal Muat</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle" id="tanggal_muat_column">Tanggal Muat</th>
                 @endif
                 @if ($customer->nota_muat == 1)
-                <th class="text-center align-middle">Nota Muat</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Nota Muat</th>
                 @endif
                 @if ($customer->tonase == 1)
-                <th class="text-center align-middle">Tonase Muat</th>
+                <th @if($customer->gt_muat == 1) colspan="3" @elseif($customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tonase Muat</th>
                 @endif
                 @if ($customer->tanggal_bongkar == 1)
-                <th class="text-center align-middle" id="tanggal_bongkar_column">Tanggal Bongkar</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle" id="tanggal_bongkar_column">Tanggal Bongkar</th>
                 @endif
-                <th class="text-center align-middle">Nota Bongkar</th>
-                <th class="text-center align-middle">Tonase Bongkar</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Nota Bongkar</th>
+                <th @if($customer->gt_bongkar == 1) colspan="3" @elseif($customer->gt_muat == 1) rowspan="2" @endif class="text-center align-middle">Tonase Bongkar</th>
                 @if ($customer->selisih == 1)
-                <th class="text-center align-middle">Selisih (Ton)</th>
-                <th class="text-center align-middle">Selisih (%)</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Selisih (Ton)</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Selisih (%)</th>
                 @endif
-                <th class="text-center align-middle">Tagihan</th>
-                <th class="text-center align-middle">Profit</th>
-                <th class="text-center align-middle">Profit (%)</th>
-                <th class="text-center align-middle">DO Fisik</th>
-                <th class="text-center align-middle">Action</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tagihan</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit (%)</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">DO Fisik</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Action</th>
             </tr>
+            @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1)
+            <tr>
+                @if ($customer->gt_muat == 1)
+                <th class="text-center align-middle">Gross</th>
+                <th class="text-center align-middle">Tarra</th>
+                <th class="text-center align-middle">Netto</th>
+                @endif
+                @if ($customer->gt_bongkar == 1)
+                <th class="text-center align-middle">Gross</th>
+                <th class="text-center align-middle">Tarra</th>
+                <th class="text-center align-middle">Netto</th>
+                @endif
+            </tr>
+            @endif
         </thead>
         <tbody>
             @foreach ($data as $d)
@@ -143,12 +157,20 @@
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
                 @endif
                 @if ($customer->tonase == 1)
+                    @if ($customer->gt_muat == 1)
+                    <td class="text-center align-middle">{{$d->gross_muat}}</td>
+                    <td class="text-center align-middle">{{$d->tarra_muat}}</td>
+                    @endif
                 <td class="text-center align-middle">{{$d->tonase}}</td>
                 @endif
                 @if ($customer->tanggal_bongkar == 1)
                 <td class="text-center align-middle">{{$d->id_tanggal_bongkar}}</td>
                 @endif
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
+                @if ($customer->gt_bongkar == 1)
+                <td class="text-center align-middle">{{$d->gross_bongkar}}</td>
+                <td class="text-center align-middle">{{$d->tarra_bongkar}}</td>
+                @endif
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
                 @if ($customer->selisih == 1)
                 <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}
@@ -277,7 +299,7 @@
             <tr>
                 <td class=""
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                     <div class="row text-center">
                         <div class="col-md-4 mt-2">
                             <label for="" class="form-label">Total Tagihan Dipilih : </label>
@@ -302,7 +324,7 @@
             <tr>
                 <td class="text-center align-middle"
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td class="text-end align-middle">
 
@@ -317,7 +339,7 @@
             <tr>
                 <td class="align-middle"
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
                 <td class="text-end align-middle">
@@ -333,7 +355,7 @@
             <tr>
                 <td class="align-middle"
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td class="text-end align-middle"> <strong>
@@ -424,6 +446,7 @@
         "ordering": true,
         "scrollCollapse": true,
         "scrollY": "550px",
+        "scrollX": true,
         "fixedColumns": {
             "leftColumns": 3,
             "rightColumns": 1
