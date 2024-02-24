@@ -156,12 +156,32 @@
         </div>
         <hr>
         <div class="row mt-3 mb-3">
-            <h3 class="mb-3">Informasi PPN & PPh</h3>
-            <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
-                <label class="btn btn-warning active">
-                    <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off"> PPN & PPh
-                </label>
-               </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <h3 class="mb-3">Informasi PPN & PPh</h3>
+                    <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                        <label class="btn btn-warning active">
+                            <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off"> PPN & PPh
+                        </label>
+                       </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <h3 class="mb-3">Gross, Tarra, Netto</h3>
+                    <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                        <label class="btn btn-primary active">
+                            <input type="checkbox" class="me-2" name="gt_muat" id="gt_muat"
+                            autocomplete="off"> Tonase Muat
+                        </label>
+                        <label class="btn btn-primary">
+                            <input type="checkbox" class="me-2" name="gt_bongkar" id="gt_bongkar"
+                            autocomplete="off"> Tonase Bongkar
+                        </label>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <br>
             <hr>

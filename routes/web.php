@@ -209,6 +209,9 @@ Route::group(['middleware' => ['auth']], function() {
         Route::patch('transaksi/nota-bongkar/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_bongkar_update'])->name('transaksi.nota-bongkar.update');
         Route::get('transaksi/nota-tagihan/{customer}', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan'])->name('transaksi.nota-tagihan');
 
+        //sales order
+        Route::get('transaksi/sales-order', [App\Http\Controllers\TransaksiController::class, 'sales_order'])->name('transaksi.sales-order');
+       
         Route::get('transaksi/nota-tagihan/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'tagihan_export'])->name('transaksi.nota-tagihan.export');
         Route::get('transaksi/nota-tagihan/{transaksi}/check', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_checked'])->name('transaksi.nota-tagihan.check');
         Route::post('transaksi/nota-tagihan/{transaksi}/uncheck', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_unchecked'])->name('transaksi.nota-tagihan.uncheck');
