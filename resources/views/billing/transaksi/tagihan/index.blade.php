@@ -401,60 +401,62 @@
 <script src="https://cdn.datatables.net/plug-ins/1.10.22/sorting/datetime-moment.js"></script>
 <script>
     $(document).ready(function() {
-    $.fn.dataTable.moment('DD-MM-YYYY');
+        $('#spinner').show();
 
-    var table = $('#notaTable').DataTable({
-        // ... your DataTable options ...
-    });
+        $.fn.dataTable.moment('DD-MM-YYYY');
 
-    var tanggalMuatColumnIndex = -1;
-    var tanggalBongkarColumnIndex = -1;
+        var table = $('#notaTable').DataTable({
+            // ... your DataTable options ...
+        });
 
-    // Check if tanggal_muat_column is visible
-    var tanggalMuatColumn = table.column('#tanggal_muat_column');
-    if (tanggalMuatColumn.visible()) {
-        tanggalMuatColumnIndex = tanggalMuatColumn.index();
-    }
+        var tanggalMuatColumnIndex = -1;
+        var tanggalBongkarColumnIndex = -1;
 
-    // Check if tanggal_bongkar_column is visible
-    var tanggalBongkarColumn = table.column('#tanggal_bongkar_column');
-    if (tanggalBongkarColumn.visible()) {
-        tanggalBongkarColumnIndex = tanggalBongkarColumn.index();
-    }
-
-    table.destroy(); // Destroy the initial DataTable
-
-    $.extend($.fn.dataTableExt.oSort, {
-        "date-eu-pre": function(date) {
-            date = date.replace(" ", "");
-            if (!date) {
-                return 0;
-            }
-            var parts = date.split('-');
-            return (parts[2] + parts[1] + parts[0]) * 1;
-        },
-        "date-eu-asc": function(a, b) {
-            return ((a < b) ? -1 : ((a > b) ? 1 : 0));
-        },
-        "date-eu-desc": function(a, b) {
-            return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+        // Check if tanggal_muat_column is visible
+        var tanggalMuatColumn = table.column('#tanggal_muat_column');
+        if (tanggalMuatColumn.visible()) {
+            tanggalMuatColumnIndex = tanggalMuatColumn.index();
         }
-    });
 
-    table = $('#notaTable').DataTable({
-        "paging": false,
-        "ordering": true,
-        "scrollCollapse": true,
-        "scrollY": "550px",
-        "scrollX": true,
-        "fixedColumns": {
-            "leftColumns": 3,
-            "rightColumns": 1
-        },
-        "columnDefs": [
-            { "type": "date-eu", "targets": [tanggalMuatColumnIndex, tanggalBongkarColumnIndex] }
-        ]
-    });
+        // Check if tanggal_bongkar_column is visible
+        var tanggalBongkarColumn = table.column('#tanggal_bongkar_column');
+        if (tanggalBongkarColumn.visible()) {
+            tanggalBongkarColumnIndex = tanggalBongkarColumn.index();
+        }
+
+        table.destroy(); // Destroy the initial DataTable
+
+        $.extend($.fn.dataTableExt.oSort, {
+            "date-eu-pre": function(date) {
+                date = date.replace(" ", "");
+                if (!date) {
+                    return 0;
+                }
+                var parts = date.split('-');
+                return (parts[2] + parts[1] + parts[0]) * 1;
+            },
+            "date-eu-asc": function(a, b) {
+                return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+            },
+            "date-eu-desc": function(a, b) {
+                return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+            }
+        });
+
+        table = $('#notaTable').DataTable({
+            "paging": false,
+            "ordering": true,
+            "scrollCollapse": true,
+            "scrollY": "550px",
+            "scrollX": true,
+            "fixedColumns": {
+                "leftColumns": 3,
+                "rightColumns": 1
+            },
+            "columnDefs": [
+                { "type": "date-eu", "targets": [tanggalMuatColumnIndex, tanggalBongkarColumnIndex] }
+            ]
+        });
 
         var dropdownMenu = $('#columnFilter');
 
@@ -509,6 +511,8 @@
 
             dropdownMenu.append(dropdownItem);
         });
+
+        $('#spinner').hide();
 
     });
 
