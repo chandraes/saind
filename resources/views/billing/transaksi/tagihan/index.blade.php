@@ -57,7 +57,7 @@
     <div class="dropdown open">
         <button class="btn btn-success dropdown-toggle" type="button" id="triggerId" data-bs-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">
-            Filter Kolom
+            Tampilkan/Sembunyikan Kolom
         </button>
         <div class="dropdown-menu" aria-labelledby="triggerId" id="columnFilter">
 
