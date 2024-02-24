@@ -122,7 +122,7 @@
     function calNetto{{$d->id}}() {
        var gross = parseFloat(document.getElementById('gross_bongkar-{{$d->id}}').value);
        var tarra = parseFloat(document.getElementById('tarra_bongkar-{{$d->id}}').value);
-       var netto = gross - tarra;
+       var netto = (gross - tarra).toFixed(2);
        document.getElementById('timbangan_bongkar-{{$d->id}}').value = netto;
    }
 
