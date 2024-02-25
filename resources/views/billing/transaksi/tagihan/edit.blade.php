@@ -68,12 +68,28 @@
                 <input type="text" class="form-control" name="nota_muat" id="nota_muat"
                     placeholder="" value="{{$d->nota_muat}}" required>
             </div>
-            <div class="col-4 mb-3">
-                <label for="tonase" class="form-label">Tonase Muat</label>
-                <input type="text" class="form-control" name="tonase" id="tonase"
-                    placeholder="" value="{{$d->tonase}}" required>
+            @if ($d->kas_uang_jalan->customer->gt_muat == 0)
+            <div class="col-md-4 mb-3">
+                <label for="tonase" class="form-label">Tonase </label>
+                <input type="text" class="form-control" name="tonase" id="tonase" placeholder="" required>
+                <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
             </div>
-
+            @else
+            <div class="col-md-4 mb-3">
+                <label for="gross_muat" class="form-label">GROSS</label>
+                <input type="text" class="form-control" name="gross_muat" id="gross_muat" value="{{$d->gross_muat}}" required oninput="calNettoMuat()">
+                <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
+                <br>
+                <br>
+                <label for="tarra_muat" class="form-label">TARRA</label>
+                <input type="text" class="form-control" name="tarra_muat" id="tarra_muat" value="{{$d->tarra_muat}}" required  oninput="calNettoMuat()">
+                <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
+                <br><br>
+                <label for="tonase" class="form-label">NETTO</label>
+                <input type="text" class="form-control" name="tonase" id="tonase" value="{{$d->tonase}}" required readonly>
+                <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
+            </div>
+            @endif
         </div>
         <hr>
         <div class="row">
@@ -88,12 +104,30 @@
                 <input type="text" class="form-control" name="nota_bongkar" id="nota_bongkar"
                     placeholder="" value="{{$d->nota_bongkar}}" required>
             </div>
-            <div class="col-4 mb-3">
+            @if ($d->kas_uang_jalan->customer->gt_bongkar == 0)
+            <div class="col-md-4 mb-3">
                 <label for="timbangan_bongkar" class="form-label">Tonase Bongkar</label>
                 <input type="text" class="form-control" name="timbangan_bongkar" id="timbangan_bongkar"
                     placeholder="" value="{{$d->timbangan_bongkar}}" required>
                     <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
             </div>
+            @else
+            <div class="col-md-4 mb-3">
+                <label for="gross_bongkar" class="form-label">GROSS</label>
+                <input type="text" class="form-control" name="gross_bongkar" id="gross_bongkar" value="{{$d->gross_bongkar}}" required oninput="calNettoBongkar()">
+                <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
+                <br>
+                <br>
+                <label for="tarra_bongkar" class="form-label">TARRA</label>
+                <input type="text" class="form-control" name="tarra_bongkar" id="tarra_bongkar" value="{{$d->tarra_bongkar}}" required  oninput="calNettoBongkar()">
+                <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
+                <br><br>
+                <label for="timbangan_bongkar" class="form-label">Tonase Bongkar</label>
+                <input type="text" class="form-control" name="timbangan_bongkar" id="timbangan_bongkar"
+                    placeholder="" value="{{$d->timbangan_bongkar}}" required readonly>
+                    <small id="helpId" class="form-text text-danger">(Gunakan "." untuk pemisah desimal)</small>
+            </div>
+            @endif
 
         </div>
 
@@ -123,6 +157,21 @@
                 });
 
             });
+
+            function calNettoMuat() {
+                var gross = parseFloat(document.getElementById('gross_muat').value);
+                var tarra = parseFloat(document.getElementById('tarra_muat').value);
+                var netto = (gross - tarra).toFixed(2); // Keep only two decimals
+                document.getElementById('tonase').value = netto;
+            }
+
+            function calNettoBongkar() {
+                var grossBongkar = parseFloat(document.getElementById('gross_bongkar').value);
+                var tarraBongkar = parseFloat(document.getElementById('tarra_bongkar').value);
+                var nettoBongkar = (grossBongkar - tarraBongkar).toFixed(2);
+                document.getElementById('timbangan_bongkar').value = nettoBongkar;
+            }
+
 
         // masukForm on submit, sweetalert confirm
         $('#masukForm').submit(function(e){

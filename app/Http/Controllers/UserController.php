@@ -17,7 +17,7 @@ class UserController extends Controller
         $vendor = Vendor::select('id', 'nama')->where('status', 'aktif')->get();
         $customer = Customer::select('id', 'nama')->where('status', true)->get();
 
-        $data = User::with('customer')->leftJoin('vendors', 'users.vendor_id', '=', 'vendors.id')
+        $data = User::with('customer')->where('role', '!=', 'su')->leftJoin('vendors', 'users.vendor_id', '=', 'vendors.id')
             ->select('users.*', 'vendors.nama as vendor')
             ->orderBy('users.role', 'asc')
             ->get();

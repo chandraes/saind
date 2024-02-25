@@ -559,7 +559,11 @@ class TransaksiController extends Controller
 
         $data = $request->validate([
             'tonase' => 'required|numeric',
+            'gross_muat' => 'nullable|numeric',
+            'tarra_muat' => 'nullable|numeric',
             'timbangan_bongkar' => 'required|numeric',
+            'gross_bongkar' => 'nullable|numeric',
+            'tarra_bongkar' => 'nullable|numeric',
             'nota_muat' => 'required',
             'nota_bongkar' => 'required',
             'tanggal_muat' => 'required',

@@ -208,7 +208,7 @@
                     @endif
                 </td>
                 <td class="text-center align-middle">
-                    @if (auth()->user()->role === 'admin')
+                    @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
                         data-bs-target="#backModal-{{$d->id}}">
                         Edit

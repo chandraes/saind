@@ -19,7 +19,7 @@ $password = \App\Models\PasswordKonfirmasi::first();
     </script>
     @endif
     <div class="row justify-content-left mt-5">
-        @if (auth()->user()->role === 'admin')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('pengguna.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/worker.svg')}}" alt="" width="100">
