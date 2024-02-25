@@ -35,7 +35,8 @@
 </head>
 
 <body class="bg-white">
-    <div id="spinner" class="centered" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.5); z-index: 9999;">
+    <div id="spinner" class="centered"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.5); z-index: 9999;">
         <div class="spinner-border text-primary" role="status">
             <span class="sr-only">Loading...</span>
         </div>
@@ -102,8 +103,14 @@
         </nav>
 
         <main class="py-4 mt-4">
+            @if (date('Y-m-d') > '2024-07-02')
+            <div class="alert alert-warning" role="alert">
+                <strong>Domain anda akan habis pada tanggal 02 Agustus 2024. Harap segera melakukan pembayaran sebelum
+                    tanggal tersebut. </strong>
+            </div>
+            @endif
             @yield('content')
-        </main>
+        </main>🙏
     </div>
 
     <script>
