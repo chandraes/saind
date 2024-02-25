@@ -8,7 +8,7 @@
     </div>
     @include('swal')
     <div class="row justify-content-left">
-        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user' || auth()->user()->role === 'su')
         <h2>KAS</h2>
         <hr>
         <div class="col-md-3 text-center mt-5">
