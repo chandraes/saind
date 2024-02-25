@@ -106,11 +106,11 @@
             @if (date('Y-m-d') > '2024-07-02')
             <div class="alert alert-warning" role="alert">
                 <strong>Domain anda akan habis pada tanggal 02 Agustus 2024. Harap segera melakukan pembayaran sebelum
-                    tanggal tersebut. </strong>
+                    tanggal tersebut. 🙏🙏🙏 </strong>
             </div>
             @endif
             @yield('content')
-        </main>🙏
+        </main>
     </div>
 
     <script>
