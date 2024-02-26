@@ -71,7 +71,7 @@
                     {{-- select all --}}
                     <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
                 </th>
-
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif  class="text-center align-middle">No</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tanggal UJ</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Kode</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">NOLAM</th>
@@ -128,6 +128,7 @@
                         data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})"
                         id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
                 </td>
+                <td class="text-center align-middle"></td>
                 <td class="text-center align-middle">
                     {{$d->kas_uang_jalan->tanggal}} <br>
                     ({{$d->kas_uang_jalan->created_at->format('H:i:s')}})
@@ -298,7 +299,7 @@
         <tfoot>
             <tr>
                 <td class=""
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                     <div class="row text-center">
                         <div class="col-md-4 mt-2">
@@ -323,7 +324,7 @@
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td class="text-end align-middle">
@@ -338,7 +339,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
@@ -354,7 +355,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
@@ -454,12 +455,20 @@
             "scrollY": "550px",
             "scrollX": true,
             "fixedColumns": {
-                "leftColumns": 3,
+                "leftColumns": 4, // Increase this by 1 because we're adding a column
                 "rightColumns": 1
             },
             "columnDefs": [
-                { "type": "date-eu", "targets": [tanggalMuatColumnIndex, tanggalBongkarColumnIndex] }
-            ]
+                { "type": "date-eu", "targets": [tanggalMuatColumnIndex + 1, tanggalBongkarColumnIndex + 1] }, // Increase these by 1 because we're adding a column
+                { "orderable": false, "targets": [0,1,-1] } // Make the numbering column unsortable
+            ],
+            "drawCallback": function (settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart; // Get the start index for the current page
+                api.column(1, {page: 'current'}).nodes().each(function (cell, i) {
+                    cell.innerHTML = startIndex + i + 1; // Update the numbering column
+                });
+            }
         });
 
         var dropdownMenu = $('#columnFilter');
