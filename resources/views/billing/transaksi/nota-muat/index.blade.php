@@ -62,7 +62,7 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
                 <td class="text-center align-middle">
-                    @if (auth()->user()->role === 'admin')
+                    @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
                     <button class="btn btn-warning btn-block" type="button" data-bs-toggle="modal" data-bs-target="#modalVoid-{{$d->id}}">Void</button>
 
                     <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->

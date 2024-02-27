@@ -31,6 +31,17 @@ Route::group(['middleware' => ['auth']], function() {
 
     });
 
+    Route::group(['middleware' => 'role:su'], function() {
+        Route::prefix('bypass')->group(function(){
+            Route::get('/', [App\Http\Controllers\ByPassVendorController::class, 'index'])->name('bypass.index');
+            Route::get('/kas-direksi', [App\Http\Controllers\ByPassVendorController::class, 'kas_direksi'])->name('bypass-kas-direksi.index');
+            Route::post('/kas-direksi', [App\Http\Controllers\ByPassVendorController::class, 'kas_direksi_store'])->name('bypass-kas-direksi.store');
+
+            Route::get('/kas-besar', [App\Http\Controllers\ByPassVendorController::class, 'by_pass_kas_besar'])->name('bypass-kas-besar.index');
+            Route::post('/kas-besar', [App\Http\Controllers\ByPassVendorController::class, 'by_pass_kas_besar_store'])->name('bypass-kas-besar.store');
+        });
+    });
+
 
     Route::resource('kontrak', App\Http\Controllers\KontrakController::class)->middleware('role:admin,user');
     Route::get('kontrak-doc/{kontrak}', [App\Http\Controllers\KontrakController::class, 'kontrak_doc'])->name('kontrak.doc')->middleware('role:admin,user');
@@ -44,18 +55,9 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('spk/view/{spk}', [App\Http\Controllers\SpkController::class, 'view_file'])->name('spk.view')->middleware('role:admin,user');
     Route::get('spk/hapus-file/{spk}', [App\Http\Controllers\SpkController::class, 'delete_file'])->name('spk.hapus-file')->middleware('role:admin,user');
 
-    Route::group(['middleware' => 'role:admin'], function() {
+    Route::group(['middleware' => 'role:admin,su'], function() {
 
         Route::get('/invoice-tagihan-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_back'])->name('invoice.tagihan-back.execute');
-
-        Route::prefix('bypass')->group(function(){
-            Route::get('/', [App\Http\Controllers\ByPassVendorController::class, 'index'])->name('bypass.index');
-            Route::get('/kas-direksi', [App\Http\Controllers\ByPassVendorController::class, 'kas_direksi'])->name('bypass-kas-direksi.index');
-            Route::post('/kas-direksi', [App\Http\Controllers\ByPassVendorController::class, 'kas_direksi_store'])->name('bypass-kas-direksi.store');
-
-            Route::get('/kas-besar', [App\Http\Controllers\ByPassVendorController::class, 'by_pass_kas_besar'])->name('bypass-kas-besar.index');
-            Route::post('/kas-besar', [App\Http\Controllers\ByPassVendorController::class, 'by_pass_kas_besar_store'])->name('bypass-kas-besar.store');
-        });
 
         Route::get('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor'])->name('bypass-kas-vendor.index');
         Route::post('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor_store'])->name('bypass-kas-vendor.store');
@@ -159,9 +161,9 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('statistik/perform-vendor/print', [App\Http\Controllers\StatistikController::class, 'perform_vendor_print'])->name('statistik.perform-vendor.print');
     });
 
-    Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index')->middleware('role:admin,user');
+    Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index')->middleware('role:admin,user,su');
 
-    Route::group(['middleware' => 'role:admin,user'], function() {
+    Route::group(['middleware' => 'role:admin,user,su'], function() {
         Route::get('statisik', [App\Http\Controllers\StatistikController::class, 'index'])->name('statisik.index');
 
         Route::get('billing/nota-csr', [App\Http\Controllers\TransaksiController::class, 'nota_csr'])->name('billing.nota-csr');
@@ -211,7 +213,7 @@ Route::group(['middleware' => ['auth']], function() {
 
         //sales order
         Route::get('transaksi/sales-order', [App\Http\Controllers\TransaksiController::class, 'sales_order'])->name('transaksi.sales-order');
-       
+
         Route::get('transaksi/nota-tagihan/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'tagihan_export'])->name('transaksi.nota-tagihan.export');
         Route::get('transaksi/nota-tagihan/{transaksi}/check', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_checked'])->name('transaksi.nota-tagihan.check');
         Route::post('transaksi/nota-tagihan/{transaksi}/uncheck', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_unchecked'])->name('transaksi.nota-tagihan.uncheck');

@@ -90,11 +90,10 @@
 </div>
 
 <script>
-     function calNetto{{$d->id}}() {
-        var gross = parseFloat(document.getElementById('gross_muat-{{$d->id}}').value);
-        var tarra = parseFloat(document.getElementById('tarra_muat-{{$d->id}}').value);
-        var netto = gross - tarra;
-        document.getElementById('tonase-{{$d->id}}').value = netto;
-    }
-
+    function calNetto{{$d->id}}() {
+       var gross = parseFloat(document.getElementById('gross_muat-{{$d->id}}').value);
+       var tarra = parseFloat(document.getElementById('tarra_muat-{{$d->id}}').value);
+       var netto = (gross - tarra).toFixed(2); // Keep only two decimals
+       document.getElementById('tonase-{{$d->id}}').value = netto;
+   }
 </script>

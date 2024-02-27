@@ -8,7 +8,7 @@
         </div>
     </div>
     <div class="row justify-content-left mt-5">
-        @if (auth()->user()->role === 'admin')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('database')}}" class="text-decoration-none">
                 <img src="{{asset('images/database.svg')}}" alt="" width="100">
@@ -16,7 +16,7 @@
             </a>
         </div>
         @endif
-        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user')
+        @if (auth()->user()->role === 'su' || auth()->user()->role === 'admin' || auth()->user()->role === 'user')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('billing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/billing.svg')}}" alt="" width="100">
@@ -30,14 +30,14 @@
             </a>
         </div>
         @endif
-        @if (auth()->user()->role === 'admin')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('dokumen')}}" class="text-decoration-none">
                 <img src="{{asset('images/document.svg')}}" alt="" width="100">
                 <h2>Dokumen</h2>
             </a>
         </div>
-        @if (auth()->user()->id === 1)
+        @if (auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('bypass.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/admin.svg')}}" alt="" width="100">

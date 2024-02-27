@@ -54,7 +54,7 @@
 @include('billing.transaksi.tagihan.show-new')
 
 <div class="container-fluid mt-3 table-responsive ">
-    <div class="dropdown open">
+    <div class="dropdown open mb-3">
         <button class="btn btn-success dropdown-toggle" type="button" id="triggerId" data-bs-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">
             Tampilkan/Sembunyikan Kolom
@@ -71,7 +71,7 @@
                     {{-- select all --}}
                     <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
                 </th>
-
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif  class="text-center align-middle">No</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tanggal UJ</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Kode</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">NOLAM</th>
@@ -128,6 +128,7 @@
                         data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})"
                         id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
                 </td>
+                <td class="text-center align-middle"></td>
                 <td class="text-center align-middle">
                     {{$d->kas_uang_jalan->tanggal}} <br>
                     ({{$d->kas_uang_jalan->created_at->format('H:i:s')}})
@@ -208,7 +209,7 @@
                     @endif
                 </td>
                 <td class="text-center align-middle">
-                    @if (auth()->user()->role === 'admin')
+                    @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
                         data-bs-target="#backModal-{{$d->id}}">
                         Edit
@@ -298,7 +299,7 @@
         <tfoot>
             <tr>
                 <td class=""
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                     <div class="row text-center">
                         <div class="col-md-4 mt-2">
@@ -323,7 +324,7 @@
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td class="text-end align-middle">
@@ -338,7 +339,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
@@ -354,7 +355,7 @@
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
@@ -399,6 +400,10 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script src="https://cdn.datatables.net/plug-ins/1.10.22/sorting/datetime-moment.js"></script>
+{{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script> --}}
 <script>
     $(document).ready(function() {
         $('#spinner').show();
@@ -450,12 +455,21 @@
             "scrollY": "550px",
             "scrollX": true,
             "fixedColumns": {
-                "leftColumns": 3,
+                "leftColumns": 4, // Increase this by 1 because we're adding a column
                 "rightColumns": 1
             },
             "columnDefs": [
-                { "type": "date-eu", "targets": [tanggalMuatColumnIndex, tanggalBongkarColumnIndex] }
-            ]
+                { "type": "date-eu", "targets": [tanggalMuatColumnIndex + 1, tanggalBongkarColumnIndex + 1] }, // Increase these by 1 because we're adding a column
+                { "orderable": false, "targets": [0,1,-1] } // Make the numbering column unsortable
+            ],
+            "order": [[ 2, "asc" ]], 
+            "drawCallback": function (settings) {
+                var api = this.api();
+                var startIndex = api.context[0]._iDisplayStart; // Get the start index for the current page
+                api.column(1, {page: 'current'}).nodes().each(function (cell, i) {
+                    cell.innerHTML = startIndex + i + 1; // Update the numbering column
+                });
+            }
         });
 
         var dropdownMenu = $('#columnFilter');

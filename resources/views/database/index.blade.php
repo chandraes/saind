@@ -8,7 +8,7 @@
     </div>
     <div class="row justify-content-left">
         <h2>Customer</h2>
-        @if (auth()->user()->role === 'admin')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-4 text-center mt-3 mb-3">
             <a href="{{route('rute.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/rute.svg')}}" alt="" width="100">

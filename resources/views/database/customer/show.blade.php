@@ -100,16 +100,31 @@
     </div>
     <hr>
     <div class="row mt-3 mb-3">
-        <h3 class="mb-3">Informasi PPN & PPh</h3>
-        <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
-            <label class="btn btn-success active">
-                <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$data->ppn == 1 ? 'checked' : ''}}
-                autocomplete="off" disabled> PPN
-            </label>
-            <label class="btn btn-success">
-                <input type="checkbox" class="me-2" name="pph" id="pph" {{$data->pph == 1 ? 'checked' : ''}}
-                autocomplete="off" disabled> PPh
-            </label>
+        <div class="col-md-6">
+            <div class="row">
+                <h3 class="mb-3">Informasi PPN & PPh</h3>
+                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                    <label class="btn btn-warning active">
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$data->ppn == 1 ? 'checked' : ''}}
+                        autocomplete="off" disabled> PPN & PPh
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="row">
+                <h3 class="mb-3">Gross, Tarra, Netto</h3>
+                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                    <label class="btn btn-primary active">
+                        <input type="checkbox" class="me-2" name="gt_muat" id="gt_muat" {{$data->gt_muat == 1 ? 'checked' : ''}}
+                        autocomplete="off" disabled> Tonase Muat
+                    </label>
+                    <label class="btn btn-primary">
+                        <input type="checkbox" class="me-2" name="gt_bongkar" id="gt_bongkar" {{$data->gt_bongkar == 1 ? 'checked' : ''}}
+                        autocomplete="off" disabled> Tonase Bongkar
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
     <hr>
@@ -130,7 +145,7 @@
                 <input type="text" class="form-control @if ($errors->has('harga_csr_atas'))
                 is-invalid
             @endif" name="harga_csr_atas" id="harga_csr_atas" data-thousands="."
-                    value="{{number_format($data->harga_csr_atas, 0, ',','.')}}">
+                    value="{{number_format($data->harga_csr_atas, 0, ',','.')}}" disabled>
             </div>
         </div>
 
