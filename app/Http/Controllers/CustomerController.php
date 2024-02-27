@@ -85,7 +85,15 @@ class CustomerController extends Controller
 
         $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
         foreach ($checkboxFields as $field) {
-            $data[$field] = array_key_exists($field, $data) ? 1 : 0;
+            if ($field == 'ppn' && array_key_exists($field, $data)) {
+                $data['ppn'] = 1;
+                $data['pph'] = 1;
+            } elseif($field == 'ppn' && !array_key_exists($field, $data)) {
+                $data['ppn'] = 0;
+                $data['pph'] = 0;
+            } elseif($field != 'pph'){
+                $data[$field] = array_key_exists($field, $data) ? 1 : 0;
+            }
         }
 
         if (!$data['csr']) {
@@ -250,7 +258,15 @@ class CustomerController extends Controller
 
         $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
         foreach ($checkboxFields as $field) {
-            $data[$field] = array_key_exists($field, $data) ? 1 : 0;
+            if ($field == 'ppn' && array_key_exists($field, $data)) {
+                $data['ppn'] = 1;
+                $data['pph'] = 1;
+            } elseif($field == 'ppn' && !array_key_exists($field, $data)) {
+                $data['ppn'] = 0;
+                $data['pph'] = 0;
+            } elseif($field != 'pph'){
+                $data[$field] = array_key_exists($field, $data) ? 1 : 0;
+            }
         }
 
         if (!$data['csr']) {
