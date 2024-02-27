@@ -21,6 +21,6 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     Route::post('logout', [AuthController::class, 'destroy'])->middleware('auth:api');
 
     Route::group(['middleware' => 'auth:api'], function () {
-        Route::get('saldo-kas-besar', [RekapController::class, 'saldo_kas_besar']);
+        Route::get('saldo-kas', [RekapController::class, 'saldo_kas_besar']);
     });
   });

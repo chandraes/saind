@@ -60,4 +60,9 @@ class KasUangJalan extends Model
     {
         return $this->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->orderBy('tahun', 'desc')->get();
     }
+
+    public function saldoKasUangJalan()
+    {
+        return $this->latest()->orderBy('id', 'desc')->first()->saldo ?? 0;
+    }
 }

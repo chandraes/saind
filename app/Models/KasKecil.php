@@ -30,4 +30,9 @@ class KasKecil extends Model
     {
         return date('d-m-Y', strtotime($value));
     }
+
+    public function saldoKasKecil()
+    {
+        return $this->latest()->orderBy('id', 'desc')->first()->saldo ?? 0;
+    }
 }
