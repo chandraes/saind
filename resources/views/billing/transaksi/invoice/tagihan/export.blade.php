@@ -1,4 +1,4 @@
-@extends('layouts.doc-nologo-1')
+@extends('layouts.doc-nologo-2')
 @section('content')
 <div class="container-fluid">
     <center>
@@ -111,7 +111,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td class="table-pdf text-pdf text-center align-middle"
+                    <td class="align-middle"
                         colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                     ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>Total</strong></td>
@@ -119,7 +119,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="table-pdf text-pdf text-center align-middle"
+                    <td class="align-middle"
                         colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                     ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                     <td class="table-pdf text-pdf text-center align-middle"><strong>PPN</strong></td>
