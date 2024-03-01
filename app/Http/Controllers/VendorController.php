@@ -21,7 +21,7 @@ class VendorController extends Controller
      */
     public function index()
     {
-        if (auth()->user()->role == 'admin') {
+        if (auth()->user()->role == 'admin' || auth()->user()->role == 'su') {
             $vendors = Vendor::with(['sponsor', 'vendor_uang_jalan', 'vendor_uang_jalan.rute'])->get();
         }
         if(auth()->user()->role == 'vendor') {
@@ -229,7 +229,7 @@ class VendorController extends Controller
         $id = $data['vendor_id'];
         $checkRole = auth()->user()->role;
 
-        if ($checkRole !== 'admin') {
+        if ($checkRole !== 'admin' || $checkRole !== 'su') {
            for ($i=0; $i < count($data['hk_opname']); $i++) {
                 if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
                     return redirect()->back()->with('error', 'Harga opname tidak sesuai');
@@ -240,7 +240,8 @@ class VendorController extends Controller
            }
         }
 
-        DB::transaction(function () use ($data, $id) {
+        DB::beginTransaction();
+        try {
             for ($i=0; $i < count($data['rute_id']); $i++) {
                 VendorUangJalan::create([
                     'vendor_id' => $id,
@@ -248,8 +249,14 @@ class VendorController extends Controller
                     'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
                     'user_id' => auth()->user()->id,
                 ]);
+                DB::commit();
             }
-        });
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->back()->with('error', $th->getMessage());
+        }
+
+
 
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil ditambahkan');
     }
@@ -258,6 +265,7 @@ class VendorController extends Controller
     {
 
         // $data = VendorUangJalan::findOrFail($id);
+        $vendor = $vendor->load('vendor_uang_jalan');
         $rutes = Rute::all();
 
         return view('database.vendor.edit-uangjalan', [
@@ -279,7 +287,10 @@ class VendorController extends Controller
         $id = $data['vendor_id'];
         $checkRole = auth()->user()->role;
 
-        if ($checkRole !== 'admin') {
+        // dd($checkRole);
+        $role = ['admin', 'su'];
+
+        if (!in_array($checkRole, $role)) {
            for ($i=0; $i < count($data['hk_opname']); $i++) {
                 if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
                     return redirect()->back()->with('error', 'Harga opname tidak sesuai');
@@ -290,8 +301,9 @@ class VendorController extends Controller
            }
         }
         // dd($data);
-        DB::transaction(function () use ($data, $id) {
-            // delete vendor uang jalan
+        DB::beginTransaction();
+        try {
+
             VendorUangJalan::where('vendor_id', $id)->delete();
 
             for ($i=0; $i < count($data['rute_id']); $i++) {
@@ -302,7 +314,14 @@ class VendorController extends Controller
                     'user_id' => auth()->user()->id,
                 ]);
             }
-        });
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->back()->with('error', $th->getMessage());
+        }
+            // delete vendor uang jalan
 
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');
     }
