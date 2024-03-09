@@ -34,7 +34,7 @@ class FormKasKecilController extends Controller
     public function masuk_store()
     {
         $kk = KasKecil::whereNotNull('nomor_kode_kas_kecil')->latest()->orderBy('id', 'desc')->first();
-        $kb = KasBesar::latest()->first();
+        $kb = KasBesar::latest()->orderBy('id', 'desc')->first();
         $rekening = Rekening::where('untuk', 'kas-kecil')->first();
 
         if ($kb == null || $kb->saldo < 1000000) {
@@ -228,7 +228,7 @@ class FormKasKecilController extends Controller
         unset($data['kas_kecil_id']);
 
         $store = KasKecil::create($data);
-        
+
         $kk->update(['void' => 1]);
 
         if(!$store){

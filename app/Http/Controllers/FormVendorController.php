@@ -43,7 +43,7 @@ class FormVendorController extends Controller
             return redirect()->back()->with('error', 'Nilai melebihi plafon titipan');
         }
         // dd($plafon);
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($last == null || $last->saldo < $data['nilai']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
@@ -115,7 +115,7 @@ class FormVendorController extends Controller
     public function get_plafon_titipan(Request $request)
     {
         $vendor = Vendor::find($request->id);
-        
+
         $kas = KasVendor::where('vendor_id', $request->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
 
         $mobil = Vehicle::where('vendor_id', $request->id)->whereNot('status', 'nonaktif')->count();
@@ -156,13 +156,13 @@ class FormVendorController extends Controller
         // make $data['nominal'] into positive number
         $data['nominal'] = $data['nominal'] * -1;
         $v = Vendor::find($data['vendor_id']);
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($last == null || $last->saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
         }
 
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
 
         if ($lastNomor)  {
             $kas['nomor_kode_tagihan'] = 1;
@@ -237,8 +237,8 @@ class FormVendorController extends Controller
         $data['nominal'] = str_replace('.', '', $data['nilai']);
 
         $v = Vendor::find($data['vendor_id']);
-        $last = KasBesar::latest()->first();
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         if ($lastNomor == null)  {

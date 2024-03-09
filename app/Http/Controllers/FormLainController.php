@@ -37,7 +37,7 @@ class FormLainController extends Controller
         $data['tanggal'] = date('Y-m-d');
 
          // Saldo terakhir
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
         if($last == null){
             $data['modal_investor_terakhir']= 0;
             $data['saldo'] = $data['nominal_transaksi'];
@@ -98,7 +98,7 @@ class FormLainController extends Controller
         $data['tanggal'] = date('Y-m-d');
 
          // Saldo terakhir
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if($last == null){
             $data['modal_investor_terakhir']= 0;

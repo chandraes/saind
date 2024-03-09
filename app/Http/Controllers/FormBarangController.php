@@ -90,7 +90,7 @@ class FormBarangController extends Controller
             return redirect()->route('billing.form-barang.beli')->with('error', 'Keranjang kosong');
         }
 
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         $total = $keranjang->sum('total');
 
