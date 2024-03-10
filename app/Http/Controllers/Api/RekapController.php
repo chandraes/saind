@@ -12,25 +12,37 @@ class RekapController extends BaseController
 {
     public function saldo_kas_besar()
     {
-        $kb = new KasBesar();
-        $saldoKasBesar = $kb->lastKasBesar()->saldo ?? 0;
+        $data = [];
+        $role = auth()->user()->role;
 
-        $kk = new KasKecil();
-        $saldoKasKecil = $kk->saldoKasKecil();
+        if ($role == 'su' || $role == 'admin') {
+            $kb = new KasBesar();
+            $kbS = [
+                'nama' => "Kas Besar",
+                'saldo' => $kb->lastKasBesar()->saldo ?? 0,
+            ];
 
-        $kuj = new KasUangJalan();
-        $kasUangJalan = $kuj->saldoKasUangJalan();
+            array_push($data, $kbS);
 
+        }
 
-        $data = [
-            'kas_besar' => $saldoKasBesar,
-            'kas_kecil' => $saldoKasKecil,
-            'kas_uang_jalan' => $kasUangJalan
-        ];
+        if ($role == 'su' || $role == 'user' || $role == 'admin') {
+            $kk = new KasKecil();
+            $kkS = [
+                'nama' => "Kas Kecil",
+                'saldo' => $kk->saldoKasKecil()
+            ];
+            array_push($data, $kkS);
 
-        // dd($data);
+            $kuj = new KasUangJalan();
+            $kujS = [
+                'nama' => "Kas Uang Jalan",
+                'saldo' => $kuj->saldoKasUangJalan()
+            ];
+            array_push($data, $kujS);
+
+        }
 
         return $this->sendResponse($data, 'Saldo Kas Berhasil diambil!');
-
     }
 }
