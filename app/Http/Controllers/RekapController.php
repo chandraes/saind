@@ -64,7 +64,7 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->first();
+        $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
         // dd($bulan);
         return view('rekap.kas-besar', [
             'data' => $data,
@@ -87,7 +87,7 @@ class RekapController extends Controller
         $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->first();
+        $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
         // dd($bulan);
         $pdf = PDF::loadview('rekap.preview-kas-besar', [
             'data' => $data,
@@ -431,7 +431,7 @@ class RekapController extends Controller
         KasVendor::create($data);
 
         if ($kas_vendor->storing == 1) {
-            $last = KasBesar::latest()->first();
+            $last = KasBesar::latest()->orderBy('id', 'desc')->first();
             $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
             $kas['tanggal'] = date('Y-m-d');
@@ -562,7 +562,7 @@ class RekapController extends Controller
             return redirect()->back()->with('error', 'Password salah!!');
         }
 
-        $kasBesar = KasBesar::latest()->first();
+        $kasBesar = KasBesar::latest()->orderBy('id', 'desc')->first();
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         $k['uraian'] = 'Void Kasbon '.$kas->karyawan->nama;

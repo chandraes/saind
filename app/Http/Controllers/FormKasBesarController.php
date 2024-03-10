@@ -12,7 +12,7 @@ class FormKasBesarController extends Controller
 {
     public function masuk()
     {
-        $nomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+        $nomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->orderBy('id', 'desc')->first();
 
         if($nomor == null){
             $nomor = 1;
@@ -41,7 +41,7 @@ class FormKasBesarController extends Controller
         $data['bank'] = $rekening->nama_bank;
 
         // Nomor Kode Kas Besar Terakhir
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->first();
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->orderBy('id', 'desc')->first();
 
         if($lastNomor == null)
         {
@@ -56,7 +56,7 @@ class FormKasBesarController extends Controller
         $data['modal_investor']= -$data['nominal_transaksi'];
 
         // Saldo terakhir
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
         if($last == null){
             $data['modal_investor_terakhir']= -$data['nominal_transaksi'];
             $data['saldo'] = $data['nominal_transaksi'];
@@ -122,7 +122,7 @@ class FormKasBesarController extends Controller
         $data['bank'] = $rekening->nama_bank;
 
 
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
         if($last == null){
             $data['saldo'] = 0 - $data['nominal_transaksi'];
             $data['modal_investor'] = $data['nominal_transaksi'];

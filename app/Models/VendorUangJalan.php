@@ -15,6 +15,10 @@ class VendorUangJalan extends Model
         'hk_uang_jalan',
     ];
 
+    protected $appends = [
+        'nf_hk_uang_jalan',
+    ];
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
@@ -23,5 +27,10 @@ class VendorUangJalan extends Model
     public function rute()
     {
         return $this->belongsTo(Rute::class);
+    }
+
+    public function getNfHkUangJalanAttribute()
+    {
+        return number_format($this->hk_uang_jalan, 0, ',', '.');
     }
 }

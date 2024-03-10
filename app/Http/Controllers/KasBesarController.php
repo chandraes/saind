@@ -14,7 +14,7 @@ class KasBesarController extends Controller
         $data = KasBesar::whereMonth('tanggal', $month)->get();
 
         // dapatkan saldo terakhir dari bulan sebelumnya
-        $saldo = KasBesar::whereMonth('tanggal', $month - 1)->latest()->first();
+        $saldo = KasBesar::whereMonth('tanggal', $month - 1)->latest()->orderBy('id', 'desc')->first();
 
         // jika tidak ada saldo terakhir, maka saldo awal adalah 0
         if (!$saldo) {

@@ -31,7 +31,7 @@ class SponsorController extends Controller
             'transfer_ke' => 'required',
         ]);
 
-        $nomor = Sponsor::latest()->first();
+        $nomor = Sponsor::latest()->orderBy('id', 'desc')->first();
 
         if ($nomor) {
             $data['nomor_kode_sponsor'] = $nomor->nomor_kode_sponsor + 1;

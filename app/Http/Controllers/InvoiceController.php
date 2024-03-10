@@ -87,9 +87,9 @@ class InvoiceController extends Controller
         ]);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
 
         if($lastNomor == null)
         {
@@ -166,7 +166,7 @@ class InvoiceController extends Controller
         if ($data['cicilan'] == $invoice->sisa_tagihan) {
             $data['lunas'] = 1;
 
-            $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+            $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
 
             if($lastNomor == null)
             {
@@ -185,7 +185,7 @@ class InvoiceController extends Controller
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($last) {
             $data['uraian'] = 'Cicil '.$invoice->customer->singkatan.' - '.$invoice->periode;
@@ -305,7 +305,7 @@ class InvoiceController extends Controller
     public function invoice_bonus_lunas(InvoiceBonus $invoice)
     {
 
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($last->saldo < $invoice->sisa_bonus) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
@@ -319,7 +319,7 @@ class InvoiceController extends Controller
             'lunas' => 1
         ]);
 
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
         if($lastNomor == null)

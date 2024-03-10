@@ -6,6 +6,9 @@
             <h1><u>Kesepakatan Uang Jalan Vendor</u></h1>
         </div>
     </div>
+    @php
+        $role = ['admin', 'su'];
+    @endphp
     @if (session('error'))
     <div class="row">
         <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
@@ -38,20 +41,20 @@
                                 <input type="hidden" name="vendor_id" value="{{$data->id}}">
                                 <input type="hidden" name="rute_id[]" value="{{$v->id}}">
                                 <input type="text" class="form-control" name="uang_jalan[]" required id="uang_jalan-{{$v->id}}"
-                                    required aria-describedby="helpId" placeholder="" @if(auth()->user()->role !== 'admin')
+                                    required aria-describedby="helpId" placeholder=""
+                                    value="{{$data->vendor_uang_jalan->where('rute_id', $v->id)->first()->nf_hk_uang_jalan ?? $v->nf_uang_jalan}}"
+                                    @if(!in_array(Auth::user()->role, $role))
                                     readonly
-                                @endif data-thousands="." >
+                                @endif >
                             </td>
                         </tr>
                         <script>
-                            $('#uang_jalan-{{$v->id}}').maskMoney({
-                                    thousands: '.',
-                                    decimal: ',',
-                                    precision: 0
-                                });
-
-                            $('#uang_jalan-{{$v->id}}').maskMoney('mask', {{$v->uang_jalan}});
-
+                            var uj_{{$v->id}} = new Cleave('#uang_jalan-{{$v->id}}', {
+                                numeral: true,
+                                numeralThousandsGroupStyle: 'thousand',
+                                numeralDecimalMark: ',',
+                                delimiter: '.'
+                            });
                         </script>
                         @endforeach
                     </tbody>
@@ -68,3 +71,6 @@
     </form>
 </div>
 @endsection
+@push('css')
+<script src="{{asset('assets/js/cleave.min.js')}}"></script>
+@endpush

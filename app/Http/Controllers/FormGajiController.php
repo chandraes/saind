@@ -44,7 +44,7 @@ class FormGajiController extends Controller
         $data = Karyawan::where('status', 'aktif')->get();
         $direksi = Direksi::where('status', 'aktif')->get();
 
-        $kasBesar = KasBesar::latest()->first();
+        $kasBesar = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($kasBesar == null || $kasBesar->saldo < $ds['total']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar Tidak Cukup');

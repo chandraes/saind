@@ -46,7 +46,7 @@ class FormKasbonController extends Controller
 
         $d = Direksi::find($data['direksi_id']);
 
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($last == null || $last->saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
@@ -149,7 +149,7 @@ class FormKasbonController extends Controller
         $d['direksi_id'] = $direksi->id;
         $d['sisa_kas'] = $lastKasDireksi->sisa_kas - $data['nominal'];
 
-        $lastKasBesar = KasBesar::latest()->first();
+        $lastKasBesar = KasBesar::latest()->orderBy('id', 'desc')->first();
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         $kas['tanggal'] = $d['tanggal'];
@@ -213,7 +213,7 @@ class FormKasbonController extends Controller
             return redirect()->back()->with('error', 'Kasbon sudah melebihi ketentuan!!');
         }
 
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($last == null || $last->saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
@@ -283,7 +283,7 @@ class FormKasbonController extends Controller
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
-        $kasBesar = KasBesar::latest()->first();
+        $kasBesar = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($kasBesar == null || $kasBesar->saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');

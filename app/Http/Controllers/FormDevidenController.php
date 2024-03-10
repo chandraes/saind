@@ -44,7 +44,7 @@ class FormDevidenController extends Controller
 
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
 
-        $last = KasBesar::latest()->first();
+        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($last == null || $last->saldo < $data['nominal_transaksi']) {
             return redirect()->route('billing.deviden.index')->with('error', 'Saldo tidak cukup');

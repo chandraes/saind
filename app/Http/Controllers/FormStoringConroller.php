@@ -104,7 +104,7 @@ class FormStoringConroller extends Controller
         $kasArray['bank'] = $rekening->nama_bank;
         $kasArray['no_rekening'] = $rekening->nomor_rekening;
 
-        $kasBesar = KasBesar::latest()->first();
+        $kasBesar = KasBesar::latest()->orderBy('id', 'desc')->first();
 
         if ($kasBesar) {
             $kasArray['saldo'] = $kasBesar->saldo - $kasArray['nominal_transaksi'];
