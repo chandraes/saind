@@ -86,8 +86,6 @@
 </div>
 @endsection
 @push('js')
-{{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-    <script src="{{asset('assets/js/cleave.min.js')}}"></script>
     <script>
         $(document).ready(function(){
             var nominal = new Cleave('#nominal_transaksi', {
