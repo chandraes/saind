@@ -30,7 +30,7 @@
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('nominal_transaksi'))
                     is-invalid
-                @endif" name="nominal_transaksi" id="nominal_transaksi" required data-thousands="." value="{{old('nominal_transaksi')}}">
+                @endif" name="nominal_transaksi" id="nominal_transaksi" required  value="{{old('nominal_transaksi')}}">
                   </div>
                 @if ($errors->has('nominal_transaksi'))
                 <div class="invalid-feedback">
@@ -86,13 +86,14 @@
 </div>
 @endsection
 @push('js')
+    <script src="{{asset('assets/js/cleave.min.js')}}"></script>
     <script>
        $(document).ready(function(){
-            $('#nominal_transaksi').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0,
-                allowZero: true,
+        var nominal = new Cleave('#nominal_transaksi', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
         });
 
