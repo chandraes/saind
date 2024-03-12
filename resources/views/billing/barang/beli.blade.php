@@ -81,11 +81,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#harga_satuan').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0,
-                allowZero: true,
+            var nominal = new Cleave('#harga_satuan', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
         });
 
