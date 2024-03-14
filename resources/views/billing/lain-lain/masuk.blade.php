@@ -94,13 +94,13 @@
 @endsection
 @push('js')
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-    <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#nominal_transaksi').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+            var nominal = new Cleave('#nominal_transaksi', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
         });
 

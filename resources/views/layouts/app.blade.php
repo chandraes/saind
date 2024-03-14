@@ -20,6 +20,7 @@
     <script src="{{asset('assets/js/jquery.min.js')}}"></script>
     <script src="{{asset('assets/js/sweetalert.js')}}"></script>
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
+    <script src="{{asset('assets/js/cleave.min.js')}}"></script>
     {{-- bootstrap 5 --}}
     @stack('css')
     <style>
