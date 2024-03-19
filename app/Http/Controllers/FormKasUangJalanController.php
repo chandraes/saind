@@ -171,6 +171,17 @@ class FormKasUangJalanController extends Controller
         $data['tanggal'] = date('Y-m-d');
         $data['vendor_id'] = $vendor;
 
+        $auth = ['admin', 'su'];
+
+        if (!in_array(auth()->user()->role, $auth)) {
+            $check = VendorUangJalan::where('vendor_id', $vendor)
+                                    ->where('rute_id', $data['rute_id'])
+                                    ->first()->hk_uang_jalan ?? 0;
+            if($check != $data['nominal_transaksi']){
+                return redirect()->back()->with('error', 'Nominal Uang Jalan Tidak Sesuai');
+            }
+        }
+
         unset($data['p_vendor']);
 
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->orderBy('id', 'desc')->first();

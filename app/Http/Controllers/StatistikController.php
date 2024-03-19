@@ -953,6 +953,45 @@ class StatistikController extends Controller
         return $pdf->stream('Perform Vendor '.$nama_bulan.' '.$tahun.'.pdf');
     }
 
+    public function statistik_vendor(Request $request)
+    {
+        $sum_nominal_bayar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                    ->where('transaksis.bayar', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
+                                    ->groupBy('kuj.vendor_id')
+                                    ->selectRaw('kuj.vendor_id, sum(nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_kas_uang_jalan')
+                                    ->get()
+                                    ->keyBy('vendor_id');
+
+        $vendors = Vendor::with(['vehicle' => function ($query) {
+            $query->whereNot('status', 'nonaktif');
+        },
+        'kas_vendor' => function ($query) {
+            $query->orderBy('id', 'desc');
+        }])->withCount(['vehicle' => function ($query) {
+            $query->whereNot('status', 'nonaktif');
+        }])->get();
+
+        $statistics = $vendors->mapWithKeys(function ($v) use ($sum_nominal_bayar) {
+            $nominal_uang_jalan =  $sum_nominal_bayar[$v->id]->total_kas_uang_jalan ?? 0;
+            $nominal_bayar = $sum_nominal_bayar[$v->id]->total_nominal_bayar  ?? 0;
+            $sisa = $v->kas_vendor->first()->sisa ?? 0;
+            $total_bayar = $nominal_bayar - $nominal_uang_jalan;
+
+            return [$v->nickname => [
+                'vendor' => $v,
+                'total_nominal_bayar' => $total_bayar,
+                'total_sisa' => $sisa,
+                'total' => $sisa-$total_bayar,
+                'total_vehicle' => $v->vehicle_count,
+            ]];
+        });
+
+        return view('rekap.statistik.statistik-vendor', [
+            'vendors' => $vendors,
+            'statistics' => $statistics,
+        ]);
+    }
+
     public function statistik_customer()
     {
         $customers = Customer::all();

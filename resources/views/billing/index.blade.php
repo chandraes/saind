@@ -208,7 +208,7 @@
                 <h2>FORM GAJI</h2>
             </a>
         </div>
-        @if (auth()->user()->role === 'admin')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formLain">
                 <img src="{{asset('images/lain.svg')}}" alt="" width="100">

@@ -350,6 +350,8 @@ Route::group(['middleware' => ['auth']], function() {
         Route::post('dokumen/template-new/kontrak/create', [App\Http\Controllers\DokumenNewController::class, 'create_template_kontrak'])->name('template-new.kontrak.create');
         Route::get('statistik/perform-vendor', [App\Http\Controllers\StatistikController::class, 'perform_vendor'])->name('statistik.perform-vendor');
 
+        Route::get('statistik/vendor', [App\Http\Controllers\StatistikController::class, 'statistik_vendor'])->name('statistik.vendor');
+
     });
 
     Route::group(['middleware' => 'role:vendor'], function() {

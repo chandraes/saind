@@ -63,7 +63,7 @@
             </div>
             <div class="col-4 mb-3">
                 <label for="hk_uang_jalan" class="form-label">Uang Jalan</label>
-                <input type="text" class="form-control" name="nominal_transaksi" id="hk_uang_jalan" required data-thousands=".">
+                <input type="text" class="form-control" name="nominal_transaksi" id="hk_uang_jalan" required @if(auth()->user()->role != 'admin') readonly @endif data-thousands=".">
             </div>
         </div>
         <hr>
@@ -130,6 +130,13 @@
         // Jalankan fungsi changeTipe saat halaman dimuat
             $('#vehicle_id').select2({
                 theme: 'bootstrap-5'
+            });
+
+            var nominal = new Cleave('#hk_uang_jalan', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
 
             $('#vehicle_id').on('change', function () {
@@ -210,16 +217,7 @@
                         vendor_id: vendor_id,
                     },
                     success: function (data) {
-                        $('#hk_uang_jalan').val(data.hk_uang_jalan);
-
-                        // maskMonye
-                        $('#hk_uang_jalan').maskMoney({
-                            thousands: '.',
-                            decimal: ',',
-                            precision: 0,
-                            allowZero: true,
-                        });
-                        $('#hk_uang_jalan').maskMoney('mask', data.hk_uang_jalan);
+                        $('#hk_uang_jalan').val(data.hk_uang_jalan.toLocaleString('id-ID'));
                     }
                 });
 
