@@ -64,7 +64,18 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::get('/dokumen', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
 
-        Route::get('/database', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
+
+        Route::prefix('database')->group(function(){
+            Route::get('/', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
+
+             Route::prefix('upah-gendong')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'upah_gendong'])->name('database.upah-gendong');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'upah_gendong_store'])->name('database.upah-gendong.store');
+                Route::patch('/update/{ug}', [App\Http\Controllers\DatabaseController::class, 'upah_gendong_update'])->name('database.upah-gendong.update');
+                Route::delete('/destroy/{ug}', [App\Http\Controllers\DatabaseController::class, 'upah_gendong_destroy'])->name('database.upah-gendong.destroy');
+             });
+        });
+
         Route::resource('vendor', App\Http\Controllers\VendorController::class);
         Route::get('/vendor/{id}/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran'])->name('vendor.pembayaran');
         Route::post('/vendor/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran_store'])->name('vendor.pembayaran.store');
