@@ -36,6 +36,10 @@ class StatistikController extends Controller
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
 
+        $ug = UpahGendong::with(['vehicle'])
+                            ->where('vehicle_id', $vehicle)
+                            ->first();
+
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
         // get array list date vrom $bulan
@@ -52,6 +56,7 @@ class StatistikController extends Controller
                             ->where('kuj.vehicle_id', $vehicle)
                             ->get();
 
+        // dd($data);
         $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
                             $tonase = $transaction->timbangan_bongkar ?? 0;
                             return $carry + $tonase;
@@ -63,66 +68,74 @@ class StatistikController extends Controller
                             ->get();
 
 
-        $statistics = [];
+        // $statistics = [];
 
-        for ($i = 1; $i <= $date; $i++) {
-                $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
+        // for ($i = 1; $i <= $date; $i++) {
+        //         $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
 
-                $transactions = $data->filter(function ($transaction) use ($dateString) {
-                    return $transaction->tanggal == $dateString;
-                });
+        //         $transactions = $data->filter(function ($transaction) use ($dateString) {
+        //             return $transaction->tanggal == $dateString;
+        //         });
 
-                $total_tonase = 0; // reset total tonase for each vehicle
+        //         $total_tonase = 0; // reset total tonase for each vehicle
 
-                if ($transactions->isEmpty()) {
-                    $statistics['data'][] = [
-                        'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
-                        'tanggal' => $i."-".$bulan."-".$tahun,
-                        'km' => '-',
-                        'rute' => '-',
-                        'tonase' => '-',
-                    ];
-                } else {
-                    $rutes = [];
-                    $tonases = [];
-                    $km = [];
+        //         if ($transactions->isEmpty()) {
+        //             $statistics['data'][] = [
+        //                 'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
+        //                 'tanggal' => $i."-".$bulan."-".$tahun,
+        //                 'km' => '-',
+        //                 'rute' => '-',
+        //                 'tonase' => '-',
+        //                 'kelebihan_tonase' => '-',
+        //             ];
+        //         } else {
+        //             $rutes = [];
+        //             $tonases = [];
+        //             $kelebihan = [];
+        //             $km = [];
 
-                    foreach ($transactions as $transaction) {
-                        $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
-                        $jarak = $transaction->jarak ?? 0;
-
-                        if ($jarak > 50) {
-                            // $statistics[$v->nomor_lambung]['long_route_count']++;
-                        } else if ($jarak > 0 && $jarak <= 50) {
-                            // $statistics[$v->nomor_lambung]['short_route_count']++;
-                        }
-
-                        $tonase = $transaction->timbangan_bongkar ?? 0;
-                        $total_tonase += $tonase; // add tonase to total
-
-                        $rutes[] = $rute;
-                        $tonases[] = $tonase;
-                        $km[] = $jarak;
-                    }
-
-                    $statistics['data'][] = [
-                        'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
-                        'tanggal' => $i."-".$bulan."-".$tahun,
-                        'km' => implode(",", $km),
-                        'rute' => implode(",", $rutes),
-                        'tonase' => implode(",", $tonases),
-                    ];
+        //             foreach ($transactions as $transaction) {
+        //                 $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
+        //                 $jarak = $transaction->jarak ?? 0;
 
 
-                $statistics['total_tonase'] = $total_tonase; // store total tonase for each vehicle
-            }
-        }
+        //                 // if ($jarak > 50) {
+        //                 //     // $statistics[$v->nomor_lambung]['long_route_count']++;
+        //                 // } else if ($jarak > 0 && $jarak <= 50) {
+        //                 //     // $statistics[$v->nomor_lambung]['short_route_count']++;
+        //                 // }
+
+        //                 $tonase = $transaction->timbangan_bongkar ?? 0;
+
+        //                 $kelebihan_tonase =  $tonase - 30;
+        //                 $total_tonase += $tonase; // add tonase to total
+
+        //                 $rutes[] = $rute;
+        //                 $tonases[] = $tonase;
+        //                 $km[] = $jarak;
+        //                 $kelebihan[] = $kelebihan_tonase;
+        //             }
+
+        //             $statistics['data'][] = [
+        //                 'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
+        //                 'tanggal' => $i."-".$bulan."-".$tahun,
+        //                 'km' => implode(",", $km),
+        //                 'rute' => implode(",", $rutes),
+        //                 'tonase' => implode(",", $tonases),
+        //                 'kelebihan_tonase' => implode(",", $kelebihan),
+        //             ];
+
+
+        //         $statistics['total_tonase'] = $total_tonase; // store total tonase for each vehicle
+        //     }
+        // }
 
         // dd($statistics['data']);
 
 
         return view('rekap.statistik.upah-gendong.index', [
-            'statistics' => $statistics,
+            'data' => $data,
+            'ug'    => $ug,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'bulan_angka' => $bulan,

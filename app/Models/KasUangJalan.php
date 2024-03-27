@@ -4,15 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class KasUangJalan extends Model
 {
     use HasFactory;
     protected $guarded = [];
 
+    protected $appends = ['id_tanggal', 'hari'];
+
     public function jenis_transaksi()
     {
         return $this->belongsTo(JenisTransaksi::class);
+    }
+
+    public function getHariAttribute()
+    {
+        return Carbon::parse($this->tanggal)->locale('id')->isoFormat('dddd');
+    }
+
+    public function getIdTanggalAttribute()
+    {
+        return date('d-m-Y', strtotime($this->tanggal));
     }
 
     public function getTanggalAttribute($value)

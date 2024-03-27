@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
             <h1><u>STATISTIK UPAH GENDONG</u></h1>
@@ -58,7 +58,7 @@
         </div>
     </div>
 
-    <div style="font-size: 11px" class="table-responsive">
+    <div class="table-responsive">
         <table class="table table-bordered table-hover table-responsive" id="rekapTable">
             <thead class="table-success">
                 <tr>
@@ -66,15 +66,17 @@
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Rute</th>
                     <th class="text-center align-middle">KM</th>
+                    <th class="text-center align-middle">Kelebihan Tonase</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($statistics['data'] as $d)
+                @foreach ($data as $d)
                 <tr>
-                    <td class="text-center">{{$d['hari']}}</td>
-                    <td class="text-center">{{$d['tanggal']}}</td>
-                    <td class="text-center">{{$d['rute']}}</td>
-                    <td class="text-center">{{$d['km']}}</td>
+                    <td class="text-center">{{$d->kas_uang_jalan->hari}}</td>
+                    <td class="text-center">{{$d->kas_uang_jalan->id_tanggal}}</td>
+                    <td class="text-center">{{$d->kas_uang_jalan->rute->nama}}</td>
+                    <td class="text-center">{{$d->kas_uang_jalan->rute->jarak}}</td>
+                    <td class="text-center"></td>
                 </tr>
                 @endforeach
             </tbody>
