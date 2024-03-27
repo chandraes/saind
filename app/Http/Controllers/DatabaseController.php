@@ -16,7 +16,8 @@ class DatabaseController extends Controller
     public function upah_gendong()
     {
         $data = UpahGendong::all();
-        $vehicles = Vehicle::whereNot('status', 'nonaktif')->get();
+        $vehicleId = $data->pluck('vehicle_id')->toArray();
+        $vehicles = Vehicle::whereNot('status', 'nonaktif')->whereNotIn('id', $vehicleId)->get();
 
         return view('database.upah-gendong.index', [
             'data' => $data,
@@ -54,7 +55,7 @@ class DatabaseController extends Controller
             'bank' => 'required',
             'nama_rek' => 'required',
         ]);
-        
+
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
         $ug->update($data);

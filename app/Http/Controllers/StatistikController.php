@@ -8,6 +8,7 @@ use App\Models\Vendor;
 use App\Models\Customer;
 use App\Models\KasVendor;
 use App\Models\InvoiceTagihan;
+use App\Models\UpahGendong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -16,7 +17,122 @@ class StatistikController extends Controller
 {
     public function index()
     {
-        return view('rekap.statistik.index');
+        $data = UpahGendong::with(['vehicle'])->get();
+
+        return view('rekap.statistik.index', [
+            'data' => $data,
+        ]);
+    }
+
+    public function upah_gendong(Request $request)
+    {
+        $vehicle = $request->vehicle_id;
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        $check = Vehicle::where('id', $vehicle)->first();
+
+        if($check == null){
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
+        }
+
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date vrom $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute'])
+                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->where('kuj.vehicle_id', $vehicle)
+                            ->get();
+
+        $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
+                            $tonase = $transaction->timbangan_bongkar ?? 0;
+                            return $carry + $tonase;
+                        }, 0);
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+
+        $statistics = [];
+
+        for ($i = 1; $i <= $date; $i++) {
+                $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
+
+                $transactions = $data->filter(function ($transaction) use ($dateString) {
+                    return $transaction->tanggal == $dateString;
+                });
+
+                $total_tonase = 0; // reset total tonase for each vehicle
+
+                if ($transactions->isEmpty()) {
+                    $statistics['data'][] = [
+                        'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
+                        'tanggal' => $i."-".$bulan."-".$tahun,
+                        'km' => '-',
+                        'rute' => '-',
+                        'tonase' => '-',
+                    ];
+                } else {
+                    $rutes = [];
+                    $tonases = [];
+                    $km = [];
+
+                    foreach ($transactions as $transaction) {
+                        $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
+                        $jarak = $transaction->jarak ?? 0;
+
+                        if ($jarak > 50) {
+                            // $statistics[$v->nomor_lambung]['long_route_count']++;
+                        } else if ($jarak > 0 && $jarak <= 50) {
+                            // $statistics[$v->nomor_lambung]['short_route_count']++;
+                        }
+
+                        $tonase = $transaction->timbangan_bongkar ?? 0;
+                        $total_tonase += $tonase; // add tonase to total
+
+                        $rutes[] = $rute;
+                        $tonases[] = $tonase;
+                        $km[] = $jarak;
+                    }
+
+                    $statistics['data'][] = [
+                        'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
+                        'tanggal' => $i."-".$bulan."-".$tahun,
+                        'km' => implode(",", $km),
+                        'rute' => implode(",", $rutes),
+                        'tonase' => implode(",", $tonases),
+                    ];
+
+
+                $statistics['total_tonase'] = $total_tonase; // store total tonase for each vehicle
+            }
+        }
+
+        // dd($statistics['data']);
+
+
+        return view('rekap.statistik.upah-gendong.index', [
+            'statistics' => $statistics,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'bulan_angka' => $bulan,
+            'vehicle' => $vehicle,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'dataTahun' => $dataTahun,
+            'grand_total_tonase' => $grand_total_tonase,
+        ]);
+
     }
 
     public function perform_unit_tahunan(Request $request)
