@@ -17,7 +17,7 @@
                     <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
                     <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
-                                    width="30"> STATISTIK</a></td>
+                                width="30"> STATISTIK</a></td>
                     <td>
 
                     </td>
@@ -25,7 +25,8 @@
             </table>
         </div>
         <div class="col-md-6">
-            <form action="{{route('statistik.perform-unit')}}" method="get">
+            <form action="{{route('statistik.upah-gendong')}}" method="get">
+                <input type="hidden" name="vehicle_id" value="{{$vehicle}}">
                 <div class="row">
                     <div class="col-md-4 my-3">
                         <select class="form-select" name="bulan" id="bulan">
@@ -46,7 +47,8 @@
                     <div class="col-md-4 my-3">
                         <select class="form-select" name="tahun" id="tahun">
                             @foreach ($dataTahun as $d)
-                            <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
+                            <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}
+                            </option>
                             @endforeach
                         </select>
                     </div>
@@ -66,22 +68,95 @@
                     <th class="text-center align-middle">Tanggal</th>
                     <th class="text-center align-middle">Rute</th>
                     <th class="text-center align-middle">KM</th>
+                    <th class="text-center align-middle">Tonase < 50 KM</th>
+                    <th class="text-center align-middle">Tonase > 50 KM</th>
                     <th class="text-center align-middle">Kelebihan Tonase</th>
+                    <th class="text-center align-middle">Total Upah Gendong</th>
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $total = 0;
+                    $total_under_50 = 0;
+                    $total_over_50 = 0;
+                    $total_kelebihan_tonase = 0;
+                @endphp
                 @foreach ($data as $d)
+                @php
+                    $kelebihan_tonase = 0;
+                    $upah_gendong = 0;
+                @endphp
                 <tr>
                     <td class="text-center">{{$d->kas_uang_jalan->hari}}</td>
                     <td class="text-center">{{$d->kas_uang_jalan->id_tanggal}}</td>
                     <td class="text-center">{{$d->kas_uang_jalan->rute->nama}}</td>
                     <td class="text-center">{{$d->kas_uang_jalan->rute->jarak}}</td>
-                    <td class="text-center"></td>
+                    <td class="text-center">
+                        @if ($d->kas_uang_jalan->rute->jarak < 50)
+                            @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
+                                {{$d->tonase}}
+                                @php
+                                    $total_under_50 += $d->tonase;
+                                @endphp
+                            @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
+                                {{$d->timbangan_bongkar}}
+                                @php
+                                    $total_under_50 += $d->timbangan_bongkar;
+                                @endphp
+                            @endif
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @if ($d->kas_uang_jalan->rute->jarak > 50)
+                            @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
+                                {{$d->tonase}}
+                                @php
+                                    $total_over_50 += $d->tonase;
+                                    $kelebihan_tonase = $d->tonase - 30;
+                                @endphp
+                            @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
+                                {{$d->timbangan_bongkar}}
+                                @php
+                                    $total_over_50 += $d->timbangan_bongkar;
+                                    $kelebihan_tonase = $d->timbangan_bongkar - 30;
+                                @endphp
+                            @endif
+                        @else
+                            -
+                    @endif
+                    </td>
+                    <td class="text-center">
+                        @if ($kelebihan_tonase < 0)
+                        0
+                        @else
+                        {{$kelebihan_tonase}}
+                        @php
+                            $upah_gendong = $kelebihan_tonase * $ug->nominal;
+                            $total += $upah_gendong;
+                            $total_kelebihan_tonase += $kelebihan_tonase;
+                        @endphp
+                        @endif
+
+                    </td>
+                    <td class="text-center">
+
+                        {{number_format($upah_gendong, 0, ',', '.')}}
+
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
-
+                <tr>
+                    <th class="text-center align-middle" colspan="3">Grand Total</th>
+                    <th class="text-center align-middle">{{$data->sum('jarak')}}</th>
+                    <th class="text-center align-middle">{{$total_under_50}}</th>
+                    <th class="text-center align-middle">{{$total_over_50}}</th>
+                    <th class="text-center align-middle">{{$total_kelebihan_tonase}}</th>
+                    <th class="text-center align-middle">{{number_format($total, 0, ',','.')}}</th>
+                </tr>
             </tfoot>
         </table>
     </div>

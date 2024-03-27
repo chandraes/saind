@@ -45,7 +45,7 @@ class StatistikController extends Controller
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute'])
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
                             ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
                             ->join('rutes as r', 'r.id', 'kuj.rute_id')
