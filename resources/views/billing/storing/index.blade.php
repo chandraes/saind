@@ -137,10 +137,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#jasa').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+            var jasa = new Cleave('#jasa', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
         });
 
