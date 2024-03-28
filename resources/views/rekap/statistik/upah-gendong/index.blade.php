@@ -59,7 +59,82 @@
             </form>
         </div>
     </div>
-
+    <div class="row mt-2">
+        <div class="col-md-6 d-flex justify-content-start">
+            <table>
+                <tr>
+                    <td>
+                        <h5>Nomor Lambung</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>SAI{{$ug->vehicle->nomor_lambung}}</h5>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <h5>Nama Driver</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{$ug->nama_driver}}</h5>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <h5>Pengurus</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{$ug->nama_pengurus}}</h5>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-6 d-flex justify-content-end">
+            <table>
+                <tr>
+                    <td>
+                        <h5>Nama Rekening</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>SAI{{$ug->nama_rek}}</h5>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <h5>Nomor Rekening</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{$ug->no_rek}}</h5>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <h5>Bank</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{$ug->bank}}</h5>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
     <div class="table-responsive">
         <table class="table table-bordered table-hover table-responsive" id="rekapTable">
             <thead class="table-success">
