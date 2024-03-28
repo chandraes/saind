@@ -4,7 +4,7 @@
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
             <h1><u>STATISTIK UPAH GENDONG</u></h1>
-            <h1>{{$nama_bulan}} {{$tahun}}</h1>
+            {{-- <h1>{{$nama_bulan}} {{$tahun}}</h1> --}}
         </div>
     </div>
     @include('swal')
@@ -58,6 +58,26 @@
                 </div>
             </form>
         </div>
+
+        <form action="{{route('statistik.upah-gendong')}}" method="get">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <input type="hidden" name="vehicle_id" value="{{$vehicle}}">
+                        <label for="start_date" class="form-label">Range Tanggal</label>
+                        <input type="text" class="form-control" name="tanggal_filter" id="tanggal_filter"
+                            value="{{$tanggal_filter}}" readonly>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="" class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary form-control">Filter Range Tanggal</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
     </div>
     <div class="row mt-2">
         <div class="col-md-6 d-flex justify-content-start">
@@ -151,15 +171,15 @@
             </thead>
             <tbody>
                 @php
-                    $total = 0;
-                    $total_under_50 = 0;
-                    $total_over_50 = 0;
-                    $total_kelebihan_tonase = 0;
+                $total = 0;
+                $total_under_50 = 0;
+                $total_over_50 = 0;
+                $total_kelebihan_tonase = 0;
                 @endphp
                 @foreach ($data as $d)
                 @php
-                    $kelebihan_tonase = 0;
-                    $upah_gendong = 0;
+                $kelebihan_tonase = 0;
+                $upah_gendong = 0;
                 @endphp
                 <tr>
                     <td class="text-center">{{$d->kas_uang_jalan->hari}}</td>
@@ -167,55 +187,50 @@
                     <td class="text-center">{{$d->kas_uang_jalan->rute->nama}}</td>
                     <td class="text-center">{{$d->kas_uang_jalan->rute->jarak}}</td>
                     <td class="text-center">
-                        @if ($d->kas_uang_jalan->rute->jarak < 50)
-                            @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
-                                {{$d->tonase}}
-                                @php
-                                    $total_under_50 += $d->tonase;
-                                @endphp
+                        @if ($d->kas_uang_jalan->rute->jarak < 50) @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
+                            {{$d->tonase}}
+                            @php
+                            $total_under_50 += $d->tonase;
+                            @endphp
                             @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
-                                {{$d->timbangan_bongkar}}
-                                @php
-                                    $total_under_50 += $d->timbangan_bongkar;
-                                @endphp
+                            {{$d->timbangan_bongkar}}
+                            @php
+                            $total_under_50 += $d->timbangan_bongkar;
+                            @endphp
                             @endif
-                        @else
+                            @else
                             -
-                        @endif
+                            @endif
                     </td>
                     <td class="text-center">
                         @if ($d->kas_uang_jalan->rute->jarak > 50)
-                            @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
-                                {{$d->tonase}}
-                                @php
-                                    $total_over_50 += $d->tonase;
-                                    $kelebihan_tonase = $d->tonase - 30;
-                                @endphp
-                            @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
-                                {{$d->timbangan_bongkar}}
-                                @php
-                                    $total_over_50 += $d->timbangan_bongkar;
-                                    $kelebihan_tonase = $d->timbangan_bongkar - 30;
-                                @endphp
-                            @endif
-                        @else
-                            -
-                    @endif
-                    </td>
-                    <td class="text-center">
-                        @if ($kelebihan_tonase < 0)
-                        0
-                        @else
-                        {{$kelebihan_tonase}}
+                        @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
+                        {{$d->tonase}}
                         @php
-                            $upah_gendong = $kelebihan_tonase * $ug->nominal;
-                            $total += $upah_gendong;
-                            $total_kelebihan_tonase += $kelebihan_tonase;
+                        $total_over_50 += $d->tonase;
+                        $kelebihan_tonase = $d->tonase - 30;
+                        @endphp
+                        @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
+                        {{$d->timbangan_bongkar}}
+                        @php
+                        $total_over_50 += $d->timbangan_bongkar;
+                        $kelebihan_tonase = $d->timbangan_bongkar - 30;
                         @endphp
                         @endif
-
+                        @else
+                        -
+                        @endif
                     </td>
                     <td class="text-center">
+                        @if ($kelebihan_tonase < 0) 0 @else {{$kelebihan_tonase}} @php $upah_gendong=$kelebihan_tonase *
+                            $ug->nominal;
+                            $total += $upah_gendong;
+                            $total_kelebihan_tonase += $kelebihan_tonase;
+                            @endphp
+                            @endif
+
+                    </td>
+                    <td class="text-end align-middle">
 
                         {{number_format($upah_gendong, 0, ',', '.')}}
 
@@ -230,7 +245,7 @@
                     <th class="text-center align-middle">{{$total_under_50}}</th>
                     <th class="text-center align-middle">{{$total_over_50}}</th>
                     <th class="text-center align-middle">{{$total_kelebihan_tonase}}</th>
-                    <th class="text-center align-middle">{{number_format($total, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($total, 0, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>
@@ -239,16 +254,22 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
 @endpush
 @push('js')
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script>
     $(document).ready(function(){
             $('#nominal_transaksi').maskMoney({
                 thousands: '.',
                 decimal: ',',
                 precision: 0
+            });
+            flatpickr("#tanggal_filter", {
+                mode: "range",
+                dateFormat: "d-m-Y",
             });
             $('#rekapTable').DataTable({
                 "searching": false,

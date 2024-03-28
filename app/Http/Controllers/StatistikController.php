@@ -29,6 +29,7 @@ class StatistikController extends Controller
         $vehicle = $request->vehicle_id;
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
+        $tanggal_filter = $request->tanggal_filter ?? null;
 
         $check = Vehicle::where('id', $vehicle)->first();
 
@@ -45,16 +46,52 @@ class StatistikController extends Controller
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
-                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->where('kuj.vehicle_id', $vehicle)
-                            ->get();
+
+        if ($tanggal_filter != null) {
+            if (strpos($tanggal_filter, 'to') !== false) {
+                // $tanggalFilter is a date range
+                $dates = explode('to', $tanggal_filter);
+                $startDate = Carbon::createFromFormat('d-m-Y', trim($dates[0]))->startOfDay();
+                $endDate = Carbon::createFromFormat('d-m-Y', trim($dates[1]))->endOfDay();
+
+                // dd($startDate, $endDate, $filter, $tanggalFilter);
+                $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                                ->where('transaksis.void', 0)
+                                ->where('kuj.vehicle_id', $vehicle)
+                                ->whereBetween('tanggal', [$startDate, $endDate])
+                                ->get();
+
+            } else {
+                // $tanggalFilter is a single date
+                $date = Carbon::createFromFormat('d-m-Y', trim($tanggal_filter));
+                $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                                ->where('transaksis.void', 0)
+                                ->where('kuj.vehicle_id', $vehicle)
+                                ->where('tanggal', '>=', $date)
+                                ->get();
+
+            }
+        } else{
+            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
+                        ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                        ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                        ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                        ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                        ->whereMonth('tanggal', $bulan)
+                        ->whereYear('tanggal', $tahun)
+                        ->where('transaksis.void', 0)
+                        ->where('kuj.vehicle_id', $vehicle)
+                        ->get();
+        }
+
 
         // dd($data);
         $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
@@ -68,71 +105,6 @@ class StatistikController extends Controller
                             ->get();
 
 
-        // $statistics = [];
-
-        // for ($i = 1; $i <= $date; $i++) {
-        //         $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
-
-        //         $transactions = $data->filter(function ($transaction) use ($dateString) {
-        //             return $transaction->tanggal == $dateString;
-        //         });
-
-        //         $total_tonase = 0; // reset total tonase for each vehicle
-
-        //         if ($transactions->isEmpty()) {
-        //             $statistics['data'][] = [
-        //                 'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
-        //                 'tanggal' => $i."-".$bulan."-".$tahun,
-        //                 'km' => '-',
-        //                 'rute' => '-',
-        //                 'tonase' => '-',
-        //                 'kelebihan_tonase' => '-',
-        //             ];
-        //         } else {
-        //             $rutes = [];
-        //             $tonases = [];
-        //             $kelebihan = [];
-        //             $km = [];
-
-        //             foreach ($transactions as $transaction) {
-        //                 $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
-        //                 $jarak = $transaction->jarak ?? 0;
-
-
-        //                 // if ($jarak > 50) {
-        //                 //     // $statistics[$v->nomor_lambung]['long_route_count']++;
-        //                 // } else if ($jarak > 0 && $jarak <= 50) {
-        //                 //     // $statistics[$v->nomor_lambung]['short_route_count']++;
-        //                 // }
-
-        //                 $tonase = $transaction->timbangan_bongkar ?? 0;
-
-        //                 $kelebihan_tonase =  $tonase - 30;
-        //                 $total_tonase += $tonase; // add tonase to total
-
-        //                 $rutes[] = $rute;
-        //                 $tonases[] = $tonase;
-        //                 $km[] = $jarak;
-        //                 $kelebihan[] = $kelebihan_tonase;
-        //             }
-
-        //             $statistics['data'][] = [
-        //                 'hari' =>  Carbon::createFromDate($tahun, $bulan, $i)->locale('id')->isoFormat('dddd'),
-        //                 'tanggal' => $i."-".$bulan."-".$tahun,
-        //                 'km' => implode(",", $km),
-        //                 'rute' => implode(",", $rutes),
-        //                 'tonase' => implode(",", $tonases),
-        //                 'kelebihan_tonase' => implode(",", $kelebihan),
-        //             ];
-
-
-        //         $statistics['total_tonase'] = $total_tonase; // store total tonase for each vehicle
-        //     }
-        // }
-
-        // dd($statistics['data']);
-
-
         return view('rekap.statistik.upah-gendong.index', [
             'data' => $data,
             'ug'    => $ug,
@@ -142,6 +114,7 @@ class StatistikController extends Controller
             'vehicle' => $vehicle,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
+            'tanggal_filter' => $tanggal_filter,
             'dataTahun' => $dataTahun,
             'grand_total_tonase' => $grand_total_tonase,
         ]);
