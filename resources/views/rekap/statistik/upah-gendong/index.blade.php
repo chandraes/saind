@@ -187,36 +187,22 @@
                     <td class="text-center">{{$d->kas_uang_jalan->rute->nama}}</td>
                     <td class="text-center">{{$d->kas_uang_jalan->rute->jarak}}</td>
                     <td class="text-center">
-                        @if ($d->kas_uang_jalan->rute->jarak < 50) @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
-                            {{$d->tonase}}
-                            @php
-                            $total_under_50 += $d->tonase;
-                            @endphp
-                            @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
-                            {{$d->timbangan_bongkar}}
+                        @if ($d->kas_uang_jalan->rute->jarak < 50) {{$d->timbangan_bongkar}}
                             @php
                             $total_under_50 += $d->timbangan_bongkar;
                             @endphp
-                            @endif
                             @else
                             -
                             @endif
                     </td>
                     <td class="text-center">
                         @if ($d->kas_uang_jalan->rute->jarak > 50)
-                        @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
-                        {{$d->tonase}}
-                        @php
-                        $total_over_50 += $d->tonase;
-                        $kelebihan_tonase = $d->tonase - 30;
-                        @endphp
-                        @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
                         {{$d->timbangan_bongkar}}
                         @php
                         $total_over_50 += $d->timbangan_bongkar;
                         $kelebihan_tonase = $d->timbangan_bongkar - 30;
                         @endphp
-                        @endif
+
                         @else
                         -
                         @endif
