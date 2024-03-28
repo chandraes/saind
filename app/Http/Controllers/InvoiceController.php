@@ -127,7 +127,7 @@ class InvoiceController extends Controller
             }
 
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                "*Invoice Tagihan*\n".
+                "*Pembayaran Invoice*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                  "Tambang : ".$invoice->customer->singkatan."\n".
                 "Periode : ".$invoice->no_invoice."\n\n".
@@ -205,7 +205,7 @@ class InvoiceController extends Controller
             $store = KasBesar::create($data);
 
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                "*Invoice Tagihan Cicil*\n".
+                "*Cicilan Invoice*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
                  "Tambang : ".$invoice->customer->singkatan."\n".
                 "Periode : ".$invoice->periode."\n\n".
