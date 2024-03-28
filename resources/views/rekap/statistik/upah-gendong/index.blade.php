@@ -107,7 +107,7 @@
                         <h5>:</h5>
                     </td>
                     <td>
-                        <h5>SAI{{$ug->nama_rek}}</h5>
+                        <h5>{{$ug->nama_rek}}</h5>
                     </td>
                 </tr>
                 <tr>
