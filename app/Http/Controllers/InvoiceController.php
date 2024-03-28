@@ -14,6 +14,7 @@ use App\Models\Vendor;
 use App\Models\KasVendor;
 use App\Models\Rekening;
 use App\Models\GroupWa;
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -128,6 +129,10 @@ class InvoiceController extends Controller
                 $invoiceSisaString = '0';
             }
 
+            $t = new Transaksi();
+
+            $totalNotaTagihan = $t->sumNotaTagihan($invoice->customer_id);
+
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*PEMBAYARAN INVOICE*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -144,6 +149,7 @@ class InvoiceController extends Controller
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                 "Tagihan : \n".
+                "Rp. ".number_format($totalNotaTagihan, 0, ',', '.')."\n\n".
                 "Invoice : \n".
                 $invoiceSisaString."\n".
                 "Terima kasih 🙏🙏🙏\n";

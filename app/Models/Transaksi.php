@@ -154,6 +154,14 @@ class Transaksi extends Model
                     ->count();
     }
 
+    public function sumNotaTagihan($customerId)
+    {
+        return self::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                    ->where('kuj.customer_id', $customerId)
+                    ->where('transaksis.status', 3)->where('transaksis.tagihan', 0)->where('transaksis.void', 0)
+                    ->sum('nominal_tagihan');
+    }
+
     public function changeStateNotaFisik($id)
     {
         $transaksi = self::findOrFail($id);
