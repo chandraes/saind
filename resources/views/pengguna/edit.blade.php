@@ -29,6 +29,7 @@
                                     <option value="admin" {{$d->role == 'admin' ? 'selected' : ''}}>Admin</option>
                                     <option value="vendor" {{$d->role == 'vendor' ? 'selected' : ''}}>Vendor</option>
                                     <option value="user" {{$d->role == 'user' ? 'selected' : ''}}>User</option>
+                                    <option value="operasional" {{$d->role == 'operasional' ? 'selected' : ''}}>Operasional</option>
                                 </select>
                             </div>
                             <div class="col-md-12 mt-3" id="divVendor-{{$d->id}}">

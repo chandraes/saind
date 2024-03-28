@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InvoiceTagihan;
 use App\Models\Transaksi;
+use App\Models\UpahGendong;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 
@@ -39,10 +40,11 @@ class HomeController extends Controller
             ]);
 
         }
-        
+
         if ($user->role == 'operasional') {
             $db = Vendor::all();
-            return view('home', ['vendor' => $db]);
+            $ug = UpahGendong::all();
+            return view('home', ['vendor' => $db, 'ug' => $ug]);
         }
 
         return view('home');

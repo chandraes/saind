@@ -405,6 +405,8 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('perform-unit', [App\Http\Controllers\OperasionalController::class, 'perform_unit'])->name('operasional.perform-unit');
             Route::get('perform-unit/print', [App\Http\Controllers\OperasionalController::class, 'perform_unit_print'])->name('operasional.perform-unit.print');
 
+            Route::get('upah-gendong', [App\Http\Controllers\OperasionalController::class, 'upah_gendong'])->name('operasional.upah-gendong');
+
             // Route::get('statistik-vendor', [App\Http\Controllers\OperasionalController::class, 'statistik_vendor'])->name('operasional.statistik-vendor');
         });
     });
