@@ -33,7 +33,7 @@
                 <th class="text-center align-middle">Nominal Upah Gendong</th>
                 <th class="text-center align-middle">NOLAM</th>
                 <th class="text-center align-middle">Nama Driver</th>
-                <th class="text-center align-middle">Nomor Pengurus</th>
+                <th class="text-center align-middle">Pengurus</th>
                 <th class="text-center align-middle">Bank</th>
                 <th class="text-center align-middle">Nama Rekening</th>
                 <th class="text-center align-middle">Nomor Rekening</th>
