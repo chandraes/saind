@@ -18,10 +18,12 @@ class DatabaseController extends Controller
         $data = UpahGendong::all();
         $vehicleId = $data->pluck('vehicle_id')->toArray();
         $vehicles = Vehicle::whereNot('status', 'nonaktif')->whereNotIn('id', $vehicleId)->get();
+        $editVehicles = Vehicle::whereNot('status', 'nonaktif')->get();
 
         return view('database.upah-gendong.index', [
             'data' => $data,
             'vehicles' => $vehicles,
+            'editVehicles' => $editVehicles,
         ]);
     }
 
@@ -30,6 +32,7 @@ class DatabaseController extends Controller
         $data = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'nominal' => 'required',
+            'tonase_min' => 'required|integer', // Add this line
             'nama_driver' => 'required',
             'nama_pengurus' => 'required',
             'no_rek' => 'required',
@@ -46,9 +49,12 @@ class DatabaseController extends Controller
 
     public function upah_gendong_update(UpahGendong $ug, Request $request)
     {
+
+        // dd($request->all());
         $data = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'nominal' => 'required',
+            'tonase_min' => 'required', // Add this line
             'nama_driver' => 'required',
             'nama_pengurus' => 'required',
             'no_rek' => 'required',

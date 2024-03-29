@@ -17,12 +17,12 @@
                             <label for="vehicle_id" class="form-label">Vehicle</label>
                             <select class="form-select" name="vehicle_id" id="edit_vehicle_id">
                                 <option value="">-- PILIH NOMOR LAMBUNG --</option>
-                                @foreach ($vehicles as $vehicle)
+                                @foreach ($editVehicles as $vehicle)
                                 <option value="{{$vehicle->id}}">{{$vehicle->nomor_lambung}}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="nominal" class="form-label">Nominal</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
@@ -30,6 +30,17 @@
                             is-invalid
                         @endif" name="nominal" id="edit_nominal" required value="{{old('nominal')}}">
                             </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="tonase_min" class="form-label">Minimal Tonase</label>
+                            <div class="input-group mb-3">
+
+                                <input type="text" class="form-control @if ($errors->has('tonase_min'))
+                                is-invalid
+                            @endif" name="tonase_min" id="edit_tonase_min" required value="{{old('tonase_min')}}">
+                                <span class="input-group-text" id="basic-addon1">Ton</span>
+                              </div>
+                              <small id="helpId" class="form-text text-danger">Gunakan "." untuk bilangan desimal</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="nama_driver" class="form-label">Nama Driver</label>

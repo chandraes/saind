@@ -24,6 +24,17 @@
         </div>
     </div>
 </div>
+@if ($errors->any())
+<div class="container">
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+            <li>{{$error}}</li>
+            @endforeach
+        </ul>
+    </div>
+</div>
+@endif
 @include('database.upah-gendong.edit')
 <div class="container mt-5 table-responsive ">
     <table class="table table-hover table-bordered" id="karyawan-data">
@@ -31,6 +42,7 @@
             <tr>
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Nominal Upah Gendong</th>
+                <th class="text-center align-middle">Minimal Tonase</th>
                 <th class="text-center align-middle">NOLAM</th>
                 <th class="text-center align-middle">Nama Driver</th>
                 <th class="text-center align-middle">Pengurus</th>
@@ -45,6 +57,7 @@
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-end align-middle">Rp. {{number_format($d->nominal,0,',','.')}}</td>
+                <td class="text-center align-middle">{{$d->tonase_min}}</td>
                 <td class="text-center align-middle">
                     {{$d->vehicle->nomor_lambung}}
                 </td>
@@ -103,9 +116,10 @@
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script>
       function editUg(data, id) {
-            document.getElementById('edit_vehicle_id').value = data.vehicle_id;
+            $('#edit_vehicle_id').val(data.vehicle_id).trigger('change');
             document.getElementById('edit_nama_driver').value = data.nama_driver;
             document.getElementById('edit_nominal').value = data.nf_nominal;
+            document.getElementById('edit_tonase_min').value = data.tonase_min;
             document.getElementById('edit_nama_pengurus').value = data.nama_pengurus;
             document.getElementById('edit_nama_rek').value = data.nama_rek;
             document.getElementById('edit_no_rek').value = data.no_rek;
