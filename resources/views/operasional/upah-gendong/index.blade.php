@@ -193,7 +193,7 @@
                         {{$d->timbangan_bongkar}}
                         @php
                         $total_over_50 += $d->timbangan_bongkar;
-                        $kelebihan_tonase = $d->timbangan_bongkar - 30;
+                        $kelebihan_tonase = $d->timbangan_bongkar - $ug->tonase_min;
                         @endphp
 
                         @else
