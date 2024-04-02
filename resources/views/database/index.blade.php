@@ -57,7 +57,7 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-3 mb-3">
-            <a href="{{route('vehicle.index')}}" class="text-decoration-none">
+            <a href="{{route('database.aktivasi-maintenance')}}" class="text-decoration-none">
                 <img src="{{asset('images/aktivasi-maintenance.svg')}}" alt="" width="80">
                 <h3 class="mt-2">Aktivasi Maintenance Vehicle</h3>
             </a>

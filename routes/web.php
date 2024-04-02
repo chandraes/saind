@@ -140,6 +140,12 @@ Route::group(['middleware' => ['auth']], function() {
         Route::patch('database/kategori-barang-update/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_update'])->name('database.kategori-barang-update');
 
         Route::prefix('database')->group(function(){
+            Route::prefix('aktivasi-maintenance')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance'])->name('database.aktivasi-maintenance');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_store'])->name('database.aktivasi-maintenance.store');
+                Route::patch('/update/{am}', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_update'])->name('database.aktivasi-maintenance.update');
+                Route::delete('/destroy/{am}', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_destroy'])->name('database.aktivasi-maintenance.destroy');
+            });
             Route::prefix('barang-maintenance')->group(function(){
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance'])->name('database.barang-maintenance');
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_store'])->name('database.barang-maintenance.store');
