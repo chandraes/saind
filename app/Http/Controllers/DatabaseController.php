@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BarangMaintenance;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -74,6 +75,54 @@ class DatabaseController extends Controller
         $ug->delete();
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil dihapus');
+    }
+
+    public function barang_maintenance()
+    {
+        $data = BarangMaintenance::all();
+
+        return view('database.barang-maintenance.index', [
+            'data' => $data,
+        ]);
+    }
+
+    public function barang_maintenance_store(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required',
+            'harga_jual' => 'required',
+        ]);
+
+        $data['harga_jual'] = str_replace('.', '', $data['harga_jual']);
+
+        BarangMaintenance::create($data);
+
+        return redirect()->route('database.barang-maintenance')->with('success', 'Data berhasil ditambahkan');
+    }
+
+    public function barang_maintenance_update(Request $request, BarangMaintenance $bm)
+    {
+        $data = $request->validate([
+            'nama' => 'required',
+            'harga_jual' => 'required',
+        ]);
+
+        $data['harga_jual'] = str_replace('.', '', $data['harga_jual']);
+
+        $bm->update($data);
+
+        return redirect()->route('database.barang-maintenance')->with('success', 'Data berhasil diubah');
+    }
+
+    public function barang_maintenance_destroy(BarangMaintenance $bm)
+    {
+        if($bm->stok > 0) {
+            return redirect()->route('database.barang-maintenance')->with('error', 'Data tidak bisa dihapus karena masih ada stok');
+        }
+
+        $bm->delete();
+
+        return redirect()->route('database.barang-maintenance')->with('success', 'Data berhasil dihapus');
     }
 
 }

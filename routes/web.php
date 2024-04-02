@@ -139,6 +139,15 @@ Route::group(['middleware' => ['auth']], function() {
         Route::delete('database/kategori-barang-destroy/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_destroy'])->name('database.kategori-barang-destroy');
         Route::patch('database/kategori-barang-update/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_update'])->name('database.kategori-barang-update');
 
+        Route::prefix('database')->group(function(){
+            Route::prefix('barang-maintenance')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance'])->name('database.barang-maintenance');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_store'])->name('database.barang-maintenance.store');
+                Route::patch('/update/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_update'])->name('database.barang-maintenance.update');
+                Route::delete('/destroy/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_destroy'])->name('database.barang-maintenance.destroy');
+            });
+        });
+
         Route::resource('barang', App\Http\Controllers\BarangController::class)->only([
             'store','update','destroy'
         ]);

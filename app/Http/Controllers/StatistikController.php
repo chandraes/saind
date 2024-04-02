@@ -1113,8 +1113,19 @@ class StatistikController extends Controller
         $statistics = [];
 
         foreach ($customers as $c) {
-            $nominal_tagihan = $sum_nominal_tagihan[$c->id]->total_nominal_tagihan ?? 0;
-            $sisa_tagihan = $sum_sisa_tagihan[$c->id]->total_sisa_tagihan ?? 0;
+            $ppn = 0;
+            $pph = 0;
+
+            $total_nominal_tagihan = $sum_nominal_tagihan[$c->id]->total_nominal_tagihan ?? 0;
+            $total_sisa_tagihan = $sum_sisa_tagihan[$c->id]->total_sisa_tagihan ?? 0;
+
+            if ($total_nominal_tagihan && $c->ppn == 1) {
+                $ppn = $total_nominal_tagihan * 0.11;
+                $pph = $total_nominal_tagihan * 0.02;
+            }
+
+            $nominal_tagihan = $total_nominal_tagihan + $ppn - $pph;
+            $sisa_tagihan = $total_sisa_tagihan;
 
             $statistics[$c->singkatan] = [
                 'customer' => $c,
