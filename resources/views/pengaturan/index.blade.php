@@ -22,20 +22,20 @@ $password = \App\Models\PasswordKonfirmasi::first();
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('pengguna.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/worker.svg')}}" alt="" width="100">
-                <h2>Pengguna</h2>
+                <img src="{{asset('images/worker.svg')}}" alt="" width="80">
+                <h4 class="mt-3">Pengguna</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('pengaturan.wa')}}" class="text-decoration-none">
-                <img src="{{asset('images/wa.svg')}}" alt="" width="100">
-                <h2>Whatsapp</h2>
+                <img src="{{asset('images/wa.svg')}}" alt="" width="80">
+                <h4 class="mt-3">Whatsapp</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#passwordKonfirmasi">
-                <img src="{{asset('images/password.svg')}}" alt="" width="100">
-                <h2>Password Konfirmasi</h2>
+                <img src="{{asset('images/password.svg')}}" alt="" width="80">
+                <h4 class="mt-3">Password Konfirmasi</h4>
             </a>
             <div class="modal fade" id="passwordKonfirmasi" tabindex="-1" data-bs-backdrop="static"
                 data-bs-keyboard="false" role="dialog" aria-labelledby="pkTitle" aria-hidden="true">
@@ -71,15 +71,15 @@ $password = \App\Models\PasswordKonfirmasi::first();
     </div>
     <div class="col-md-3 text-center mb-5">
         <a href="{{route('pengaturan.nota-transaksi')}}" class="text-decoration-none">
-            <img src="{{asset('images/konfigurasi.svg')}}" alt="" width="100">
-            <h2>Konfigurasi Nota Transaksi</h2>
+            <img src="{{asset('images/konfigurasi.svg')}}" alt="" width="80">
+            <h4 class="mt-3">Konfigurasi Nota Transaksi</h4>
         </a>
     </div>
     @endif
     <div class="col-md-3 text-center">
         <a href="{{route('home')}}" class="text-decoration-none">
-            <img src="{{asset('images/dashboard.svg')}}" alt="" width="100">
-            <h2>Dashboard</h2>
+            <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
+            <h4 class="mt-3">Dashboard</h4>
         </a>
     </div>
 </div>
