@@ -9,7 +9,7 @@
     {{-- if session has success, trigger sweet alert --}}
     @include('swal')
     <div class="row justify-content-left">
-        <h4>KAS BESAR</h3>
+        <h4 class="mt-3">KAS BESAR</h3>
         <div class="col-md-2 text-center mt-5">
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="formKasBesar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -34,14 +34,14 @@
             </div>
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasBesar">
                 <img src="{{asset('images/kas-besar.svg')}}" alt="" width="80">
-                <h4>FORM DEPOSIT</h3>
+                <h4 class="mt-3">FORM DEPOSIT</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <!-- Modal trigger button -->
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasKecil">
                 <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="80">
-                <h4>FORM KAS KECIL</h3>
+                <h4 class="mt-3">FORM KAS KECIL</h3>
             </a>
             <!-- Modal Body -->
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
@@ -69,13 +69,13 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.deviden.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/dividen.svg')}}" alt="" width="80">
-                <h4>FORM DEVIDEN</h3>
+                <h4 class="mt-3">FORM DEVIDEN</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formVendor">
                 <img src="{{asset('images/form-vendor.svg')}}" alt="" width="80">
-                <h4>FORM VENDOR</h3>
+                <h4 class="mt-3">FORM VENDOR</h3>
             </a>
 
         </div>
@@ -104,11 +104,11 @@
     <hr>
     <br>
     <div class="row justify-content-left">
-        <h4>TRANSAKSI</h3>
+        <h4 class="mt-3">TRANSAKSI</h3>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#uangJalan">
                 <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="80">
-                <h4>FORM KAS UANG JALAN</h3>
+                <h4 class="mt-3">FORM KAS UANG JALAN</h3>
             </a>
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="uangJalan" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -134,19 +134,19 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.transaksi.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/transaction.svg')}}" alt="" width="80">
-                <h4>FORM TRANSAKSI</h3>
+                <h4 class="mt-3">FORM TRANSAKSI</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.storing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/storing.svg')}}" alt="" width="80">
-                <h4>FORM STORING BBM</h3>
+                <h4 class="mt-3">FORM STORING BBM</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
                 <img src="{{asset('images/barang.svg')}}" alt="" width="80">
-                <h4>FORM BARANG UMUM</h3>
+                <h4 class="mt-3">FORM BARANG UMUM</h3>
             </a>
             <div class="modal fade" id="formBarang" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
@@ -159,8 +159,8 @@
                         <div class="modal-body">
                             <select class="form-select form-select-lg" name="" id="formBarangSelect">
                                 <option value="masuk">Beli</option>
-                                <option value="keluar">Jual Vendor</option>
-                                <option value="">Jual Vendor</option>
+                                <option value="keluar">Jual ke Vendor</option>
+                                <option value="keluar-umum">Jual ke Umum</option>
                             </select>
                         </div>
                         <div class="modal-footer">
@@ -174,7 +174,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formMaintenance">
                 <img src="{{asset('images/form-maintenance.svg')}}" alt="" width="80">
-                <h4>FORM BARANG MAINTENANCE</h3>
+                <h4 class="mt-3">FORM BARANG MAINTENANCE</h3>
             </a>
             <div class="modal fade" id="formMaintenance" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
@@ -203,11 +203,11 @@
     <hr>
     <br>
     <div class="row justify-content-left">
-        <h4>STAFF</h3>
+        <h4 class="mt-3">STAFF</h3>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#direksiStaff">
                 <img src="{{asset('images/kasbon.svg')}}" alt="" width="80">
-                <h4>FORM KASBON</h3>
+                <h4 class="mt-3">FORM KASBON</h3>
             </a>
             <div class="modal fade" id="direksiStaff" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="direksiStafftitle" aria-hidden="true">
@@ -234,14 +234,14 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.gaji.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/gaji.svg')}}" alt="" width="80">
-                <h4>FORM GAJI</h3>
+                <h4 class="mt-3">FORM GAJI</h3>
             </a>
         </div>
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formLain">
                 <img src="{{asset('images/lain.svg')}}" alt="" width="80">
-                <h4>FORM LAIN-LAIN</h3>
+                <h4 class="mt-3">FORM LAIN-LAIN</h3>
             </a>
             <div class="modal fade" id="formLain" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
@@ -271,7 +271,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
-                <h4>Dashboard</h3>
+                <h4 class="mt-3">Dashboard</h3>
             </a>
         </div>
     </div>
