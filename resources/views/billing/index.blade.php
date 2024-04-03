@@ -9,7 +9,7 @@
     {{-- if session has success, trigger sweet alert --}}
     @include('swal')
     <div class="row justify-content-left">
-        <h2>KAS BESAR</h2>
+        <h4>KAS BESAR</h3>
         <div class="col-md-2 text-center mt-5">
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="formKasBesar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -33,15 +33,15 @@
                 </div>
             </div>
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasBesar">
-                <img src="{{asset('images/kas-besar.svg')}}" alt="" width="100">
-                <h2>FORM DEPOSIT</h2>
+                <img src="{{asset('images/kas-besar.svg')}}" alt="" width="80">
+                <h4>FORM DEPOSIT</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <!-- Modal trigger button -->
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasKecil">
-                <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="100">
-                <h2>FORM KAS KECIL</h2>
+                <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="80">
+                <h4>FORM KAS KECIL</h3>
             </a>
             <!-- Modal Body -->
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
@@ -68,14 +68,14 @@
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.deviden.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/dividen.svg')}}" alt="" width="100">
-                <h2>FORM DEVIDEN</h2>
+                <img src="{{asset('images/dividen.svg')}}" alt="" width="80">
+                <h4>FORM DEVIDEN</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formVendor">
-                <img src="{{asset('images/form-vendor.svg')}}" alt="" width="100">
-                <h2>FORM VENDOR</h2>
+                <img src="{{asset('images/form-vendor.svg')}}" alt="" width="80">
+                <h4>FORM VENDOR</h3>
             </a>
 
         </div>
@@ -104,11 +104,11 @@
     <hr>
     <br>
     <div class="row justify-content-left">
-        <h2>TRANSAKSI</h2>
+        <h4>TRANSAKSI</h3>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#uangJalan">
-                <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="100">
-                <h2>FORM KAS UANG JALAN</h2>
+                <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="80">
+                <h4>FORM KAS UANG JALAN</h3>
             </a>
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="uangJalan" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -133,20 +133,20 @@
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.transaksi.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/transaction.svg')}}" alt="" width="100">
-                <h2>FORM TRANSAKSI</h2>
+                <img src="{{asset('images/transaction.svg')}}" alt="" width="80">
+                <h4>FORM TRANSAKSI</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.storing.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/storing.svg')}}" alt="" width="100">
-                <h2>FORM STORING BBM</h2>
+                <img src="{{asset('images/storing.svg')}}" alt="" width="80">
+                <h4>FORM STORING BBM</h3>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
-                <img src="{{asset('images/barang.svg')}}" alt="" width="100">
-                <h2>FORM BARANG UMUM</h2>
+                <img src="{{asset('images/barang.svg')}}" alt="" width="80">
+                <h4>FORM BARANG UMUM</h3>
             </a>
             <div class="modal fade" id="formBarang" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
@@ -172,27 +172,28 @@
             </div>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
-                <img src="{{asset('images/barang.svg')}}" alt="" width="100">
-                <h2>FORM BARANG MAINTENANCE</h2>
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formMaintenance">
+                <img src="{{asset('images/form-maintenance.svg')}}" alt="" width="80">
+                <h4>FORM BARANG MAINTENANCE</h3>
             </a>
-            <div class="modal fade" id="formBarang" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+            <div class="modal fade" id="formMaintenance" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="fllTitle">Form Barang</h5>
+                            <h5 class="modal-title" id="fllTitle">Form Barang Maintenance</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <select class="form-select form-select-lg" name="" id="formBarangSelect">
+                            <select class="form-select form-select-lg" name="" id="fomrMaintenanceSelect">
                                 <option value="masuk">Beli</option>
-                                <option value="keluar">Jual</option>
+                                <option value="keluar">Jual ke Vendor</option>
+                                <option value="keluar-umum">Jual ke Umum</option>
                             </select>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            <button type="button" class="btn btn-primary" onclick="tipeFormBarang()">Lanjutkan</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeFormMaintenance()">Lanjutkan</button>
                         </div>
                     </div>
                 </div>
@@ -202,11 +203,11 @@
     <hr>
     <br>
     <div class="row justify-content-left">
-        <h2>STAFF</h2>
+        <h4>STAFF</h3>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#direksiStaff">
-                <img src="{{asset('images/kasbon.svg')}}" alt="" width="100">
-                <h2>FORM KASBON</h2>
+                <img src="{{asset('images/kasbon.svg')}}" alt="" width="80">
+                <h4>FORM KASBON</h3>
             </a>
             <div class="modal fade" id="direksiStaff" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="direksiStafftitle" aria-hidden="true">
@@ -232,15 +233,15 @@
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.gaji.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/gaji.svg')}}" alt="" width="100">
-                <h2>FORM GAJI</h2>
+                <img src="{{asset('images/gaji.svg')}}" alt="" width="80">
+                <h4>FORM GAJI</h3>
             </a>
         </div>
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formLain">
-                <img src="{{asset('images/lain.svg')}}" alt="" width="100">
-                <h2>FORM LAIN-LAIN</h2>
+                <img src="{{asset('images/lain.svg')}}" alt="" width="80">
+                <h4>FORM LAIN-LAIN</h3>
             </a>
             <div class="modal fade" id="formLain" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
@@ -269,8 +270,8 @@
 
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
-                <img src="{{asset('images/dashboard.svg')}}" alt="" width="100">
-                <h2>Dashboard</h2>
+                <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
+                <h4>Dashboard</h3>
             </a>
         </div>
     </div>
@@ -329,6 +330,18 @@
                 window.location.href = "{{route('billing.form-barang.beli')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('billing.form-barang.jual')}}";
+            }
+        }
+
+        function tipeFormMaintenance()
+        {
+            let val = document.getElementById('fomrMaintenanceSelect').value;
+            if (val === 'masuk') {
+                window.location.href = "{{route('billing.form-maintenance.beli')}}";
+            } else if (val === 'keluar') {
+                window.location.href = "{{route('billing.form-maintenance.jual-vendor')}}";
+            } else if (val === 'keluar-umum') {
+                window.location.href = "{{route('billing.form-maintenance.jual-umum')}}";
             }
         }
 

@@ -30,6 +30,16 @@ class KasBesar extends Model
         $this->attributes['tanggal'] = date('Y-m-d', strtotime($value));
     }
 
+    public function saldoTerakhir()
+    {
+        return $this->latest()->orderBy('id', 'desc')->first()->saldo ?? 0;
+    }
+
+    public function modalInvestorTerakhir()
+    {
+        return $this->latest()->orderBy('id', 'desc')->first()->modal_investor_terakhir ?? 0;
+    }
+
     public function insert_bypass($data)
     {
         $data['tanggal'] = date('Y-m-d');
@@ -47,6 +57,29 @@ class KasBesar extends Model
         $data['no_rekening'] = '-';
 
         $data['modal_investor_terakhir'] = $this->lastKasBesar()->modal_investor_terakhir;
+
+        $store = $this->create($data);
+
+        return $store;
+
+    }
+
+    public function keluarStore($data)
+    {
+        $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
+
+        if($data['nominal_transaksi'] > $this->saldoTerakhir()){
+            return [
+                'status' => 'error',
+                'message' => 'Saldo kas besar tidak cukup!',
+            ];
+        }
+
+        $data['tanggal'] = date('Y-m-d');
+        $data['jenis_transaksi_id'] = 2;
+        $data['saldo'] = $this->saldoTerakhir() - $data['nominal_transaksi'];
+        $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir();
 
         $store = $this->create($data);
 

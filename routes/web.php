@@ -220,6 +220,21 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('kas-uang-jalan/get-rute', [App\Http\Controllers\FormKasUangJalanController::class, 'get_rute'])->name('kas-uang-jalan.get-rute');
         Route::get('kas-uang-jalan/get-uang-jalan', [App\Http\Controllers\FormKasUangJalanController::class, 'get_uang_jalan'])->name('kas-uang-jalan.get-uang-jalan');
 
+        //Form maintenance
+        Route::prefix('billing')->group(function(){
+            Route::prefix('form-maintenance')->group(function(){
+                Route::get('/beli', [App\Http\Controllers\FormMaintenanceController::class, 'beli'])->name('billing.form-maintenance.beli');
+                Route::post('/barang-store', [App\Http\Controllers\FormMaintenanceController::class, 'beli_store'])->name('billing.form-maintenance.barang-store');
+                Route::post('/keranjang-store', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_store'])->name('billing.form-maintenance.keranjang-store');
+                Route::delete('/keranjang-destroy/{keranjang}', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_destroy'])->name('billing.form-maintenance.keranjang-destroy');
+                Route::get('/keranjang-empty', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_empty'])->name('billing.form-maintenance.keranjang-empty');
+
+                Route::get('/jual-vendor', [App\Http\Controllers\FormMaintenanceController::class, 'jual_vendor'])->name('billing.form-maintenance.jual-vendor');
+                Route::get('/jual-umum', [App\Http\Controllers\FormMaintenanceController::class, 'jual_umum'])->name('billing.form-maintenance.jual-umum');
+
+            });
+        });
+
         // Form Barang
         Route::get('billing/form-barang/beli', [App\Http\Controllers\FormBarangController::class, 'beli'])->name('billing.form-barang.beli');
         Route::get('billing/form-barang/get-barang', [App\Http\Controllers\FormBarangController::class, 'get_barang'])->name('billing.form-barang.get-barang');
