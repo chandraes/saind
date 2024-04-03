@@ -9,30 +9,30 @@
     @include('swal')
     <div class="row justify-content-left">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user' || auth()->user()->role === 'su')
-        <h2>KAS</h2>
+        <h4>KAS</h4>
         <hr>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.kas-besar')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekap-besar.svg')}}" alt="" width="100">
-                <h2>Kas Besar</h2>
+                <img src="{{asset('images/rekap-besar.svg')}}" alt="" width="80">
+                <h4>Kas Besar</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.kas-kecil')}}" class="text-decoration-none">
-                <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="100">
-                <h2>Kas Kecil</h2>
+                <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="80">
+                <h4>Kas Kecil</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.kas-uang-jalan')}}" class="text-decoration-none">
-                <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="100">
-                <h2>Kas Uang Jalan</h2>
+                <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="80">
+                <h4>Kas Uang Jalan</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorModal">
-                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="100">
-                <h2>Kas Vendor</h2>
+                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="80">
+                <h4>Kas Vendor</h4>
             </a>
 
             <div class="modal fade" id="vendorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -67,56 +67,60 @@
     <br>
     <br>
     <div class="row justify-content-left">
-        <h2>NOTA LUNAS</h2>
+        <h4>NOTA LUNAS</h4>
         <hr>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.nota-lunas')}}" class="text-decoration-none">
-                <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="100">
-                <h2>Customer</h2>
+                <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="80">
+                <h4>Customer</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap-gaji')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekap-gaji.svg')}}" alt="" width="100">
-                <h2>Gaji Karyawan</h2>
+                <img src="{{asset('images/rekap-gaji.svg')}}" alt="" width="80">
+                <h4>Gaji Karyawan</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.bonus')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekap-bonus.svg')}}" alt="" width="100">
-                <h2>Bonus Sponsor</h2>
+                <img src="{{asset('images/rekap-bonus.svg')}}" alt="" width="80">
+                <h4>Bonus Sponsor</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.csr')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekap-csr.svg')}}" alt="" width="100">
-                <h2>CSR</h2>
+                <img src="{{asset('images/rekap-csr.svg')}}" alt="" width="80">
+                <h4>CSR</h4>
             </a>
         </div>
     </div>
     <br>
     <br>
     <div class="row justify-content-left">
-        <h2>OTHERS</h2>
+        <h4>OTHERS</h4>
         <hr>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
-                <img src="{{asset('images/void.svg')}}" alt="" width="100">
-                <h2>Nota Void Transaksi</h2>
+                <img src="{{asset('images/void.svg')}}" alt="" width="80">
+                <h4>Nota Void Transaksi</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.stock-barang')}}" class="text-decoration-none">
-                <img src="{{asset('images/stock.svg')}}" alt="" width="100">
-                <h2>Stock Barang</h2>
+                <img src="{{asset('images/stock.svg')}}" alt="" width="80">
+                <h4>Stock Barang Umum</h4>
             </a>
         </div>
-
-
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
+                <img src="{{asset('images/barang-maintenance.svg')}}" alt="" width="80">
+                <h4>Stock Barang Maintenance</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKasbon">
-                <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="100">
-                <h2>Kasbon Karyawan</h2>
+                <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="80">
+                <h4>Kasbon Karyawan</h4>
             </a>
             <div class="modal fade" id="modalKasbon" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
@@ -140,17 +144,18 @@
                 </div>
             </div>
         </div>
+
         @endif
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('statisik.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/statistik.svg')}}" alt="" width="100">
-                <h2>Statistik</h2>
+                <img src="{{asset('images/statistik.svg')}}" alt="" width="80">
+                <h4>Statistik</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
-                <img src="{{asset('images/dashboard.svg')}}" alt="" width="100">
-                <h2>Dashboard</h2>
+                <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
+                <h4>Dashboard</h4>
             </a>
         </div>
     </div>

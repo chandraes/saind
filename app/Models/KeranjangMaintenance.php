@@ -83,6 +83,7 @@ class KeranjangMaintenance extends Model
                 'status' => 'success',
                 'message' => 'Berhasil beli barang maintenance',
             ];
+            
             $this->sendWa($pesan);
 
             DB::commit();
@@ -95,8 +96,6 @@ class KeranjangMaintenance extends Model
             ];
 
         }
-
-
 
         return $result;
     }

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('jumlah');
             $table->integer('harga_satuan');
             $table->integer('total');
+            $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('SET NULL');
             $table->timestamps();
         });
     }
