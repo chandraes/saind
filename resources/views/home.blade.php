@@ -12,7 +12,7 @@
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('database')}}" class="text-decoration-none">
                 <img src="{{asset('images/database.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Database</h4>
+                <h4 class="mt-3">DATABASE</h4>
             </a>
         </div>
         @endif
@@ -20,13 +20,13 @@
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('billing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/billing.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Billing</h4>
+                <h4 class="mt-3">BILLING</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('rekap.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Rekap</h4>
+                <h4 class="mt-3">REKAP</h4>
             </a>
         </div>
         @endif
@@ -34,21 +34,21 @@
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('dokumen')}}" class="text-decoration-none">
                 <img src="{{asset('images/document.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Dokumen</h4>
+                <h4 class="mt-3">DOKUMEN</h4>
             </a>
         </div>
         @if (auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('bypass.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/admin.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Bypass</h4>
+                <h4 class="mt-3">BYPASS</h4>
             </a>
         </div>
         @endif
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('pengaturan')}}" class="text-decoration-none">
                 <img src="{{asset('images/pengaturan.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Pengaturan</h4>
+                <h4 class="mt-3">PENGATURAN</h4>
             </a>
         </div>
         @endif
@@ -98,28 +98,22 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <form action="{{route('per-vendor.upah-gendong')}}" method="get">
-                        <div class="modal-body">
-                            <div class="col-md-12 mb-3">
-                                <select
-                                    class="form-select"
-                                    name="vehicle_id"
-                                    id="vehicle_id"
-                                >
-                                @foreach ($ug as $d)
-                                    <option value="{{$d->vehicle_id}}">{{$d->vehicle->nomor_lambung}}</option>
-                                @endforeach
-                                </select>
+                            <div class="modal-body">
+                                <div class="col-md-12 mb-3">
+                                    <select class="form-select" name="vehicle_id" id="vehicle_id">
+                                        @foreach ($ug as $d)
+                                        <option value="{{$d->vehicle_id}}">{{$d->vehicle->nomor_lambung}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-
-
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                Tutup
-                            </button>
-                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                        </div>
-                    </form>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Tutup
+                                </button>
+                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -148,28 +142,22 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <form action="{{route('per-vendor.upah-gendong')}}" method="get">
-                        <div class="modal-body">
-                            <div class="col-md-12 mb-3">
-                                <select
-                                    class="form-select"
-                                    name="vehicle_id"
-                                    id="vehicle_id"
-                                >
-                                @foreach ($ug as $d)
-                                    <option value="{{$d->vehicle_id}}">{{$d->vehicle->nomor_lambung}}</option>
-                                @endforeach
-                                </select>
+                            <div class="modal-body">
+                                <div class="col-md-12 mb-3">
+                                    <select class="form-select" name="vehicle_id" id="vehicle_id">
+                                        @foreach ($ug as $d)
+                                        <option value="{{$d->vehicle_id}}">{{$d->vehicle->nomor_lambung}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-
-
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                Tutup
-                            </button>
-                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                        </div>
-                    </form>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Tutup
+                                </button>
+                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

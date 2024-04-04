@@ -14,25 +14,25 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.kas-besar')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-besar.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Kas Besar</h4>
+                <h4 class="mt-3">KAS BESAR</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.kas-kecil')}}" class="text-decoration-none">
                 <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Kas Kecil</h4>
+                <h4 class="mt-3">KAS KECIL</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.kas-uang-jalan')}}" class="text-decoration-none">
                 <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Kas Uang Jalan</h4>
+                <h4 class="mt-3">KAS UANG JALAN</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorModal">
                 <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Kas Vendor</h4>
+                <h4 class="mt-3">KAS VENDOR</h4>
             </a>
 
             <div class="modal fade" id="vendorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -72,19 +72,19 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.nota-lunas')}}" class="text-decoration-none">
                 <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Customer</h4>
+                <h4 class="mt-3">CUSTOMER</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap-gaji')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-gaji.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Gaji Karyawan</h4>
+                <h4 class="mt-3">GAJI KARYAWAN</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.bonus')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-bonus.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Bonus Sponsor</h4>
+                <h4 class="mt-3">BONUS SPONSOR</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
@@ -102,25 +102,25 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
                 <img src="{{asset('images/void.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Nota Void Transaksi</h4>
+                <h4 class="mt-3">NOTA VOID TRANSAKSI</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.stock-barang')}}" class="text-decoration-none">
                 <img src="{{asset('images/stock.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Stock Barang Umum</h4>
+                <h4 class="mt-3">STOCK BARANG UMUM</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang-maintenance.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Stock Barang Maintenance</h4>
+                <h4 class="mt-3">STOCK BARANG MAINTENANCE</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKasbon">
                 <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Kasbon Karyawan</h4>
+                <h4 class="mt-3">KASBON KARYAWAN</h4>
             </a>
             <div class="modal fade" id="modalKasbon" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
@@ -149,13 +149,13 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statisik.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Statistik</h4>
+                <h4 class="mt-3">STATISTIK</h4>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Dashboard</h4>
+                <h4 class="mt-3">DASHBOARD</h4>
             </a>
         </div>
     </div>

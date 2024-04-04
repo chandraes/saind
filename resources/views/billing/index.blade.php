@@ -271,7 +271,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Dashboard</h3>
+                <h4 class="mt-3">DASHBOARD</h3>
             </a>
         </div>
     </div>
