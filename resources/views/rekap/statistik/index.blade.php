@@ -83,6 +83,12 @@
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-unit-tahunan')}}" class="text-decoration-none">
+                <img src="{{asset('images/aktivasi-maintenance.svg')}}" alt="" width="80">
+                <h4 class="mt-3">MAINTENANCE</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('statistik.perform-unit-tahunan')}}" class="text-decoration-none">
                 <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
                 <h4 class="mt-3">BAN LUAR</h4>
             </a>

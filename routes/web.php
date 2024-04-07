@@ -229,7 +229,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::delete('/keranjang-destroy/{keranjang}', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_destroy'])->name('billing.form-maintenance.keranjang-destroy');
                 Route::get('/keranjang-empty', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_empty'])->name('billing.form-maintenance.keranjang-empty');
 
+                Route::get('/get-harga-jual', [App\Http\Controllers\FormMaintenanceController::class, 'get_harga_jual'])->name('billing.form-maintenance.get-harga-jual');
+
                 Route::get('/jual-vendor', [App\Http\Controllers\FormMaintenanceController::class, 'jual_vendor'])->name('billing.form-maintenance.jual-vendor');
+                Route::post('/jual-vendor-store', [App\Http\Controllers\FormMaintenanceController::class, 'jual_vendor_store'])->name('billing.form-maintenance.jual-vendor-store');
                 Route::get('/jual-umum', [App\Http\Controllers\FormMaintenanceController::class, 'jual_umum'])->name('billing.form-maintenance.jual-umum');
 
             });

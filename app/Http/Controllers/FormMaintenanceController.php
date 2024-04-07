@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AktivasiMaintenance;
 use App\Models\BarangMaintenance;
 use App\Models\KeranjangMaintenance;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 
 class FormMaintenanceController extends Controller
@@ -67,5 +69,45 @@ class FormMaintenanceController extends Controller
 
         return redirect()->route('billing.index')->with($store['status'], $store['message']);
 
+    }
+
+    public function get_harga_jual(Request $request)
+    {
+        $barang = BarangMaintenance::find($request->barang_maintenance_id);
+
+        return response()->json($barang);
+    }
+
+    public function jual_vendor()
+    {
+        $kategori = BarangMaintenance::all();
+        $am = AktivasiMaintenance::pluck('vehicle_id');
+        $vehicle = Vehicle::whereIn('id', $am)->get();
+
+        return view('billing.form-maintenance.jual-vendor', [
+            'kategori' => $kategori,
+            'vehicle' => $vehicle,
+        ]);
+    }
+
+    public function jual_vendor_store(Request $request)
+    {
+        $data = $request->validate([
+            'barang_maintenance_id' => 'required|exists:barang_maintenances,id',
+            'jumlah' => 'required',
+            'harga_satuan' => 'required',
+            'vendor' => 'required',
+            'no_rekening' => 'required',
+        ]);
+
+        $data['harga_satuan'] = str_replace('.', '', $data['harga_satuan']);
+
+        $data['total'] = $data['jumlah'] * $data['harga_satuan'];
+
+        $db = new BarangMaintenance();
+
+        $store = $db->jualVendorStore($data);
+
+        return redirect()->route('billing.index')->with($store['status'], $store['message']);
     }
 }

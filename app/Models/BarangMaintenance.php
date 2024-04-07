@@ -16,4 +16,11 @@ class BarangMaintenance extends Model
     {
         return number_format($this->harga_jual, 0, ',', '.');
     }
+
+    public function jualVendorStore($data)
+    {
+        $kv = new KasVendor();
+
+        
+    }
 }

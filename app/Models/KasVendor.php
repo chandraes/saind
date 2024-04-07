@@ -54,11 +54,12 @@ class KasVendor extends Model
                     ->latest()
                     ->orderBy('id', 'desc')
                     ->first();
-                    
+
         if (!$record) {
             $record = $this->where('vendor_id', $vendorId)
                             ->whereDate('tanggal', '<', "$year-$month-01")
                             ->latest()
+                            ->orderBy('id', 'desc')
                             ->first();
         }
 

@@ -85,8 +85,6 @@
                         0)->count() > 0 ?
                         "(".$data->where('status', 3)->where('bayar', 0)->count().")" : '' }}</span></h4>
             </a>
-
-            <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
