@@ -76,12 +76,12 @@
         </div>
     </div>
     <div class="row justify-content-left mt-5">
-        <div class="col-md-3 text-center mb-5">
+        {{-- <div class="col-md-3 text-center mb-5">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
                 <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="80">
                 <h4 class="mt-3">DATABASE<br>UPAH GENDONG</h4>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-3 text-center mb-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
                 <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="80">

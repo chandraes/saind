@@ -160,7 +160,7 @@
                             <select class="form-select form-select-lg" name="" id="formBarangSelect">
                                 <option value="masuk">Beli</option>
                                 <option value="keluar">Jual ke Vendor</option>
-                                <option value="keluar-umum">Jual ke Umum</option>
+                                {{-- <option value="keluar-umum">Jual ke Umum</option> --}}
                             </select>
                         </div>
                         <div class="modal-footer">
@@ -171,7 +171,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formMaintenance">
                 <img src="{{asset('images/form-maintenance.svg')}}" alt="" width="80">
                 <h4 class="mt-3">FORM BARANG MAINTENANCE</h3>
@@ -198,7 +198,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
     <hr>
     <br>

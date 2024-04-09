@@ -111,12 +111,12 @@
                 <h4 class="mt-3">STOCK BARANG UMUM</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang-maintenance.svg')}}" alt="" width="80">
                 <h4 class="mt-3">STOCK BARANG MAINTENANCE</h4>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalKasbon">
                 <img src="{{asset('images/rekap-kasbon.svg')}}" alt="" width="80">
