@@ -25,7 +25,7 @@
             <div class="col-6">
                 <div class="mb-3">
                     <label for="id" class="form-label">Nomor Lambung</label>
-                    <select class="form-select" name="id" id="id" onchange="funGetVendor()">
+                    <select class="form-select" name="vehicle_id" id="id" onchange="funGetVendor()">
                         <option selected> -- Pilih Nomor Lambung -- </option>
                         @foreach ($vehicle as $d)
                             <option value="{{$d->id}}">{{$d->nomor_lambung}}</option>
@@ -37,7 +37,7 @@
                 <div class="mb-3">
                   <label for="vendor" class="form-label">Nama Vendor</label>
                   <input type="text"
-                    class="form-control" name="vendor" id="vendor" aria-describedby="helpId" placeholder="" disabled>
+                    class="form-control" name="vendor" id="vendor" aria-describedby="helpId" placeholder="" readonly>
                     <input type="hidden" name="vendor_id" id="vendor_id" required>
                 </div>
             </div>
@@ -49,7 +49,7 @@
                     <select class="form-select" name="barang_maintenance_id" id="barang_maintenance_id" onchange="getHargaJual()">
                         <option value=""> -- Pilih barang -- </option>
                         @foreach ($kategori as $b)
-                            <option value="{{$b->id}}">{{$b->nama}}</option>
+                            <option value="{{$b->id}}">{{$b->nama}} ({{$b->stok}})</option>
                         @endforeach
                     </select>
                 </div>

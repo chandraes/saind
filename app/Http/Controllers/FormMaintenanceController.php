@@ -80,7 +80,7 @@ class FormMaintenanceController extends Controller
 
     public function jual_vendor()
     {
-        $kategori = BarangMaintenance::all();
+        $kategori = BarangMaintenance::where('stok', '>', 0)->get();
         $am = AktivasiMaintenance::pluck('vehicle_id');
         $vehicle = Vehicle::whereIn('id', $am)->get();
 
@@ -94,15 +94,10 @@ class FormMaintenanceController extends Controller
     {
         $data = $request->validate([
             'barang_maintenance_id' => 'required|exists:barang_maintenances,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'vendor_id' => 'required|exists:vendors,id',
             'jumlah' => 'required',
-            'harga_satuan' => 'required',
-            'vendor' => 'required',
-            'no_rekening' => 'required',
         ]);
-
-        $data['harga_satuan'] = str_replace('.', '', $data['harga_satuan']);
-
-        $data['total'] = $data['jumlah'] * $data['harga_satuan'];
 
         $db = new BarangMaintenance();
 
