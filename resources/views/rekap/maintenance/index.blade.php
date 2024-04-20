@@ -38,9 +38,9 @@
         <div class="col-md-3 mt-2">
             {{-- <label for="tahun" class="form-label">Tahun</label> --}}
             <select class="form-select" name="tahun" id="tahun">
-                {{-- @foreach ($dataTahun as $d)
+                @foreach ($dataTahun as $d)
                 <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
-                @endforeach --}}
+                @endforeach
             </select>
         </div>
         <div class="col-md-3 mt-2">

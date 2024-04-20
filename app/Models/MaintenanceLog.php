@@ -9,4 +9,9 @@ class MaintenanceLog extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+
+    public function dataTahun()
+    {
+        return $this->selectRaw('YEAR(created_at) tahun')->groupBy('tahun')->orderBy('tahun', 'desc')->get();
+    }
 }

@@ -904,7 +904,9 @@ class RekapController extends Controller
             'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
         ]);
         $db = new MaintenanceLog();
-        // $log = $db->where('vehicle_id', $data['vehicle_id'])->get();
+        $tahun = $request->tahun ?? date('Y');
+        $dataTahun = $db->dataTahun();
+        // dd($dataTahun);
 
         $equipment = BarangMaintenance::select('id', 'nama')->get();
 
@@ -944,6 +946,8 @@ class RekapController extends Controller
             'weekly' => $weekly,
             'vehicle' => Vehicle::find($data['vehicle_id']),
             'equipment' => $equipment,
+            'dataTahun' => $dataTahun,
+            'tahun' => $tahun,
         ]);
     }
 
