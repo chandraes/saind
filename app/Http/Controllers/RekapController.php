@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AktivasiMaintenance;
+use App\Models\BarangMaintenance;
 use App\Models\KasKecil;
 use App\Models\KasBesar;
 use App\Models\Vendor;
@@ -21,9 +23,11 @@ use App\Models\Rekening;
 use App\Models\RekapGaji;
 use App\Models\Sponsor;
 use App\Models\GroupWa;
+use App\Models\MaintenanceLog;
 use App\Services\StarSender;
 use App\Models\PasswordKonfirmasi;
 use App\Models\RekapBarang;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -34,9 +38,11 @@ class RekapController extends Controller
     public function index()
     {
         $vendor = Vendor::all();
+        $maintenance = AktivasiMaintenance::with(['vehicle'])->get();
 
         return view('rekap.index', [
             'vendor' => $vendor,
+            'maintenance' => $maintenance,
         ]);
     }
 
@@ -889,6 +895,55 @@ class RekapController extends Controller
             'customer' => $customer,
             'periode' => $periode,
             'invoice_id' => $invoiceCsr->id
+        ]);
+    }
+
+    public function maintenance_vehicle(Request $request)
+    {
+        $data = $request->validate([
+            'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
+        ]);
+        $db = new MaintenanceLog();
+        // $log = $db->where('vehicle_id', $data['vehicle_id'])->get();
+
+        $equipment = BarangMaintenance::select('id', 'nama')->get();
+
+        $activation_start = AktivasiMaintenance::where('vehicle_id', $data['vehicle_id'])->first()->tanggal_mulai;
+
+        // make array weekly maintenance that start from activation date in a year
+        $weekly = [];
+
+        $i = 0;
+        while (true) {
+            $startOfWeek = $activation_start->copy()->addWeeks($i)->startOfWeek();
+            $endOfWeek = $startOfWeek->copy()->endOfWeek();
+
+            if ($endOfWeek->year > $activation_start->year) {
+                break;
+            }
+
+             // Set the locale to Indonesian
+            Carbon::setLocale('id');
+
+            $week = $startOfWeek->translatedFormat('d M') . ' - ' . $endOfWeek->translatedFormat('d M');
+            $weekly[$week] = [];
+
+            foreach ($equipment as $eq) {
+                $count = MaintenanceLog::where('vehicle_id', $data['vehicle_id'])
+                    ->where('barang_maintenance_id', $eq->id)
+                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->count();
+
+                $weekly[$week][$eq->nama] = $count;
+            }
+
+            $i++;
+        }
+
+        return view('rekap.maintenance.index', [
+            'weekly' => $weekly,
+            'vehicle' => Vehicle::find($data['vehicle_id']),
+            'equipment' => $equipment,
         ]);
     }
 

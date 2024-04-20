@@ -341,45 +341,47 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('billing/storing/get-vendor', [App\Http\Controllers\FormStoringConroller::class, 'get_vendor'])->name('billing.storing.get-vendor');
         Route::get('billing/storing/storing-latest', [App\Http\Controllers\FormStoringConroller::class, 'storing_latest'])->name('billing.storing.storing-latest');
 
-
-        Route::get('rekap/kas-besar', [App\Http\Controllers\RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
-        Route::get('rekap/kas-besar/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_besar'])->name('rekap.kas-besar.preview');
-        Route::get('rekap/kas-kecil', [App\Http\Controllers\RekapController::class, 'kas_kecil'])->name('rekap.kas-kecil');
-        Route::get('rekap/kas-kecil/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_kecil'])->name('rekap.kas-kecil.preview');
-        Route::get('rekap/kas-uang-jalan', [App\Http\Controllers\RekapController::class, 'kas_uang_jalan'])->name('rekap.kas-uang-jalan');
-        Route::get('rekap/kas-uang-jalan/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_uang_jalan'])->name('rekap.kas-uang-jalan.preview');
-
-        Route::get('rekap/nota-void', [App\Http\Controllers\RekapController::class, 'nota_void'])->name('rekap.nota-void');
-        Route::get('rekap/nota-void/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_nota_void'])->name('rekap.nota-void.preview');
-
-        Route::get('rekap/stock-barang', [App\Http\Controllers\RekapController::class, 'stock_barang'])->name('rekap.stock-barang');
-
-        Route::get('rekap/kas-bon', [App\Http\Controllers\RekapController::class, 'kas_bon'])->name('rekap.kas-bon');
-        Route::get('rekap/kas-bon/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_bon'])->name('rekap.kas-bon.preview');
-        Route::post('rekap/kas-bon/void/{kas}', [App\Http\Controllers\RekapController::class, 'kas_bon_void'])->name('rekap.kas-bon.void');
-
-        Route::get('rekap/kas-bon/direksi', [App\Http\Controllers\RekapController::class, 'kas_bon_direksi'])->name('rekap.kas-bon.direksi');
-        Route::get('rekap/direksi', [App\Http\Controllers\RekapController::class, 'direksi'])->name('rekap.direksi');
-
-        Route::get('rekap/bonus', [App\Http\Controllers\RekapController::class, 'rekap_bonus'])->name('rekap.bonus');
-        Route::get('rekap/bonus/{invoiceBonus}/detail', [App\Http\Controllers\RekapController::class, 'rekap_bonus_detail'])->name('rekap.bonus.detail');
-        Route::get('rekap/nota-lunas', [App\Http\Controllers\RekapController::class, 'nota_lunas'])->name('rekap.nota-lunas');
-        Route::get('rekap/nota-lunas-detail/{invoice}', [App\Http\Controllers\RekapController::class, 'nota_lunas_detail'])->name('rekap.nota-lunas-detail');
-
         Route::view('rekap-gaji', 'rekap.gaji')->name('rekap-gaji');
         Route::get('rekap-gaji-detail', [App\Http\Controllers\RekapController::class, 'rekap_gaji_detail'])->name('rekap-gaji-detail');
         Route::get('print-rekap-gaji', [App\Http\Controllers\RekapController::class, 'print_rekap_gaji'])->name('print-rekap-gaji');
 
-        Route::get('rekap', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap.index');
-        // Route::get('kas-besar', [App\Http\Controllers\KasBesarController::class, 'index'])->name('kas-besar.index');
+        Route::prefix('rekap')->group(function(){
+            Route::get('/', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap.index');
 
-        Route::get('rekap/kas-vendor', [App\Http\Controllers\RekapController::class, 'kas_vendor'])->name('rekap.kas-vendor');
-        Route::get('rekap/kas-vendor/{invoiceBayar}/detail', [App\Http\Controllers\RekapController::class, 'kas_vendor_detail'])->name('rekap.kas-vendor.detail');
-        Route::post('rekap/kas-vendor/void/{kas_vendor}', [App\Http\Controllers\RekapController::class, 'kas_vendor_void'])->name('rekap.kas-vendor.void');
-        Route::get('rekap/kas-vendor/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_vendor'])->name('rekap.kas-vendor.preview');
+            Route::get('/kas-besar', [App\Http\Controllers\RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
+            Route::get('/kas-besar/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_besar'])->name('rekap.kas-besar.preview');
+            Route::get('/kas-kecil', [App\Http\Controllers\RekapController::class, 'kas_kecil'])->name('rekap.kas-kecil');
+            Route::get('/kas-kecil/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_kecil'])->name('rekap.kas-kecil.preview');
+            Route::get('/kas-uang-jalan', [App\Http\Controllers\RekapController::class, 'kas_uang_jalan'])->name('rekap.kas-uang-jalan');
+            Route::get('/kas-uang-jalan/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_uang_jalan'])->name('rekap.kas-uang-jalan.preview');
 
-        Route::get('rekap/csr', [App\Http\Controllers\RekapController::class, 'rekap_csr'])->name('rekap.csr');
-        Route::get('rekap/csr/{invoiceCsr}/detail', [App\Http\Controllers\RekapController::class, 'rekap_csr_detail'])->name('rekap.csr.detail');
+            Route::get('/kas-vendor', [App\Http\Controllers\RekapController::class, 'kas_vendor'])->name('rekap.kas-vendor');
+            Route::get('/kas-vendor/{invoiceBayar}/detail', [App\Http\Controllers\RekapController::class, 'kas_vendor_detail'])->name('rekap.kas-vendor.detail');
+            Route::post('/kas-vendor/void/{kas_vendor}', [App\Http\Controllers\RekapController::class, 'kas_vendor_void'])->name('rekap.kas-vendor.void');
+            Route::get('/kas-vendor/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_vendor'])->name('rekap.kas-vendor.preview');
+
+            Route::get('/csr', [App\Http\Controllers\RekapController::class, 'rekap_csr'])->name('rekap.csr');
+            Route::get('/csr/{invoiceCsr}/detail', [App\Http\Controllers\RekapController::class, 'rekap_csr_detail'])->name('rekap.csr.detail');
+
+            Route::get('/nota-void', [App\Http\Controllers\RekapController::class, 'nota_void'])->name('rekap.nota-void');
+            Route::get('/nota-void/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_nota_void'])->name('rekap.nota-void.preview');
+
+            Route::get('/stock-barang', [App\Http\Controllers\RekapController::class, 'stock_barang'])->name('rekap.stock-barang');
+
+            Route::get('/kas-bon', [App\Http\Controllers\RekapController::class, 'kas_bon'])->name('rekap.kas-bon');
+            Route::get('/kas-bon/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_bon'])->name('rekap.kas-bon.preview');
+            Route::post('/kas-bon/void/{kas}', [App\Http\Controllers\RekapController::class, 'kas_bon_void'])->name('rekap.kas-bon.void');
+
+            Route::get('/kas-bon/direksi', [App\Http\Controllers\RekapController::class, 'kas_bon_direksi'])->name('rekap.kas-bon.direksi');
+            Route::get('/direksi', [App\Http\Controllers\RekapController::class, 'direksi'])->name('rekap.direksi');
+
+            Route::get('/bonus', [App\Http\Controllers\RekapController::class, 'rekap_bonus'])->name('rekap.bonus');
+            Route::get('/bonus/{invoiceBonus}/detail', [App\Http\Controllers\RekapController::class, 'rekap_bonus_detail'])->name('rekap.bonus.detail');
+            Route::get('/nota-lunas', [App\Http\Controllers\RekapController::class, 'nota_lunas'])->name('rekap.nota-lunas');
+            Route::get('/nota-lunas-detail/{invoice}', [App\Http\Controllers\RekapController::class, 'nota_lunas_detail'])->name('rekap.nota-lunas-detail');
+
+            Route::get('/maintenance-vehicle', [App\Http\Controllers\RekapController::class, 'maintenance_vehicle'])->name('rekap.maintenance-vehicle');
+        });
 
         Route::prefix('statistik')->group(function(){
             Route::get('/perform-unit', [App\Http\Controllers\StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
