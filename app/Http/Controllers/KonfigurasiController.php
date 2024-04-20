@@ -21,4 +21,17 @@ class KonfigurasiController extends Controller
 
         return redirect()->back()->with('success', 'Konfigurasi berhasil diubah');
     }
+
+    public function update_jam(Konfigurasi $konfigurasi, Request $request)
+    {
+        $data = $request->validate([
+            'waktu_aktif' => 'required|numeric'
+        ]);
+
+        $konfigurasi->update([
+            'waktu_aktif' => $data['waktu_aktif']
+        ]);
+
+        return redirect()->back()->with('success', 'Konfigurasi berhasil diubah');
+    }
 }

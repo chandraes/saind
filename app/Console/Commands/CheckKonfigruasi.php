@@ -27,8 +27,9 @@ class CheckKonfigruasi extends Command
     public function handle()
     {
         $data = Konfigurasi::where('kode', 'nota-muat')->first();
+        $waktu = $data->waktu_aktif * 60;
 
-        if($data && $data->status == 0 && $data->updated_at->diffInMinutes(now()) >= 10){
+        if($data && $data->status == 0 && $data->updated_at->diffInMinutes(now()) >= $waktu){
             $data->update(['status' => 1]);
         }
     }

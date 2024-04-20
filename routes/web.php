@@ -103,11 +103,17 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::view('pengaturan', 'pengaturan.index')->name('pengaturan');
         Route::post('password-konfirmasi', [App\Http\Controllers\PasswordKonfirmasiController::class, 'store'])->name('password-konfirmasi.store');
-        Route::get('pengaturan/wa', [App\Http\Controllers\WaController::class, 'wa'])->name('pengaturan.wa');
-        Route::get('pengaturan/wa/edit/{id}', [App\Http\Controllers\WaController::class, 'edit'])->name('pengaturan.wa.edit');
-        Route::patch('pengaturan/wa/update/{id}', [App\Http\Controllers\WaController::class, 'update'])->name('pengaturan.wa.update');
-        Route::get('pengaturan/nota-transaksi', [App\Http\Controllers\KonfigurasiController::class, 'index'])->name('pengaturan.nota-transaksi');
-        Route::patch('pengaturan/nota-transaksi/update/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update'])->name('pengaturan.konfigurasi-transaksi.update');
+
+
+        Route::prefix('pengaturan')->group(function(){
+            Route::get('/wa', [App\Http\Controllers\WaController::class, 'wa'])->name('pengaturan.wa');
+            Route::get('/wa/edit/{id}', [App\Http\Controllers\WaController::class, 'edit'])->name('pengaturan.wa.edit');
+            Route::patch('/wa/update/{id}', [App\Http\Controllers\WaController::class, 'update'])->name('pengaturan.wa.update');
+            Route::get('/nota-transaksi', [App\Http\Controllers\KonfigurasiController::class, 'index'])->name('pengaturan.nota-transaksi');
+            Route::patch('/nota-transaksi/update/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update'])->name('pengaturan.konfigurasi-transaksi.update');
+
+            Route::patch('/nota-transaksi/update-jam/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update_jam'])->name('pengaturan.konfigurasi-transaksi.update-jam');
+        });
 
         Route::resource('direksi', App\Http\Controllers\DireksiController::class);
 
