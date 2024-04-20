@@ -24,6 +24,7 @@ use App\Models\RekapGaji;
 use App\Models\Sponsor;
 use App\Models\GroupWa;
 use App\Models\MaintenanceLog;
+use App\Models\OdoLog;
 use App\Services\StarSender;
 use App\Models\PasswordKonfirmasi;
 use App\Models\RekapBarang;
@@ -936,11 +937,18 @@ class RekapController extends Controller
                     ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->count();
 
+                $weekly[$week]['odometer'] = OdoLog::where('vehicle_id', $data['vehicle_id'])
+                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->max('odometer') ?? 0;
+
                 $weekly[$week][$eq->nama] = $count;
+
             }
 
             $i++;
         }
+
+        // dd($weekly);
 
         return view('rekap.maintenance.index', [
             'weekly' => $weekly,
@@ -949,6 +957,21 @@ class RekapController extends Controller
             'dataTahun' => $dataTahun,
             'tahun' => $tahun,
         ]);
+    }
+
+    public function store_odo(Request $request)
+    {
+        $data = $request->validate([
+            'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
+            'odometer' => 'required|numeric',
+        ]);
+
+        OdoLog::create([
+            'vehicle_id' => $data['vehicle_id'],
+            'odometer' => $data['odometer'],
+        ]);
+
+        return redirect()->back()->with('success', 'Berhasil menambahkan Odometer!!');
     }
 
 }
