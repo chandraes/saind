@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\StarSender;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class BarangMaintenance extends Model
         $data['tanggal'] = date('Y-m-d');
 
         $barang = $this->find($data['barang_maintenance_id']);
+        $vehicle = Vehicle::find($data['vehicle_id']);
 
         $data['uraian'] = 'Maintenance ' . $barang->nama;
 
@@ -47,12 +49,28 @@ class BarangMaintenance extends Model
             unset($data['jumlah']);
             unset($data['nama_barang']);
 
-            $kv->create($data);
+            $store = $kv->create($data);
+
+            $pesan =    "==========================\n".
+                        "*Form Jual Barang Maintenance*\n".
+                        "==========================\n\n".
+                        "No. Lambung : ".$vehicle->nomor_lambung."\n".
+                        "Vendor : ".$vehicle->vendor->nama."\n\n".
+                        "Barang : ".$barang->nama."\n".
+                        "Jumlah : ".$data['quantity']."\n".
+                        "Total :  *Rp. ".number_format($data['pinjaman'], 0, ',', '.')."*\n".
+                        "==========================\n\n".
+                        "Total Kasbon: Rp. ".number_format($store->sisa, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
 
             $barang->update(['stok' => $barang->stok - $data['quantity']]);
             // $this->maintenance_store($data);
 
             DB::commit();
+
+            $tujuan = GroupWa::where('untuk', 'team')->first()->nama_group;
+
+            $this->send_wa($tujuan, $pesan);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -100,5 +118,14 @@ class BarangMaintenance extends Model
             'total' => $data['pinjaman'],
             'vendor_id' => $data['vendor_id'] ?? null,
         ]);
+    }
+
+    private function send_wa($tujuan, $pesan)
+    {
+
+        $send = new StarSender($tujuan, $pesan);
+        $res = $send->sendGroup();
+
+        return true;
     }
 }
