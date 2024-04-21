@@ -9,6 +9,7 @@
     </div>
     @include('swal')
     @include('database.barang-maintenance.create')
+    @include('database.barang-maintenance.create-kategori')
     @include('database.barang-maintenance.edit')
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
@@ -18,6 +19,11 @@
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen"
                                 width="30"> Database</a></td>
+                    <td>
+                        <td><a href="#" data-bs-toggle="modal" data-bs-target="#create-category"><img src="{{asset('images/kategori.svg')}}" alt="dokumen"
+                            width="30"> Tambah Kategori</a></td>
+
+                    </td>
                     <td>
                         <a href="#" data-bs-toggle="modal" data-bs-target="#createModal"">
                             <img src=" {{asset('images/barang-maintenance.svg')}}" alt="dokumen" width="30"> Tambah
@@ -33,6 +39,7 @@
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
+                <th class="text-center align-middle">Kategori</th>
                 <th class="text-center align-middle">Barang</th>
                 <th class="text-center align-middle">Stok</th>
                 <th class="text-center align-middle">Harga Jual</th>
@@ -43,6 +50,9 @@
             @foreach ($data as $d)
             <tr>
                 <td class="text-center align-middle" style="width: 10px">{{$loop->iteration}}</td>
+                <td class="text-start align-middle">
+                    {{$d->kategori->nama}}
+                </td>
                 <td class="text-start align-middle">
                     {{$d->nama}}
                 </td>
@@ -77,10 +87,28 @@
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
    function editFun(data, id) {
+
             document.getElementById('edit_nama').value = data.nama;
             document.getElementById('edit_harga_jual').value = data.nf_harga_jual;
+            document.getElementById('edit_kategori_barang_maintenance_id').value = data.kategori_barang_maintenance_id;
             // Populate other fields...
             document.getElementById('editForm').action = '/database/barang-maintenance/update/' + id;
+        }
+
+        function toggleNamaJabatan(id) {
+
+            // check if input is readonly
+            if ($('#nama_jabatan-'+id).attr('readonly')) {
+                // remove readonly
+                $('#nama_jabatan-'+id).removeAttr('readonly');
+                // show button
+                $('#buttonJabatan-'+id).removeAttr('hidden');
+            } else {
+                // add readonly
+                $('#nama_jabatan-'+id).attr('readonly', true);
+                // hide button
+                $('#buttonJabatan-'+id).attr('hidden', true);
+            }
         }
 
     $(document).ready(function() {

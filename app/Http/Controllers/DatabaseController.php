@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
 use App\Models\BarangMaintenance;
+use App\Models\KategoriBarangMaintenance;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -80,16 +81,52 @@ class DatabaseController extends Controller
 
     public function barang_maintenance()
     {
-        $data = BarangMaintenance::all();
+        $data = BarangMaintenance::with(['kategori'])->get();
+        $kategori = KategoriBarangMaintenance::all();
 
         return view('database.barang-maintenance.index', [
             'data' => $data,
+            'kategori' => $kategori,
         ]);
+    }
+
+    public function kategori_store(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required',
+        ]);
+
+        KategoriBarangMaintenance::create($data);
+
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan');
+    }
+
+    public function kategori_update(Request $request, KategoriBarangMaintenance $kategori)
+    {
+        $data = $request->validate([
+            'nama' => 'required',
+        ]);
+
+        $kategori->update($data);
+
+        return redirect()->back()->with('success', 'Data berhasil diubah');
+    }
+
+    public function kategori_destroy(KategoriBarangMaintenance $kategori)
+    {
+        if($kategori->barang_maintenance->count() > 0) {
+            return redirect()->back()->with('error', 'Data tidak bisa dihapus karena masih ada barang maintenance');
+        }
+
+        $kategori->delete();
+
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 
     public function barang_maintenance_store(Request $request)
     {
         $data = $request->validate([
+            'kategori_barang_maintenance_id' => 'required|exists:kategori_barang_maintenances,id',
             'nama' => 'required',
             'harga_jual' => 'required',
         ]);
@@ -104,6 +141,7 @@ class DatabaseController extends Controller
     public function barang_maintenance_update(Request $request, BarangMaintenance $bm)
     {
         $data = $request->validate([
+            'kategori_barang_maintenance_id' => 'required|exists:kategori_barang_maintenances,id',
             'nama' => 'required',
             'harga_jual' => 'required',
         ]);

@@ -13,12 +13,21 @@
                 @method('patch')
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="kategori_barang_id" class="form-label">Kategori Barang</label>
+                            <select class="form-select" name="kategori_barang_maintenance_id" id="edit_kategori_barang_maintenance_id" required>
+                                <option value="">-- Pilih Kategori Barang --</option>
+                                @foreach ($kategori as $i)
+                                <option value="{{$i->id}}">{{$i->nama}}</option>
+                                @endforeach
+                            </select>
+                    </div>
+                        <div class="col-md-4 mb-3">
                             <label for="nama" class="form-label">Nama Barang</label>
                             <input type="text" class="form-control" name="nama" id="edit_nama" aria-describedby="helpId"
                                 placeholder="" />
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="harga_jual" class="form-label">Harga Jual</label>
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1">Rp</span>

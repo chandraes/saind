@@ -157,6 +157,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_store'])->name('database.barang-maintenance.store');
                 Route::patch('/update/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_update'])->name('database.barang-maintenance.update');
                 Route::delete('/destroy/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_destroy'])->name('database.barang-maintenance.destroy');
+
+                Route::post('/store-kategori', [App\Http\Controllers\DatabaseController::class, 'kategori_store'])->name('database.barang-maintenance.kategori.store');
+                Route::patch('/update-kategori/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_update'])->name('database.barang-maintenance.kategori.update');
+                Route::delete('/destroy-kategori/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_destroy'])->name('database.barang-maintenance.kategori.destroy');
             });
         });
 
@@ -236,6 +240,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/keranjang-empty', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_empty'])->name('billing.form-maintenance.keranjang-empty');
 
                 Route::get('/get-harga-jual', [App\Http\Controllers\FormMaintenanceController::class, 'get_harga_jual'])->name('billing.form-maintenance.get-harga-jual');
+                Route::get('/get-barang', [App\Http\Controllers\FormMaintenanceController::class, 'get_barang'])->name('billing.form-maintenance.get-barang');
 
                 Route::get('/jual-vendor', [App\Http\Controllers\FormMaintenanceController::class, 'jual_vendor'])->name('billing.form-maintenance.jual-vendor');
                 Route::post('/jual-vendor-store', [App\Http\Controllers\FormMaintenanceController::class, 'jual_vendor_store'])->name('billing.form-maintenance.jual-vendor-store');

@@ -71,6 +71,14 @@ class FormMaintenanceController extends Controller
 
     }
 
+    public function get_barang(Request $request)
+    {
+        $barang = BarangMaintenance::where('kategori_barang_maintenance_id', $request->kategori_barang_maintenance_id)->get();
+
+        return response()->json($barang);
+    }
+
+
     public function get_harga_jual(Request $request)
     {
         $barang = BarangMaintenance::find($request->barang_maintenance_id);

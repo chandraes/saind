@@ -14,6 +14,11 @@ class BarangMaintenance extends Model
 
     protected $appends = ['nf_harga_jual'];
 
+    public function kategori()
+    {
+        return $this->belongsTo(KategoriBarangMaintenance::class, 'kategori_barang_maintenance_id');
+    }
+
     public function getNfHargaJualAttribute()
     {
         return number_format($this->harga_jual, 0, ',', '.');
