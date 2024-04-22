@@ -41,9 +41,13 @@ class DatabaseController extends Controller
             'no_rek' => 'required',
             'bank' => 'required',
             'nama_rek' => 'required',
+            'tanggal_masuk_driver' => 'required',
+            'tanggal_masuk_pengurus' => 'required',
         ]);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
+        $data['tanggal_masuk_driver'] = date('Y-m-d', strtotime($data['tanggal_masuk_driver']));
+        $data['tanggal_masuk_pengurus'] = date('Y-m-d', strtotime($data['tanggal_masuk_pengurus']));
 
         UpahGendong::create($data);
 
@@ -63,9 +67,14 @@ class DatabaseController extends Controller
             'no_rek' => 'required',
             'bank' => 'required',
             'nama_rek' => 'required',
+            'tanggal_masuk_driver' => 'required',
+            'tanggal_masuk_pengurus' => 'required',
         ]);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
+
+        $data['tanggal_masuk_driver'] = date('Y-m-d', strtotime($data['tanggal_masuk_driver']));
+        $data['tanggal_masuk_pengurus'] = date('Y-m-d', strtotime($data['tanggal_masuk_pengurus']));
 
         $ug->update($data);
 

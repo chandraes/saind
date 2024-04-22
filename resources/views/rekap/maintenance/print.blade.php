@@ -12,12 +12,12 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle text-pdf table-pdf">Periode</th>
-                    <th class="text-center align-middle text-pdf table-pdf">Odometer</th>
-                    <th class="text-center align-middle text-pdf table-pdf">Filter Strainer</th>
-                    <th class="text-center align-middle text-pdf table-pdf">Filter Udara</th>
-                    <th class="text-center align-middle text-pdf table-pdf">Stock Baut (Buah)</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Odo<br>meter</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Filter<br>Strainer</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Filter<br>Udara</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Stock<br>Baut</th>
                     @foreach ($equipment as $eq)
-                    <th class="text-center align-middle text-pdf table-pdf">{{ $eq->nama }}</th>
+                    <th class="text-center align-middle text-pdf table-pdf">{!! implode('<br>', explode(' ', $eq->nama)) !!}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -25,12 +25,24 @@
                 @foreach ($weekly as $week => $equipmentCounts)
                 <tr>
                     <td class="text-center align-middle text-pdf table-pdf">{{ $week }}</td>
-                    <td class="text-center align-middle text-pdf table-pdf">{{ number_format($equipmentCounts['odometer'], 0, ',','.') }}</td>
+                    <td class="text-center align-middle text-pdf table-pdf">
+                        @if ($equipmentCounts['odometer'] == 0)
+                        -
+                        @else
+                        {{ number_format($equipmentCounts['odometer'], 0, ',','.') }}
+                        @endif
+                    </td>
                     <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['filter_strainer'] }}</td>
                     <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['filter_udara'] }}</td>
                     <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['baut'] }}</td>
                     @foreach ($equipment as $eq)
-                    <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts[$eq->nama] ?? 0 }}</td>
+                    <td class="text-center align-middle text-pdf table-pdf">
+                        @if ($equipmentCounts[$eq->nama] == 0)
+                        -
+                        @else
+                        {{ $equipmentCounts[$eq->nama] }}
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @endforeach

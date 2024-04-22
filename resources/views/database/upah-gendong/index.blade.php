@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row ">
         <div class="col-md-12 text-center">
             <h1><u>UPAH GENDONG</u></h1>
@@ -36,7 +36,7 @@
 </div>
 @endif
 @include('database.upah-gendong.edit')
-<div class="container mt-5 table-responsive ">
+<div class="container-fluid mt-5 table-responsive ">
     <table class="table table-hover table-bordered" id="karyawan-data">
         <thead class="table-success">
             <tr>
@@ -45,7 +45,9 @@
                 <th class="text-center align-middle">Minimal Tonase</th>
                 <th class="text-center align-middle">NOLAM</th>
                 <th class="text-center align-middle">Nama Driver</th>
+                <th class="text-center align-middle">Tanggal Masuk Driver</th>
                 <th class="text-center align-middle">Pengurus</th>
+                <th class="text-center align-middle">Tanggal Masuk Pengurus</th>
                 <th class="text-center align-middle">Bank</th>
                 <th class="text-center align-middle">Nama Rekening</th>
                 <th class="text-center align-middle">Nomor Rekening</th>
@@ -62,7 +64,9 @@
                     {{$d->vehicle->nomor_lambung}}
                 </td>
                 <td class="text-center align-middle">{{$d->nama_driver}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal_masuk_driver}}</td>
                 <td class="text-center align-middle">{{$d->nama_pengurus}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal_masuk_pengurus}}</td>
                 <td class="text-center align-middle">{{$d->bank}}</td>
                 <td class="text-center align-middle">{{$d->nama_rek}}</td>
                 <td class="text-center align-middle">{{$d->no_rek}}</td>
@@ -107,12 +111,13 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
 @endpush
 @push('js')
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
-<script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script>
       function editUg(data, id) {
@@ -121,6 +126,8 @@
             document.getElementById('edit_nominal').value = data.nf_nominal;
             document.getElementById('edit_tonase_min').value = data.tonase_min;
             document.getElementById('edit_nama_pengurus').value = data.nama_pengurus;
+            document.getElementById('edit_tanggal_masuk_pengurus').value = data.id_tanggal_masuk_pengurus;
+            document.getElementById('edit_tanggal_masuk_driver').value = data.id_tanggal_masuk_driver;
             document.getElementById('edit_nama_rek').value = data.nama_rek;
             document.getElementById('edit_no_rek').value = data.no_rek;
             document.getElementById('edit_bank').value = data.bank;
@@ -129,6 +136,19 @@
         }
 
     $(document).ready(function() {
+
+        flatpickr("#edit_tanggal_masuk_driver", {
+            dateFormat: "d-m-Y",
+        });
+
+        flatpickr("#edit_tanggal_masuk_pengurus", {
+            dateFormat: "d-m-Y",
+        });
+
+        flatpickr(".tanggal_flatpick", {
+            dateFormat: "d-m-Y",
+        });
+
         $('#karyawan-data').DataTable();
 
         var nominal = new Cleave('#nominal', {

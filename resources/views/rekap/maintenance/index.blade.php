@@ -74,7 +74,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="baut" class="form-label">Stock Baut (Buah)</label>
+                    <label for="baut" class="form-label">Stock<br>Baut (Buah)</label>
                     <input type="number" class="form-control" name="baut" id="baut" aria-describedby="helpId" required
                         placeholder="Masukan sisa Stock Baut" />
                 </div>
@@ -86,16 +86,16 @@
     </section>
 </div>
 <div class="row mt-3">
-    <table class="table table-hover table-bordered" id="rekapTable" style="font-size:10px">
+    <table class="table table-hover table-bordered" id="rekapTable" style="font-size:12px">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">Periode</th>
-                <th class="text-center align-middle">Odometer</th>
-                <th class="text-center align-middle">Filter Strainer</th>
-                <th class="text-center align-middle">Filter Udara</th>
-                <th class="text-center align-middle">Stock Baut (Buah)</th>
+                <th class="text-center align-middle">Odo<br>Meter</th>
+                <th class="text-center align-middle">Filter<br>Strainer</th>
+                <th class="text-center align-middle">Filter<br>Udara</th>
+                <th class="text-center align-middle">Stock<br>Baut</th>
                 @foreach ($equipment as $eq)
-                <th class="text-center align-middle">{{ $eq->nama }}</th>
+                <th class="text-center align-middle">{!! implode('<br>', explode(' ', $eq->nama)) !!}</th>
                 @endforeach
             </tr>
         </thead>
@@ -103,12 +103,24 @@
             @foreach ($weekly as $week => $equipmentCounts)
             <tr>
                 <td class="text-center align-middle">{{ $week }}</td>
-                <td class="text-center align-middle">{{ number_format($equipmentCounts['odometer'], 0, ',','.') }}</td>
+                <td class="text-center align-middle">
+                    @if ($equipmentCounts['odometer'] == 0)
+                    -
+                    @else
+                    {{ number_format($equipmentCounts['odometer'], 0, ',','.') }}
+                    @endif
+                  </td>
                 <td class="text-center align-middle">{{ $equipmentCounts['filter_strainer'] }}</td>
                 <td class="text-center align-middle">{{ $equipmentCounts['filter_udara'] }}</td>
                 <td class="text-center align-middle">{{ $equipmentCounts['baut'] }}</td>
                 @foreach ($equipment as $eq)
-                <td class="text-center align-middle">{{ $equipmentCounts[$eq->nama] ?? 0 }}</td>
+                <td class="text-center align-middle">
+                    @if ($equipmentCounts[$eq->nama] == 0)
+                    -
+                    @else
+                    {{ $equipmentCounts[$eq->nama] }}
+                    @endif
+                </td>
                 @endforeach
             </tr>
             @endforeach

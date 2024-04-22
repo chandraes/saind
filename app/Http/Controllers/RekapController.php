@@ -966,7 +966,7 @@ class RekapController extends Controller
                 $weekly[$week]['filter_strainer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->sortByDesc('created_at')
                     ->first()
-                    ->filter_strainer ?? 0;
+                    ->filter_strainer ?? '-';
 
                 if (Carbon::parse($tanggalNow)->between($startOfWeek, $endOfWeek)){
                     $state = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
@@ -977,7 +977,7 @@ class RekapController extends Controller
                 $weekly[$week]['filter_udara'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->sortByDesc('created_at')
                     ->first()
-                    ->filter_udara ?? 0;
+                    ->filter_udara ?? '-';
 
                 $weekly[$week]['baut'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->sortByDesc('created_at')
@@ -1071,12 +1071,12 @@ class RekapController extends Controller
                 $weekly[$week]['filter_strainer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->sortByDesc('created_at')
                     ->first()
-                    ->filter_strainer ?? 0;
+                    ->filter_strainer ?? '-';
 
                 $weekly[$week]['filter_udara'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->sortByDesc('created_at')
                     ->first()
-                    ->filter_udara ?? 0;
+                    ->filter_udara ?? '-';
 
                 $weekly[$week]['baut'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->sortByDesc('created_at')
