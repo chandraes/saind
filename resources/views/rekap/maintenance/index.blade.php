@@ -45,16 +45,73 @@
         </form>
     </div>
 </div>
+<div class="container-fluid">
+    <div class="row mt-2">
+        <div class="col-md-6 d-flex justify-content-start">
+            <table>
 
+                <tr>
+                    <td>
+                        <h5>Nama Driver</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{$vehicle->driver}}</h5>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <h5>Tgl Masuk Driver</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{ \Carbon\Carbon::parse($vehicle->tanggal_masuk_driver)->format('d-m-Y') }}</h5>
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+        <div class="col-md-6 d-flex justify-content-end">
+            <table>
+                <tr>
+                    <td>
+                        <h5>Pengurus</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{$vehicle->pengurus}}</h5>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <h5>Tgl Masuk Pengurus</h5>
+                    </td>
+                    <td style="padding-left:10px;padding-right:10px">
+                        <h5>:</h5>
+                    </td>
+                    <td>
+                        <h5>{{ \Carbon\Carbon::parse($vehicle->tanggal_masuk_pengurus)->format('d-m-Y') }}</h5>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
 <div class="container-fluid table-responsive ml-3">
-    <section id="form-input-odo" @if ($state==1) hidden @endif>
+    <section id="form-input-odo">
         <form action="{{route('rekap.maintenance-vehicle.store-odometer')}}" method="post" id="masukForm">
             @csrf
             <input type="hidden" name="vehicle_id" value="{{$vehicle->id}}">
             <div class="row">
                 <div class="col-md-2">
                     <label for="odometer" class="form-label">Odometer</label>
-                    <input type="text" class="form-control" name="odometer" id="odometer" aria-describedby="helpId"
+                    <input type="text" class="form-control" name="odometer" id="odometer" aria-describedby="helpId" value="{{$odo}}"
                         required placeholder="Masukan Odometer" />
                 </div>
                 <div class="col-md-2">
@@ -66,7 +123,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label for="filter_udara" class="form-label">Filter Strainer</label>
+                    <label for="filter_udara" class="form-label">Filter Udara</label>
                     <select class="form-select" name="filter_udara" id="filter_udara" required>
                         <option value="">-- Pilih Salah Satu -- </option>
                         <option value="1">Sudah</option>
@@ -74,8 +131,8 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="baut" class="form-label">Stock<br>Baut (Buah)</label>
-                    <input type="number" class="form-control" name="baut" id="baut" aria-describedby="helpId" required
+                    <label for="baut" class="form-label">Stock Baut</label>
+                    <input type="number" class="form-control" name="baut" id="baut" aria-describedby="helpId" required value="{{$baut}}"
                         placeholder="Masukan sisa Stock Baut" />
                 </div>
                 <div class="col-md-3">

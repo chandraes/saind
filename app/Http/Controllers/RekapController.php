@@ -906,9 +906,9 @@ class RekapController extends Controller
             'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
         ]);
 
-        $state = 0;
         $tanggalNow = now();
-
+        $odo = 0;
+        $baut = '-';
         $db = new MaintenanceLog();
         $tahun = $request->tahun ?? date('Y');
         $dataTahun = $db->dataTahun();
@@ -961,7 +961,13 @@ class RekapController extends Controller
 
                 // Filter the odo logs in memory
                 $weekly[$week]['odometer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-                    ->max('odometer') ?? 0;
+                    ->sortByDesc('created_at')
+                    ->first()
+                    ->odometer ?? 0;
+
+                if ($weekly[$week]['odometer'] !=0) {
+                    $odo = $weekly[$week]['odometer'];
+                }
 
                 $weekly[$week]['filter_strainer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->sortByDesc('created_at')
@@ -984,30 +990,40 @@ class RekapController extends Controller
                     ->first()
                     ->baut ?? '-';
 
+                if ($weekly[$week]['baut'] != '-') {
+                    $baut = $weekly[$week]['baut'];
+                }
+
                 $weekly[$week][$eq->nama] = $count;
             }
 
             $i++;
         }
 
-        if ($tahun != date('Y')) {
-            $state = 1;
-        }
+        $vehicle = Vehicle::leftJoin('upah_gendongs', 'vehicles.id', '=', 'upah_gendongs.vehicle_id')
+            ->where('vehicles.id', $data['vehicle_id'])
+            ->select('vehicles.*', 'upah_gendongs.nama_driver as driver', 'upah_gendongs.nama_pengurus as pengurus', 'upah_gendongs.tanggal_masuk_driver as tanggal_masuk_driver', 'upah_gendongs.tanggal_masuk_pengurus as tanggal_masuk_pengurus')
+            ->first();
 
-        // dd($state);
+            // dd($vehicle);
 
         return view('rekap.maintenance.index', [
             'weekly' => $weekly,
-            'vehicle' => Vehicle::find($data['vehicle_id']),
+            'vehicle' => $vehicle,
             'equipment' => $equipment,
             'dataTahun' => $dataTahun,
             'tahun' => $tahun,
-            'state' => $state,
+            'odo' => $odo,
+            'baut' => $baut,
         ]);
     }
 
     public function maintenance_vehicle_print(Request $request)
     {
+
+        ini_set('max_execution_time', 80);
+        ini_set('memory_limit', '256M');
+        
         $data = $request->validate([
             'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
         ]);
@@ -1089,9 +1105,15 @@ class RekapController extends Controller
             $i++;
         }
 
+
+        $vehicle = Vehicle::leftJoin('upah_gendongs', 'vehicles.id', '=', 'upah_gendongs.vehicle_id')
+            ->where('vehicles.id', $data['vehicle_id'])
+            ->select('vehicles.*', 'upah_gendongs.nama_driver as driver', 'upah_gendongs.nama_pengurus as pengurus', 'upah_gendongs.tanggal_masuk_driver as tanggal_masuk_driver', 'upah_gendongs.tanggal_masuk_pengurus as tanggal_masuk_pengurus')
+            ->first();
+
         $pdf = PDF::loadview('rekap.maintenance.print', [
                     'weekly' => $weekly,
-                    'vehicle' => Vehicle::find($data['vehicle_id']),
+                    'vehicle' => $vehicle,
                     'equipment' => $equipment,
                     'dataTahun' => $dataTahun,
                     'tahun' => $tahun,
