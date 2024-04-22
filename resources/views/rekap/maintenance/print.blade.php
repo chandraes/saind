@@ -1,0 +1,41 @@
+@extends('layouts.doc-nologo-1')
+@section('content')
+<div class="container-fluid">
+    <center>
+        <h2>MAINTENANCE {{$vehicle->nomor_lambung}}</h2>
+        <h2>{{$tahun}}</h2>
+    </center>
+</div>
+<div class="container-fluid table-responsive ml-3 text-pdf">
+    <div class="row mt-3">
+        <table class="table table-hover table-bordered text-pdf table-pdf" id="rekapTable">
+            <thead class="table-success">
+                <tr>
+                    <th class="text-center align-middle text-pdf table-pdf">Periode</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Odometer</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Filter Strainer</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Filter Udara</th>
+                    <th class="text-center align-middle text-pdf table-pdf">Stock Baut (Buah)</th>
+                    @foreach ($equipment as $eq)
+                    <th class="text-center align-middle text-pdf table-pdf">{{ $eq->nama }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($weekly as $week => $equipmentCounts)
+                <tr>
+                    <td class="text-center align-middle text-pdf table-pdf">{{ $week }}</td>
+                    <td class="text-center align-middle text-pdf table-pdf">{{ number_format($equipmentCounts['odometer'], 0, ',','.') }}</td>
+                    <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['filter_strainer'] }}</td>
+                    <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['filter_udara'] }}</td>
+                    <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['baut'] }}</td>
+                    @foreach ($equipment as $eq)
+                    <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts[$eq->nama] ?? 0 }}</td>
+                    @endforeach
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endsection

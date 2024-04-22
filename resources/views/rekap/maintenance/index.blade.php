@@ -5,6 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>MAINTENANCE <br> NOLAM {{$vehicle->nomor_lambung}}</u></h1>
+            <h1>{{$tahun}}</h1>
         </div>
     </div>
     @include('swal')
@@ -17,9 +18,12 @@
                     <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
                     <td>
-                        <a href="{{route('rekap.maintenance-vehicle.print', ['vehicle' => $vehicle->id])}}"
-                            target="_blank"><img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> PRINT
-                            PDF</a>
+                        <form action="{{route('rekap.maintenance-vehicle.print')}}" method="get" target="_blank">
+                            <input type="hidden" name="vehicle_id" value="{{$vehicle->id}}">
+                            <input type="hidden" name="tahun" value="{{$tahun}}">
+                        <button type="submit" class="btn"><img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> PRINT
+                            PDF</button>
+                        </form>
                     </td>
                 </tr>
             </table>

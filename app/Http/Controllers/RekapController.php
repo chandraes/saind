@@ -970,8 +970,8 @@ class RekapController extends Controller
 
                 if (Carbon::parse($tanggalNow)->between($startOfWeek, $endOfWeek)){
                     $state = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-                    ->sortByDesc('created_at')
-                    ->first() ? 1 : 0;
+                            ->sortByDesc('created_at')
+                            ->first() ? 1 : 0;
                 }
 
                 $weekly[$week]['filter_udara'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
@@ -1006,9 +1006,98 @@ class RekapController extends Controller
         ]);
     }
 
-    public function maintenance_vehicle_print(Vehicle $vehicle)
+    public function maintenance_vehicle_print(Request $request)
     {
+        $data = $request->validate([
+            'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
+        ]);
 
+        $tanggalNow = now();
+
+        $db = new MaintenanceLog();
+        $tahun = $request->tahun ?? date('Y');
+        $dataTahun = $db->dataTahun();
+        // dd($dataTahun);
+
+        $equipment = KategoriBarangMaintenance::select('id', 'nama')->get();
+
+        $tahun = $request->tahun ?? date('Y');
+
+        // Define the start and end of the year
+        $startOfYear = Carbon::create($tahun)->startOfYear();
+        $endOfYear = Carbon::create($tahun)->endOfYear();
+
+        $activation_start = AktivasiMaintenance::where('vehicle_id', $data['vehicle_id'])->first()->tanggal_mulai;
+
+        // If the activation year is the same as the requested year, use the activation date as the start date
+        // Otherwise, use the start of the requested year
+        $start_date = $activation_start->year == $tahun ? $activation_start : $startOfYear;
+
+        // Fetch all relevant MaintenanceLog records for the year
+        $maintenanceLogs = MaintenanceLog::where('vehicle_id', $data['vehicle_id'])
+            ->whereIn('kategori_barang_maintenance_id', $equipment->pluck('id'))
+            ->whereBetween('created_at', [$start_date, $endOfYear])
+            ->get();
+
+        // Fetch all relevant OdoLog records for the year
+        $odoLogs = OdoLog::where('vehicle_id', $data['vehicle_id'])
+            ->whereBetween('created_at', [$start_date, $endOfYear])
+            ->get();
+
+        $i = 0;
+        while (true) {
+            $startOfWeek = $start_date->copy()->addWeeks($i)->startOfWeek();
+            $endOfWeek = $startOfWeek->copy()->endOfWeek();
+
+            if ($endOfWeek->greaterThan($endOfYear)) {
+                break;
+            }
+
+            // Set the locale to Indonesian
+            Carbon::setLocale('id');
+
+            $week = $startOfWeek->translatedFormat('d M') . ' - ' . $endOfWeek->translatedFormat('d M');
+
+            foreach ($equipment as $eq) {
+                // Filter the maintenance logs in memory
+                $count = $maintenanceLogs->where('kategori_barang_maintenance_id', $eq->id)
+                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sum('qty') ?? 0;
+
+                // Filter the odo logs in memory
+                $weekly[$week]['odometer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->max('odometer') ?? 0;
+
+                $weekly[$week]['filter_strainer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sortByDesc('created_at')
+                    ->first()
+                    ->filter_strainer ?? 0;
+
+                $weekly[$week]['filter_udara'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sortByDesc('created_at')
+                    ->first()
+                    ->filter_udara ?? 0;
+
+                $weekly[$week]['baut'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sortByDesc('created_at')
+                    ->first()
+                    ->baut ?? '-';
+
+                $weekly[$week][$eq->nama] = $count;
+            }
+
+            $i++;
+        }
+
+        $pdf = PDF::loadview('rekap.maintenance.print', [
+                    'weekly' => $weekly,
+                    'vehicle' => Vehicle::find($data['vehicle_id']),
+                    'equipment' => $equipment,
+                    'dataTahun' => $dataTahun,
+                    'tahun' => $tahun,
+                ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Rekap Maintenance '.$tahun.'.pdf');
     }
 
     public function store_odo(Request $request)
