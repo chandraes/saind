@@ -23,6 +23,7 @@ use App\Models\Rekening;
 use App\Models\RekapGaji;
 use App\Models\Sponsor;
 use App\Models\GroupWa;
+use App\Models\KategoriBarangMaintenance;
 use App\Models\MaintenanceLog;
 use App\Models\OdoLog;
 use App\Services\StarSender;
@@ -904,17 +905,31 @@ class RekapController extends Controller
         $data = $request->validate([
             'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
         ]);
+
+        $stateInput = 0;
+        $tanggalNow = now();
+
         $db = new MaintenanceLog();
         $tahun = $request->tahun ?? date('Y');
         $dataTahun = $db->dataTahun();
         // dd($dataTahun);
 
-        $equipment = BarangMaintenance::select('id', 'nama')->get();
+        $equipment = KategoriBarangMaintenance::select('id', 'nama')->get();
 
         $activation_start = AktivasiMaintenance::where('vehicle_id', $data['vehicle_id'])->first()->tanggal_mulai;
 
         // make array weekly maintenance that start from activation date in a year
         $weekly = [];
+        // Fetch all relevant MaintenanceLog records at once
+        $maintenanceLogs = MaintenanceLog::where('vehicle_id', $data['vehicle_id'])
+            ->whereIn('kategori_barang_maintenance_id', $equipment->pluck('id'))
+            ->whereBetween('created_at', [$activation_start, $activation_start->copy()->endOfYear()])
+            ->get();
+
+        // Fetch all relevant OdoLog records at once
+        $odoLogs = OdoLog::where('vehicle_id', $data['vehicle_id'])
+            ->whereBetween('created_at', [$activation_start, $activation_start->copy()->endOfYear()])
+            ->get();
 
         $i = 0;
         while (true) {
@@ -925,30 +940,49 @@ class RekapController extends Controller
                 break;
             }
 
-             // Set the locale to Indonesian
+            // Set the locale to Indonesian
             Carbon::setLocale('id');
 
             $week = $startOfWeek->translatedFormat('d M') . ' - ' . $endOfWeek->translatedFormat('d M');
-            $weekly[$week] = [];
 
             foreach ($equipment as $eq) {
-                $count = MaintenanceLog::where('vehicle_id', $data['vehicle_id'])
-                    ->where('barang_maintenance_id', $eq->id)
+                // Filter the maintenance logs in memory
+                $count = $maintenanceLogs->where('kategori_barang_maintenance_id', $eq->id)
                     ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-                    ->count();
+                    ->sum('qty') ?? 0;
 
-                $weekly[$week]['odometer'] = OdoLog::where('vehicle_id', $data['vehicle_id'])
-                    ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                // Filter the odo logs in memory
+                $weekly[$week]['odometer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                     ->max('odometer') ?? 0;
 
-                $weekly[$week][$eq->nama] = $count;
+                $weekly[$week]['filter_strainer'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sortByDesc('created_at')
+                    ->first()
+                    ->filter_strainer ?? 0;
 
+                if (Carbon::parse($tanggalNow)->between($startOfWeek, $endOfWeek)){
+                    $state = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sortByDesc('created_at')
+                    ->first() ? 1 : 0;
+                }
+
+                $weekly[$week]['filter_udara'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sortByDesc('created_at')
+                    ->first()
+                    ->filter_udara ?? 0;
+
+                $weekly[$week]['baut'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                    ->sortByDesc('created_at')
+                    ->first()
+                    ->baut ?? '-';
+
+                $weekly[$week][$eq->nama] = $count;
             }
 
             $i++;
         }
 
-        // dd($weekly);
+        // dd($state);
 
         return view('rekap.maintenance.index', [
             'weekly' => $weekly,
@@ -956,19 +990,33 @@ class RekapController extends Controller
             'equipment' => $equipment,
             'dataTahun' => $dataTahun,
             'tahun' => $tahun,
+            'state' => $state,
         ]);
+    }
+
+    public function maintenance_vehicle_print(Vehicle $vehicle)
+    {
+
     }
 
     public function store_odo(Request $request)
     {
         $data = $request->validate([
             'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
-            'odometer' => 'required|numeric',
+            'odometer' => 'required',
+            'filter_strainer' => 'required',
+            'filter_udara' => 'required',
+            'baut' => 'required|numeric',
         ]);
+
+        $data['odometer'] = str_replace('.', '', $data['odometer']);
 
         OdoLog::create([
             'vehicle_id' => $data['vehicle_id'],
             'odometer' => $data['odometer'],
+            'filter_strainer' => $data['filter_strainer'],
+            'filter_udara' => $data['filter_udara'],
+            'baut' => $data['baut'],
         ]);
 
         return redirect()->back()->with('success', 'Berhasil menambahkan Odometer!!');

@@ -101,10 +101,13 @@ class BarangMaintenance extends Model
     {
         $db = new MaintenanceLog();
 
+        $barang = $this->find($data['barang_maintenance_id']);
+
         $store = $db->create([
             'barang_maintenance_id' => $data['barang_maintenance_id'],
             'vehicle_id' => $data['vehicle_id'],
-            'odometer' => $data['odometer'] ?? null,
+            'kategori_barang_maintenance_id' => $barang->kategori_barang_maintenance_id,
+            'qty' => $data['quantity'],
         ]);
 
         return true;

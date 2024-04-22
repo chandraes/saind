@@ -392,6 +392,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/nota-lunas-detail/{invoice}', [App\Http\Controllers\RekapController::class, 'nota_lunas_detail'])->name('rekap.nota-lunas-detail');
 
             Route::get('/maintenance-vehicle', [App\Http\Controllers\RekapController::class, 'maintenance_vehicle'])->name('rekap.maintenance-vehicle');
+            Route::get('/maintenance-vehicle/{vehicle}/print', [App\Http\Controllers\RekapController::class, 'maintenance_vehicle_print'])->name('rekap.maintenance-vehicle.print');
             Route::post('/maintenance-vehicle/store-odometer', [App\Http\Controllers\RekapController::class, 'store_odo'])->name('rekap.maintenance-vehicle.store-odometer');
         });
 

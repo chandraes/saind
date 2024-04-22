@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
 use App\Models\BarangMaintenance;
+use App\Models\KategoriBarangMaintenance;
 use App\Models\KeranjangMaintenance;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -73,7 +74,10 @@ class FormMaintenanceController extends Controller
 
     public function get_barang(Request $request)
     {
-        $barang = BarangMaintenance::where('kategori_barang_maintenance_id', $request->kategori_barang_maintenance_id)->get();
+        $barang = KategoriBarangMaintenance::join('barang_maintenances', 'kategori_barang_maintenances.id', '=', 'barang_maintenances.kategori_barang_maintenance_id')
+            ->where('barang_maintenances.id', $request->barang_maintenance_id)
+            ->select('kategori_barang_maintenances.id as id', 'kategori_barang_maintenances.nama as nama')
+            ->first();
 
         return response()->json($barang);
     }
