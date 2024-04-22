@@ -56,13 +56,13 @@
                 <h4 class="mt-3">UPAH GENDONG</h4>
             </a>
         </div>
-        {{-- <div class="col-md-2 text-center mt-3 mb-3">
+        <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.aktivasi-maintenance')}}" class="text-decoration-none">
                 <img src="{{asset('images/aktivasi-maintenance.svg')}}" alt="" width="80">
                 <h4 class="mt-3">AKTIVASI MAINTENANCE VEHICLE</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-3 mb-3">
+        {{-- <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
                 <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
                 <h4 class="mt-3">BAN LUAR</h4>
@@ -106,12 +106,12 @@
                 <h4 class="mt-3">KATEGORI BARANG<br>UMUM</h4>
             </a>
         </div>
-        {{-- <div class="col-md-2 text-center mt-3 mb-3">
+        <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.barang-maintenance')}}" class="text-decoration-none">
                 <img src="{{asset('images/barang-maintenance.svg')}}" alt="" width="80">
                 <h4 class="mt-3">KATEGORI BARANG MAINTENANCE</h4>
             </a>
-        </div> --}}
+        </div>
         <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">

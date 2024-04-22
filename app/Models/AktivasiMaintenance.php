@@ -13,6 +13,10 @@ class AktivasiMaintenance extends Model
 
     protected $appends = ['id_tanggal_mulai'];
 
+    protected $casts = [
+        'tanggal_mulai' => 'date',
+    ];
+
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);

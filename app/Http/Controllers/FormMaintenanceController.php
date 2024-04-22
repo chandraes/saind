@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
 use App\Models\BarangMaintenance;
+use App\Models\KategoriBarangMaintenance;
 use App\Models\KeranjangMaintenance;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -71,6 +72,17 @@ class FormMaintenanceController extends Controller
 
     }
 
+    public function get_barang(Request $request)
+    {
+        $barang = KategoriBarangMaintenance::join('barang_maintenances', 'kategori_barang_maintenances.id', '=', 'barang_maintenances.kategori_barang_maintenance_id')
+            ->where('barang_maintenances.id', $request->barang_maintenance_id)
+            ->select('kategori_barang_maintenances.id as id', 'kategori_barang_maintenances.nama as nama')
+            ->first();
+
+        return response()->json($barang);
+    }
+
+
     public function get_harga_jual(Request $request)
     {
         $barang = BarangMaintenance::find($request->barang_maintenance_id);
@@ -80,7 +92,7 @@ class FormMaintenanceController extends Controller
 
     public function jual_vendor()
     {
-        $kategori = BarangMaintenance::all();
+        $kategori = BarangMaintenance::where('stok', '>', 0)->get();
         $am = AktivasiMaintenance::pluck('vehicle_id');
         $vehicle = Vehicle::whereIn('id', $am)->get();
 
@@ -94,15 +106,10 @@ class FormMaintenanceController extends Controller
     {
         $data = $request->validate([
             'barang_maintenance_id' => 'required|exists:barang_maintenances,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'vendor_id' => 'required|exists:vendors,id',
             'jumlah' => 'required',
-            'harga_satuan' => 'required',
-            'vendor' => 'required',
-            'no_rekening' => 'required',
         ]);
-
-        $data['harga_satuan'] = str_replace('.', '', $data['harga_satuan']);
-
-        $data['total'] = $data['jumlah'] * $data['harga_satuan'];
 
         $db = new BarangMaintenance();
 

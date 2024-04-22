@@ -48,9 +48,19 @@
                                 placeholder="" required>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label for="tanggal_masuk_driver" class="form-label">Tanggal Masuk Driver</label>
+                            <input type="text" class="form-control tanggal_flatpick" name="tanggal_masuk_driver" id="tanggal_masuk_driver"
+                                aria-describedby="helpId" placeholder="" required readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label for="nama_pengurus" class="form-label">Nama Pengurus</label>
                             <input type="text" class="form-control" name="nama_pengurus" id="nama_pengurus"
                                 aria-describedby="helpId" placeholder="" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tanggal_masuk_pengurus" class="form-label">Tanggal Masuk Pengurus</label>
+                            <input type="text" class="form-control tanggal_flatpick" name="tanggal_masuk_pengurus" id="tanggal_masuk_pengurus"
+                                aria-describedby="helpId" placeholder="" required readonly>
                         </div>
                         <hr>
                         <h4>INFO REKENING</h4>

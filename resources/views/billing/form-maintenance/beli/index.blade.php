@@ -31,10 +31,17 @@
     <form action="{{route('billing.form-maintenance.keranjang-store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="kategori_barang_id" class="form-label">Kategori Barang</label>
+                    <input type="hidden" name="kategori_barang_maintenance_id" id="kategori_barang_maintenance_id">
+                    <input type="text" class="form-control" name="nama_kategori" id="nama_kategori" aria-describedby="helpId" placeholder="" disabled>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="mb-3">
                     <label for="barang_maintenance_id" class="form-label">Barang Maintenance</label>
-                    <select class="form-select" name="barang_maintenance_id" id="barang_maintenance_id">
+                    <select class="form-select" name="barang_maintenance_id" id="barang_maintenance_id" onchange="funGetBarang()">
                         <option value=""> -- Pilih barang Maintenance -- </option>
                         @foreach ($kategori as $k)
                             <option value="{{$k->id}}">{{$k->nama}}</option>
@@ -42,14 +49,14 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <div class="mb-3">
                   <label for="jumlah" class="form-label">Jumlah</label>
                   <input type="number"
                     class="form-control" name="jumlah" id="jumlah" aria-describedby="helpId" placeholder="" required>
                 </div>
             </div>
-            <div class="col-md-5 mb-3">
+            <div class="col-md-6 mb-6">
                 <label for="harga_satuan" class="form-label">Harga Satuan</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
@@ -119,18 +126,15 @@
         function funGetBarang() {
             var barang_maintenance_id = $('#barang_maintenance_id').val();
             $.ajax({
-                url: "{{route('billing.form-barang.get-barang')}}",
+                url: "{{route('billing.form-maintenance.get-barang')}}",
                 type: "GET",
                 data: {
                     barang_maintenance_id: barang_maintenance_id
                 },
                 success: function(data){
-                    console.log(data);
-                    $('#barang_id').empty();
-                    $('#barang_id').append('<option value=""> -- Pilih kategori barang -- </option>');
-                    $.each(data, function(index, value){
-                        $('#barang_id').append('<option value="'+value.id+'">'+value.nama+'</option>');
-                    });
+                    console.log(data.id, data.nama);
+                    $('#kategori_barang_maintenance_id').val(data.id);
+                    $('#nama_kategori').val(data.nama);
                 }
             });
         }

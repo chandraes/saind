@@ -37,7 +37,7 @@ class RekapBarangMaintenance extends Model
 
         foreach ($keranjang as $k) {
             $data = [
-                'jenis_transaksi' => 1,
+                'jenis_transaksi' => 0,
                 'barang_maintenance_id' => $k->barang_maintenance_id,
                 'nama_barang' => $k->barang_maintenance->nama,
                 'jumlah' => $k->jumlah,

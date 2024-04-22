@@ -462,7 +462,7 @@
                 { "type": "date-eu", "targets": [tanggalMuatColumnIndex + 1, tanggalBongkarColumnIndex + 1] }, // Increase these by 1 because we're adding a column
                 { "orderable": false, "targets": [0,1,-1] } // Make the numbering column unsortable
             ],
-            "order": [[ 2, "asc" ]], 
+            "order": [[ 2, "asc" ]],
             "drawCallback": function (settings) {
                 var api = this.api();
                 var startIndex = api.context[0]._iDisplayStart; // Get the start index for the current page

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             JenisTransaksiSeeder::class,
             RekeningSeeder::class,
             GroupWaSeeder::class,
+            KategoriMaintenanceSeeder::class,
         ]);
     }
 }
