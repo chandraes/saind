@@ -202,36 +202,44 @@ Route::group(['middleware' => ['auth']], function() {
     Route::group(['middleware' => 'role:admin,user,su'], function() {
         Route::get('statisik', [App\Http\Controllers\StatistikController::class, 'index'])->name('statisik.index');
 
-        Route::get('billing/nota-csr', [App\Http\Controllers\TransaksiController::class, 'nota_csr'])->name('billing.nota-csr');
-        Route::post('billing/nota-csr/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_csr_lanjut'])->name('billing.nota-csr.lanjut');
-        Route::get('billing/invoice-csr', [App\Http\Controllers\InvoiceController::class, 'invoice_csr'])->name('billing.invoice-csr');
-        Route::get('billing/invoice-csr/{invoiceCsr}/detail', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_detail'])->name('billing.invoice-csr.detail');
-        Route::post('billing/invoice-csr/{invoiceCsr}/lunas', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_lunas'])->name('invoice.csr.lunas');
-
         // Route::resource('kas-besar', App\Http\Controllers\KasBesarController::class);
-        Route::get('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
-        Route::post('kas-besar/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
-        Route::get('kas-besar/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar'])->name('kas-besar.keluar');
-        Route::post('kas-besar/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar_store'])->name('kas-besar.keluar.store');
 
-        Route::get('kas-kecil/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk'])->name('kas-kecil.masuk');
-        Route::post('kas-kecil/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk_store'])->name('kas-kecil.masuk.store');
-        Route::get('kas-kecil/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar'])->name('kas-kecil.keluar');
-        Route::post('kas-kecil/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar_store'])->name('kas-kecil.keluar.store');
-        Route::get('kas-kecil/void', [App\Http\Controllers\FormKasKecilController::class, 'void'])->name('kas-kecil.void');
-        Route::post('kas-kecil/void', [App\Http\Controllers\FormKasKecilController::class, 'void_store'])->name('kas-kecil.void.store');
-        Route::get('kas-kecil/get-void', [App\Http\Controllers\FormKasKecilController::class, 'get_void'])->name('kas-kecil.get-void');
+        Route::prefix('kas-besar')->group(function(){
+            Route::get('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
+            Route::post('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
+            Route::get('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar'])->name('kas-besar.keluar');
+            Route::post('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar_store'])->name('kas-besar.keluar.store');
+        });
 
-        Route::get('kas-uang-jalan/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk'])->name('kas-uang-jalan.masuk');
-        Route::post('kas-uang-jalan/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk_store'])->name('kas-uang-jalan.masuk.store');
-        Route::get('kas-uang-jalan/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar'])->name('kas-uang-jalan.keluar');
-        Route::post('kas-uang-jalan/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar_store'])->name('kas-uang-jalan.keluar.store');
-        Route::get('kas-uang-jalan/get-vendor', [App\Http\Controllers\FormKasUangJalanController::class, 'get_vendor'])->name('kas-uang-jalan.get-vendor');
-        Route::get('kas-uang-jalan/get-rute', [App\Http\Controllers\FormKasUangJalanController::class, 'get_rute'])->name('kas-uang-jalan.get-rute');
-        Route::get('kas-uang-jalan/get-uang-jalan', [App\Http\Controllers\FormKasUangJalanController::class, 'get_uang_jalan'])->name('kas-uang-jalan.get-uang-jalan');
+        Route::prefix('kas-kecil')->group(function(){
+            Route::get('/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk'])->name('kas-kecil.masuk');
+            Route::post('/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk_store'])->name('kas-kecil.masuk.store');
+            Route::get('/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar'])->name('kas-kecil.keluar');
+            Route::post('/keluar', [App\Http\Controllers\FormKasKecilController::class, 'keluar_store'])->name('kas-kecil.keluar.store');
+            Route::get('/void', [App\Http\Controllers\FormKasKecilController::class, 'void'])->name('kas-kecil.void');
+            Route::post('/void', [App\Http\Controllers\FormKasKecilController::class, 'void_store'])->name('kas-kecil.void.store');
+            Route::get('/get-void', [App\Http\Controllers\FormKasKecilController::class, 'get_void'])->name('kas-kecil.get-void');
+        });
+
+        Route::prefix('kas-uang-jalan')->group(function(){
+            Route::get('/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk'])->name('kas-uang-jalan.masuk');
+            Route::post('/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk_store'])->name('kas-uang-jalan.masuk.store');
+            Route::get('/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar'])->name('kas-uang-jalan.keluar');
+            Route::post('/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar_store'])->name('kas-uang-jalan.keluar.store');
+            Route::get('/get-vendor', [App\Http\Controllers\FormKasUangJalanController::class, 'get_vendor'])->name('kas-uang-jalan.get-vendor');
+            Route::get('/get-rute', [App\Http\Controllers\FormKasUangJalanController::class, 'get_rute'])->name('kas-uang-jalan.get-rute');
+            Route::get('/get-uang-jalan', [App\Http\Controllers\FormKasUangJalanController::class, 'get_uang_jalan'])->name('kas-uang-jalan.get-uang-jalan');
+        });
 
         //Form maintenance
         Route::prefix('billing')->group(function(){
+
+            Route::get('/nota-csr', [App\Http\Controllers\TransaksiController::class, 'nota_csr'])->name('billing.nota-csr');
+            Route::post('/nota-csr/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_csr_lanjut'])->name('billing.nota-csr.lanjut');
+            Route::get('/invoice-csr', [App\Http\Controllers\InvoiceController::class, 'invoice_csr'])->name('billing.invoice-csr');
+            Route::get('/invoice-csr/{invoiceCsr}/detail', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_detail'])->name('billing.invoice-csr.detail');
+            Route::post('/invoice-csr/{invoiceCsr}/lunas', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_lunas'])->name('invoice.csr.lunas');
+
             Route::prefix('form-maintenance')->group(function(){
                 Route::get('/beli', [App\Http\Controllers\FormMaintenanceController::class, 'beli'])->name('billing.form-maintenance.beli');
                 Route::post('/barang-store', [App\Http\Controllers\FormMaintenanceController::class, 'beli_store'])->name('billing.form-maintenance.barang-store');
@@ -247,18 +255,64 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/jual-umum', [App\Http\Controllers\FormMaintenanceController::class, 'jual_umum'])->name('billing.form-maintenance.jual-umum');
 
             });
+
+            Route::prefix('form-barang')->group(function(){
+                Route::get('/beli', [App\Http\Controllers\FormBarangController::class, 'beli'])->name('billing.form-barang.beli');
+                Route::get('/get-barang', [App\Http\Controllers\FormBarangController::class, 'get_barang'])->name('billing.form-barang.get-barang');
+                Route::post('/keranjang-store', [App\Http\Controllers\FormBarangController::class, 'keranjang_store'])->name('billing.form-barang.keranjang-store');
+                Route::delete('/keranjang-destroy/{keranjang}', [App\Http\Controllers\FormBarangController::class, 'keranjang_destroy'])->name('billing.form-barang.keranjang-destroy');
+                Route::get('/keranjang-empty', [App\Http\Controllers\FormBarangController::class, 'keranjang_empty'])->name('billing.form-barang.keranjang-empty');
+                Route::get('/barang-store', [App\Http\Controllers\FormBarangController::class, 'beli_store'])->name('billing.form-barang.barang-store');
+                Route::get('/jual', [App\Http\Controllers\FormBarangController::class, 'jual'])->name('billing.form-barang.jual');
+                Route::post('/jual-store', [App\Http\Controllers\FormBarangController::class, 'jual_store'])->name('billing.form-barang.jual-store');
+                Route::get('/get-harga-jual', [App\Http\Controllers\FormBarangController::class, 'get_harga_jual'])->name('billing.form-barang.get-harga-jual');
+            });
+
+            // form vendor
+            Route::prefix('vendor')->group(function(){
+                Route::get('/titipan', [App\Http\Controllers\FormVendorController::class, 'titipan'])->name('billing.vendor.titipan');
+                Route::post('/titipan-store', [App\Http\Controllers\FormVendorController::class, 'titipan_store'])->name('billing.vendor.titipan-store');
+                Route::get('/pelunasan', [App\Http\Controllers\FormVendorController::class, 'pelunasan'])->name('billing.vendor.pelunasan');
+                Route::post('/pelunasan-store', [App\Http\Controllers\FormVendorController::class, 'pelunasan_store'])->name('billing.vendor.pelunasan-store');
+                Route::get('/get-kas-vendor', [App\Http\Controllers\FormVendorController::class, 'get_kas_vendor'])->name('billing.vendor.get-kas-vendor');
+                Route::get('/bayar', [App\Http\Controllers\FormVendorController::class, 'bayar'])->name('billing.vendor.bayar');
+                Route::post('/bayar-store', [App\Http\Controllers\FormVendorController::class, 'bayar_store'])->name('billing.vendor.bayar-store');
+                Route::get('/get-vehicle', [App\Http\Controllers\FormVendorController::class, 'get_vehicle'])->name('billing.vendor.get-vehicle');
+                Route::get('/get-plafon-titipan', [App\Http\Controllers\FormVendorController::class, 'get_plafon_titipan'])->name('billing.vendor.get-plafon-titipan');
+            });
+
+
+            // form kasbon
+            Route::prefix('kasbon')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormKasbonController::class, 'index'])->name('billing.kasbon.index');
+
+                Route::prefix('direksi')->group(function(){
+                    Route::view('/', 'billing.kasbon.direksi.index')->name('billing.kasbon.direksi.index');
+                    Route::get('/kasbon', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas'])->name('billing.kasbon.direksi.kasbon');
+                    Route::get('/bayar', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar'])->name('billing.kasbon.direksi.bayar');
+                    Route::get('/bayar/list', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_list'])->name('billing.kasbon.direksi.bayar.list');
+                    Route::post('/bayar-store/{direksi}', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_store'])->name('billing.kasbon.direksi.bayar-store');
+                    Route::post('/kasbon-store', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas_store'])->name('billing.kasbon.direksi.kasbon-store');
+                });
+
+                Route::post('/store', [App\Http\Controllers\FormKasbonController::class, 'store'])->name('billing.kasbon.store');
+                Route::view('/kas-bon-staff', 'billing.kasbon.kas-bon-staff')->name('billing.kasbon.kas-bon-staff');
+                Route::get('/kas-bon-cicil', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil'])->name('billing.kasbon.kas-bon-cicil');
+                Route::post('/kas-bon-cicil-store', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil_store'])->name('billing.kasbon.kas-bon-cicil-store');
+            });
+
+            Route::prefix('storing')->group(function(){
+                Route::get('/index', [App\Http\Controllers\FormStoringConroller::class, 'index'])->name('billing.storing.index');
+                Route::post('/store', [App\Http\Controllers\FormStoringConroller::class, 'store'])->name('billing.storing.store');
+                Route::get('/void', [App\Http\Controllers\FormStoringConroller::class, 'void'])->name('billing.storing.void');
+                Route::get('/get-storing', [App\Http\Controllers\FormStoringConroller::class, 'get_storing'])->name('billing.storing.get-storing');
+                Route::get('/get-status-so', [App\Http\Controllers\FormStoringConroller::class, 'get_status_so'])->name('billing.storing.get-status-so');
+                Route::get('/get-vendor', [App\Http\Controllers\FormStoringConroller::class, 'get_vendor'])->name('billing.storing.get-vendor');
+                Route::get('/storing-latest', [App\Http\Controllers\FormStoringConroller::class, 'storing_latest'])->name('billing.storing.storing-latest');
+            });
+
         });
 
-        // Form Barang
-        Route::get('billing/form-barang/beli', [App\Http\Controllers\FormBarangController::class, 'beli'])->name('billing.form-barang.beli');
-        Route::get('billing/form-barang/get-barang', [App\Http\Controllers\FormBarangController::class, 'get_barang'])->name('billing.form-barang.get-barang');
-        Route::post('billing/form-barang/keranjang-store', [App\Http\Controllers\FormBarangController::class, 'keranjang_store'])->name('billing.form-barang.keranjang-store');
-        Route::delete('billing/form-barang/keranjang-destroy/{keranjang}', [App\Http\Controllers\FormBarangController::class, 'keranjang_destroy'])->name('billing.form-barang.keranjang-destroy');
-        Route::get('billing/form-barang/keranjang-empty', [App\Http\Controllers\FormBarangController::class, 'keranjang_empty'])->name('billing.form-barang.keranjang-empty');
-        Route::get('billing/form-barang/barang-store', [App\Http\Controllers\FormBarangController::class, 'beli_store'])->name('billing.form-barang.barang-store');
-        Route::get('billing/form-barang/jual', [App\Http\Controllers\FormBarangController::class, 'jual'])->name('billing.form-barang.jual');
-        Route::post('billing/form-barang/jual-store', [App\Http\Controllers\FormBarangController::class, 'jual_store'])->name('billing.form-barang.jual-store');
-        Route::get('billing/form-barang/get-harga-jual', [App\Http\Controllers\FormBarangController::class, 'get_harga_jual'])->name('billing.form-barang.get-harga-jual');
 
         Route::get('transaksi/nota-muat', [App\Http\Controllers\TransaksiController::class, 'nota_muat'])->name('transaksi.nota-muat');
         Route::patch('transaksi/nota-muat/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_muat_update'])->name('transaksi.nota-muat.update');
@@ -293,31 +347,6 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::resource('bbm-storing', App\Http\Controllers\BbmStoringController::class);
 
-        // form vendor
-        Route::get('billing/vendor/titipan', [App\Http\Controllers\FormVendorController::class, 'titipan'])->name('billing.vendor.titipan');
-        Route::post('billing/vendor/titipan-store', [App\Http\Controllers\FormVendorController::class, 'titipan_store'])->name('billing.vendor.titipan-store');
-        Route::get('billing/vendor/pelunasan', [App\Http\Controllers\FormVendorController::class, 'pelunasan'])->name('billing.vendor.pelunasan');
-        Route::post('billing/vendor/pelunasan-store', [App\Http\Controllers\FormVendorController::class, 'pelunasan_store'])->name('billing.vendor.pelunasan-store');
-        Route::get('billing/vendor/get-kas-vendor', [App\Http\Controllers\FormVendorController::class, 'get_kas_vendor'])->name('billing.vendor.get-kas-vendor');
-        Route::get('billing/vendor/bayar', [App\Http\Controllers\FormVendorController::class, 'bayar'])->name('billing.vendor.bayar');
-        Route::post('billing/vendor/bayar-store', [App\Http\Controllers\FormVendorController::class, 'bayar_store'])->name('billing.vendor.bayar-store');
-        Route::get('billing/vendor/get-vehicle', [App\Http\Controllers\FormVendorController::class, 'get_vehicle'])->name('billing.vendor.get-vehicle');
-        Route::get('billing/vendor/get-plafon-titipan', [App\Http\Controllers\FormVendorController::class, 'get_plafon_titipan'])->name('billing.vendor.get-plafon-titipan');
-
-        // form kasbon
-        Route::get('billing/kasbon', [App\Http\Controllers\FormKasbonController::class, 'index'])->name('billing.kasbon.index');
-        Route::view('billing/kasbon/direksi', 'billing.kasbon.direksi.index')->name('billing.kasbon.direksi.index');
-        Route::get('billing/kasbon/direksi/kasbon', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas'])->name('billing.kasbon.direksi.kasbon');
-        Route::get('billing/kasbon/direksi/bayar', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar'])->name('billing.kasbon.direksi.bayar');
-        Route::get('billing/kasbon/direksi/bayar/list', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_list'])->name('billing.kasbon.direksi.bayar.list');
-        Route::post('billing/kasbon/direksi/bayar-store/{direksi}', [App\Http\Controllers\FormKasbonController::class, 'direksi_bayar_store'])->name('billing.kasbon.direksi.bayar-store');
-
-        Route::post('billing/kasbon/direksi/kasbon-store', [App\Http\Controllers\FormKasbonController::class, 'direksi_kas_store'])->name('billing.kasbon.direksi.kasbon-store');
-        Route::post('billing/kasbon/store', [App\Http\Controllers\FormKasbonController::class, 'store'])->name('billing.kasbon.store');
-        Route::view('billing/kasbon/kas-bon-staff', 'billing.kasbon.kas-bon-staff')->name('billing.kasbon.kas-bon-staff');
-        Route::get('billing/kasbon/kas-bon-cicil', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil'])->name('billing.kasbon.kas-bon-cicil');
-        Route::post('billing/kasbon/kas-bon-cicil-store', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil_store'])->name('billing.kasbon.kas-bon-cicil-store');
-
         // Form Deviden
         Route::get('billing/deviden', [App\Http\Controllers\FormDevidenController::class, 'index'])->name('billing.deviden.index');
         Route::post('billing/deviden/store', [App\Http\Controllers\FormDevidenController::class, 'store'])->name('billing.deviden.store');
@@ -343,14 +372,6 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('billing/transaksi/invoice/bonus', [App\Http\Controllers\InvoiceController::class, 'invoice_bonus'])->name('invoice.bonus.index');
         Route::get('billing/transaksi/invoice/bonus/{invoiceBonus}/detail', [App\Http\Controllers\InvoiceController::class, 'invoice_bonus_detail'])->name('invoice.bonus.detail');
         Route::post('billing/transaksi/invoice/bonus/{invoice}/lunas', [App\Http\Controllers\InvoiceController::class, 'invoice_bonus_lunas'])->name('invoice.bonus.lunas');
-
-        Route::get('billing/storing/index', [App\Http\Controllers\FormStoringConroller::class, 'index'])->name('billing.storing.index');
-        Route::post('billing/storing/store', [App\Http\Controllers\FormStoringConroller::class, 'store'])->name('billing.storing.store');
-        Route::get('billing/storing/void', [App\Http\Controllers\FormStoringConroller::class, 'void'])->name('billing.storing.void');
-        Route::get('billing/storing/get-storing', [App\Http\Controllers\FormStoringConroller::class, 'get_storing'])->name('billing.storing.get-storing');
-        Route::get('billing/storing/get-status-so', [App\Http\Controllers\FormStoringConroller::class, 'get_status_so'])->name('billing.storing.get-status-so');
-        Route::get('billing/storing/get-vendor', [App\Http\Controllers\FormStoringConroller::class, 'get_vendor'])->name('billing.storing.get-vendor');
-        Route::get('billing/storing/storing-latest', [App\Http\Controllers\FormStoringConroller::class, 'storing_latest'])->name('billing.storing.storing-latest');
 
         Route::view('rekap-gaji', 'rekap.gaji')->name('rekap-gaji');
         Route::get('rekap-gaji-detail', [App\Http\Controllers\RekapController::class, 'rekap_gaji_detail'])->name('rekap-gaji-detail');
@@ -409,9 +430,6 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::get('/upah-gendong', [App\Http\Controllers\StatistikController::class, 'upah_gendong'])->name('statistik.upah-gendong');
         });
-
-
-
 
         Route::get('dokumen/template-new', [App\Http\Controllers\DokumenNewController::class, 'index'])->name('template-new');
         Route::get('dokumen/template-new/kontrak', [App\Http\Controllers\DokumenNewController::class, 'kontrak_new'])->name('template-new.kontrak');
