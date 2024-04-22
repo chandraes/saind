@@ -906,7 +906,7 @@ class RekapController extends Controller
             'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
         ]);
 
-        $stateInput = 0;
+        $state = 0;
         $tanggalNow = now();
 
         $db = new MaintenanceLog();
