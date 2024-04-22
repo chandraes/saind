@@ -916,27 +916,35 @@ class RekapController extends Controller
 
         $equipment = KategoriBarangMaintenance::select('id', 'nama')->get();
 
+        $tahun = $request->tahun ?? date('Y');
+
+        // Define the start and end of the year
+        $startOfYear = Carbon::create($tahun)->startOfYear();
+        $endOfYear = Carbon::create($tahun)->endOfYear();
+
         $activation_start = AktivasiMaintenance::where('vehicle_id', $data['vehicle_id'])->first()->tanggal_mulai;
 
-        // make array weekly maintenance that start from activation date in a year
-        $weekly = [];
-        // Fetch all relevant MaintenanceLog records at once
+        // If the activation year is the same as the requested year, use the activation date as the start date
+        // Otherwise, use the start of the requested year
+        $start_date = $activation_start->year == $tahun ? $activation_start : $startOfYear;
+
+        // Fetch all relevant MaintenanceLog records for the year
         $maintenanceLogs = MaintenanceLog::where('vehicle_id', $data['vehicle_id'])
             ->whereIn('kategori_barang_maintenance_id', $equipment->pluck('id'))
-            ->whereBetween('created_at', [$activation_start, $activation_start->copy()->endOfYear()])
+            ->whereBetween('created_at', [$start_date, $endOfYear])
             ->get();
 
-        // Fetch all relevant OdoLog records at once
+        // Fetch all relevant OdoLog records for the year
         $odoLogs = OdoLog::where('vehicle_id', $data['vehicle_id'])
-            ->whereBetween('created_at', [$activation_start, $activation_start->copy()->endOfYear()])
+            ->whereBetween('created_at', [$start_date, $endOfYear])
             ->get();
 
         $i = 0;
         while (true) {
-            $startOfWeek = $activation_start->copy()->addWeeks($i)->startOfWeek();
+            $startOfWeek = $start_date->copy()->addWeeks($i)->startOfWeek();
             $endOfWeek = $startOfWeek->copy()->endOfWeek();
 
-            if ($endOfWeek->year > $activation_start->year) {
+            if ($endOfWeek->greaterThan($endOfYear)) {
                 break;
             }
 
@@ -980,6 +988,10 @@ class RekapController extends Controller
             }
 
             $i++;
+        }
+
+        if ($tahun != date('Y')) {
+            $state = 1;
         }
 
         // dd($state);

@@ -24,32 +24,34 @@
                 </tr>
             </table>
         </div>
+
         <div class="col-md-3 mt-2">
             {{-- <label for="tahun" class="form-label">Tahun</label> --}}
-            <select class="form-select" name="tahun" id="tahun">
-                @foreach ($dataTahun as $d)
-                <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
-                @endforeach
-            </select>
+            <form action="{{route('rekap.maintenance-vehicle')}}" method="get">
+                <select class="form-select" name="tahun" id="tahun">
+                    @foreach ($dataTahun as $d)
+                    <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
+                    @endforeach
+                </select>
+                <input type="hidden" name="vehicle_id" value="{{$vehicle->id}}">
         </div>
         <div class="col-md-3 mt-2">
             <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
         </div>
+        </form>
     </div>
 </div>
 
 <div class="container-fluid table-responsive ml-3">
-    <section id="form-input-odo" @if ($state == 1)
-    hidden
-    @endif>
+    <section id="form-input-odo" @if ($state==1) hidden @endif>
         <form action="{{route('rekap.maintenance-vehicle.store-odometer')}}" method="post" id="masukForm">
             @csrf
             <input type="hidden" name="vehicle_id" value="{{$vehicle->id}}">
             <div class="row">
                 <div class="col-md-2">
                     <label for="odometer" class="form-label">Odometer</label>
-                    <input type="text" class="form-control" name="odometer" id="odometer" aria-describedby="helpId" required
-                        placeholder="Masukan Odometer" />
+                    <input type="text" class="form-control" name="odometer" id="odometer" aria-describedby="helpId"
+                        required placeholder="Masukan Odometer" />
                 </div>
                 <div class="col-md-2">
                     <label for="filter_strainer" class="form-label">Filter Strainer</label>
