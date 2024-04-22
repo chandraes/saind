@@ -62,12 +62,12 @@
                 <h4 class="mt-3">AKTIVASI MAINTENANCE VEHICLE</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-3 mb-3">
+        {{-- <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
                 <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
                 <h4 class="mt-3">BAN LUAR</h4>
             </a>
-        </div>
+        </div> --}}
     </div>
     <hr>
     <div class="row justify-content-left">
