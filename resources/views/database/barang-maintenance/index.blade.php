@@ -51,7 +51,7 @@
             <tr>
                 <td class="text-center align-middle" style="width: 10px">{{$loop->iteration}}</td>
                 <td class="text-start align-middle">
-                    {{$d->kategori->nama}}
+                    {{$d->kategori ? $d->kategori->nama : ''}}
                 </td>
                 <td class="text-start align-middle">
                     {{$d->nama}}
