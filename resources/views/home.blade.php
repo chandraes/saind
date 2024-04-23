@@ -119,7 +119,7 @@
             </div>
         </div>
     </div>
-    <div class="row justify-content-left mt-5">
+    {{-- <div class="row justify-content-left mt-5">
         <div class="col-md-3 text-center mb-5">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
                 <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="80">
@@ -162,7 +162,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
     @endif
     @if (auth()->user()->role === 'customer')
     @include('per-customer.index')
