@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AktivasiMaintenance;
 use App\Models\InvoiceTagihan;
 use App\Models\Transaksi;
 use App\Models\UpahGendong;
@@ -51,11 +52,17 @@ class HomeController extends Controller
         if ($user->role == 'vendor') {
             $vehicle = Vehicle::where('vendor_id', auth()->user()->vendor_id)->pluck('id');
             $ug = UpahGendong::whereIn('vehicle_id', $vehicle)->get();
-            return view('home', ['ug' => $ug]);
+            $maintenance = AktivasiMaintenance::with(['vehicle'])
+                        ->whereHas('vehicle', function ($query) {
+                            $query->where('vendor_id', auth()->user()->vendor_id);
+                        })
+                        ->get();
+            return view('home', [
+                'ug' => $ug,
+                'maintenance' => $maintenance
+            ]);
         }
 
         return view('home');
-
-
     }
 }

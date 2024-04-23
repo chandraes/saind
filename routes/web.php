@@ -445,7 +445,17 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('perform-unit-pervendor', [App\Http\Controllers\StatistikController::class, 'perform_unit_pervendor'])->name('perform-unit-pervendor.index');
         Route::get('statistik-pervendor', [App\Http\Controllers\StatistikController::class, 'statistik_pervendor'])->name('statistik-pervendor.index');
 
-        Route::get('per-vendor/upah-gendong', [App\Http\Controllers\PerVendorController::class, 'upah_gendong'])->name('per-vendor.upah-gendong');
+        Route::prefix('per-vendor')->group(function(){
+            Route::get('/upah-gendong', [App\Http\Controllers\PerVendorController::class, 'upah_gendong'])->name('per-vendor.upah-gendong');
+
+            Route::prefix('maintenance-vehicle')->group(function(){
+                Route::get('/', [App\Http\Controllers\PerVendorController::class, 'maintenance_vehicle'])->name('per-vendor.maintenance-vehicle');
+                Route::get('/print', [App\Http\Controllers\PerVendorController::class, 'maintenance_vehicle_print'])->name('per-vendor.maintenance-vehicle.print');
+                Route::post('/store-odo', [App\Http\Controllers\PerVendorController::class, 'store_odo'])->name('per-vendor.maintenance-vehicle.store-odo');
+            });
+
+        });
+
     });
 
     Route::group(['middleware' => 'role:customer'], function() {
