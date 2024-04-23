@@ -485,6 +485,13 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::get('upah-gendong', [App\Http\Controllers\OperasionalController::class, 'upah_gendong'])->name('operasional.upah-gendong');
 
+            Route::prefix('maintenance')->group(function(){
+                Route::get('/', [App\Http\Controllers\OperasionalController::class, 'maintenance_vehicle'])->name('operasional.maintenance-vehicle');
+                Route::get('/print', [App\Http\Controllers\OperasionalController::class, 'maintenance_vehicle_print'])->name('operasional.maintenance-vehicle.print');
+                Route::post('/store-odo', [App\Http\Controllers\OperasionalController::class, 'store_odo'])->name('operasional.maintenance-vehicle.store-odo');
+            
+            });
+
             // Route::get('statistik-vendor', [App\Http\Controllers\OperasionalController::class, 'statistik_vendor'])->name('operasional.statistik-vendor');
         });
     });

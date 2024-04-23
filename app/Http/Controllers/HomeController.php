@@ -46,7 +46,9 @@ class HomeController extends Controller
         if ($user->role == 'operasional') {
             $db = Vendor::all();
             $ug = UpahGendong::all();
-            return view('home', ['vendor' => $db, 'ug' => $ug]);
+            $maintenance = AktivasiMaintenance::with(['vehicle'])
+            ->get();
+            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance]);
         }
 
         if ($user->role == 'vendor') {
