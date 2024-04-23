@@ -167,8 +167,24 @@
                     {{ number_format($equipmentCounts['odometer'], 0, ',','.') }}
                     @endif
                   </td>
-                <td class="text-center align-middle">{{ $equipmentCounts['filter_strainer'] }}</td>
-                <td class="text-center align-middle">{{ $equipmentCounts['filter_udara'] }}</td>
+                <td class="text-center align-middle">
+                    @if ($equipmentCounts['filter_strainer']  == 0)
+                    -
+                    @elseif ($equipmentCounts['filter_strainer']  == 1)
+                    <i class="fa fa-check" style="font-size: 15px""></i>
+                    @else
+                    -
+                    @endif
+                </td>
+                <td class="text-center align-middle">
+                    @if ($equipmentCounts['filter_udara']  == 0)
+                    -
+                    @elseif ($equipmentCounts['filter_udara']  == 1)
+                    <i class="fa fa-check" style="font-size: 15px""></i>
+                    @else
+                    -
+                    @endif
+                </td>
                 <td class="text-center align-middle">{{ $equipmentCounts['baut'] }}</td>
                 @foreach ($equipment as $eq)
                 <td class="text-center align-middle">

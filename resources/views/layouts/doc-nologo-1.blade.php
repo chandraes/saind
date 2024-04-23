@@ -17,6 +17,25 @@
             height: 50px;
             text-align: right;
         }
+
+        .checked-icon {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            border: 2px solid green;
+        }
+
+        .checked-icon::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 5px;
+            border-bottom: 2px solid green;
+            border-right: 2px solid green;
+            transform: rotate(45deg);
+            top: 5px;
+            left: 4px;
+        }
         .table-pdf {
             border: 1px solid;
             padding-left: 5px;

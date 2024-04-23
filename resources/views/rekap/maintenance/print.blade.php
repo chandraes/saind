@@ -92,9 +92,24 @@
                         {{ number_format($equipmentCounts['odometer'], 0, ',','.') }}
                         @endif
                     </td>
-                    <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['filter_strainer'] }}
+                    <td class="text-center align-middle text-pdf table-pdf">
+                        @if ($equipmentCounts['filter_strainer']  == 0)
+                        -
+                        @elseif ($equipmentCounts['filter_strainer']  == 1)
+                        V
+                        @else
+                        -
+                        @endif
                     </td>
-                    <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['filter_udara'] }}</td>
+                    <td class="text-center align-middle text-pdf table-pdf">
+                        @if ($equipmentCounts['filter_udara']  == 0)
+                        -
+                        @elseif ($equipmentCounts['filter_udara']  == 1)
+                        V
+                        @else
+                        -
+                        @endif
+                    </td>
                     <td class="text-center align-middle text-pdf table-pdf">{{ $equipmentCounts['baut'] }}</td>
                     @foreach ($equipment as $eq)
                     <td class="text-center align-middle text-pdf table-pdf">
