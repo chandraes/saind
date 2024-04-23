@@ -15,8 +15,6 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
-                                width="30"> REKAP</a></td>
                     <td>
                         <form action="{{route('per-vendor.maintenance-vehicle.print')}}" method="get" target="_blank">
                             <input type="hidden" name="vehicle_id" value="{{$vehicle->id}}">
