@@ -132,10 +132,17 @@ class FormMaintenanceController extends Controller
         $data = $request->validate([
             'barang_maintenance_id' => 'required|exists:barang_maintenances,id',
             'uraian' => 'required',
+            'konsumen' => 'required',
             'jumlah' => 'required',
         ]);
 
         $db = new BarangMaintenance();
+
+        $stock = BarangMaintenance::find($data['barang_maintenance_id']);
+
+        if ($stock->stok < $data['jumlah']) {
+            return redirect()->route('billing.index')->with('error', 'Stok barang tidak cukup');
+        }
 
         $store = $db->jual_umum($data);
 

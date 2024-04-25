@@ -19,10 +19,10 @@
             </ul>
         </div>
     @endif
-    <form action="{{route('billing.form-maintenance.jual-vendor-store')}}" method="post" id="masukForm">
+    <form action="{{route('billing.form-maintenance.jual-umum.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
-            <div class="col-6">
+            <div class="col-md-4">
                 <div class="mb-3">
                     <label for="barang_maintenance_id" class="form-label">Nama Barang</label>
                     <select class="form-select" name="barang_maintenance_id" id="barang_maintenance_id" onchange="getHargaJual()">
@@ -31,6 +31,18 @@
                             <option value="{{$b->id}}">{{$b->nama}} ({{$b->stok}})</option>
                         @endforeach
                     </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="keterangan" class="form-label">Uraian</label>
+                    <input type="text" class="form-control" name="uraian" required>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="konsumen" class="form-label">Konsumen</label>
+                    <input type="text" class="form-control" name="konsumen" required>
                 </div>
             </div>
         </div>

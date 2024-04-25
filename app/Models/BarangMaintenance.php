@@ -141,17 +141,18 @@ class BarangMaintenance extends Model
     {
         $db = new KasBesar();
 
+        $barang = $this->find($data['barang_maintenance_id']);
         $rekap = new RekapBarangMaintenance();
 
-        $barang = $this->find($data['barang_maintenance_id']);
+        $data['tanggal'] = date('Y-m-d');
+        $data['quantity'] = $data['jumlah'];
+        $data['harga_satuan'] = $barang->harga_jual;
+        $total = $barang->harga_jual * $data['quantity'];
+        $data['nama_barang'] = $barang->nama;
 
         try {
-            $data['harga_satuan'] = $barang->harga_jual;
-            $data['tanggal'] = now();
 
             $rekening = Rekening::where('untuk', 'kas-besar')->first();
-
-            $total = $data['jumlah'] * $data['harga_satuan'];
 
             DB::beginTransaction();
 
@@ -167,15 +168,18 @@ class BarangMaintenance extends Model
                 'no_rekening' => $rekening->nomor_rekening,
             ]);
 
-            $store = $rekap->create([
-                'tanggal' => $data['tanggal'],
+            $store =  $rekap->create([
                 'jenis_transaksi' => 1,
                 'barang_maintenance_id' => $data['barang_maintenance_id'],
-                'nama_barang' => $barang->nama,
-                'jumlah' => $data['jumlah'],
+                'nama_barang' => $data['nama_barang'],
+                'jumlah' => $data['quantity'],
                 'harga_satuan' => $data['harga_satuan'],
                 'total' => $total,
             ]);
+
+            $barang->stok -= $data['quantity'];
+            $barang->save();
+
 
             DB::commit();
 
@@ -191,7 +195,29 @@ class BarangMaintenance extends Model
                 'status' => 'error',
                 'message' => $e->getMessage(),
             ];
+
+            return $result;
         }
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    "*Form Jual Barang Umum*\n".
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                    "Konsumen  : ".$data['konsumen']."\n\n".
+                    "Uraian : ".$kas->uraian."\n".
+                    "Barang : ".$barang->nama."\n".
+                    "Jumlah : ".$data['jumlah']."\n\n".
+                    "Nilai :  *Rp. ".number_format($total, 0, ',', '.')."*\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($kas->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($kas->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+
+        $send = new StarSender($group->nama_group, $pesan);
+        $res = $send->sendGroup();
 
         return $result;
     }
