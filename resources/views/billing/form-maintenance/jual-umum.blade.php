@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Form Jual Barang Umum</u></h1>
+            <h1><u>Form Barang Maintenance</u></h1>
         </div>
     </div>
     @include('swal')
@@ -19,25 +19,17 @@
             </ul>
         </div>
     @endif
-    <form action="{{route('billing.form-barang.jual-umum.store')}}" method="post" id="masukForm">
+    <form action="{{route('billing.form-maintenance.jual-vendor-store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
             <div class="col-6">
                 <div class="mb-3">
-                    <label for="kategori_barang_id" class="form-label">Kategori Barang</label>
-                    <select class="form-select" name="kategori_barang_id" id="kategori_barang_id" onchange="funGetBarang()">
-                        <option value=""> -- Pilih kategori barang -- </option>
-                        @foreach ($kategori as $k)
-                            <option value="{{$k->id}}">{{$k->nama}}</option>
+                    <label for="barang_maintenance_id" class="form-label">Nama Barang</label>
+                    <select class="form-select" name="barang_maintenance_id" id="barang_maintenance_id" onchange="getHargaJual()">
+                        <option value=""> -- Pilih barang -- </option>
+                        @foreach ($kategori as $b)
+                            <option value="{{$b->id}}">{{$b->nama}} ({{$b->stok}})</option>
                         @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="mb-3">
-                    <label for="barang_id" class="form-label">Nama Barang</label>
-                    <select class="form-select" name="barang_id" id="barang_id" onchange="getHargaJual()">
-                        <option value=""> -- Pilih kategori barang -- </option>
                     </select>
                 </div>
             </div>
@@ -69,14 +61,6 @@
                 @endif" name="total" id="total" data-thousands="." disabled>
                   </div>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="keterangan" class="form-label">Uraian</label>
-                <input type="text" class="form-control" name="uraian" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="konsumen" class="form-label">Konsumen</label>
-                <input type="text" class="form-control" name="konsumen" required>
-            </div>
         </div>
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary">Jual</button>
@@ -86,16 +70,9 @@
 </div>
 @endsection
 @push('js')
-    <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
+
     <script>
-        $(function() {
-             $('#harga_satuan').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0,
-                allowZero: true,
-            });
-        });
+
 
         $('#masukForm').submit(function(e){
             e.preventDefault();
@@ -148,22 +125,17 @@
         }
 
         function getHargaJual() {
-            var barang_id = $('#barang_id').val();
+            var barang_maintenance_id = $('#barang_maintenance_id').val();
             $.ajax({
-                url: "{{route('billing.form-barang.get-harga-jual')}}",
+                url: "{{route('billing.form-maintenance.get-harga-jual')}}",
                 type: "GET",
                 data: {
-                    barang_id: barang_id
+                    barang_maintenance_id: barang_maintenance_id
                 },
                 success: function(data){
                     // maskMoney
-                    $('#harga_jual').maskMoney('destroy');
-                    $('#harga_jual').maskMoney({
-                        thousands: '.',
-                        decimal: ',',
-                        precision: 0
-                    });
-                    $('#harga_jual').maskMoney('mask', (data.harga_jual));
+                    harga = data.harga_jual.toLocaleString('id-ID');
+                    $('#harga_jual').val(harga);
 
                     // $('#harga_jual').val((data.harga_jual));
                 }
@@ -175,39 +147,10 @@
             var harga_jual = $('#harga_jual').val();
             // remove . from harga_jual
             harga_jual = harga_jual.replace(/\./g,'');
-            console.log(harga_jual);
-            console.log(jumlah);
             var total = jumlah * harga_jual;
-            console.log(total);
-            $('#total').maskMoney('destroy');
-            $('#total').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0,
-                allowZero: true,
-            });
-            $('#total').maskMoney('mask', (total));
-        }
 
-        // funGetBarang
-        function funGetBarang() {
-            var kategori_barang_id = $('#kategori_barang_id').val();
-            $.ajax({
-                url: "{{route('billing.form-barang.get-barang')}}",
-                type: "GET",
-                data: {
-                    kategori_barang_id: kategori_barang_id
-                },
-                success: function(data){
-                    console.log(data);
-                    $('#barang_id').empty();
+            $('#total').val(total.toLocaleString('id-ID'));
 
-                    $('#barang_id').append('<option value=""> -- Pilih kategori barang -- </option>');
-                    $.each(data, function(index, value){
-                        $('#barang_id').append('<option value="'+value.id+'">'+value.nama+' ('+value.stok+')'+'</option>');
-                    });
-                }
-            });
         }
 
     </script>

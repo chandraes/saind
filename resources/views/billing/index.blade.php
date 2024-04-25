@@ -188,7 +188,7 @@
                             <select class="form-select form-select-lg" name="" id="fomrMaintenanceSelect">
                                 <option value="masuk">Beli</option>
                                 <option value="keluar">Jual ke Vendor</option>
-                                {{-- <option value="keluar-umum">Jual ke Umum</option> --}}
+                                <option value="keluar-umum">Jual ke Umum</option>
                             </select>
                         </div>
                         <div class="modal-footer">

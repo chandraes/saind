@@ -117,4 +117,28 @@ class FormMaintenanceController extends Controller
 
         return redirect()->route('billing.index')->with($store['status'], $store['message']);
     }
+
+    public function jual_umum()
+    {
+        $kategori = BarangMaintenance::where('stok', '>', 0)->get();
+
+        return view('billing.form-maintenance.jual-umum', [
+            'kategori' => $kategori,
+        ]);
+    }
+
+    public function jual_umum_store(Request $request)
+    {
+        $data = $request->validate([
+            'barang_maintenance_id' => 'required|exists:barang_maintenances,id',
+            'uraian' => 'required',
+            'jumlah' => 'required',
+        ]);
+
+        $db = new BarangMaintenance();
+
+        $store = $db->jual_umum($data);
+
+        return redirect()->route('billing.index')->with($store['status'], $store['message']);
+    }
 }

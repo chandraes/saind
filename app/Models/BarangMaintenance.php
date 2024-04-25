@@ -136,4 +136,63 @@ class BarangMaintenance extends Model
 
         return true;
     }
+
+    public function jual_umum($data)
+    {
+        $db = new KasBesar();
+
+        $rekap = new RekapBarangMaintenance();
+
+        $barang = $this->find($data['barang_maintenance_id']);
+
+        try {
+            $data['harga_satuan'] = $barang->harga_jual;
+            $data['tanggal'] = now();
+
+            $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+            $total = $data['jumlah'] * $data['harga_satuan'];
+
+            DB::beginTransaction();
+
+            $kas = $db->create([
+                'tanggal' => $data['tanggal'],
+                'uraian' => $data['uraian'],
+                'jenis_transaksi_id' => 1,
+                'nominal_transaksi' => $total,
+                'saldo' => $db->saldoTerakhir() + $total,
+                'modal_investor_terakhir' => $db->modalInvestorTerakhir(),
+                'transfer_ke' => $rekening->nama_rekening,
+                'bank' => $rekening->nama_bank,
+                'no_rekening' => $rekening->nomor_rekening,
+            ]);
+
+            $store = $rekap->create([
+                'tanggal' => $data['tanggal'],
+                'jenis_transaksi' => 1,
+                'barang_maintenance_id' => $data['barang_maintenance_id'],
+                'nama_barang' => $barang->nama,
+                'jumlah' => $data['jumlah'],
+                'harga_satuan' => $data['harga_satuan'],
+                'total' => $total,
+            ]);
+
+            DB::commit();
+
+            $result = [
+                'status' => 'success',
+                'message' => 'Data berhasil disimpan!',
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            $result = [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        return $result;
+    }
 }

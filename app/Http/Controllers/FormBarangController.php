@@ -267,6 +267,7 @@ class FormBarangController extends Controller
     {
         $data = $request->validate([
             'uraian' => 'required',
+            'konsumen' => 'required',
             'barang_id' => 'required',
             'jumlah' => 'required',
         ]);

@@ -99,14 +99,19 @@ class RekapBarang extends Model
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
-        $pesan =    "==========================\n".
+        $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Form Jual Barang Umum*\n".
-                    "==========================\n\n".
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                    "Konsumen  : ".$data['konsumen']."\n\n".
                     "Uraian : ".$kas['uraian']."\n".
                     "Barang : ".$barang->nama."\n".
-                    "Jumlah : ".$data['jumlah']."\n".
-                    "Total :  *Rp. ".number_format($total, 0, ',', '.')."*\n".
-                    "==========================\n\n".
+                    "Jumlah : ".$data['jumlah']."\n\n".
+                    "Nilai :  *Rp. ".number_format($total, 0, ',', '.')."*\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($kas->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($kas->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);

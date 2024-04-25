@@ -253,6 +253,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/jual-vendor', [App\Http\Controllers\FormMaintenanceController::class, 'jual_vendor'])->name('billing.form-maintenance.jual-vendor');
                 Route::post('/jual-vendor-store', [App\Http\Controllers\FormMaintenanceController::class, 'jual_vendor_store'])->name('billing.form-maintenance.jual-vendor-store');
                 Route::get('/jual-umum', [App\Http\Controllers\FormMaintenanceController::class, 'jual_umum'])->name('billing.form-maintenance.jual-umum');
+                Route::post('/jual-umum/store', [App\Http\Controllers\FormMaintenanceController::class, 'jual_umum_store'])->name('billing.form-maintenance.jual-umum.store');
 
             });
 
