@@ -253,4 +253,34 @@ class FormBarangController extends Controller
         return redirect()->route('billing.index')->with('success', 'Berhasil menjual barang');
 
     }
+
+    public function jual_umum()
+    {
+        $kategori = KategoriBarang::all();
+
+        return view('billing.barang.jual-umum', [
+            'kategori' => $kategori,
+        ]);
+    }
+
+    public function jual_umum_store(Request $request)
+    {
+        $data = $request->validate([
+            'uraian' => 'required',
+            'barang_id' => 'required',
+            'jumlah' => 'required',
+        ]);
+
+        $barang = Barang::find($data['barang_id']);
+
+        if ($barang->stok < $data['jumlah']) {
+            return redirect()->route('billing.index')->with('error', 'Stok barang tidak cukup');
+        }
+
+        $db = new RekapBarang();
+
+        $store = $db->jual_umum($data);
+
+        return redirect()->route('billing.index')->with($store['status'], $store['message'] );
+    }
 }

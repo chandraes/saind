@@ -160,7 +160,7 @@
                             <select class="form-select form-select-lg" name="" id="formBarangSelect">
                                 <option value="masuk">Beli</option>
                                 <option value="keluar">Jual ke Vendor</option>
-                                {{-- <option value="keluar-umum">Jual ke Umum</option> --}}
+                                <option value="keluar-umum">Jual ke Umum</option>
                             </select>
                         </div>
                         <div class="modal-footer">
@@ -330,6 +330,8 @@
                 window.location.href = "{{route('billing.form-barang.beli')}}";
             } else if (val === 'keluar') {
                 window.location.href = "{{route('billing.form-barang.jual')}}";
+            } else if(val === 'keluar-umum') {
+                window.location.href = "{{route('billing.form-barang.jual-umum')}}";
             }
         }
 

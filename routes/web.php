@@ -266,6 +266,11 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/jual', [App\Http\Controllers\FormBarangController::class, 'jual'])->name('billing.form-barang.jual');
                 Route::post('/jual-store', [App\Http\Controllers\FormBarangController::class, 'jual_store'])->name('billing.form-barang.jual-store');
                 Route::get('/get-harga-jual', [App\Http\Controllers\FormBarangController::class, 'get_harga_jual'])->name('billing.form-barang.get-harga-jual');
+
+                Route::prefix('umum')->group(function(){
+                    Route::get('/', [App\Http\Controllers\FormBarangController::class, 'jual_umum'])->name('billing.form-barang.jual-umum');
+                    Route::post('/store', [App\Http\Controllers\FormBarangController::class, 'jual_umum_store'])->name('billing.form-barang.jual-umum.store');
+                });
             });
 
             // form vendor
@@ -489,7 +494,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/', [App\Http\Controllers\OperasionalController::class, 'maintenance_vehicle'])->name('operasional.maintenance-vehicle');
                 Route::get('/print', [App\Http\Controllers\OperasionalController::class, 'maintenance_vehicle_print'])->name('operasional.maintenance-vehicle.print');
                 Route::post('/store-odo', [App\Http\Controllers\OperasionalController::class, 'store_odo'])->name('operasional.maintenance-vehicle.store-odo');
-            
+
             });
 
             // Route::get('statistik-vendor', [App\Http\Controllers\OperasionalController::class, 'statistik_vendor'])->name('operasional.statistik-vendor');
