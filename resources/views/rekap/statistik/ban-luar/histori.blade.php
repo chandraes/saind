@@ -40,6 +40,7 @@
                     <th class="text-center align-middle">NO. SERI BAN</th>
                     <th class="text-center align-middle">KONDISI BAN</th>
                     <th class="text-center align-middle">TGL GANTI BAN</th>
+                    <th class="text-center align-middle">ACTION</th>
                 </tr>
             </thead>
             <tbody>
@@ -89,6 +90,15 @@
                     class:"text-center align-middle",
                     "render": function (data, type, row, meta) {
                         return moment(data).format('DD-MM-YYYY');
+                    }
+                },
+                {
+                    data: null,
+                    name: 'ACT',
+                    class:"text-center align-middle",
+                    "render": function (data, type, row, meta) {
+                        var url = "/statistik/ban-luar/histori-destroy/" + row.id;
+                        return '<a href="' + url + '" class="btn btn-danger" onclick="return confirm(\'Are you sure you want to delete this item?\')">Delete</a>';
                     }
                 },
             ]

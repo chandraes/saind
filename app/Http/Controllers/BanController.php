@@ -107,4 +107,12 @@ class BanController extends Controller
 
         return abort(404);
     }
+
+    public function histori_delete($histori)
+    {
+        $banLog = BanLog::findOrFail($histori);
+        $banLog->delete();
+
+        return redirect()->back()->with('success', 'Berhasil menghapus data!!');
+    }
 }
