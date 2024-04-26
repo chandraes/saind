@@ -52,8 +52,9 @@ class HomeController extends Controller
         }
 
         if ($user->role == 'vendor') {
-            $vehicle = Vehicle::where('vendor_id', auth()->user()->vendor_id)->pluck('id');
-            $ug = UpahGendong::whereIn('vehicle_id', $vehicle)->get();
+            $v = Vehicle::where('vendor_id', auth()->user()->vendor_id)->pluck('id');
+            $vehicle = Vehicle::where('vendor_id', auth()->user()->vendor_id)->whereNot('status', 'nonaktif')->get();
+            $ug = UpahGendong::whereIn('vehicle_id', $v)->get();
             $maintenance = AktivasiMaintenance::with(['vehicle'])
                         ->whereHas('vehicle', function ($query) {
                             $query->where('vendor_id', auth()->user()->vendor_id);
@@ -61,6 +62,7 @@ class HomeController extends Controller
                         ->get();
             return view('home', [
                 'ug' => $ug,
+                'vehicle' => $vehicle,
                 'maintenance' => $maintenance
             ]);
         }
