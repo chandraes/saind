@@ -9,6 +9,38 @@
         </div>
     </div>
     @include('swal')
+    <!-- Modal Body -->
+    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+    <div class="modal fade" id="passwordModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+        role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitleId">
+                        Masukan Password
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="passwordForm">
+                    @csrf
+                    <div class="modal-body">
+
+                        <input class="form-control" type="password" id="password" name="password" placeholder="Password" required>
+                        <input type="hidden" id="itemId" name="itemId">
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Tutup
+                        </button>
+                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
     <div class="row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
@@ -23,7 +55,7 @@
                         <form action="{{route('statistik.ban-luar')}}" method="get">
                             <input type="hidden" name="vehicle_id" value="{{$vehicle->id}}">
 
-                                <button class="btn" type="submit"> <img src="{{asset('images/back.svg')}}" alt="dokumen"
+                            <button class="btn" type="submit"> <img src="{{asset('images/back.svg')}}" alt="dokumen"
                                     width="30"> KEMBALI</button>
                         </form>
                     </td>
@@ -59,6 +91,14 @@
 <script src="{{asset('assets/js/moment.min.js')}}"></script>
 <script>
     $(document).ready(function(){
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            $('#itemId').val(id);
+            // $('#passwordModal').modal('open');
+            // set action to password form
+            $('#passwordForm').attr('action', "{{route('statistik.ban-luar.histori-destroy', ['histori' => ':id'])}}".replace(':id', id));
+            console.log("{{route('statistik.ban-luar.histori-destroy', ['histori' => ':id'])}}".replace(':id', id));
+        });
 
         $('#rekapTable').DataTable({
             'processing': true,
@@ -97,12 +137,12 @@
                     name: 'ACT',
                     class:"text-center align-middle",
                     "render": function (data, type, row, meta) {
-                        var url = "/statistik/ban-luar/histori-destroy/" + row.id;
-                        return '<a href="' + url + '" class="btn btn-danger" onclick="return confirm(\'Are you sure you want to delete this item?\')">Delete</a>';
+                        return '<button class="btn btn-danger delete-btn" data-id="' + row.id + '"  data-bs-toggle="modal" data-bs-target="#passwordModal">Delete</button>';
                     }
                 },
             ]
         });
+
     });
 </script>
 @endpush

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BanLog;
+use App\Models\PasswordKonfirmasi;
 use App\Models\PosisiBan;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
@@ -108,8 +109,14 @@ class BanController extends Controller
         return abort(404);
     }
 
-    public function histori_delete($histori)
+    public function histori_delete($histori, Request $request)
     {
+        $dbP = PasswordKonfirmasi::first();
+
+        if ($request->password != $dbP->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
         $banLog = BanLog::findOrFail($histori);
         $banLog->delete();
 
