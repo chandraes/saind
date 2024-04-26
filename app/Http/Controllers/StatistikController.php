@@ -18,9 +18,11 @@ class StatistikController extends Controller
     public function index()
     {
         $data = UpahGendong::with(['vehicle'])->get();
+        $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
 
         return view('rekap.statistik.index', [
             'data' => $data,
+            'vehicle' => $vehicle,
         ]);
     }
 
