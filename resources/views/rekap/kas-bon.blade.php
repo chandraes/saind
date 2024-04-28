@@ -64,6 +64,9 @@
 </div>
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
+        <div class="text-center">
+            <h1><u>REKAP KASBON POTONG GAJI</u></h1>
+        </div>
         <table class="table table-hover table-bordered" id="rekapTable">
             <thead class=" table-success">
             <tr>
@@ -80,7 +83,7 @@
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
-                    <td class="text-center align-middle">
+                    <td class="text-end align-middle">
                         @if ($d->cicilan == 1)
                             {{number_format($d->sisa_kas, 0,',','.')}}
                         @else
@@ -134,28 +137,45 @@
                     </td>
                 </tr>
                 @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td class="text-center align-middle" colspan="2">Total</td>
+                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('total_bayar'),0,',','.')}}</th>
+                    <td class="text-center align-middle" colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="row mt-5">
+        <div class="text-center">
+            <h1><u>REKAP CICILAN KASBON</u></h1>
+        </div>
+        <table class="table table-bordered table-hover" id="tableCicilan">
+            <thead class="table-success">
+                <tr>
+                    <th class="text-center align-middle">Tanggal</th>
+                    <th class="text-center align-middle">Nama Karyawan</th>
+                    <th class="text-center align-middle">Nominal Kasbon</th>
+                    <th class="text-center align-middle">Nominal Cicilan / bulan</th>
+                    <th class="text-center align-middle">Total Bayar</th>
+                    <th class="text-center align-middle">Sisa Kasbon</th>
+                    <th class="text-center align-middle">Mulai</th>
+                    <th class="text-center align-middle">Selesai</th>
+                    <th class="text-center align-middle">ACT</th>
+                </tr>
+            </thead>
+            <tbody>
                 @foreach ($dataCicilan as $c)
                 <tr>
-                    <td class="text-center align-middle">{{$c->tanggal}}</td>
-                    <td class="text-center align-middle">{{$c->karyawan->nama}}</td>
-                    <td class="text-center align-middle">
-                        @if ($c->nomonal != $c->sisa_kas)
-                            {{number_format($c->sisa_kas, 0,',','.')}}
-                        @else
-                            {{number_format($c->nominal, 0,',','.')}}
-                        @endif
-
-                    </td>
-                    <td class="text-center align-middle">
-                        <h5><span class="badge bg-warning">Cicilan</span></h5>
-
-                    <td class="text-center align-middle">
-                        @if ($c->lunas == 1)
-                        <span class="badge bg-success">Lunas</span>
-                        @else
-                        <span class="badge bg-danger">Belum Lunas</span>
-                        @endif
-                    </td>
+                    <td class="text-center align-middle">{{$c->id_tanggal}}</td>
+                    <td class="text-start align-middle">{{$c->karyawan->nama}}</td>
+                    <td class="text-end align-middle">{{number_format($c->nominal, 0,',','.')}}</td>
+                    <td class="text-end align-middle">{{$c->nf_cicilan_nominal}}</td>
+                    <td class="text-end align-middle">{{number_format($c->total_bayar, 0,',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($c->sisa_kas, 0,',','.')}}</td>
+                    <td class="text-center align-middle">{{$c->tanggal_mulai}}</td>
+                    <td class="text-center align-middle">{{$c->tanggal_selesai}}</td>
                     <td>
                         @if ($c->void == 0)
                         <div class="text-center">
@@ -190,10 +210,19 @@
                         </div>
                         @endif
                     </td>
-                    </td>
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <th class="text-center align-middle" colspan="2">Total</th>
+                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('nominal'),0,',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('cicilan_nominal'),0,',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('total_bayar'),0,',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('sisa_kas'),0,',','.')}}</th>
+                    <th class="text-center align-middle" colspan="3"></th>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -205,16 +234,25 @@
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-    // hide alert after 5 seconds
-    setTimeout(function() {
-        $('#alert').fadeOut('slow');
-    }, 5000);
 
     $(document).ready(function() {
+
         $('#rekapTable').DataTable({
-            'paging': false,
-            'scrollY': "550px",
-            'info': false,
+            "paging": false,
+            "info": false,
+            "ordering": true,
+            "searching": false,
+            "scrollCollapse": true,
+            "scrollY": "550px",
+        });
+
+        $('#tableCicilan').DataTable({
+            "paging": false,
+            "info": false,
+            "ordering": true,
+            "searching": false,
+            "scrollCollapse": true,
+            "scrollY": "550px",
         });
 
     } );

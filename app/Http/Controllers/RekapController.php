@@ -502,7 +502,7 @@ class RekapController extends Controller
         $dataTahun = KasBon::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
         $data = KasBon::with('karyawan')->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
-        $dataCicilan = KasBonCicilan::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $dataCicilan = KasBonCicilan::with(['karyawan'])->where('lunas', 0)->get();
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -1023,7 +1023,7 @@ class RekapController extends Controller
 
         ini_set('max_execution_time', 80);
         ini_set('memory_limit', '256M');
-        
+
         $data = $request->validate([
             'vehicle_id' => 'required|exists:aktivasi_maintenances,vehicle_id',
         ]);

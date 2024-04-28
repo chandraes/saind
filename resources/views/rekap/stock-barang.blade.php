@@ -78,7 +78,7 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->jenis_transaksi == 1 ? "Beli ".$d->barang->kategori_barang->nama.' '.$d->nama_barang : "Jual ".$d->barang->kategori_barang->nama.' '.$d->nama_barang}}</td>
+                    <td class="text-center align-middle">{{$d->jenis_transaksi == 1 ? "Beli ".$d->nama_barang : "Jual " .$d->nama_barang}}</td>
                     <td class="text-center align-middle">
                         {{$d->jumlah}}
                     </td>
@@ -86,16 +86,16 @@
                         {{number_format($d->harga_satuan, 0, ',', '.')}}
                     </td>
                     <td class="text-center align-middle">
-                        {{number_format($d->barang->harga_jual, 0, ',', '.')}}
+                        {{number_format($d->harga_satuan, 0, ',', '.')}}
                     </td>
                     <td class="text-center align-middle">
                         {{number_format($d->total, 0, ',', '.')}}
                     </td>
                     <td class="text-center align-middle">
-                        {{number_format($d->barang->harga_jual * $d->jumlah, 0, ',', '.')}}
+                        {{number_format($d->harga_satuan * $d->jumlah, 0, ',', '.')}}
                     </td>
                     <td class="text-center align-middle">
-                        {{number_format(($d->barang->harga_jual * $d->jumlah) - $d->total, 0, ',', '.')}}
+                        {{number_format(($d->harga_satuan * $d->jumlah) - $d->total, 0, ',', '.')}}
                     </td>
                 </tr>
                 @endforeach
