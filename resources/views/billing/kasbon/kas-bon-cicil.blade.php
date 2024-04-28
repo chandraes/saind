@@ -98,10 +98,11 @@
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#nominal').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+            var nominal = new Cleave('#nominal', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
         });
 

@@ -296,6 +296,12 @@ class FormKasbonController extends Controller
         $data['sisa_kas'] = $data['nominal'];
         $data['cicilan_nominal'] = $data['nominal'] / $data['cicil_kali'];
 
+        $gapok = $karyawan->gaji_pokok * 0.3;
+        
+        if ($gapok < $data['cicilan_nominal']) {
+            return redirect()->back()->with('error', 'Cicilan melebihi 30% dari Gaji Pokok!!');
+        }
+
         KasBonCicilan::create($data);
 
         $k['tanggal'] = $data['tanggal'];
