@@ -70,7 +70,7 @@
                         <h5>:</h5>
                     </td>
                     <td>
-                        <h5>{{$vehicle->nama_pengurus}}</h5>
+                        <h5>{{$vehicle->pengurus}}</h5>
                     </td>
                 </tr>
             </table>
