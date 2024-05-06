@@ -148,7 +148,7 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank" class="form-label">Nama Bank</label>
-                    <input type="text" class="form-control {{$errors->has('bank') ? 'is-invalid' : ''}}" name="bank" id="bank" placeholder="" value="BCA" readonly disabled>
+                    <input type="text" class="form-control {{$errors->has('bank') ? 'is-invalid' : ''}}" name="bank" id="bank" placeholder="" value="{{$vendor->bank}}" readonly disabled>
                     @if ($errors->has('bank'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('bank') }}</strong>
