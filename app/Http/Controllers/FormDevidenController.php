@@ -81,7 +81,7 @@ class FormDevidenController extends Controller
                 $store = KasBesar::create($k);
 
                 $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                            "*Form Deviden ".$month."*\n".
+                            "*Form Deviden Mei*\n".
                             "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                             "Nama  : ".$v->nama."\n".
                             "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
