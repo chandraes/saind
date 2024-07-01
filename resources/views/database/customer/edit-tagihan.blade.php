@@ -42,7 +42,7 @@
                                 <input type="text" class="form-control @if ($errors->has('harga_tagihan'))
                                 is-invalid
                             @endif" name="harga_tagihan[]" id="harga_tagihan-{{$i->id}}" required data-thousands="." @if ($data->customer_tagihan->where('rute_id', $i->id)->first() != null)
-                                value="{{number_format($data->customer_tagihan->where('rute_id', $i->id)->first()->harga_tagihan, 0, ',','.')}}"
+                                value="{{$data->customer_tagihan->where('rute_id', $i->id)->first()->nf_harga_tagihan}}"
                                 @endif >
                               </div>
                             @if ($errors->has('harga_tagihan'))
@@ -52,11 +52,12 @@
                             @endif
                             <script>
                                 $(function() {
-                                        $('#harga_tagihan-{{$i->id}}').maskMoney({
-                                            thousands: '.',
-                                            decimal: ',',
-                                            precision: 0
-                                        });
+                                    var nominal{{$i->id}} = new Cleave('#harga_tagihan-{{$i->id}}', {
+                                        numeral: true,
+                                        numeralThousandsGroupStyle: 'thousand',
+                                        numeralDecimalMark: ',',
+                                        delimiter: '.'
+                                    });
                                 });
                             </script>
                         </td>
@@ -65,7 +66,7 @@
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control @if ($errors->has('opname'))
                                 is-invalid
-                            @endif" name="opname[]" id="opname-{{$i->id}}" required data-thousands="." @if ($data->customer_tagihan->where('rute_id', $i->id)->first() != null) value="{{number_format($data->customer_tagihan->where('rute_id', $i->id)->first()->opname, 0, ',','.')}}" @endif>
+                            @endif" name="opname[]" id="opname-{{$i->id}}" required data-thousands="." @if ($data->customer_tagihan->where('rute_id', $i->id)->first() != null) value="{{$data->customer_tagihan->where('rute_id', $i->id)->first()->nf_opname}}" @endif>
                               </div>
                             @if ($errors->has('opname'))
                             <div class="invalid-feedback">
@@ -73,11 +74,11 @@
                             </div>
                             @endif
                             <script>
-
-                                        $('#opname-{{$i->id}}').maskMoney({
-                                            thousands: '.',
-                                            decimal: ',',
-                                            precision: 0
+                                       var opname{{$i->id}} = new Cleave('#opname-{{$i->id}}', {
+                                            numeral: true,
+                                            numeralThousandsGroupStyle: 'thousand',
+                                            numeralDecimalMark: ',',
+                                            delimiter: '.'
                                         });
                             </script>
                         </td>
@@ -86,7 +87,7 @@
                                 <span class="input-group-text" id="basic-addon1">Rp</span>
                                 <input type="text" class="form-control @if ($errors->has('titipan'))
                                 is-invalid
-                            @endif" name="titipan[]" id="titipan-{{$i->id}}" required data-thousands="." @if ($data->customer_tagihan->where('rute_id', $i->id)->first() != null) value="{{number_format($data->customer_tagihan->where('rute_id', $i->id)->first()->titipan, 0, ',','.')}}" @endif>
+                            @endif" name="titipan[]" id="titipan-{{$i->id}}" required data-thousands="." @if ($data->customer_tagihan->where('rute_id', $i->id)->first() != null) value="{{$data->customer_tagihan->where('rute_id', $i->id)->first()->nf_titipan}}" @endif>
                               </div>
                             @if ($errors->has('titipan'))
                             <div class="invalid-feedback">
@@ -94,12 +95,12 @@
                             </div>
                             @endif
                             <script>
-                                        $('#titipan-{{$i->id}}').maskMoney({
-                                            thousands: '.',
-                                            decimal: ',',
-                                            precision: 0
-                                        });
-
+                                  var titipan{{$i->id}} = new Cleave('#titipan-{{$i->id}}', {
+                                        numeral: true,
+                                        numeralThousandsGroupStyle: 'thousand',
+                                        numeralDecimalMark: ',',
+                                        delimiter: '.'
+                                    });
                             </script>
                         </td>
                     </tr>

@@ -49,11 +49,12 @@
                             @endif
                             <script>
                                 $(function() {
-                                        $('#harga_tagihan-{{$i->id}}').maskMoney({
-                                            thousands: '.',
-                                            decimal: ',',
-                                            precision: 0
-                                        });
+                                       var nominal{{$i->id}} = new Cleave('#harga_tagihan-{{$i->id}}', {
+                                        numeral: true,
+                                        numeralThousandsGroupStyle: 'thousand',
+                                        numeralDecimalMark: ',',
+                                        delimiter: '.'
+                                    });
                                 });
                             </script>
                         </td>
@@ -71,10 +72,11 @@
                             @endif
                             <script>
                                 $(function() {
-                                        $('#opname-{{$i->id}}').maskMoney({
-                                            thousands: '.',
-                                            decimal: ',',
-                                            precision: 0
+                                    var opname{{$i->id}} = new Cleave('#opname-{{$i->id}}', {
+                                            numeral: true,
+                                            numeralThousandsGroupStyle: 'thousand',
+                                            numeralDecimalMark: ',',
+                                            delimiter: '.'
                                         });
                                 });
                             </script>
@@ -93,11 +95,12 @@
                             @endif
                             <script>
                                 $(function() {
-                                        $('#titipan-{{$i->id}}').maskMoney({
-                                            thousands: '.',
-                                            decimal: ',',
-                                            precision: 0
-                                        });
+                                    var titipan{{$i->id}} = new Cleave('#titipan-{{$i->id}}', {
+                                        numeral: true,
+                                        numeralThousandsGroupStyle: 'thousand',
+                                        numeralDecimalMark: ',',
+                                        delimiter: '.'
+                                    });
                                 });
                             </script>
                         </td>

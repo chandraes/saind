@@ -146,6 +146,7 @@ class CustomerController extends Controller
 
 
         for ($i=0; $i < count($data['rute_id']); $i++) {
+
             $customer->customer_tagihan()->create([
                 'rute_id' => $data['rute_id'][$i],
                 'harga_tagihan' => str_replace('.', '', $data['harga_tagihan'][$i]),
@@ -175,16 +176,28 @@ class CustomerController extends Controller
 
         $customer->customer_tagihan()->delete();
 
-        for ($i=0; $i < count($data['rute_id']); $i++) {
+        for ($i = 0; $i < count($data['rute_id']); $i++) {
             $customer->customer_tagihan()->create([
                 'rute_id' => $data['rute_id'][$i],
-                'harga_tagihan' => str_replace('.', '', $data['harga_tagihan'][$i]),
-                'opname' => str_replace('.', '', $data['opname'][$i]),
-                'titipan' => str_replace('.', '', $data['titipan'][$i]),
+                'harga_tagihan' => $this->convertToDecimal($data['harga_tagihan'][$i]),
+                'opname' => $this->convertToDecimal($data['opname'][$i]),
+                'titipan' => $this->convertToDecimal($data['titipan'][$i]),
             ]);
         }
 
         return redirect()->route('customer.index')->with('success', 'Tagihan berhasil diupdate');
+    }
+
+    /**
+     * Convert a string number from "1.000,50" format to a decimal "1000.50".
+     *
+     * @param string $number
+     * @return float
+     */
+    private function convertToDecimal($number)
+    {
+        // Remove dots and replace commas with dots.
+        return (float)str_replace(',', '.', str_replace('.', '', $number));
     }
 
     /**

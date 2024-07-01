@@ -53,7 +53,7 @@
                 <td>{{$d->contact_person}}</td>
                 <td>
                     @foreach ($d->customer_tagihan as $t)
-                    <h5><span class="badge bg-primary">Rp. {{number_format($t->harga_tagihan, 0, ',', '.')}}</span></h5>
+                    <h5><span class="badge bg-primary">Rp. {{$t->nf_harga_tagihan}}</span></h5>
                     @endforeach
                 </td>
                 <td>
