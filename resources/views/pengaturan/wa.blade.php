@@ -36,7 +36,7 @@
                     <td class="text-center align-middle">{{$d->untuk}}</td>
                     <td class="text-center align-middle">{{$d->group_id}}</td>
                     <td class="text-center align-middle">
-                        <a href="{{route('pengaturan.wa.edit', $d->id)}}" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="{{route('pengaturan.wa.edit', $d->id)}}" class="btn btn-warning btn-sm" onclick="showSpinner({{$d->id}})" id="editBtn{{$d->id}}">Edit</a>
                     </td>
                 </tr>
             @endforeach
@@ -49,6 +49,13 @@
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
+
+        function showSpinner(id) {
+            $('#spinner').show();
+            // Optional: You can also disable the button to prevent multiple clicks
+            $('#editBtn'+id).prop('disabled', true);
+
+        }
         // masukForm on submit, sweetalert confirm
         $('#masukForm').submit(function(e){
             e.preventDefault();
