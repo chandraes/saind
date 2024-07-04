@@ -104,7 +104,7 @@
         </nav>
 
         <main class="py-4 mt-4">
-            @if (date('Y-m-d') > '2024-07-02')
+            @if (date('Y-m-d') > '2025-07-02')
             <div class="alert alert-warning" role="alert">
                 <strong>Domain anda akan habis pada tanggal 02 Agustus 2024. Harap segera melakukan pembayaran sebelum
                     tanggal tersebut. 🙏🙏🙏 </strong>

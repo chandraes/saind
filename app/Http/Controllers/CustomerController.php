@@ -192,12 +192,12 @@ class CustomerController extends Controller
      * Convert a string number from "1.000,50" format to a decimal "1000.50".
      *
      * @param string $number
-     * @return float
+     * @return int
      */
     private function convertToDecimal($number)
     {
         // Remove dots and replace commas with dots.
-        return (float)str_replace(',', '.', str_replace('.', '', $number));
+        return (int)str_replace('.', '', $number);
     }
 
     /**

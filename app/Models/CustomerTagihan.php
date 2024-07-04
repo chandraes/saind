@@ -34,16 +34,16 @@ class CustomerTagihan extends Model
 
     public function getNfHargaTagihanAttribute()
     {
-        return number_format($this->harga_tagihan, 2, ',', '.');
+        return number_format($this->harga_tagihan, 0, ',', '.');
     }
 
     public function getNfOpnameAttribute()
     {
-        return number_format($this->opname, 2, ',', '.');
+        return number_format($this->opname, 0, ',', '.');
     }
 
     public function getNfTitipanAttribute()
     {
-        return number_format($this->titipan, 2, ',', '.');
+        return number_format($this->titipan, 0, ',', '.');
     }
 }
