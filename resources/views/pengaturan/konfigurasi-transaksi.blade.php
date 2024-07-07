@@ -25,7 +25,7 @@
                 <tr>
                     <th class="text-center align-middle">No</th>
                     <th class="text-center align-middle">Nama</th>
-                    <th class="text-center align-middle">Otomatis Aktif Dalam</th>
+                    <th class="text-center align-middle">Otomatis Tutup Dalam</th>
                     <th class="text-center align-middle">Status</th>
                 </tr>
             </thead>
@@ -47,7 +47,7 @@
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="title{{$d->id}}">
-                                            Otomatis Aktif Dalam
+                                            Otomatis Tutup Dalam
                                         </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="Close"></button>
@@ -87,8 +87,8 @@
                             @csrf
                             @method('PATCH')
                             <button type="submit"
-                                class="btn btn-{{$d->status ? 'success' : 'danger'}} btn-sm">{{$d->status ? 'Aktif' :
-                                'Nonaktif'}}</button>
+                                class="btn btn-{{$d->status ? 'success' : 'danger'}} btn-sm">{{$d->status ? 'Tutup' :
+                                'Buka'}}</button>
                         </form>
                     </td>
                 </tr>
