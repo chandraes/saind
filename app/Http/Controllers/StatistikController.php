@@ -541,6 +541,71 @@ class StatistikController extends Controller
         return $pdf->stream('Perform Unit Bulan '.$nama_bulan.' '.$tahun.'.pdf');
     }
 
+    public function profit_harian(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        $offset = $request->offset ?? 0;
+        $vendor = $request->vendor ?? 0;
+        // nama bulan dalam indonesia berdasarkan $bulan
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date vrom $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        $data = Transaksi::with(['kas_uang_jalan','kas_uang_jalan.vendor'])
+                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->when($vendor, function ($query, $vendor) {
+                                return $query->where('v.vendor_id', $vendor);
+                            })
+                            ->get();
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+
+        $vehicle = Vehicle::with(['vendor'])->orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
+                    ->limit(10)
+                    ->offset($offset)
+                    ->get();
+        if ($vehicle->count() == 0) {
+            $offset = 0;
+            $vehicle = Vehicle::orderBy('nomor_lambung')
+                    ->when($vendor, function ($query, $vendor) {
+                        return $query->where('vendor_id', $vendor);
+                    })
+                    ->limit(10)
+                    ->offset($offset)
+                    ->get();
+        }
+
+        $vendors = Vendor::all();
+
+        return view('rekap.statistik.profit-harian', [
+            'data' => $data,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'bulan_angka' => $bulan,
+            'vehicle' => $vehicle,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'offset' => $offset,
+            'dataTahun' => $dataTahun,
+            'vendors' => $vendors,
+            'vendor' => $vendor,
+        ]);
+    }
+
     public function profit_bulanan(Request $request)
     {
         $bulan = $request->bulan ?? date('m');
