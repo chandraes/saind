@@ -27,10 +27,16 @@ class FormVendorController extends Controller
         $data = $request->validate([
             'id' => 'required',
             'nilai' => 'required',
+            'uraian' => 'required',
+            'transfer_ke' => 'required',
+            'bank' => 'required',
+            'no_rekening' => 'required',
         ]);
 
         $data['nilai'] = str_replace('.', '', $data['nilai']);
 
+        $data['uraian'] = substr($data['uraian'], 0, 20);
+        
         $v = Vendor::find($data['id']);
 
         $sisa = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
@@ -53,16 +59,16 @@ class FormVendorController extends Controller
         $d['jenis_transaksi_id'] = 2;
         $d['nominal_transaksi'] = $data['nilai'];
         $d['saldo'] = $last->saldo - $d['nominal_transaksi'];
-        $d['uraian'] = "Titipan ".$v->nama;
-        $d['transfer_ke'] = substr($v->nama_rekening, 0, 15);
-        $d['bank'] = $v->bank;
-        $d['no_rekening'] = $v->no_rekening;
+        $d['uraian'] = $data['uraian'];
+        $d['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
+        $d['bank'] = $data['bank'];
+        $d['no_rekening'] = $data['no_rekening'];
         $d['modal_investor_terakhir'] = $last->modal_investor_terakhir;
 
         $kas['vendor_id'] = $v->id;
         $kas['tanggal'] = $d['tanggal'];
         // $kas['vehicle_id'] = $data['id'];
-        $kas['uraian'] = "Titipan ".$v->nama;
+        $kas['uraian'] = $data['uraian'];
         $kas['pinjaman'] = $d['nominal_transaksi'];
 
         $kasTerakhir = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first();
@@ -82,7 +88,8 @@ class FormVendorController extends Controller
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Titipan Vendor*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Vendor : ".$v->nama."\n\n".
+                    "Vendor : ".$v->nama."\n".
+                    "Uraian : ".$d['uraian']."\n\n".
                     "Nilai :  *Rp. ".number_format($d['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$d['bank']."\n".

@@ -56,6 +56,46 @@
                 @endif" name="nilai" id="nilai" data-thousands="." required>
                   </div>
             </div>
+            <div class="col-3">
+                <div class="mb-3">
+                  <label for="vendor" class="form-label">Uraian</label>
+                  <input type="text"
+                    class="form-control" name="uraian" id="uraian" aria-describedby="helpId" placeholder="" required>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="transfer_ke" class="form-label">Nama Rekening</label>
+                <input type="text" class="form-control @if ($errors->has('transfer_ke'))
+                is-invalid
+            @endif" name="transfer_ke" id="transfer_ke" value="{{old('transfer_ke')}}" maxlength="15">
+                @if ($errors->has('transfer_ke'))
+                <div class="invalid-feedback">
+                    {{$errors->first('transfer_ke')}}
+                </div>
+                @endif
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="bank" class="form-label">Bank</label>
+                <input type="text" class="form-control @if ($errors->has('bank'))
+                is-invalid
+            @endif" name="bank" id="bank" value="{{old('bank')}}" maxlength="10">
+                @if ($errors->has('bank'))
+                <div class="invalid-feedback">
+                    {{$errors->first('bank')}}
+                </div>
+                @endif
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="no_rekening" class="form-label">Nomor Rekening</label>
+                <input type="text" class="form-control @if ($errors->has('no_rekening'))
+                is-invalid
+            @endif" name="no_rekening" id="no_rekening" value="{{old('no_rekening')}}">
+                @if ($errors->has('no_rekening'))
+                <div class="invalid-feedback">
+                    {{$errors->first('no_rekening')}}
+                </div>
+                @endif
+            </div>
         </div>
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-primary">Ok</button>
@@ -121,6 +161,22 @@
                 success: function(data){
                     funGetPlafonTitipan();
                     $('#nomor_lambung').val(data);
+                    // get text from selected option
+                    var text = $("#id option:selected").text();
+                    // set value uraian to Titipan + text
+                    var id_vendor = $('#id').val();
+
+                    $('#uraian').val('Titipan ' + text);
+
+                    // set value transfer_ke, bank, no_rekening to $vendor->nama_rekening, $vendor->no_rekening and $vendor->bank selected from select id
+                    var vendor = {!! json_encode($vendor) !!};
+                    for (let i = 0; i < vendor.length; i++) {
+                        if (vendor[i].id == id_vendor) {
+                            $('#transfer_ke').val(vendor[i].nama_rekening);
+                            $('#bank').val(vendor[i].bank);
+                            $('#no_rekening').val(vendor[i].no_rekening);
+                        }
+                    }
 
                 }
             });
