@@ -25,7 +25,13 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.profit-tahunan')}}" class="text-decoration-none">
                 <img src="{{asset('images/profit-tahunan.svg')}}" alt="" width="80">
-                <h5 class="mt-3">TAHUNAN</h5>
+                <h5 class="mt-3">BULANAN<br>(KOTOR)</h5>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/profit-tahunan.svg')}}" alt="" width="80">
+                <h5 class="mt-3">BULANAN<br>(BERSIH)</h5>
             </a>
         </div>
         @endif
