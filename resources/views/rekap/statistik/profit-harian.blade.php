@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Statistik Profit Harian</u></h1>
+            <h1><u>Statistik Profit Harian (Kotor)</u></h1>
             <h1>{{$nama_bulan}} {{$tahun}}</h1>
         </div>
     </div>
