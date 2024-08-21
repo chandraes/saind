@@ -13,19 +13,19 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.profit-harian')}}" class="text-decoration-none">
                 <img src="{{asset('images/profit.svg')}}" alt="" width="80">
-                <h4 class="mt-3">HARIAN</h4>
+                <h5 class="mt-3">GRAND TOTAL<br>HARIAN<br>(KOTOR)</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statisik.profit-bulanan')}}" class="text-decoration-none">
                 <img src="{{asset('images/profit.svg')}}" alt="" width="80">
-                <h4 class="mt-3">BULANAN</h4>
+                <h5 class="mt-3">TOTAL<br>HARIAN<br>(KOTOR)</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.profit-tahunan')}}" class="text-decoration-none">
                 <img src="{{asset('images/profit-tahunan.svg')}}" alt="" width="80">
-                <h4 class="mt-3">TAHUNAN</h4>
+                <h5 class="mt-3">TAHUNAN</h5>
             </a>
         </div>
         @endif
@@ -36,19 +36,19 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-unit')}}" class="text-decoration-none">
                 <img src="{{asset('images/perform-unit.svg')}}" alt="" width="80">
-                <h4 class="mt-3">BULANAN</h4>
+                <h5 class="mt-3">BULANAN</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-unit-tahunan')}}" class="text-decoration-none">
                 <img src="{{asset('images/perform-unit-tahunan.svg')}}" alt="" width="80">
-                <h4 class="mt-3">TAHUNAN</h4>
+                <h5 class="mt-3">TAHUNAN</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
                 <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="80">
-                <h4 class="mt-3">UPAH GENDONG</h4>
+                <h5 class="mt-3">UPAH GENDONG</h5>
             </a>
             <div class="modal fade" id="upahGendongId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="ugTitleId" aria-hidden="true">
@@ -84,13 +84,13 @@
         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-unit-tahunan')}}" class="text-decoration-none">
                 <img src="{{asset('images/aktivasi-maintenance.svg')}}" alt="" width="80">
-                <h4 class="mt-3">MAINTENANCE</h4>
+                <h5 class="mt-3">MAINTENANCE</h5>
             </a>
         </div> --}}
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ban_luar">
                 <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
-                <h4 class="mt-3">BAN LUAR</h4>
+                <h5 class="mt-3">BAN LUAR</h5>
             </a>
             <div class="modal fade" id="ban_luar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="ban-luarTitle" aria-hidden="true">
@@ -130,25 +130,25 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-vendor')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="80">
-                <h4 class="mt-3">STATISTIK VENDOR</h4>
+                <h5 class="mt-3">STATISTIK VENDOR</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.customer')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-customer.svg')}}" alt="" width="80">
-                <h4 class="mt-3">STATISTIK CUSTOMER</h4>
+                <h5 class="mt-3">STATISTIK CUSTOMER</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="80">
-                <h4 class="mt-3">KEMBALI</h4>
+                <h5 class="mt-3">KEMBALI</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Dashboard</h4>
+                <h5 class="mt-3">Dashboard</h5>
             </a>
         </div>
     </div>
