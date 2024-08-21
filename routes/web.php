@@ -192,6 +192,8 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::get('statistik/profit-harian', [App\Http\Controllers\StatistikController::class, 'profit_harian'])->name('statistik.profit-harian');
 
+        Route::get('statistik/profit-tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih'])->name('statistik.profit-tahunan-bersih');
+
         Route::get('statisik/profit-bulanan', [App\Http\Controllers\StatistikController::class, 'profit_bulanan'])->name('statisik.profit-bulanan');
         Route::get('statistik/profit-bulanan/print', [App\Http\Controllers\StatistikController::class, 'profit_bulanan_print'])->name('statistik.profit-bulanan.print');
         Route::get('statistik/profit-tahunan', [App\Http\Controllers\StatistikController::class, 'profit_tahunan'])->name('statistik.profit-tahunan');
