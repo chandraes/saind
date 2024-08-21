@@ -11,6 +11,12 @@
         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
         <h1>PROFIT</h1>
         <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/profit.svg')}}" alt="" width="80">
+                <h4 class="mt-3">HARIAN</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('statisik.profit-bulanan')}}" class="text-decoration-none">
                 <img src="{{asset('images/profit.svg')}}" alt="" width="80">
                 <h4 class="mt-3">BULANAN</h4>
