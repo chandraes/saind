@@ -39,8 +39,10 @@
                 <th class="text-center align-middle">Tambang</th>
                 <th class="text-center align-middle">Invoice</th>
                 <th class="text-center align-middle">Estimasi Nominal Invoice</th>
+                {{-- penyesuaian --}}
+                {{-- pembayaran invoice --}}
                 <th class="text-center align-middle">Balance</th>
-                <th class="text-center align-middle">Sisa Tagihan</th>
+                <th class="text-center align-middle">Sisa Invoice</th>
                 <th class="text-center align-middle">Lunas</th>
                 <th class="text-center align-middle">Cicil</th>
                 @if (auth()->user()->role === 'su')
