@@ -58,13 +58,13 @@
                 <td class="text-center align-middle">
                     <a href="{{route('invoice.tagihan.detail', $d)}}"> {{$d->periode}}</a>
                 </td>
-                <td class="text-center align-middle">
+                <td class="text-end align-middle">
                     {{number_format($d->total_tagihan, 0, ',', '.')}}
                 </td>
-                <td class="text-center align-middle">
+                <td class="text-end align-middle">
                     {{number_format($d->total_bayar, 0, ',', '.')}}
                 </td>
-                <td class="text-center align-middle">
+                <td class="text-end align-middle">
                     {{number_format($d->sisa_tagihan, 0, ',', '.')}}
                 </td>
                 <td class="text-center align-middle">
