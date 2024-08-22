@@ -40,7 +40,7 @@
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
                 <img src="{{asset('images/tagihan.svg')}}" alt="" width="80">
-                <h4 class="mt-3">NOTA TAGIHAN CUSTOMER <span class="text-danger">{{$data->where('status',
+                <h4 class="mt-3">NOTA CUSTOMER <span class="text-danger">{{$data->where('status',
                         3)->where('tagihan', 0)->count() > 0
                         ? "(".$data->where('status', 3)->where('tagihan', 0)->count().")" : '' }}</span></h4>
             </a>
