@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE TAGIHAN</u></h1>
+            <h1><u>INVOICE CUSTOMER</u></h1>
         </div>
     </div>
     @include('swal')

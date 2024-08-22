@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Invoice Tagihan</u></h1>
+            <h1><u>Invoice Customer</u></h1>
             <h1>{{$periode}}</h1>
 
         </div>
