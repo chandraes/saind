@@ -195,19 +195,35 @@
             </div>
             <hr>
             <div class="row mt-3 mb-3">
-                <h3 class="mb-3">Tagihan</h3>
-                <div class="mb-3">
-                    <label for="tagihan_dari" class="form-label">Di ambil dari</label>
-                    <select class="form-select" name="tagihan_dari" id="tagihan_dari" required>
-                        <option value="1" {{$data->tagihan_dari == 1 ? 'selected' : ''}}>Tonase Muat</option>
-                        <option value="2" {{$data->tagihan_dari == 2 ? 'selected' : ''}}>Tonase Bongkar</option>
-                    </select>
-                    @if ($errors->has('tagihan_dari'))
-                    <span class="text-danger">
-                        <strong>{{ $errors->first('tagihan_dari') }}</strong>
-                    </span>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="tagihan_dari" class="form-label"> Tagihan Di ambil dari</label>
+                        <select class="form-select" name="tagihan_dari" id="tagihan_dari" required>
+                            <option value="1" {{$data->tagihan_dari == 1 ? 'selected' : ''}}>Tonase Muat</option>
+                            <option value="2" {{$data->tagihan_dari == 2 ? 'selected' : ''}}>Tonase Bongkar</option>
+                        </select>
+                        @if ($errors->has('tagihan_dari'))
+                        <span class="text-danger">
+                            <strong>{{ $errors->first('tagihan_dari') }}</strong>
+                        </span>
+                        @endif
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="nominal_penalty" class="form-label">Nominal Pinalty</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">Rp</span>
+                        <input type="text" class="form-control @if ($errors->has('nominal_penalty'))
+                        is-invalid
+                    @endif" name="nominal_penalty" id="nominal_penalty" value="{{$data->nominal_penalty}}">
+                      </div>
+                    @if ($errors->has('nominal_penalty'))
+                    <div class="invalid-feedback">
+                        {{$errors->first('nominal_penalty')}}
+                    </div>
                     @endif
                 </div>
+
             </div>
             <br>
             <hr>
@@ -326,6 +342,14 @@
         precision: 0,
         allowZero: true,
     });
+
+    var nominal_penalty = new Cleave('#nominal_penalty', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
+
     $('#csr').on('change', function() {
         if ($(this).is(':checked')) {
             $('#rek_csr').removeAttr('hidden');

@@ -73,6 +73,7 @@ class CustomerController extends Controller
                 'harga_csr_bawah' => 'nullable',
                 'gt_muat' => 'nullable',
                 'gt_bongkar' => 'nullable',
+                'nominal_penalty' => 'required',
         ]);
 
         $rute = $data['rute'];
@@ -262,6 +263,7 @@ class CustomerController extends Controller
                     'harga_csr_bawah' => 'nullable',
                     'gt_muat' => 'nullable',
                     'gt_bongkar' => 'nullable',
+                    'nominal_penalty' => 'required',
                 ]);
 
         $data['harga_csr_atas'] = $data['harga_csr_atas'] ? str_replace('.', '', $data['harga_csr_atas']) : 0;

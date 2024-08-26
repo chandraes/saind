@@ -18,25 +18,28 @@ class BanController extends Controller
             'vehicle_id' => 'required|exists:vehicles,id',
         ]);
 
-        $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')->where('vehicles.id',$request->vehicle_id)
-                    ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus')->first();
+        // Retrieve vehicle with driver and pengurus information
+        $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
+                          ->where('vehicles.id', $request->vehicle_id)
+                          ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus')
+                          ->first();
 
+        // Retrieve the latest BanLog for each posisi_ban_id for the given vehicle_id
         $banLogs = BanLog::where('vehicle_id', $request->vehicle_id)
-                    ->select('posisi_ban_id', DB::raw('MAX(created_at) as max_created_at'))
-                    ->groupBy('posisi_ban_id')
-                    ->get()
-                    ->mapWithKeys(function ($banLog) {
-                        $banLog = BanLog::where('posisi_ban_id', $banLog->posisi_ban_id)
-                                        ->where('created_at', $banLog->max_created_at)
-                                        ->first();
-                        return [$banLog->posisi_ban_id => [
-                            'merk' => $banLog->merk,
-                            'no_seri' => $banLog->no_seri,
-                            'kondisi' => $banLog->kondisi,
-                            'tanggal_ganti' => \Carbon\Carbon::parse($banLog->created_at)->format('d-m-Y'),
-                        ]];
-                    });
+                         ->select('posisi_ban_id', 'merk', 'no_seri', 'kondisi', 'created_at')
+                         ->orderBy('created_at', 'desc')
+                         ->get()
+                         ->unique('posisi_ban_id')
+                         ->mapWithKeys(function ($banLog) {
+                             return [$banLog->posisi_ban_id => [
+                                 'merk' => $banLog->merk,
+                                 'no_seri' => $banLog->no_seri,
+                                 'kondisi' => $banLog->kondisi,
+                                 'tanggal_ganti' => \Carbon\Carbon::parse($banLog->created_at)->format('d-m-Y'),
+                             ]];
+                         });
 
+        // Map the BanLog data to the PosisiBan
         $ban = PosisiBan::all()->map(function ($ban) use ($banLogs) {
             $ban->banLog = $banLogs[$ban->id] ?? null;
             return $ban;
