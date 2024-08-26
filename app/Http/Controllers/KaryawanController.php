@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Karyawan;
 use App\Models\Jabatan;
+use App\Models\KasBon;
+use App\Models\KasBonCicilan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
@@ -15,14 +17,16 @@ class KaryawanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $karyawans = Karyawan::with(['jabatan'])->get();
+        $status = $request->filled('status') ? $request->status : 'aktif';
+        $karyawans = Karyawan::with(['jabatan'])->where('status', $status)->get();
         $jabatan = Jabatan::select('id', 'nama')->get();
 
         return view('database.karyawan.index', [
             'karyawans' => $karyawans,
             'jabatan' => $jabatan,
+            'status' => $status,
         ]);
     }
 
@@ -194,12 +198,53 @@ class KaryawanController extends Controller
      */
     public function destroy(Karyawan $karyawan)
     {
-        //delete karyawan data and file
+       // Delete karyawan data and file
+       try {
+        DB::beginTransaction();
+
         $ktp_path = storage_path('app/'.$karyawan->foto_ktp);
         $diri_path = storage_path('app/'.$karyawan->foto_diri);
-        unlink($ktp_path);
-        unlink($diri_path);
+
+
+
+        $kasbon = KasBon::where('karyawan_id', $karyawan->id)
+                ->where('void', 0)
+                ->where('lunas', 0)
+                ->first();
+
+        if ($kasbon) {
+            return redirect()->route('karyawan.index')->with('error', 'Karyawan gagal dihapus! Karyawan masih memiliki kasbon yang belum lunas');
+        }
+
+        KasBon::where('karyawan_id', $karyawan->id)->delete();
+
+        $kasbonCicilan = KasBonCicilan::where('karyawan_id', $karyawan->id)
+                                    ->where('lunas', 0)
+                                    ->first();
+
+        if ($kasbonCicilan) {
+            return redirect()->route('karyawan.index')->with('error', 'Karyawan gagal dihapus! Karyawan masih memiliki cicilan kasbon yang belum lunas');
+        }
+
+        KasBonCicilan::where('karyawan_id', $karyawan->id)->delete();
+
+        if (file_exists($ktp_path)) {
+            unlink($ktp_path);
+        }
+
+        if (file_exists($diri_path)) {
+            unlink($diri_path);
+        }
+
         $karyawan->delete();
+
+        DB::commit();
+
+       } catch (\Throwable $th) {
+              DB::rollBack();
+                return redirect()->route('karyawan.index')->with('error', 'Karyawan gagal dihapus! '.$th->getMessage());
+       }
+
 
         return redirect()->route('karyawan.index')->with('success', 'Karyawan berhasil dihapus');
     }
