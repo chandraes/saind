@@ -179,10 +179,12 @@ class TransaksiController extends Controller
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
+            $penalty = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
 
         } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
             $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
+            $penalty = $transaksi->tonase * $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak;
 
         }
 
@@ -204,7 +206,7 @@ class TransaksiController extends Controller
 
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
-        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'];
+        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'] - $penalty;
 
         $vehicle = $transaksi->kas_uang_jalan->vehicle;
 
@@ -578,9 +580,11 @@ class TransaksiController extends Controller
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
+            $penalty = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
         } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
             $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
+            $penalty = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
         }
 
         if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
@@ -601,7 +605,7 @@ class TransaksiController extends Controller
 
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
-        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'];
+        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'] - $penalty;
 
         try {
             $transaksi->update($data);
