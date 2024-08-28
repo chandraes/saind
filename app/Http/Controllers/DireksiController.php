@@ -55,11 +55,15 @@ class DireksiController extends Controller
             'nama_rekening' => 'required',
             'mulai_bekerja' => 'required',
             'status' => 'required',
+            'apa_bpjs_tk' => 'nullable',
+            'apa_bpjs_kesehatan' => 'nullable',
             'foto_ktp' => 'required|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'required|mimes:jpg,jpeg,png|max:10000',
         ]);
 
         $data['bank'] = "BCA";
+        $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
+        $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
 
         $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
@@ -137,11 +141,16 @@ class DireksiController extends Controller
             'nama_rekening' => 'required',
             'mulai_bekerja' => 'required',
             'status' => 'required',
+            'apa_bpjs_tk' => 'nullable',
+            'apa_bpjs_kesehatan' => 'nullable',
             'foto_ktp' => 'nullable|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'nullable|mimes:jpg,jpeg,png|max:10000',
         ]);
 
         $data['bank'] = "BCA";
+
+        $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
+        $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
 
         $data['updated_by'] = auth()->user()->id;
 
