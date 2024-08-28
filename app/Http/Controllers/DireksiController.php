@@ -14,10 +14,11 @@ class DireksiController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $data = Direksi::all();
-        return view('database.direksi.index', compact('data'));
+        $status = $request->filled('status') ? $request->status : 'aktif';
+        $data = Direksi::where('status', $status)->get();
+        return view('database.direksi.index', compact('data', 'status'));
     }
 
     /**

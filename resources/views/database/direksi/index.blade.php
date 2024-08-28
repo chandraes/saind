@@ -8,7 +8,7 @@
         </div>
     </div>
     @include('swal')
-    <div class="flex-row justify-content-between mt-3">
+    <div class="row d-flex justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
                 <tr class="text-center">
@@ -21,6 +21,25 @@
                     </td>
                 </tr>
             </table>
+        </div>
+        <div class="col-md-6">
+            <form action="{{route('direksi.index')}}" method="get">
+                <div class="row d-flex">
+                    <div class="col-md-6 mb-3">
+                        {{-- <label for="status" class="form-label">Status</label> --}}
+                        <select class="form-select" name="status" id="status" required>
+                            <option value="aktif" @if ($status=='aktif' ) selected @endif>Aktif</option>
+                            <option value="nonaktif" @if ($status=='nonaktif' ) selected @endif>Nonaktif</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="row">
+                            <button type="submit" class="btn btn-primary">Filter</button>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
         </div>
     </div>
 </div>
