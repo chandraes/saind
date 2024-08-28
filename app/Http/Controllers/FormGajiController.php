@@ -65,10 +65,11 @@ class FormGajiController extends Controller
             $pendapatan_kotor_direksi = 0;
             $pendapatan_bersih_direksi = 0;
 
-            $bpjs_tk_direksi = $d->gaji_pokok * 0.049;
-            $bpjs_k_direksi = $d->gaji_pokok * 0.04;
-            $potongan_bpjs_tk_direksi = $d->gaji_pokok * 0.02;
-            $potongan_bpjs_kesehatan_direksi = $d->gaji_pokok * 0.01;
+            $bpjs_tk_direksi = $d->apa_bpjs_tk == 1 ? $d->gaji_pokok * 0.049 : 0;
+            $potongan_bpjs_tk_direksi = $d->apa_bpjs_tk == 1 ? $d->gaji_pokok * 0.02 : 0;
+            $bpjs_k_direksi = $d->apa_bpjs_kesehatan == 1 ? $d->gaji_pokok * 0.04 : 0;
+            $potongan_bpjs_kesehatan_direksi = $d->apa_bpjs_kesehatan == 1 ? $d->gaji_pokok * 0.01 : 0;
+
             $pendapatan_kotor_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
             $pendapatan_bersih_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga - $potongan_bpjs_tk_direksi - $potongan_bpjs_kesehatan_direksi;
 
@@ -103,10 +104,11 @@ class FormGajiController extends Controller
             $pendapatan_kotor = 0;
             $pendapatan_bersih = 0;
 
-            $bpjs_tk = $d->gaji_pokok * 0.049;
-            $bpjs_k = $d->gaji_pokok * 0.04;
-            $potongan_bpjs_tk = $d->gaji_pokok * 0.02;
-            $potongan_bpjs_kesehatan = $d->gaji_pokok * 0.01;
+            $bpjs_tk = $d->apa_bpjs_tk == 1 ? $d->gaji_pokok * 0.049 : 0;
+            $potongan_bpjs_tk = $d->apa_bpjs_tk == 1 ? $d->gaji_pokok * 0.02 : 0;
+            $bpjs_k = $d->apa_bpjs_kesehatan == 1 ? $d->gaji_pokok * 0.04 : 0;
+            $potongan_bpjs_kesehatan = $d->apa_bpjs_kesehatan == 1 ? $d->gaji_pokok * 0.01 : 0;
+
             $pendapatan_kotor = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
             $pendapatan_bersih = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga - $potongan_bpjs_tk - $potongan_bpjs_kesehatan;
 

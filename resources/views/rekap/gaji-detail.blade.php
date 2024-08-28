@@ -17,6 +17,7 @@
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
                 <tr>
+                    <th rowspan="2" class="text-center align-middle">No</th>
                     <th rowspan="2" class="text-center align-middle">NIK</th>
                     <th rowspan="2" class="text-center align-middle">Nama</th>
                     <th rowspan="2" class="text-center align-middle">Jabatan</th>
@@ -42,26 +43,44 @@
             <tbody>
                 @foreach ($data->rekap_gaji_detail as $dir)
                 <tr>
+                    <td class="text-center align-middle">{{$loop->iteration}}</td>
                     <td class="text-center align-middle">{{$dir->nik}}</td>
                     <td class="text-center align-middle">{{$dir->nama}}</td>
                     <td class="text-center align-middle">{{$dir->jabatan}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->tunjangan_jabatan, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->tunjangan_keluarga, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->bpjs_tk, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->bpjs_k, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->potongan_bpjs_tk, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->potongan_bpjs_kesehatan, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->tunjangan_jabatan, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->tunjangan_keluarga, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->bpjs_tk, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->bpjs_k, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->potongan_bpjs_tk, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->potongan_bpjs_kesehatan, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{$dir->no_rekening}}</td>
                     <td class="text-center align-middle">{{$dir->transfer_ke}}</td>
                     <td class="text-center align-middle">{{$dir->bank}}</td>
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <th class="text-end align-middle" colspan="4">Grand Total : </th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('gaji_pokok'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('tunjangan_jabatan'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('tunjangan_keluarga'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('bpjs_tk'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('bpjs_k'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('potongan_bpjs_tk'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('potongan_bpjs_kesehatan'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('pendapatan_kotor'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('pendapatan_bersih'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('kasbon'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('sisa_gaji_dibayar'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle" colspan="3"></th>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>

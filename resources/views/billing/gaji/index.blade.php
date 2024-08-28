@@ -19,6 +19,8 @@
         $gtTunjanganKeluarga = 0;
         $gtTunjanganJabatan = 0;
         $gtGajiPokok = 0;
+        $gtBpjsTk = 0;
+        $gtBpjsKesehatan = 0;
         $no = 1;
     @endphp
     @include('swal')
@@ -49,15 +51,18 @@
             <tbody>
                 @foreach ($direksi as $dir)
                 @php
-                    $bpjs_tk_direksi = $dir->gaji_pokok * 0.049;
-                    $bpjs_k_direksi = $dir->gaji_pokok * 0.04;
-                    $potongan_bpjs_tk_direksi = $dir->gaji_pokok * 0.02;
+                    $bpjs_tk_direksi = $dir->apa_bpjs_tk == 1 ? $dir->gaji_pokok * 0.049 : 0;
+                    $bpjs_k_direksi = $dir->apa_bpjs_kesehatan == 1 ? $dir->gaji_pokok * 0.04 : 0;
+                    $potongan_bpjs_tk_direksi = $dir->apa_bpjs_tk == 1 ? $dir->gaji_pokok * 0.02 : 0;
+                    $potongan_bpjs_kesehatan_direksi = $dir->apa_bpjs_kesehatan == 1 ? $dir->gaji_pokok * 0.01 : 0;
+
                     $grandTotalPotonganBpjsTk = $grandTotalPotonganBpjsTk + $potongan_bpjs_tk_direksi;
-                    $potongan_bpjs_kesehatan_direksi = $dir->gaji_pokok * 0.01;
                     $gtPotonganBpjsKesehatan += $potongan_bpjs_kesehatan_direksi;
                     $gtPotonganBpjsTk += $potongan_bpjs_tk_direksi;
                     $gtTunjanganKeluarga += $dir->tunjangan_keluarga;
                     $gtTunjanganJabatan += $dir->tunjangan_jabatan;
+                    $gtBpjsTk += $bpjs_tk_direksi;
+                    $gtBpjsKesehatan += $bpjs_k_direksi;
                     $gtGajiPokok += $dir->gaji_pokok;
                     $grandTotalPotonganBpjsKesehatan = $grandTotalPotonganBpjsKesehatan + $potongan_bpjs_kesehatan_direksi;
                     $pendapatan_kotor_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
@@ -86,16 +91,19 @@
                 @endforeach
                 @foreach ($data as $i)
                 @php
-                    $bpjs_tk = $i->gaji_pokok * 0.049;
-                    $bpjs_k = $i->gaji_pokok * 0.04;
-                    $potongan_bpjs_tk = $i->gaji_pokok * 0.02;
+                    $bpjs_tk = $i->apa_bpjs_tk == 1 ? $i->gaji_pokok * 0.049 : 0;
+                    $potongan_bpjs_tk = $i->apa_bpjs_tk == 1 ? $i->gaji_pokok * 0.02 : 0;
+                    $bpjs_k = $i->apa_bpjs_kesehatan == 1 ? $i->gaji_pokok * 0.04 : 0;
+                    $potongan_bpjs_kesehatan = $i->apa_bpjs_kesehatan == 1 ? $i->gaji_pokok * 0.01 : 0;
+
                     $grandTotalPotonganBpjsTk = $grandTotalPotonganBpjsTk + $potongan_bpjs_tk;
-                    $potongan_bpjs_kesehatan = $i->gaji_pokok * 0.01;
                     $gtPotonganBpjsKesehatan += $potongan_bpjs_kesehatan;
                     $gtPotonganBpjsTk += $potongan_bpjs_tk;
                     $gtTunjanganKeluarga += $i->tunjangan_keluarga;
                     $gtTunjanganJabatan += $i->tunjangan_jabatan;
                     $gtGajiPokok += $i->gaji_pokok;
+                    $gtBpjsTk += $bpjs_tk;
+                    $gtBpjsKesehatan += $bpjs_k;
                     $grandTotalPotonganBpjsKesehatan = $grandTotalPotonganBpjsKesehatan + $potongan_bpjs_kesehatan;
                     $pendapatan_kotor = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
                     $grandTotalPendapatanKotor = $grandTotalPendapatanKotor + $pendapatan_kotor;
@@ -160,8 +168,8 @@
                     <th class="text-end align-middle">{{number_format($gtGajiPokok, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($gtTunjanganJabatan, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($gtTunjanganKeluarga, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($gtPotonganBpjsTk, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($gtPotonganBpjsKesehatan, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($gtBpjsTk, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($gtBpjsKesehatan, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grandTotalPotonganBpjsTk, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grandTotalPotonganBpjsKesehatan, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grandTotalPendapatanKotor, 0, ',','.')}}</th>
