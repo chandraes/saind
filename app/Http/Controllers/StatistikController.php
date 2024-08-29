@@ -546,24 +546,31 @@ class StatistikController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
-        $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::with(['kas_uang_jalan','kas_uang_jalan.vendor'])
-                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->when($vendor, function ($query, $vendor) {
-                                return $query->where('v.vendor_id', $vendor);
-                            })
-                            ->get();
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+                    ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
+                    ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
+                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit')
+                    ->whereMonth('kuj.tanggal', $bulan)
+                    ->whereYear('kuj.tanggal', $tahun)
+                    ->where('transaksis.void', 0)
+                    ->groupBy('tanggal')
+                    ->get()
+                    ->keyBy('tanggal');
+
+        $profitHarian = [];
+        $grandTotal = 0;
+
+        for ($i = 1; $i <= $date; $i++) {
+            $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $i);
+            $profitHarian[$tanggal] = $data->get($tanggal)->total_nominal_profit ?? 0;
+            $grandTotal += $profitHarian[$tanggal];
+        }
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->selectRaw('YEAR(tanggal) tahun')
@@ -571,38 +578,17 @@ class StatistikController extends Controller
                             ->get();
 
 
-        $vehicle = Vehicle::with(['vendor'])->orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
-        if ($vehicle->count() == 0) {
-            $offset = 0;
-            $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
-        }
-
-        $vendors = Vendor::all();
-
-        return view('rekap.statistik.profit-harian', [
+        return view('rekap.statistik.profit.harian-kotor', [
             'data' => $data,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'bulan_angka' => $bulan,
-            'vehicle' => $vehicle,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
             'offset' => $offset,
             'dataTahun' => $dataTahun,
-            'vendors' => $vendors,
-            'vendor' => $vendor,
+            'profitHarian' => $profitHarian,
+            'grandTotal' => $grandTotal,
         ]);
     }
 

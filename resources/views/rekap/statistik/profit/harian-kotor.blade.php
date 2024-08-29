@@ -22,9 +22,6 @@
                         <form target="_blank" action="{{route('statistik.profit-bulanan.print')}}" method="get">
                             <input type="hidden" name="offset" value="{{$offset}}">
                             <input type="hidden" name="bulan" value="{{$bulan_angka}}">
-                            @if ($vendor != 0)
-                            <input type="hidden" name="vendor" value="{{$vendor}}">
-                            @endif
                             <input type="hidden" name="tahun" value="{{$tahun}}">
                             <button class="btn" type="submit">
                                 <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Rekap
@@ -77,19 +74,21 @@
                 </tr>
             </thead>
             <tbody>
-                @for ($i = 1; $i <= $date; $i++) <tr>
-                    <td class="text-center align-middle" style="width: 8%">{{$i}}</td>
-                    <td class="text-center align-middle">0</td>
-                    @endfor
-
+                @foreach(range(1, $date) as $i)
+                    @php
+                        $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $i);
+                        $profit = $profitHarian[$tanggal];
+                    @endphp
+                    <tr>
+                        <td class="text-center align-middle" style="width: 8%">{{ $i }}</td>
+                        <td class="text-center align-middle">{{ number_format($profit, 0, ',','.') }}</td>
+                    </tr>
+                @endforeach
             </tbody>
             <tfoot>
-
                 <tr>
                     <td><strong>Grand Total</strong></td>
-                    <td>
-
-                    </td>
+                    <td class="text-center align-middle"><strong>{{ number_format($grandTotal, 0, ',','.') }}</strong></td>
                 </tr>
             </tfoot>
         </table>

@@ -12,7 +12,7 @@
         <h1>PROFIT</h1>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.profit-harian')}}" class="text-decoration-none">
-                <img src="{{asset('images/profit.svg')}}" alt="" width="80">
+                <img src="{{asset('images/harian-kotor.svg')}}" alt="" width="80">
                 <h5 class="mt-3">GRAND TOTAL<br>HARIAN<br>(KOTOR)</h5>
             </a>
         </div>
