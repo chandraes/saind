@@ -592,6 +592,51 @@ class StatistikController extends Controller
         ]);
     }
 
+    public function profit_harian_download(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        $offset = $request->offset ?? 0;
+        // nama bulan dalam indonesia berdasarkan $bulan
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date vrom $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+                    ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
+                    ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
+                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit')
+                    ->whereMonth('kuj.tanggal', $bulan)
+                    ->whereYear('kuj.tanggal', $tahun)
+                    ->where('transaksis.void', 0)
+                    ->groupBy('tanggal')
+                    ->get()
+                    ->keyBy('tanggal');
+
+        $profitHarian = [];
+        $grandTotal = 0;
+
+        for ($i = 1; $i <= $date; $i++) {
+            $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $i);
+            $profitHarian[$tanggal] = $data->get($tanggal)->total_nominal_profit ?? 0;
+            $grandTotal += $profitHarian[$tanggal];
+        }
+
+        $pdf = PDF::loadview('rekap.statistik.profit.harian-kotor-pdf', [
+            'data' => $data,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'bulan_angka' => $bulan,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'profitHarian' => $profitHarian,
+            'grandTotal' => $grandTotal,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Profit Bulan '.$nama_bulan.' '.$tahun.'.pdf');
+    }
+
     public function profit_bulanan(Request $request)
     {
         $bulan = $request->bulan ?? date('m');

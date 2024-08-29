@@ -190,7 +190,14 @@ Route::group(['middleware' => ['auth']], function() {
         Route::get('form-lain-lain/keluar', [App\Http\Controllers\FormLainController::class, 'keluar'])->name('form-lain-lain.keluar');
         Route::post('form-lain-lain/keluar', [App\Http\Controllers\FormLainController::class, 'keluar_store'])->name('form-lain-lain.keluar.store');
 
-        Route::get('statistik/profit-harian', [App\Http\Controllers\StatistikController::class, 'profit_harian'])->name('statistik.profit-harian');
+        Route::prefix('statistik')->group(function(){
+            Route::prefix('profit-harian')->group(function(){
+                Route::get('/', [App\Http\Controllers\StatistikController::class, 'profit_harian'])->name('statistik.profit-harian');
+                Route::get('/pdf', [App\Http\Controllers\StatistikController::class, 'profit_harian_download'])->name('statistik.profit-harian.pdf');
+            });
+        });
+
+
 
         Route::get('statistik/profit-tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih'])->name('statistik.profit-tahunan-bersih');
 

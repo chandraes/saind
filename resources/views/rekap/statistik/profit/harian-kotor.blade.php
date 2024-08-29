@@ -19,7 +19,7 @@
                     <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
                                 width="30"> STATISTIK</a></td>
                     <td>
-                        <form target="_blank" action="{{route('statistik.profit-bulanan.print')}}" method="get">
+                        <form target="_blank" action="{{route('statistik.profit-harian.pdf')}}" method="get">
                             <input type="hidden" name="offset" value="{{$offset}}">
                             <input type="hidden" name="bulan" value="{{$bulan_angka}}">
                             <input type="hidden" name="tahun" value="{{$tahun}}">
