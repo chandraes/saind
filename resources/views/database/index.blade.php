@@ -113,6 +113,12 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-3 mb-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/barang-maintenance.svg')}}" alt="" width="80">
+                <h4 class="mt-3">KATEGORI COST OPERATIONAL</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
                 <h4 class="mt-3">DASHBOARD</h4>
