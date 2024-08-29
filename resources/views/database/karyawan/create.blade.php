@@ -125,11 +125,11 @@
                 <div class="row">
                     <label for="bpjs_tk" class="form-label" >----------------------------</label>
                     <div class="btn-group" role="group" data-bs-toggle="buttons">
-                        <label class="btn btn-secondary active">
+                        <label class="btn btn-primary active">
                             <input type="checkbox" class="me-2" name="apa_bpjs_tk" id="apa_bpjs_tk" autocomplete="off" />
                             Ikut BPJS Tenaga Kerja
                         </label>
-                        <label class="btn btn-secondary">
+                        <label class="btn btn-primary">
                             <input type="checkbox" class="me-2" name="apa_bpjs_kesehatan" id="apa_bpjs_kesehatan" autocomplete="off"  />
                             Ikut BPJS Kesehatan
                         </label>
