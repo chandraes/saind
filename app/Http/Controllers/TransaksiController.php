@@ -184,7 +184,7 @@ class TransaksiController extends Controller
         } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
             $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
-            $penalty = $transaksi->tonase * $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak;
+            $penalty = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
 
         }
 

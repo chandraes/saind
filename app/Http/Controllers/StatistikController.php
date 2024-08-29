@@ -757,6 +757,7 @@ class StatistikController extends Controller
         return $pdf->stream('Profit Bulan '.$nama_bulan.' '.$tahun.'.pdf');
     }
 
+
     public function profit_tahunan_bersih(Request $request)
     {
         $tahun = $request->tahun ?? date('Y');
