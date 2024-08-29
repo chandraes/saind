@@ -10,4 +10,9 @@ class BillingController extends Controller
     {
         return view('billing.index');
     }
+
+    public function form_cost_operational()
+    {
+        return view('billing.cost-operational.index');
+    }
 }

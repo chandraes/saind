@@ -197,8 +197,6 @@ Route::group(['middleware' => ['auth']], function() {
             });
         });
 
-
-
         Route::get('statistik/profit-tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih'])->name('statistik.profit-tahunan-bersih');
 
         Route::get('statisik/profit-bulanan', [App\Http\Controllers\StatistikController::class, 'profit_bulanan'])->name('statisik.profit-bulanan');
@@ -298,6 +296,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/bayar-store', [App\Http\Controllers\FormVendorController::class, 'bayar_store'])->name('billing.vendor.bayar-store');
                 Route::get('/get-vehicle', [App\Http\Controllers\FormVendorController::class, 'get_vehicle'])->name('billing.vendor.get-vehicle');
                 Route::get('/get-plafon-titipan', [App\Http\Controllers\FormVendorController::class, 'get_plafon_titipan'])->name('billing.vendor.get-plafon-titipan');
+            });
+
+            Route::prefix('form-cost-operational')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_cost_operational'])->name('billing.cost-operational');
             });
 
 
