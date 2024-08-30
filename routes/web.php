@@ -319,7 +319,11 @@ Route::group(['middleware' => ['auth']], function() {
             });
 
             Route::prefix('form-cost-operational')->group(function(){
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_cost_operational'])->name('billing.cost-operational');
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_cost_operational'])->name('billing.form-cost-operational');
+                Route::prefix('cost-operational')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational'])->name('billing.form-cost-operational.cost-operational');
+                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_store'])->name('billing.form-cost-operational.cost-operational.store');
+                });
             });
 
 

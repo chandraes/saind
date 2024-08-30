@@ -11,8 +11,8 @@
     <div class="row justify-content-left">
 
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/transaction.svg')}}" alt="" width="80">
+            <a href="{{route('billing.form-cost-operational.cost-operational')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="80">
                 <h4 class="mt-3">FORM OPERATIONAL</h3>
             </a>
         </div>

@@ -172,8 +172,8 @@
             </div>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.cost-operational')}}" class="text-decoration-none">
-                <img src="{{asset('images/transaction.svg')}}" alt="" width="80">
+            <a href="{{route('billing.form-cost-operational')}}" class="text-decoration-none">
+                <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="80">
                 <h4 class="mt-3">FORM COST OPERATIONAL</h3>
             </a>
         </div>
