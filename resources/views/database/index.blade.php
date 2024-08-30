@@ -113,8 +113,8 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-3 mb-3">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/barang-maintenance.svg')}}" alt="" width="80">
+            <a href="{{route('database.cost-operational')}}" class="text-decoration-none">
+                <img src="{{asset('images/cost-operational.svg')}}" alt="" width="80">
                 <h4 class="mt-3">KATEGORI COST OPERATIONAL</h4>
             </a>
         </div>

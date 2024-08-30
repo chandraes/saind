@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
 use App\Models\BarangMaintenance;
+use App\Models\CostOperational;
 use App\Models\KategoriBarangMaintenance;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
@@ -226,4 +227,41 @@ class DatabaseController extends Controller
         return redirect()->route('database.aktivasi-maintenance')->with('success', 'Data berhasil dihapus');
     }
 
+    public function cost_operational()
+    {
+        $data = CostOperational::all();
+
+        return view('database.cost-operational.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function cost_operational_store(Request $req)
+    {
+        $data = $req->validate([
+            'nama' => 'required',
+        ]);
+
+        CostOperational::create($data);
+
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan');
+    }
+
+    public function cost_operational_update(CostOperational $cost, Request $req)
+    {
+        $data = $req->validate([
+            'nama' => 'required',
+        ]);
+
+        $cost->update($data);
+
+        return redirect()->back()->with('success', 'Data berhasil diupdate');
+    }
+
+    public function cost_operational_delete(CostOperational $cost)
+    {
+        $cost->delete();
+
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
+    }
 }
