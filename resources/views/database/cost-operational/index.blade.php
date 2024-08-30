@@ -23,6 +23,7 @@
         </div>
     </div>
 </div>
+@include('swal')
 @include('database.cost-operational.create')
 @include('database.cost-operational.edit')
 <div class="container mt-5 table-responsive">
