@@ -9,45 +9,87 @@
     </div>
     <div class="row justify-content-left mt-5">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database')}}" class="text-decoration-none">
-                <img src="{{asset('images/database.svg')}}" alt="" width="80">
+                <img src="{{asset('images/database.svg')}}" alt="" width="70">
                 <h4 class="mt-3">DATABASE</h4>
             </a>
         </div>
         @endif
         @if (auth()->user()->role === 'su' || auth()->user()->role === 'admin' || auth()->user()->role === 'user')
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('billing.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/billing.svg')}}" alt="" width="80">
+                <img src="{{asset('images/billing.svg')}}" alt="" width="70">
                 <h4 class="mt-3">BILLING</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('rekap.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekap.svg')}}" alt="" width="80">
+                <img src="{{asset('images/rekap.svg')}}" alt="" width="70">
                 <h4 class="mt-3">REKAP</h4>
             </a>
         </div>
         @endif
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">PURCHASE<br>ORDER</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">INVENTARIS</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">PAJAK</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">LAPORAN<br>KEUANGAN</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">STATISTIK</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">LEGALITAS</h4>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-2">STRUKTUR<br>ORGANISASI</h4>
+            </a>
+        </div>
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('dokumen')}}" class="text-decoration-none">
-                <img src="{{asset('images/document.svg')}}" alt="" width="80">
+                <img src="{{asset('images/document.svg')}}" alt="" width="70">
                 <h4 class="mt-3">DOKUMEN</h4>
             </a>
         </div>
         @if (auth()->user()->role === 'su')
-        <div class="col-md-3 text-center mb-5">
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('bypass.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/admin.svg')}}" alt="" width="80">
+                <img src="{{asset('images/admin.svg')}}" alt="" width="70">
                 <h4 class="mt-3">BYPASS</h4>
             </a>
-        </div>
+        </div> --}}
         @endif
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('pengaturan')}}" class="text-decoration-none">
-                <img src="{{asset('images/pengaturan.svg')}}" alt="" width="80">
+                <img src="{{asset('images/pengaturan.svg')}}" alt="" width="70">
                 <h4 class="mt-3">PENGATURAN</h4>
             </a>
         </div>
@@ -56,35 +98,35 @@
     </div>
     @if (auth()->user()->role === 'vendor')
     <div class="row justify-content-left mt-5">
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
-                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="80">
+                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">Kas Vendor</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('perform-unit-pervendor.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/perform-unit.svg')}}" alt="" width="80">
+                <img src="{{asset('images/perform-unit.svg')}}" alt="" width="70">
                 <h4 class="mt-3">Perform Unit</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('statistik-pervendor.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="80">
+                <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">Statistik Vendor</h4>
             </a>
         </div>
     </div>
     <div class="row justify-content-left mt-5">
-        {{-- <div class="col-md-3 text-center mb-5">
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
-                <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="80">
+                <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">DATABASE<br>UPAH GENDONG</h4>
             </a>
         </div> --}}
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
-                <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="80">
+                <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="70">
                 <h4 class="mt-3">STATISTIK<br>UPAH GENDONG</h4>
             </a>
             <div class="modal fade" id="upahGendongId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -118,9 +160,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#maintenaceModal">
-                <img src="{{asset('images/rekap-maintenance.svg')}}" alt="" width="80">
+                <img src="{{asset('images/rekap-maintenance.svg')}}" alt="" width="70">
                 <h4 class="mt-3">MAINTENANCE VEHICLE</h4>
             </a>
 
@@ -156,9 +198,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ban_luar">
-                <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
+                <img src="{{asset('images/db-ban.svg')}}" alt="" width="70">
                 <h4 class="mt-3">BAN LUAR</h4>
             </a>
             <div class="modal fade" id="ban_luar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -194,15 +236,15 @@
         </div>
     </div>
     {{-- <div class="row justify-content-left mt-5">
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
-                <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="80">
+                <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">DATABASE<br>BAN LUAR</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
-                <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="80">
+                <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="70">
                 <h4 class="mt-3">STATISTIK<br>BAN LUAR</h4>
             </a>
             <div class="modal fade" id="upahGendongId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
