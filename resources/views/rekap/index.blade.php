@@ -63,6 +63,12 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('rekap.cost-operational')}}" class="text-decoration-none">
+                <img src="{{asset('images/co.svg')}}" alt="" width="80">
+                <h5 class="mt-3">COST OPERATIONAL</h5>
+            </a>
+        </div>
 
     </div>
     <br>

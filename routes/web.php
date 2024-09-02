@@ -445,6 +445,10 @@ Route::group(['middleware' => ['auth']], function() {
         Route::prefix('rekap')->group(function(){
             Route::get('/', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap.index');
 
+            Route::prefix('cost-opertaional')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'cost_operational'])->name('rekap.cost-operational');
+            });
+
             Route::get('/kas-besar', [App\Http\Controllers\RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
             Route::get('/kas-besar/preview/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'preview_kas_besar'])->name('rekap.kas-besar.preview');
             Route::get('/kas-kecil', [App\Http\Controllers\RekapController::class, 'kas_kecil'])->name('rekap.kas-kecil');
