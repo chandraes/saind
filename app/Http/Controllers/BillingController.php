@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CostOperational;
 use App\Models\KasBesar;
+use App\Models\RekapGaji;
 use Illuminate\Http\Request;
 
 class BillingController extends Controller
@@ -15,7 +16,16 @@ class BillingController extends Controller
 
     public function form_cost_operational()
     {
-        return view('billing.form-cost-operational.index');
+        $check = RekapGaji::orderBy('id', 'desc')->first();
+
+        $bulan = $check->bulan + 1 == 13 ? 1 : $check->bulan + 1;
+        $tahun = $check->bulan + 1 == 13 ? $check->tahun + 1 : $check->tahun;
+        
+        return view('billing.form-cost-operational.index',
+            [
+                'bulan' => $bulan,
+                'tahun' => $tahun,
+            ]);
     }
 
     public function cost_operational()

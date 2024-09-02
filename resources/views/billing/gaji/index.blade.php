@@ -132,8 +132,11 @@
                             $mulai = $cicilan->mulai_tahun.'-'.$cicilan->mulai_bulan.'-01';
                             $mulai = date('Y-m-d', strtotime($mulai));
                             // check if $mulai month and year is > from now
-                            $now = date('Y-m-d');
+                            // $tahun = $tahun;
+                            $bulan = $bulan;
 
+                            // $now = create y-m-d from $tahun $bulan
+                            $now = date('Y-m-d', strtotime($tahun.'-'.$bulan.'-01'));
                             // if true, then $mulai = $now
                             if($mulai < $now){
                                 $kasbon_cicil = $i->kas_bon_cicilan->where('lunas', 0)->first()->cicilan_nominal;
@@ -184,10 +187,12 @@
         <div class="d-grid gap-2 d-md-flex justify-content-md-center">
             <form action="{{route('billing.gaji.store')}}" method="post" id="lanjutForm">
                 @csrf
+                <input type="hidden" name="bulan" value="{{$bulan}}">
                 <input type="hidden" name="total" value="{{$total}}">
+                <input type="hidden" name="tahun" value="{{$tahun}}">
                 <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
             </form>
-            <a href="{{route('billing.index')}}" class="btn btn-secondary btn-lg">Batalkan</a>
+            <a href="{{route('billing.form-cost-operational')}}" class="btn btn-secondary btn-lg">Batalkan</a>
             {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
           </div>
     </div>

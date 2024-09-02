@@ -46,7 +46,7 @@
             </div>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="{{route('billing.gaji.index')}}" class="text-decoration-none">
+            <a href="{{route('billing.gaji.index', ['bulan' => $bulan, 'tahun' => $tahun])}}" class="text-decoration-none">
                 <img src="{{asset('images/gaji.svg')}}" alt="" width="80">
                 <h4 class="mt-3">FORM GAJI</h3>
             </a>
