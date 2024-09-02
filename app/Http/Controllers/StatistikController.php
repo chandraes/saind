@@ -813,6 +813,7 @@ class StatistikController extends Controller
                 'nama_bulan' => $nama_bulan[$bulan],
                 'profit' => $data->sum('profit'),
                 'pengeluaran' => $pengeluaran_kas_kecil+$gaji,
+                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$gaji),
             ];
 
         }
