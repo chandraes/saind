@@ -62,12 +62,12 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($nama_bulan as $bulan)
+                @foreach($statistics as $s)
                 <tr>
-                    <td class="text-center align-middle">{{$bulan}}</td>
-                    <td>0</td>
-                    <td>0</td>
-                    <td>0</td>
+                    <td class="text-center align-middle">{{$s['nama_bulan']}}</td>
+                    <td class="text-end align-middle">{{number_format($s['profit'], 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($s['pengeluaran'], 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($s['profit']-$s['pengeluaran'], 0, ',','.')}}</td>
                 </tr>
 
                 @endforeach

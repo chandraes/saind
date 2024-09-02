@@ -8,6 +8,8 @@ use App\Models\Vendor;
 use App\Models\Customer;
 use App\Models\KasVendor;
 use App\Models\InvoiceTagihan;
+use App\Models\KasBesar;
+use App\Models\RekapGaji;
 use App\Models\UpahGendong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -761,7 +763,6 @@ class StatistikController extends Controller
     public function profit_tahunan_bersih(Request $request)
     {
         $tahun = $request->tahun ?? date('Y');
-        $offset = $request->offset ?? 0;
 
         $nama_bulan = [
             1 => 'Januari',
@@ -782,7 +783,6 @@ class StatistikController extends Controller
         $statistics = [];
 
         // get all vehicle
-        $vehicle = Vehicle::orderBy('nomor_lambung')->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->selectRaw('YEAR(tanggal) tahun')
@@ -790,6 +790,7 @@ class StatistikController extends Controller
                             ->get();
         // looping sum profit each vehicle for each month
         for ($bulan = 1; $bulan <= 12; $bulan++) {
+
             $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
                                 ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                                 ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
@@ -799,33 +800,26 @@ class StatistikController extends Controller
                                 ->where('transaksis.void', 0)
                                 ->get();
 
-            foreach ($data as $transaction) {
-                $v = $transaction->kas_uang_jalan->vehicle;
-                $vendor = $transaction->kas_uang_jalan->vendor;
+            $pengeluaran_kas_kecil = KasBesar::whereMonth('tanggal', $bulan)
+                                ->whereYear('tanggal', $tahun)
+                                ->whereNotNull('nomor_kode_kas_kecil')
+                                ->sum('nominal_transaksi');
 
-                if (!isset($statistics[$v->nomor_lambung])) {
-                    $statistics[$v->nomor_lambung] = [
-                        'vehicle' => $v,
-                        'vendor' => $vendor->nama,
-                        'monthly' => array_fill(1, 12, 0),
-                    ];
-                }
+            $gaji = RekapGaji::where('bulan', $bulan)
+                                ->where('tahun', $tahun)
+                                ->sum('total');
 
-                $statistics[$v->nomor_lambung]['monthly'][$bulan] += $transaction->profit;
-            }
+            $statistics[$bulan] = [
+                'nama_bulan' => $nama_bulan[$bulan],
+                'profit' => $data->sum('profit'),
+                'pengeluaran' => $pengeluaran_kas_kecil+$gaji,
+            ];
+
         }
-
-        // dd($statistics);
-
-        uksort($statistics, function($a, $b) {
-            return $a <=> $b;
-        });
 
         return view('rekap.statistik.profit-tahunan-bersih', [
             'statistics' => $statistics,
             'tahun' => $tahun,
-            'vehicle' => $vehicle,
-            'offset' => $offset,
             'dataTahun' => $dataTahun,
             'nama_bulan' => $nama_bulan, // pass the variable to the view
         ]);
