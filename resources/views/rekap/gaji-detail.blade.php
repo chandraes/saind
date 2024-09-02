@@ -8,7 +8,7 @@
         </div>
     </div>
     @include('swal')
-    <form action="{{route('print-rekap-gaji')}}" method="get">
+    <form action="{{route('print-rekap-gaji')}}" method="get" target="_blank">
         <input type="hidden" name="bulan" value="{{$bulan_angka}}">
         <input type="hidden" name="tahun" value="{{$tahun}}">
         <button type="submit" class="btn btn-success mb-3">Cetak Rekap gaji Karyawan</button>

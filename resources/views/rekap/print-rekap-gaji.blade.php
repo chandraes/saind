@@ -39,23 +39,40 @@
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->nik}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->nama}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->jabatan}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->tunjangan_jabatan, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->tunjangan_keluarga, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->bpjs_tk, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->bpjs_k, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->potongan_bpjs_tk, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->potongan_bpjs_kesehatan, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
-                    <td class="table-pdf text-pdf text-center align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->tunjangan_jabatan, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->tunjangan_keluarga, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->bpjs_tk, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->bpjs_k, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->potongan_bpjs_tk, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->potongan_bpjs_kesehatan, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->no_rekening}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->transfer_ke}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->bank}}</td>
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <th class="text-end align-middle table-pdf text-pdf" colspan="3">Grand Total : </th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('gaji_pokok'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('tunjangan_jabatan'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('tunjangan_keluarga'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('bpjs_tk'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('bpjs_k'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('potongan_bpjs_tk'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('potongan_bpjs_kesehatan'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('pendapatan_kotor'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('pendapatan_bersih'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('kasbon'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('sisa_gaji_dibayar'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf" colspan="3"></th>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
