@@ -216,6 +216,10 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::get('/profit-tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih'])->name('statistik.profit-tahunan-bersih');
 
+            Route::prefix('profit')->group(function(){
+                Route::get('/tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'tahunan_bersih'])->name('statistik.profit.tahunan-bersih');
+            });
+
             Route::get('/profit-bulanan', [App\Http\Controllers\StatistikController::class, 'profit_bulanan'])->name('statisik.profit-bulanan');
             Route::get('/profit-bulanan/print', [App\Http\Controllers\StatistikController::class, 'profit_bulanan_print'])->name('statistik.profit-bulanan.print');
             Route::get('/profit-tahunan', [App\Http\Controllers\StatistikController::class, 'profit_tahunan'])->name('statistik.profit-tahunan');

@@ -830,7 +830,7 @@ class StatistikController extends Controller
 
         }
 
-        return view('rekap.statistik.profit-tahunan-bersih', [
+        return view('rekap.statistik.profit.bulanan-bersih', [
             'statistics' => $statistics,
             'tahun' => $tahun,
             'dataTahun' => $dataTahun,
@@ -1352,4 +1352,64 @@ class StatistikController extends Controller
         ]);
 
     }
+
+    public function tahunan_bersih()
+    {
+        // create statistics array
+        $statistics = [];
+
+        // get all vehicle
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+        // dd($dataTahun);
+        // looping sum profit each vehicle for each month
+        foreach ($dataTahun as $tahun) {
+
+            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                                ->whereYear('tanggal', $tahun->tahun)
+                                ->where('transaksis.void', 0)
+                                ->get();
+
+            $pengeluaran_kas_kecil = KasBesar::whereYear('tanggal', $tahun->tahun)
+                                ->whereNotNull('nomor_kode_kas_kecil')
+                                ->sum('nominal_transaksi');
+
+            $coTransactions = KasBesar::whereYear('tanggal', $tahun->tahun)
+                                ->where('cost_operational', 1)
+                                ->whereIn('jenis_transaksi_id', [1, 2])
+                                ->get()
+                                ->groupBy('jenis_transaksi_id');
+
+            $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
+            $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
+
+            $total_co = $pengeluaran_co - $pemasukan_co;
+
+            $gaji = RekapGaji::where('tahun', $tahun->tahun)
+                                ->sum('total');
+
+            $statistics[$tahun->tahun] = [
+                'profit' => $data->sum('profit'),
+                'pengeluaran' => $pengeluaran_kas_kecil+$gaji+$total_co,
+                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$gaji+$total_co),
+            ];
+
+        }
+
+        // dd($statistics);
+
+        return view('rekap.statistik.profit.tahunan-bersih', [
+            'statistics' => $statistics,
+            'tahun' => $tahun,
+            'dataTahun' => $dataTahun,
+        ]);
+    }
+
 }
