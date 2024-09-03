@@ -805,10 +805,17 @@ class StatistikController extends Controller
                                 ->whereNotNull('nomor_kode_kas_kecil')
                                 ->sum('nominal_transaksi');
 
-            $pengeluaran_co = KasBesar::whereMonth('tanggal', $bulan)
+            $coTransactions = KasBesar::whereMonth('tanggal', $bulan)
                                 ->whereYear('tanggal', $tahun)
                                 ->where('cost_operational', 1)
-                                ->sum('nominal_transaksi');
+                                ->whereIn('jenis_transaksi_id', [1, 2])
+                                ->get()
+                                ->groupBy('jenis_transaksi_id');
+
+            $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
+            $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
+
+            $total_co = $pengeluaran_co - $pemasukan_co;
 
             $gaji = RekapGaji::where('bulan', $bulan)
                                 ->where('tahun', $tahun)
@@ -817,8 +824,8 @@ class StatistikController extends Controller
             $statistics[$bulan] = [
                 'nama_bulan' => $nama_bulan[$bulan],
                 'profit' => $data->sum('profit'),
-                'pengeluaran' => $pengeluaran_kas_kecil+$gaji+$pengeluaran_co,
-                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$gaji+$pengeluaran_co),
+                'pengeluaran' => $pengeluaran_kas_kecil+$gaji+$total_co,
+                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$gaji+$total_co),
             ];
 
         }
