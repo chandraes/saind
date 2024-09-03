@@ -156,6 +156,65 @@ class KasBesar extends Model
         }
     }
 
+    public function cost_operational_masuk($data)
+    {
+        $data['cost_operational'] = 1;
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+        $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
+        $data['jenis_transaksi_id'] = 1;
+        $data['saldo'] = $this->saldoTerakhir() + $data['nominal_transaksi'];
+
+        $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
+        $data['bank'] = $rekening->nama_bank;
+        $data['no_rekening'] = $rekening->nomor_rekening;
+
+        $data['modal_investor_terakhir'] = $this->modalInvestorTerakhir();
+        $data['tanggal'] = date('Y-m-d');
+        // dd($data);
+        try {
+            DB::beginTransaction();
+
+            $store = $this->create($data);
+
+            $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                        "*Form Cost Operational*\n".
+                        "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                        "Uraian : ".$store->uraian."\n".
+                        "Nilai :  *Rp. ".number_format($store->nominal_transaksi, 0, ',', '.')."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank      : ".$store->bank."\n".
+                        "Nama    : ".$store->transfer_ke."\n".
+                        "No. Rek : ".$store->no_rekening."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Besar : \n".
+                        "Rp. ".number_format($this->saldoTerakhir(), 0, ',', '.')."\n\n".
+                        "Total Modal Investor : \n".
+                        "Rp. ".number_format($this->modalInvestorTerakhir(), 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+            DB::commit();
+
+            $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+
+            $this->sendWa($tujuan, $pesan);
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil menambahkan data',
+            ];
+
+        } catch (\Throwable $th) {
+
+                DB::rollback();
+
+                return [
+                    'status' => 'error',
+                    'message' => $th->getMessage(),
+                ];
+
+        }
+    }
+
     public function sendWa($tujuan, $pesan)
     {
         $storeWa = PesanWa::create([

@@ -225,6 +225,15 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/perform-vendor/print', [App\Http\Controllers\StatistikController::class, 'perform_vendor_print'])->name('statistik.perform-vendor.print');
         });
 
+        Route::prefix('billing')->group(function(){
+            Route::prefix('form-cost-operational')->group(function(){
+                Route::prefix('masuk')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk'])->name('billing.form-cost-operational.masuk');
+                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk_store'])->name('billing.form-cost-operational.masuk.store');
+                });
+            });
+        });
+
 
     });
 

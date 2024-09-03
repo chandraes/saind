@@ -8,12 +8,17 @@
     </div>
     {{-- if session has success, trigger sweet alert --}}
     @include('swal')
+    @include('billing.form-cost-operational.modal-co')
     <div class="row justify-content-left">
 
         <div class="col-md-3 text-center mt-5">
-            <a href="{{route('billing.form-cost-operational.cost-operational')}}" class="text-decoration-none">
+            <a @if (Auth::user()->role == 'admin' || Auth::user()->role == 'su')
+                href="#" data-bs-toggle="modal" data-bs-target="#modalCo"
+                @else
+                href="{{route('billing.form-cost-operational.cost-operational')}}"
+            @endif class="text-decoration-none">
                 <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="80">
-                <h4 class="mt-3">FORM OPERATIONAL</h3>
+                <h4 class="mt-3">FORM OPERATIONAL</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
@@ -71,6 +76,15 @@
                 window.location.href = "{{route('kas-kecil.keluar')}}";
             } else if (val === 'void') {
                 window.location.href = "{{route('kas-kecil.void')}}";
+            }
+        }
+
+        function tipeFormCo() {
+            let val = document.getElementById('formCo').value;
+            if (val === 'masuk') {
+                window.location.href = "{{route('billing.form-cost-operational.masuk')}}";
+            } else if (val === 'keluar') {
+                window.location.href = "{{route('billing.form-cost-operational.cost-operational')}}";
             }
         }
 </script>
