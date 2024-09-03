@@ -36,7 +36,7 @@
         </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.profit.tahunan-bersih')}}" class="text-decoration-none">
-                <img src="{{asset('images/profit-tahunan.svg')}}" alt="" width="80">
+                <img src="{{asset('images/tahunan-bersih.svg')}}" alt="" width="80">
                 <h5 class="mt-3">GRAND TOTAL<br>TAHUNAN<br>(BERSIH)</h5>
             </a>
         </div>
