@@ -674,6 +674,7 @@ class StatistikController extends Controller
                     ->when($vendor, function ($query, $vendor) {
                         return $query->where('vendor_id', $vendor);
                     })
+                    ->whereNot('status', 'nonaktif')
                     ->limit(10)
                     ->offset($offset)
                     ->get();
@@ -732,6 +733,7 @@ class StatistikController extends Controller
                     ->when($vendor, function ($query, $vendor) {
                         return $query->where('vendor_id', $vendor);
                     })
+                    ->whereNot('status', 'nonaktif')
                     ->limit(10)
                     ->offset($offset)
                     ->get();

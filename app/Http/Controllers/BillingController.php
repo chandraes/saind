@@ -12,7 +12,16 @@ class BillingController extends Controller
 {
     public function index()
     {
-        return view('billing.index');
+        $check = RekapGaji::orderBy('id', 'desc')->first();
+
+        $bulan = $check->bulan + 1 == 13 ? 1 : $check->bulan + 1;
+        $tahun = $check->bulan + 1 == 13 ? $check->tahun + 1 : $check->tahun;
+
+        return view('billing.index',
+        [
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+        ]);
     }
 
     public function form_cost_operational()
