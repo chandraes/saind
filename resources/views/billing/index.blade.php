@@ -134,6 +134,57 @@
     </div>
     <hr>
     <br>
+
+    <div class="row justify-content-left">
+        <h4 class="mt-3">COST OPERATIONAL</h4>
+        <div class="col-md-2 text-center mt-5">
+            <a @if (Auth::user()->role == 'admin' || Auth::user()->role == 'su')
+                href="#" data-bs-toggle="modal" data-bs-target="#modalCo"
+                @else
+                href="{{route('billing.form-cost-operational.cost-operational')}}"
+            @endif class="text-decoration-none">
+                <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM OPERATIONAL</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <!-- Modal trigger button -->
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasKecil">
+                <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM KAS KECIL</h3>
+            </a>
+            <!-- Modal Body -->
+            <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+            <div class="modal fade" id="formKasKecil" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="mb-3 mt-3">
+                                <select class="form-select form-select-lg" name="" id="tipeKasKecil">
+                                    <option value="masuk">Permintaan Dana Kas Kecil</option>
+                                    <option value="keluar">Pengeluaran Dana Kas Kecil</option>
+                                    <option value="void">Void Dana Kas Kecil</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <a href="#" class="btn btn-primary" onclick="tipeFormKasKecil()">Lanjutkan</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.gaji.index', ['bulan' => $bulan, 'tahun' => $tahun])}}" class="text-decoration-none">
+                <img src="{{asset('images/gaji.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM GAJI</h3>
+            </a>
+        </div>
+    </div>
+    <hr>
+    <br>
     <div class="row justify-content-left">
         <h4 class="mt-3">KHUSUS</h4>
         <div class="col-md-2 text-center mt-5">
@@ -196,56 +247,6 @@
             <a href="{{route('billing.storing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/storing.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM STORING BBM</h4>
-            </a>
-        </div>
-    </div>
-    <hr>
-    <br>
-    <div class="row justify-content-left">
-        <h4 class="mt-3">COST OPERATIONAL</h4>
-        <div class="col-md-2 text-center mt-5">
-            <a @if (Auth::user()->role == 'admin' || Auth::user()->role == 'su')
-                href="#" data-bs-toggle="modal" data-bs-target="#modalCo"
-                @else
-                href="{{route('billing.form-cost-operational.cost-operational')}}"
-            @endif class="text-decoration-none">
-                <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM OPERATIONAL</h4>
-            </a>
-        </div>
-        <div class="col-md-2 text-center mt-5">
-            <!-- Modal trigger button -->
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasKecil">
-                <img src="{{asset('images/kas-kecil.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM KAS KECIL</h3>
-            </a>
-            <!-- Modal Body -->
-            <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-            <div class="modal fade" id="formKasKecil" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                    <div class="modal-content">
-                        <div class="modal-body">
-                            <div class="mb-3 mt-3">
-                                <select class="form-select form-select-lg" name="" id="tipeKasKecil">
-                                    <option value="masuk">Permintaan Dana Kas Kecil</option>
-                                    <option value="keluar">Pengeluaran Dana Kas Kecil</option>
-                                    <option value="void">Void Dana Kas Kecil</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            <a href="#" class="btn btn-primary" onclick="tipeFormKasKecil()">Lanjutkan</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.gaji.index', ['bulan' => $bulan, 'tahun' => $tahun])}}" class="text-decoration-none">
-                <img src="{{asset('images/gaji.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM GAJI</h3>
             </a>
         </div>
     </div>
