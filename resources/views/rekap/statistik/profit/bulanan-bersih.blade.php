@@ -75,10 +75,10 @@
             <tfoot>
 
                 <tr>
-                    <td><strong>Grand Total</strong></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <th><strong>Grand Total</strong></th>
+                    <th class="text-end align-middle">{{number_format($grand_total_profit, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($grand_total_pengeluaran, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($grand_total_bersih, 0, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>
