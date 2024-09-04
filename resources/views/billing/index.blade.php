@@ -10,7 +10,7 @@
     @include('swal')
     @include('billing.form-cost-operational.modal-co')
     <div class="row justify-content-left">
-        <h4 class="mt-3">KAS BESAR</h4>
+        <h4 class="mt-3">UMUM</h4>
         <div class="col-md-2 text-center mt-5">
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="formKasBesar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
