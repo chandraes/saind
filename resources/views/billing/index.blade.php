@@ -130,6 +130,68 @@
             </div>
         </div>
         @endif
+
+    </div>
+    <hr>
+    <br>
+    <div class="row justify-content-left">
+        <h4 class="mt-3">KHUSUS</h4>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
+                <img src="{{asset('images/barang.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM BARANG UMUM</h4>
+            </a>
+            <div class="modal fade" id="formBarang" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="fllTitle">Form Barang</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select class="form-select form-select-lg" name="" id="formBarangSelect">
+                                <option value="masuk">Beli</option>
+                                <option value="keluar">Jual ke Vendor</option>
+                                <option value="keluar-umum">Jual ke Umum</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeFormBarang()">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formMaintenance">
+                <img src="{{asset('images/form-maintenance.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM BARANG MAINTENANCE</h4>
+            </a>
+            <div class="modal fade" id="formMaintenance" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="fllTitle">Form Barang Maintenance</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <select class="form-select form-select-lg" name="" id="fomrMaintenanceSelect">
+                                <option value="masuk">Beli</option>
+                                <option value="keluar">Jual ke Vendor</option>
+                                <option value="keluar-umum">Jual ke Umum</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-primary" onclick="tipeFormMaintenance()">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.storing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/storing.svg')}}" alt="" width="70">
@@ -139,7 +201,6 @@
     </div>
     <hr>
     <br>
-
     <div class="row justify-content-left">
         <h4 class="mt-3">COST OPERATIONAL</h4>
         <div class="col-md-2 text-center mt-5">
@@ -225,62 +286,7 @@
             </a>
         </div>
 
-        <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
-                <img src="{{asset('images/barang.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM BARANG UMUM</h4>
-            </a>
-            <div class="modal fade" id="formBarang" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="fllTitle">Form Barang</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <select class="form-select form-select-lg" name="" id="formBarangSelect">
-                                <option value="masuk">Beli</option>
-                                <option value="keluar">Jual ke Vendor</option>
-                                <option value="keluar-umum">Jual ke Umum</option>
-                            </select>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            <button type="button" class="btn btn-primary" onclick="tipeFormBarang()">Lanjutkan</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formMaintenance">
-                <img src="{{asset('images/form-maintenance.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM BARANG MAINTENANCE</h4>
-            </a>
-            <div class="modal fade" id="formMaintenance" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="fllTitle">Form Barang Maintenance</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <select class="form-select form-select-lg" name="" id="fomrMaintenanceSelect">
-                                <option value="masuk">Beli</option>
-                                <option value="keluar">Jual ke Vendor</option>
-                                <option value="keluar-umum">Jual ke Umum</option>
-                            </select>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            <button type="button" class="btn btn-primary" onclick="tipeFormMaintenance()">Lanjutkan</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
