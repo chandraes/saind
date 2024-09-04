@@ -7,25 +7,13 @@
         </div>
     </div>
     @include('swal')
+    @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
     <div class="row justify-content-left mt-5">
-        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-        <h1>PROFIT</h1>
+        <h2>PROFIT BERDASARKAN AKUMULASI</h2>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.profit-harian')}}" class="text-decoration-none">
                 <img src="{{asset('images/harian-kotor.svg')}}" alt="" width="80">
                 <h5 class="mt-3">GRAND TOTAL<br>HARIAN<br>(KOTOR)</h5>
-            </a>
-        </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('statisik.profit-bulanan')}}" class="text-decoration-none">
-                <img src="{{asset('images/profit.svg')}}" alt="" width="80">
-                <h5 class="mt-3">TOTAL<br>HARIAN<br>(KOTOR)</h5>
-            </a>
-        </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('statistik.profit-tahunan')}}" class="text-decoration-none">
-                <img src="{{asset('images/profit-tahunan.svg')}}" alt="" width="80">
-                <h5 class="mt-3">TOTAL<br>BULANAN<br>(KOTOR)</h5>
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
@@ -40,11 +28,29 @@
                 <h5 class="mt-3">GRAND TOTAL<br>TAHUNAN<br>(BERSIH)</h5>
             </a>
         </div>
-        @endif
+
     </div>
     <hr>
     <div class="row justify-content-left mt-5">
-        <h1>PERFORM UNIT</h1>
+        <h2>PROFIT BERDASARKAN VENDOR</h2>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('statisik.profit-bulanan')}}" class="text-decoration-none">
+                <img src="{{asset('images/profit.svg')}}" alt="" width="80">
+                <h5 class="mt-3">TOTAL<br>HARIAN<br>(KOTOR)</h5>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('statistik.profit-tahunan')}}" class="text-decoration-none">
+                <img src="{{asset('images/profit-tahunan.svg')}}" alt="" width="80">
+                <h5 class="mt-3">TOTAL<br>BULANAN<br>(KOTOR)</h5>
+            </a>
+        </div>
+    </div>
+    <hr>
+    @endif
+
+    <div class="row justify-content-left mt-5">
+        <h2>PERFORM UNIT</h2>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-unit')}}" class="text-decoration-none">
                 <img src="{{asset('images/perform-unit.svg')}}" alt="" width="80">
@@ -138,7 +144,7 @@
     </div>
     <hr>
     <div class="row justify-content-left mt-5">
-        <h1>OTHERS</h1>
+        <h2>OTHERS</h2>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-vendor')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="80">

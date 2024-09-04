@@ -17,9 +17,6 @@
                                 width="30"> STATISTIK</a></td>
                     <td>
                         <form target="_blank" action="{{route('statistik.profit-bulanan.print')}}" method="get">
-
-
-
                             <input type="hidden" name="tahun" value="{{$tahun}}">
                             <button class="btn" type="submit">
                                 <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Rekap
