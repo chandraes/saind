@@ -131,9 +131,9 @@
         </div>
         @endif
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('home')}}" class="text-decoration-none">
-                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
-                <h4 class="mt-3">DASHBOARD</h4>
+            <a href="{{route('billing.storing.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/storing.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM STORING BBM</h4>
             </a>
         </div>
     </div>
@@ -224,12 +224,7 @@
                 <h4 class="mt-3">FORM TRANSAKSI</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.storing.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/storing.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM STORING BBM</h4>
-            </a>
-        </div>
+
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
                 <img src="{{asset('images/barang.svg')}}" alt="" width="70">
@@ -286,7 +281,12 @@
                 </div>
             </div>
         </div>
-
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('home')}}" class="text-decoration-none">
+                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
+                <h4 class="mt-3">DASHBOARD</h4>
+            </a>
+        </div>
     </div>
     <hr>
     <br>
