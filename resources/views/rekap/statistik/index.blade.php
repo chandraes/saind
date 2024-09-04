@@ -151,12 +151,12 @@
                 <h5 class="mt-3">STATISTIK CUSTOMER</h5>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="80">
                 <h5 class="mt-3">KEMBALI</h5>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">

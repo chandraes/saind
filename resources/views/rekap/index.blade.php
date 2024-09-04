@@ -197,12 +197,7 @@
             </div>
         </div>
         @endif
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('statisik.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/statistik.svg')}}" alt="" width="80">
-                <h5 class="mt-3">STATISTIK</h5>
-            </a>
-        </div>
+        
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
