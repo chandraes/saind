@@ -10,6 +10,7 @@ use App\Models\KasVendor;
 use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
 use App\Models\RekapGaji;
+use App\Models\RekapGajiDetail;
 use App\Models\UpahGendong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -819,13 +820,16 @@ class StatistikController extends Controller
 
             $gaji = RekapGaji::where('bulan', $bulan)
                                 ->where('tahun', $tahun)
-                                ->sum('total');
+                                ->first();
+
+            $total_gaji_bersih = $gaji ? $gaji->rekap_gaji_detail->sum('pendapatan_bersih') : 0;
+
 
             $statistics[$bulan] = [
                 'nama_bulan' => $nama_bulan[$bulan],
                 'profit' => $data->sum('profit'),
-                'pengeluaran' => $pengeluaran_kas_kecil+$gaji+$total_co,
-                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$gaji+$total_co),
+                'pengeluaran' => $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co,
+                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
             ];
 
         }
@@ -1393,12 +1397,15 @@ class StatistikController extends Controller
             $total_co = $pengeluaran_co - $pemasukan_co;
 
             $gaji = RekapGaji::where('tahun', $tahun->tahun)
-                                ->sum('total');
+                 ->pluck('id')
+                 ->toArray();
+
+            $total_gaji_bersih = count($gaji) > 0 ? RekapGajiDetail::whereIn('rekap_gaji_id', $gaji)->sum('pendapatan_bersih') : 0;
 
             $statistics[$tahun->tahun] = [
                 'profit' => $data->sum('profit'),
-                'pengeluaran' => $pengeluaran_kas_kecil+$gaji+$total_co,
-                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$gaji+$total_co),
+                'pengeluaran' => $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co,
+                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
             ];
 
         }
