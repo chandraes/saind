@@ -45,13 +45,7 @@
                 <h4 class="mt-3">FORM DEVIDEN</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formVendor">
-                <img src="{{asset('images/form-vendor.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM VENDOR</h4>
-            </a>
 
-        </div>
         <div class="modal fade" id="formVendor" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
             role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
             <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
@@ -130,7 +124,12 @@
             </div>
         </div>
         @endif
-
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM GANTI RUGI</h4>
+            </a>
+        </div>
     </div>
     <hr>
     <br>
@@ -249,6 +248,12 @@
                 <h4 class="mt-3">FORM STORING BBM</h4>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formVendor">
+                <img src="{{asset('images/form-vendor.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM VENDOR</h4>
+            </a>
+        </div>
     </div>
     <hr>
     <br>
@@ -306,7 +311,7 @@
     <hr>
     <br>
     <div class="row justify-content-left">
-        <h4 class="mt-3">PEMBAYARAN</h4>
+        <h4 class="mt-3">NOTA</h4>
          <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
                 <img src="{{asset('images/tagihan.svg')}}" alt="" width="70">
@@ -474,7 +479,7 @@
     <hr>
     <br>
     <div class="row justify-content-left">
-        <h4 class="mt-3">CUT OFF</h4>
+        <h4 class="mt-3">INVOICE</h4>
          <div class="col-md-2 text-center mt-5">
             <a href="{{route('invoice.tagihan.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-tagihan.svg')}}" alt="" width="70">
