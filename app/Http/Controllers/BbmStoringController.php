@@ -13,6 +13,8 @@ class BbmStoringController extends Controller
     public function index()
     {
         $data = BbmStoring::all();
+
+       
         return view('database.bbm-storing.index', [
             'data' => $data,
         ]);
