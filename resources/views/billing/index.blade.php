@@ -42,7 +42,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.deviden.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/dividen.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM DEVIDEN</h4>
+                <h4 class="mt-3">FORM DIVIDEN</h4>
             </a>
         </div>
 
