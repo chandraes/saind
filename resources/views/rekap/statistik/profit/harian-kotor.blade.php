@@ -68,6 +68,11 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tanggal</th>
+                    <th class="text-center align-middle">Tagihan</th>
+                    <th class="text-center align-middle">Bayar Vendor</th>
+                    <th class="text-center align-middle">Bonus</th>
+                    <th class="text-center align-middle">CSR</th>
+                    <th class="text-center align-middle">Penalty</th>
                     <th class="text-center align-middle">Profit Kotor</th>
                 </tr>
             </thead>
@@ -79,13 +84,23 @@
                     @endphp
                     <tr>
                         <td class="text-center align-middle" style="width: 8%">{{ $i }}</td>
-                        <td class="text-center align-middle">{{ number_format($profit, 0, ',','.') }}</td>
+                        <td class="text-center align-middle">{{ number_format($profit['nominal_tagihan'], 0, ',','.') }}</td>
+                        <td class="text-center align-middle">{{ number_format($profit['nominal_bayar'], 0, ',','.') }}</td>
+                        <td class="text-center align-middle">{{ number_format($profit['nominal_bonus'], 0, ',','.') }}</td>
+                        <td class="text-center align-middle">{{ number_format($profit['nominal_csr'], 0, ',','.') }}</td>
+                        <td class="text-center align-middle">{{ number_format($profit['penalty'], 0, ',','.') }}</td>
+                        <td class="text-center align-middle">{{ number_format($profit['profit'], 0, ',','.') }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
                     <td><strong>Grand Total</strong></td>
+                    <td class="text-center align-middle"><strong>{{ number_format($grandTotalTagihan, 0, ',','.') }}</strong></td>
+                    <td class="text-center align-middle"><strong>{{ number_format($grandTotalBayar, 0, ',','.') }}</strong></td>
+                    <td class="text-center align-middle"><strong>{{ number_format($grandTotalBonus, 0, ',','.') }}</strong></td>
+                    <td class="text-center align-middle"><strong>{{ number_format($grandTotalCsr, 0, ',','.') }}</strong></td>
+                    <td class="text-center align-middle"><strong>{{ number_format($grandTotalPenalty, 0, ',','.') }}</strong></td>
                     <td class="text-center align-middle"><strong>{{ number_format($grandTotal, 0, ',','.') }}</strong></td>
                 </tr>
             </tfoot>

@@ -558,7 +558,7 @@ class StatistikController extends Controller
         $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
                     ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
                     ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
-                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit')
+                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
                     ->whereMonth('kuj.tanggal', $bulan)
                     ->whereYear('kuj.tanggal', $tahun)
                     ->where('transaksis.void', 0)
@@ -568,13 +568,40 @@ class StatistikController extends Controller
 
         $profitHarian = [];
         $grandTotal = 0;
+        $grandTotalTagihan = 0;
+        $grandTotalBayar = 0;
+        $grandTotalBonus = 0;
+        $grandTotalCsr = 0;
+        $grandTotalPenalty = 0;
 
         for ($i = 1; $i <= $date; $i++) {
             $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $i);
-            $profitHarian[$tanggal] = $data->get($tanggal)->total_nominal_profit ?? 0;
-            $grandTotal += $profitHarian[$tanggal];
-        }
+            $dailyData = $data->get($tanggal);
 
+            $tagihan = $dailyData ? $dailyData->total_nominal_tagihan * 0.98 : 0;
+            $bayar = $dailyData->total_nominal_bayar ?? 0;
+            $bonus = $dailyData->total_nominal_bonus ?? 0;
+            $csr = $dailyData->total_nominal_csr ?? 0;
+            $profit = $dailyData->total_nominal_profit ?? 0;
+            $penalty = ($tagihan - $bayar - $bonus - $csr - $profit);
+
+            $profitHarian[$tanggal] = [
+                'nominal_tagihan' => $tagihan,
+                'nominal_bayar' => $bayar,
+                'nominal_bonus' => $bonus,
+                'nominal_csr' => $csr,
+                'penalty' => $penalty,
+                'profit' => $profit,
+            ];
+
+            $grandTotal += $profitHarian[$tanggal]['profit'];
+            $grandTotalPenalty += $profitHarian[$tanggal]['penalty'];
+            $grandTotalTagihan += $profitHarian[$tanggal]['nominal_tagihan'];
+            $grandTotalBayar += $profitHarian[$tanggal]['nominal_bayar'];
+            $grandTotalBonus += $profitHarian[$tanggal]['nominal_bonus'];
+            $grandTotalCsr += $profitHarian[$tanggal]['nominal_csr'];
+        }
+        // dd($profitHarian);
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->selectRaw('YEAR(tanggal) tahun')
                             ->groupBy('tahun')
@@ -592,6 +619,11 @@ class StatistikController extends Controller
             'dataTahun' => $dataTahun,
             'profitHarian' => $profitHarian,
             'grandTotal' => $grandTotal,
+            'grandTotalTagihan' => $grandTotalTagihan,
+            'grandTotalBayar' => $grandTotalBayar,
+            'grandTotalBonus' => $grandTotalBonus,
+            'grandTotalCsr' => $grandTotalCsr,
+            'grandTotalPenalty' => $grandTotalPenalty,
         ]);
     }
 
