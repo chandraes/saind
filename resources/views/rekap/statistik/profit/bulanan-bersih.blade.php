@@ -53,10 +53,15 @@
         <table class="table table-bordered table-hover" id="rekapTable">
             <thead class="table-success">
                 <tr>
-                    <th class="text-center align-middle">Bulan</th>
-                    <th class="text-center align-middle">Profit Kotor</th>
-                    <th class="text-center align-middle">Pengeluaran</th>
-                    <th class="text-center align-middle">Profit Bersih</th>
+                    <th rowspan="2" class="text-center align-middle">Bulan</th>
+                    <th rowspan="2" class="text-center align-middle">Profit Kotor</th>
+                    <th colspan="3" class="text-center align-middle">Pengeluaran</th>
+                    <th rowspan="2" class="text-center align-middle">Profit Bersih</th>
+                </tr>
+                <tr>
+                    <th class="text-center align-middle">Operational</th>
+                    <th class="text-center align-middle">Kas Kecil</th>
+                    <th class="text-center align-middle">Gaji</th>
                 </tr>
             </thead>
             <tbody>
@@ -64,7 +69,9 @@
                 <tr>
                     <td class="text-center align-middle">{{$s['nama_bulan']}}</td>
                     <td class="text-end align-middle">{{number_format($s['profit'], 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($s['pengeluaran'], 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($s['total_co'], 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($s['kas_kecil'], 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($s['total_gaji'], 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($s['bersih'], 0, ',','.')}}</td>
                 </tr>
 
@@ -75,7 +82,9 @@
                 <tr>
                     <th><strong>Grand Total</strong></th>
                     <th class="text-end align-middle">{{number_format($grand_total_profit, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($grand_total_pengeluaran, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($grand_total_co, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($grand_total_kas_kecil, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($grand_total_gaji, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grand_total_bersih, 0, ',','.')}}</th>
                 </tr>
             </tfoot>

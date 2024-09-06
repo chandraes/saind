@@ -795,6 +795,10 @@ class StatistikController extends Controller
         $grand_total_profit = 0;
         $grand_total_pengeluaran = 0;
         $grand_total_bersih = 0;
+        $grant_total_co = 0;
+        $grand_total_gaji = 0;
+        $grand_total_kas_kecil = 0;
+
         for ($bulan = 1; $bulan <= 12; $bulan++) {
 
             $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
@@ -832,9 +836,17 @@ class StatistikController extends Controller
             $grand_total_profit += $data->sum('profit');
             $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co;
             $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
+
+            $grand_total_gaji += $total_gaji_bersih;
+            $grant_total_co += $total_co;
+            $grand_total_kas_kecil += $pengeluaran_kas_kecil;
+
             $statistics[$bulan] = [
                 'nama_bulan' => $nama_bulan[$bulan],
                 'profit' => $data->sum('profit'),
+                'total_gaji' => $total_gaji_bersih,
+                'total_co' => $total_co,
+                'kas_kecil' => $pengeluaran_kas_kecil,
                 'pengeluaran' => $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co,
                 'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
             ];
@@ -849,6 +861,9 @@ class StatistikController extends Controller
             'grand_total_profit' => $grand_total_profit,
             'grand_total_pengeluaran' => $grand_total_pengeluaran,
             'grand_total_bersih' => $grand_total_bersih,
+            'grand_total_gaji' => $grand_total_gaji,
+            'grand_total_co' => $grant_total_co,
+            'grand_total_kas_kecil' => $grand_total_kas_kecil,
         ]);
     }
 
