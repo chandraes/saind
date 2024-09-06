@@ -71,7 +71,7 @@
                     <th class="text-center align-middle">Tagihan</th>
                     <th class="text-center align-middle">Bayar Vendor</th>
                     <th class="text-center align-middle">Bonus</th>
-                    <th class="text-center align-middle">CSR</th>
+                    <th class="text-center align-middle">CSR<br>(Tertentu)</th>
                     <th class="text-center align-middle">Penalty</th>
                     <th class="text-center align-middle">Profit Kotor</th>
                 </tr>
