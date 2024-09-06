@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
             <h1><u>Grand Total Tahunan (Bersih)</u></h1>
@@ -16,8 +16,8 @@
                     <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
                                 width="30"> STATISTIK</a></td>
                     <td>
-                        <form target="_blank" action="{{route('statistik.profit-bulanan.print')}}" method="get">
-                            <input type="hidden" name="tahun" value="{{$tahun}}">
+                        <form target="_blank" action="{{route('statistik.profit.tahunan-bersih.pdf')}}" method="get">
+                            {{-- <input type="hidden" name="tahun" value="{{$tahun}}"> --}}
                             <button class="btn" type="submit">
                                 <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Rekap
                             </button>
@@ -50,31 +50,25 @@
             <thead class="table-success">
                 <tr>
                     <th class="text-center align-middle">Tahun</th>
-                    <th class="text-center align-middle">Profit Kotor</th>
-                    <th class="text-center align-middle">Pengeluaran</th>
-                    <th class="text-center align-middle">Profit Bersih</th>
+                    @foreach ($nama_bulan as $item => $value)
+                    <th class="text-center align-middle">{{$value}}</th>
+                    @endforeach
+                    <th>Grand Total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($statistics as $s => $su)
                 <tr>
-                    <td class="text-center align-middle">{{$s}}</td>
-                    <td class="text-end align-middle">{{number_format($su['profit'], 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($su['pengeluaran'], 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($su['bersih'], 0, ',','.')}}</td>
+                    <td class="text-center">{{$s}}</td>
+                    @foreach ($su['data'] as $item => $value)
+                    <td class="text-end">{{number_format($value['bersih'], 0, ',', '.')}}</td>
+                    @endforeach
+                    <th class="text-end">{{number_format($su['total'], 0, ',', '.')}}</th>
                 </tr>
 
                 @endforeach
             </tbody>
-            <tfoot>
 
-                <tr>
-                    <td><strong>Grand Total</strong></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-            </tfoot>
         </table>
     </div>
 </div>
@@ -97,7 +91,7 @@
                 "paging": false,
                 "ordering": false,
                 "scrollCollapse": true,
-                "scrollY": "550px",
+                "scrollY": "500px",
             });
         });
         // masukForm on submit, sweetalert confirm

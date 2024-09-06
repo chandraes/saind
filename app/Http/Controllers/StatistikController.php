@@ -1370,6 +1370,24 @@ class StatistikController extends Controller
     public function tahunan_bersih()
     {
         // create statistics array
+        // $tahun = $request->tahun ?? date('Y');
+
+        $nama_bulan = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'May',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Augustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
+        // create statistics array
         $statistics = [];
 
         // get all vehicle
@@ -1378,55 +1396,162 @@ class StatistikController extends Controller
                             ->selectRaw('YEAR(tanggal) tahun')
                             ->groupBy('tahun')
                             ->get();
-
-        // dd($dataTahun);
         // looping sum profit each vehicle for each month
+        $grand_total_profit = 0;
+        $grand_total_pengeluaran = 0;
+        $grand_total_bersih = 0;
+
         foreach ($dataTahun as $tahun) {
+            $gt_peryear = 0;
+            for ($bulan = 1; $bulan <= 12; $bulan++) {
 
-            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
-                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                                ->whereYear('tanggal', $tahun->tahun)
-                                ->where('transaksis.void', 0)
-                                ->get();
+                $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
+                                    ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                                    ->whereMonth('tanggal', $bulan)
+                                    ->whereYear('tanggal', $tahun->tahun)
+                                    ->where('transaksis.void', 0)
+                                    ->get();
 
-            $pengeluaran_kas_kecil = KasBesar::whereYear('tanggal', $tahun->tahun)
-                                ->whereNotNull('nomor_kode_kas_kecil')
-                                ->sum('nominal_transaksi');
+                $pengeluaran_kas_kecil = KasBesar::whereMonth('tanggal', $bulan)
+                                    ->whereYear('tanggal', $tahun->tahun)
+                                    ->whereNotNull('nomor_kode_kas_kecil')
+                                    ->sum('nominal_transaksi');
 
-            $coTransactions = KasBesar::whereYear('tanggal', $tahun->tahun)
-                                ->where('cost_operational', 1)
-                                ->whereIn('jenis_transaksi_id', [1, 2])
-                                ->get()
-                                ->groupBy('jenis_transaksi_id');
+                $coTransactions = KasBesar::whereMonth('tanggal', $bulan)
+                                    ->whereYear('tanggal', $tahun->tahun)
+                                    ->where('cost_operational', 1)
+                                    ->whereIn('jenis_transaksi_id', [1, 2])
+                                    ->get()
+                                    ->groupBy('jenis_transaksi_id');
 
-            $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
-            $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
+                $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
+                $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
 
-            $total_co = $pengeluaran_co - $pemasukan_co;
+                $total_co = $pengeluaran_co - $pemasukan_co;
 
-            $gaji = RekapGaji::where('tahun', $tahun->tahun)
-                 ->pluck('id')
-                 ->toArray();
+                $gaji = RekapGaji::where('bulan', $bulan)
+                                    ->where('tahun', $tahun->tahun)
+                                    ->first();
 
-            $total_gaji_bersih = count($gaji) > 0 ? RekapGajiDetail::whereIn('rekap_gaji_id', $gaji)->sum('pendapatan_bersih') : 0;
+                $total_gaji_bersih = $gaji ? $gaji->rekap_gaji_detail->sum('pendapatan_bersih') : 0;
 
-            $statistics[$tahun->tahun] = [
-                'profit' => $data->sum('profit'),
-                'pengeluaran' => $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co,
-                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
-            ];
+                $grand_total_profit += $data->sum('profit');
+                $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co;
+                $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
+                $gt_peryear += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
+                $statistics[$tahun->tahun]['data'][$bulan] = [
+                    'nama_bulan' => $nama_bulan[$bulan],
+                    'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
 
+                ];
+
+            }
+
+            $statistics[$tahun->tahun]['total'] = $gt_peryear;
         }
+
 
         // dd($statistics);
 
         return view('rekap.statistik.profit.tahunan-bersih', [
             'statistics' => $statistics,
-            'tahun' => $tahun,
-            'dataTahun' => $dataTahun,
+            'nama_bulan' => $nama_bulan,
+            'grand_total_bersih' => $grand_total_bersih,
         ]);
+    }
+
+    public function tahunan_bersih_download()
+    {
+
+        $nama_bulan = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'May',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Augustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
+        // create statistics array
+        $statistics = [];
+
+        // get all vehicle
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+        // looping sum profit each vehicle for each month
+        $grand_total_profit = 0;
+        $grand_total_pengeluaran = 0;
+        $grand_total_bersih = 0;
+
+        foreach ($dataTahun as $tahun) {
+            $gt_peryear = 0;
+            for ($bulan = 1; $bulan <= 12; $bulan++) {
+
+                $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
+                                    ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                                    ->whereMonth('tanggal', $bulan)
+                                    ->whereYear('tanggal', $tahun->tahun)
+                                    ->where('transaksis.void', 0)
+                                    ->get();
+
+                $pengeluaran_kas_kecil = KasBesar::whereMonth('tanggal', $bulan)
+                                    ->whereYear('tanggal', $tahun->tahun)
+                                    ->whereNotNull('nomor_kode_kas_kecil')
+                                    ->sum('nominal_transaksi');
+
+                $coTransactions = KasBesar::whereMonth('tanggal', $bulan)
+                                    ->whereYear('tanggal', $tahun->tahun)
+                                    ->where('cost_operational', 1)
+                                    ->whereIn('jenis_transaksi_id', [1, 2])
+                                    ->get()
+                                    ->groupBy('jenis_transaksi_id');
+
+                $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
+                $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
+
+                $total_co = $pengeluaran_co - $pemasukan_co;
+
+                $gaji = RekapGaji::where('bulan', $bulan)
+                                    ->where('tahun', $tahun->tahun)
+                                    ->first();
+
+                $total_gaji_bersih = $gaji ? $gaji->rekap_gaji_detail->sum('pendapatan_bersih') : 0;
+
+                $grand_total_profit += $data->sum('profit');
+                $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co;
+                $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
+                $gt_peryear += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
+                $statistics[$tahun->tahun]['data'][$bulan] = [
+                    'nama_bulan' => $nama_bulan[$bulan],
+                    'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
+
+                ];
+
+            }
+
+            $statistics[$tahun->tahun]['total'] = $gt_peryear;
+        }
+
+        $pdf = PDF::loadview('rekap.statistik.profit.tahunan-bersih-pdf', [
+            'statistics' => $statistics,
+            'nama_bulan' => $nama_bulan,
+            'grand_total_bersih' => $grand_total_bersih,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('Grand Total Tahunan Bersih.pdf');
     }
 
 }
