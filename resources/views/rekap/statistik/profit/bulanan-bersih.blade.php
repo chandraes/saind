@@ -59,7 +59,7 @@
                     <th rowspan="2" class="text-center align-middle">Profit Bersih</th>
                 </tr>
                 <tr>
-                    <th class="text-center align-middle">Operational</th>
+                    <th class="text-center align-middle">Cost<br>Operational</th>
                     <th class="text-center align-middle">Kas Kecil</th>
                     <th class="text-center align-middle">Gaji</th>
                     <th class="text-center align-middle">CSR<br>(Tidak Tertentu)</th>
