@@ -23,9 +23,6 @@
                 <h5 class="mt-3">NOTA VOID TRANSAKSI</h5>
             </a>
         </div>
-
-
-
     </div>
         <div class="row justify-content-left">
             <div class="col-md-2 text-center mt-5">
