@@ -10,7 +10,6 @@
     <div class="row justify-content-left">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'user' || auth()->user()->role === 'su')
         <h2 class="mt-3">UMUM</h2>
-        <hr>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.kas-besar')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekap-besar.svg')}}" alt="" width="70">
