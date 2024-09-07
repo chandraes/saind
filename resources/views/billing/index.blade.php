@@ -133,7 +133,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">FORM CSR</h4>
+                <h4 class="mt-3">FORM CSR<br>(TIDAK TERTENTU)</h4>
             </a>
         </div>
     </div>
@@ -448,7 +448,7 @@
          <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#csrModal">
                 <img src="{{asset('images/csr.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA CSR
+                <h4 class="mt-3">NOTA CSR (TERTENTU)
                     <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>',
                         0)->count() > 0 ?
                         "(".$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>', 0)->count().")" : ''
@@ -516,7 +516,7 @@
          <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.invoice-csr')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-csr.svg')}}" alt="" width="70">
-                <h4 class="mt-3">INVOICE CSR <span class="text-danger">{{$invoice_csr > 0 ? "(".$invoice_csr.")" :
+                <h4 class="mt-3">INVOICE CSR (TERTENTU) <span class="text-danger">{{$invoice_csr > 0 ? "(".$invoice_csr.")" :
                         ''}}</span></h4>
             </a>
         </div>
