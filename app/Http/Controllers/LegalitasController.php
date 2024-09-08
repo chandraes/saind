@@ -75,7 +75,7 @@ class LegalitasController extends Controller
         // file path with public url + file path
         $file = public_path($legalitas->file);
 
-        $service = new StarSender($data['tujuan'], $data['pesan']);
+        $service = new StarSender($data['tujuan'], $data['pesan'], $file);
 
         $res = $service->sendGroup();
 
