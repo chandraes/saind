@@ -72,8 +72,9 @@ class LegalitasController extends Controller
 
         $data['tujuan'] = str_replace('-', '', $data['tujuan']);
         // dd($data);
-        // file path with public url + file path
-        $file = public_path($legalitas->file);
+        // baseurl + file
+        $file = url($legalitas->file);
+
 
         $service = new StarSender($data['tujuan'], $data['pesan'], $file);
 
