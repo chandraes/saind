@@ -75,7 +75,7 @@ class LegalitasController extends Controller
         // baseurl + file
         $file = url($legalitas->file);
 
-
+        dd($file, $data);
         $service = new StarSender($data['tujuan'], $data['pesan'], $file);
 
         $res = $service->sendGroup();
