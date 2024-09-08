@@ -66,7 +66,7 @@ class StarSender
         curl_close($curl);
 
         $result = json_decode($response, true);
-        // dd($result);
+        dd($result);
         if ($result['success'] == true) {
             return true;
         } else {
