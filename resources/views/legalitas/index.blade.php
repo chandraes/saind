@@ -10,6 +10,7 @@
     @include('swal')
     @include('legalitas.kategori')
     @include('legalitas.create')
+    @include('legalitas.edit')
     @include('legalitas.kirim-wa')
     <div class="row d-flex justify-content-between mt-3">
         <div class="col-md-6">
@@ -30,15 +31,11 @@
         </div>
     </div>
 </div>
-
-
-
-
 <div class="container mt-5 table-responsive ">
     <table class="table table-hover table-bordered" id="karyawan-data">
         <thead class="table-success">
             <tr>
-                <th class="text-center align-middle">No</th>
+                <th class="text-center align-middle" style="width: 7%">No</th>
                 <th class="text-center align-middle">Kategori</th>
                 <th class="text-center align-middle">Nama Dokumen</th>
                 <th class="text-center align-middle" style="width: 20%">Dokumen</th>
@@ -72,8 +69,10 @@
                     <div class="row px-4">
                         <div class="col-md-12">
                             <div class="row mb-2">
-                                <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning btn-sm">Edit <i
-                                    class="fa fa-edit"></i></a>
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit" onclick="editFun({{$k}})">Edit <i
+                                    class="fa fa-edit"></i></button>
+                                {{-- <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning btn-sm">Edit <i
+                                    class="fa fa-edit"></i></a> --}}
                             </div>
 
                         </div>
@@ -111,6 +110,12 @@
 <script>
     function kirimWa(data) {
        document.getElementById('waForm').action = '/legalitas/kirim-wa/'+data.id;
+    }
+
+    function editFun(data) {
+        document.getElementById('editForm').action = '/legalitas/update/'+data.id;
+        document.getElementById('edit_legalitas_kategori_id').value = data.legalitas_kategori_id;
+        document.getElementById('edit_nama').value = data.nama;
     }
 
     var tujuan = new Cleave('#tujuan', {
@@ -154,6 +159,23 @@
             })
         });
 
+        $('#editForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah data sudah benar?',
+                text: "Pastikan data sudah benar sebelum disimpan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#spinner').show();
+                    this.submit();
+                }
+            })
+        });
 
     $(document).ready(function() {
         $('#karyawan-data').DataTable();

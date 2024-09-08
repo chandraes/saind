@@ -50,6 +50,33 @@ class LegalitasController extends Controller
         return redirect()->back()->with('success', 'Dokumen berhasil ditambahkan');
     }
 
+    public function update(LegalitasDokumen $legalitas, Request $request)
+    {
+        $data = $request->validate([
+            'legalitas_kategori_id' => 'required',
+            'nama' => 'required',
+            'file' => 'nullable|file|mimes:pdf'
+        ]);
+
+        if ($request->hasFile('file')) {
+            $path = public_path($legalitas->file);
+
+            if(File::exists($path)) {
+                File::delete($path);
+            }
+
+            $file = $request->file('file');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('files/legalitas'), $filename);
+
+            $data['file'] = 'files/legalitas/' . $filename;
+        }
+
+        $legalitas->update($data);
+
+        return redirect()->back()->with('success', 'Dokumen berhasil diubah');
+    }
+
     public function destroy(LegalitasDokumen $legalitas)
     {
         $path = public_path($legalitas->file);
