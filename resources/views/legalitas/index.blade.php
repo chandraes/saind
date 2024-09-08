@@ -41,7 +41,8 @@
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Kategori</th>
                 <th class="text-center align-middle">Nama Dokumen</th>
-                <th class="text-center align-middle">Action</th>
+                <th class="text-center align-middle" style="width: 20%">Dokumen</th>
+                <th class="text-center align-middle" style="width: 20%">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -50,22 +51,49 @@
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$k->kategori ? $k->kategori->nama : '-'}}</td>
                 <td class="text-start align-middle">{{$k->nama}}</td>
-
-                <td class="text-center align-middle">
+                <td class="text-center align-middle" >
                     <div class="row px-4">
+                        <div class="col-md-12">
+                            <div class="row mb-2">
+                                <a class="btn btn-primary btn-sm" href="{{asset($k->file)}}" target="_blank">Lihat Dokumen <i class="fa fa-file"></i></a>
+                            </div>
 
-                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})">Kirim Whatsapp <i class="fa fa-whatsapp"></i></button>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="row ">
+                                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})">Kirim Whatsapp <i class="fa fa-whatsapp"></i></button>
+                            </div>
+
+                        </div>
                     </div>
-                    <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning m-2"><i
-                            class="fa fa-edit"></i></a>
+                </td>
+                <td class="text-center align-middle" >
+
+                    <div class="row px-4">
+                        <div class="col-md-12">
+                            <div class="row mb-2">
+                                <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning btn-sm">Edit <i
+                                    class="fa fa-edit"></i></a>
+                            </div>
+
+                        </div>
+                        <div class="col-md-12">
+                            <form action="{{route('legalitas.destroy', $k->id)}}" method="post">
+                                @csrf
+                                @method('delete')
+                                <div class="row">
+                                    <button type="submit" class="btn btn-danger btn-sm "
+                                    onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"> Hapus <i
+                                        class="fa fa-trash"></i></button>
+                                </div>
+
+                            </form>
+                        </div>
+
+                    </div>
+
                     {{-- delete button --}}
-                    <form action="{{route('legalitas.destroy', $k->id)}}" method="post" class="d-inline">
-                        @csrf
-                        @method('delete')
-                        <button type="submit" class="btn btn-danger m-2"
-                            onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i
-                                class="fa fa-trash"></i></button>
-                    </form>
+
                 </td>
             </tr>
             @endforeach
