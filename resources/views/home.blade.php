@@ -61,8 +61,8 @@
             </a>
         </div>
         <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="{{route('legalitas')}}" class="text-decoration-none">
+                <img src="{{asset('images/legalitas.svg')}}" alt="" width="70">
                 <h4 class="mt-2">LEGALITAS</h4>
             </a>
         </div>

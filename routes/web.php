@@ -239,6 +239,21 @@ Route::group(['middleware' => ['auth']], function() {
             });
         });
 
+        Route::prefix('legalitas')->group(function(){
+
+            Route::prefix('kategori')->group(function(){
+                Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'kategori_store'])->name('legalitas.kategori-store');
+                Route::patch('/update/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_update'])->name('legalitas.kategori-update');
+                Route::delete('/destroy/{id}', [App\Http\Controllers\LegalitasController::class, 'kategori_destroy'])->name('legalitas.kategori-destroy');
+            });
+
+            Route::get('/', [App\Http\Controllers\LegalitasController::class, 'index'])->name('legalitas');
+            Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'store'])->name('legalitas.store');
+            Route::patch('/update/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'update'])->name('legalitas.update');
+            Route::delete('/destroy/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'destroy'])->name('legalitas.destroy');
+            
+        });
+
 
     });
 
