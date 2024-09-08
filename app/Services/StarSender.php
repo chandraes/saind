@@ -6,13 +6,14 @@ use Illuminate\Support\Facades\Http;
 
 class StarSender
 {
-    private $apikey, $tujuan, $pesan;
+    private $apikey, $tujuan, $pesan, $file;
 
-    function __construct($tujuan, $pesan)
+    function __construct($tujuan, $pesan, $file = null)
     {
         $this->apikey = env('STARSENDER_KEY');
         $this->tujuan = $tujuan;
         $this->pesan = $pesan;
+        $this->file = $file;
     }
 
     public function sendGroup()
@@ -20,10 +21,13 @@ class StarSender
         $apikey=$this->apikey;
         // $tujuan=$this->tujuan; //atau $tujuan="Group Chat Name";
         // $pesan=$this->pesan;
+        $file=$this->file;
+
         $pesan = [
             'messageType' => 'text',
             'to' => $this->tujuan,
-            'body' => $this->pesan
+            'body' => $this->pesan,
+            'file' => $file
         ];
         $curl = curl_init();
 

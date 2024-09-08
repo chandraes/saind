@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Legalitas\LegalitasDokumen;
 use App\Models\Legalitas\LegalitasKategori;
+use App\Services\StarSender;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
@@ -60,6 +61,30 @@ class LegalitasController extends Controller
         $legalitas->delete();
 
         return redirect()->back()->with('success', 'Dokumen berhasil dihapus');
+    }
+
+    public function kirim_wa(LegalitasDokumen $legalitas, Request $request)
+    {
+        $data = $request->validate([
+            'tujuan' => 'required',
+            'pesan' => 'nullable'
+        ]);
+
+        $data['tujuan'] = str_replace('-', '', $data['tujuan']);
+        // dd($data);
+        // file path with public url + file path
+        $file = public_path($legalitas->file);
+
+        $service = new StarSender($data['tujuan'], $data['pesan']);
+
+        $res = $service->sendGroup();
+
+        if ($res == 'true') {
+            return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
+        } else {
+            return redirect()->back()->with('error', 'Dokumen gagal dikirim');
+        }
+
     }
 
     public function kategori_store(Request $request)

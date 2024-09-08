@@ -10,6 +10,7 @@
     @include('swal')
     @include('legalitas.kategori')
     @include('legalitas.create')
+    @include('legalitas.kirim-wa')
     <div class="row d-flex justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
@@ -31,6 +32,8 @@
 </div>
 
 
+
+
 <div class="container mt-5 table-responsive ">
     <table class="table table-hover table-bordered" id="karyawan-data">
         <thead class="table-success">
@@ -49,8 +52,10 @@
                 <td class="text-start align-middle">{{$k->nama}}</td>
 
                 <td class="text-center align-middle">
-                    {{-- show button --}}
-                    {{-- edit button --}}
+                    <div class="row px-4">
+
+                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})">Kirim Whatsapp <i class="fa fa-whatsapp"></i></button>
+                    </div>
                     <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning m-2"><i
                             class="fa fa-edit"></i></a>
                     {{-- delete button --}}
@@ -74,11 +79,53 @@
 @push('js')
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
+<script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
-    // hide alert after 5 seconds
-    setTimeout(function() {
-        $('#alert').fadeOut('slow');
-    }, 5000);
+    function kirimWa(data) {
+       document.getElementById('waForm').action = '/legalitas/kirim-wa/'+data.id;
+    }
+
+    var tujuan = new Cleave('#tujuan', {
+        delimiter: '-',
+        blocks: [4, 4, 8]
+    });
+
+    $('#waForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah data sudah benar?',
+                text: "Pastikan data sudah benar sebelum disimpan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#spinner').show();
+                    this.submit();
+                }
+            })
+        });
+
+        $('#createForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah data sudah benar?',
+                text: "Pastikan data sudah benar sebelum disimpan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#spinner').show();
+                    this.submit();
+                }
+            })
+        });
+
 
     $(document).ready(function() {
         $('#karyawan-data').DataTable();

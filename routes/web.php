@@ -251,7 +251,9 @@ Route::group(['middleware' => ['auth']], function() {
             Route::post('/store', [App\Http\Controllers\LegalitasController::class, 'store'])->name('legalitas.store');
             Route::patch('/update/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'update'])->name('legalitas.update');
             Route::delete('/destroy/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'destroy'])->name('legalitas.destroy');
-            
+
+            Route::post('/kirim-wa/{legalitas}', [App\Http\Controllers\LegalitasController::class, 'kirim_wa'])->name('legalitas.kirim-wa');
+
         });
 
 

@@ -8,7 +8,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{route('legalitas.store')}}" method="post" enctype="multipart/form-data">
+            <form action="{{route('legalitas.store')}}" method="post" enctype="multipart/form-data" id="createForm">
                 @csrf
                 <div class="modal-body">
 
