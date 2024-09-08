@@ -30,15 +30,20 @@ class LegalitasController extends Controller
         ]);
 
         // Define the storage path
-        $path = 'legalitas';
+        $path = public_path('files/legalitas');
+
+        // Check if directory exists, if not create it
+        if (!File::exists($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
 
         // Store the file
         $file = $request->file('file');
         $filename = time() . '.' . $file->getClientOriginalExtension();
-        $file->storeAs($path, $filename, 'public');
+        $file->move($path, $filename);
 
         // Save the data
-        $data['file'] = $filename;
+        $data['file'] = 'files/legalitas/' . $filename;
         LegalitasDokumen::create($data);
 
         return redirect()->back()->with('success', 'Dokumen berhasil ditambahkan');
@@ -46,17 +51,15 @@ class LegalitasController extends Controller
 
     public function destroy(LegalitasDokumen $legalitas)
     {
-        $file = $legalitas->file;
-        $path = 'public/legalitas/' . $file;
+        $path = public_path($legalitas->file);
 
-        // Delete the file
-        if (Storage::exists($path)) {
-            Storage::delete($path);
+        if(File::exists($path)) {
+            File::delete($path);
         }
 
         $legalitas->delete();
 
-        return redirect()->back()->with('success', 'Dokumen berhasil dihapus'); 
+        return redirect()->back()->with('success', 'Dokumen berhasil dihapus');
     }
 
     public function kategori_store(Request $request)
