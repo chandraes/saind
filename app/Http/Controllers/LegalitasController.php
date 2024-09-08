@@ -30,17 +30,12 @@ class LegalitasController extends Controller
         ]);
 
         // Define the storage path
-        $path = 'public/legalitas';
-
-        // Check if directory exists, if not create it
-        if (!Storage::exists($path)) {
-            Storage::makeDirectory($path, 0755, true);
-        }
+        $path = 'legalitas';
 
         // Store the file
         $file = $request->file('file');
         $filename = time() . '.' . $file->getClientOriginalExtension();
-        $file->storeAs($path, $filename);
+        $file->storeAs($path, $filename, 'public');
 
         // Save the data
         $data['file'] = $filename;
