@@ -117,7 +117,7 @@ class StarSender
         $tujuan=$this->tujuan; //atau $tujuan="Group Chat Name";
         $pesan=$this->pesan;
         $filePath=$this->file;
-
+        dd($filePath);
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
