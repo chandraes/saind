@@ -116,8 +116,8 @@ class StarSender
         $apikey=$this->apikey;
         $tujuan=$this->tujuan; //atau $tujuan="Group Chat Name";
         $pesan=$this->pesan;
-        $filePath=$this->file;
-        dd($filePath);
+        $filePath="https://dev.ds-saind.com/files/legalitas/1725810575.pdf";
+        // dd($filePath);
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
