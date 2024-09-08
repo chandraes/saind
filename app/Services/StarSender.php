@@ -19,16 +19,13 @@ class StarSender
     public function sendGroup()
     {
         $apikey=$this->apikey;
-        // $tujuan=$this->tujuan; //atau $tujuan="Group Chat Name";
-        // $pesan=$this->pesan;
-        $file=$this->file;
 
         $pesan = [
             'messageType' => 'text',
             'to' => $this->tujuan,
-            'file' => $this->file,
-            'deley' => 10,
+            'body' => $this->pesan,
         ];
+
         $curl = curl_init();
 
 
@@ -66,7 +63,7 @@ class StarSender
         curl_close($curl);
 
         $result = json_decode($response, true);
-        dd($result);
+        // dd($result);
         if ($result['success'] == true) {
             return true;
         } else {
@@ -114,9 +111,14 @@ class StarSender
     public function sendWaLama()
     {
         $apikey=$this->apikey;
-        $tujuan=$this->tujuan; //atau $tujuan="Group Chat Name";
+        $tujuan=$this->tujuan;
         $pesan=$this->pesan;
+
         $filePath=$this->file;
+
+        if ($filePath != null) {
+            $this->sendGroup();
+        }
 
         $curl = curl_init();
 
