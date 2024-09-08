@@ -78,7 +78,7 @@ class LegalitasController extends Controller
         // dd($file, $data);
         $service = new StarSender($data['tujuan'], $data['pesan'], $file);
 
-        $res = $service->sendGroup();
+        $res = $service->sendWaLama();
 
         if ($res == 'true') {
             return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
