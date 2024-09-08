@@ -26,8 +26,8 @@ class StarSender
         $pesan = [
             'messageType' => 'text',
             'to' => $this->tujuan,
-            'body' => $this->pesan,
-            'file' => $file
+            'file' => $this->file,
+            'deley' => 10,
         ];
         $curl = curl_init();
 
