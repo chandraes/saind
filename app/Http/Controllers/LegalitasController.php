@@ -44,6 +44,21 @@ class LegalitasController extends Controller
         return redirect()->back()->with('success', 'Dokumen berhasil ditambahkan');
     }
 
+    public function destroy(LegalitasDokumen $legalitas)
+    {
+        $file = $legalitas->file;
+        $path = 'public/legalitas/' . $file;
+
+        // Delete the file
+        if (Storage::exists($path)) {
+            Storage::delete($path);
+        }
+
+        $legalitas->delete();
+
+        return redirect()->back()->with('success', 'Dokumen berhasil dihapus'); 
+    }
+
     public function kategori_store(Request $request)
     {
         $data = $request->validate([

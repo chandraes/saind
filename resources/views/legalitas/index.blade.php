@@ -54,11 +54,11 @@
                     <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning m-2"><i
                             class="fa fa-edit"></i></a>
                     {{-- delete button --}}
-                    <form action="{{route('karyawan.destroy', $k->id)}}" method="post" class="d-inline">
+                    <form action="{{route('legalitas.destroy', $k->id)}}" method="post" class="d-inline">
                         @csrf
                         @method('delete')
                         <button type="submit" class="btn btn-danger m-2"
-                            onclick="return confirm('Apakah anda yakin untuk menghapus karyawan ini?')"><i
+                            onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i
                                 class="fa fa-trash"></i></button>
                     </form>
                 </td>
