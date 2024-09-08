@@ -116,12 +116,12 @@ class StarSender
         $apikey=$this->apikey;
         $tujuan=$this->tujuan; //atau $tujuan="Group Chat Name";
         $pesan=$this->pesan;
-        $filePath="https://dev.ds-saind.com/files/legalitas/1725810575.pdf";
-        // dd($filePath);
+        $filePath=$this->file;
+
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://starsender.online/api/sendFiles?message='.rawurlencode($pesan).'&tujuan='.rawurlencode($tujuan.'@s.whatsapp.net'),
+            CURLOPT_URL => 'https://starsender.online/api/sendFilesUpload?message='.rawurlencode($pesan).'&tujuan='.rawurlencode($tujuan.'@s.whatsapp.net'),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -129,7 +129,7 @@ class StarSender
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => array('file'=> $filePath),
+            CURLOPT_POSTFIELDS => array('file'=> curl_file_create($filePath)),
             CURLOPT_HTTPHEADER => array(
               'apikey: '.$apikey
             ),
