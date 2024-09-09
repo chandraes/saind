@@ -14,7 +14,7 @@ class LegalitasController extends Controller
     public function index()
     {
         $kategori = LegalitasKategori::all();
-        $dokumen = LegalitasDokumen::all();
+        $dokumen = LegalitasDokumen::orderBy('legalitas_kategori_id')->get();
 
         return view('legalitas.index', [
             'kategori' => $kategori,
