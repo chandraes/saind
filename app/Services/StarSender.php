@@ -150,7 +150,7 @@ class StarSender
                 return false;
             }
         } else {
-            dd($result);
+            // dd($result);
             return $result;
         }
     }

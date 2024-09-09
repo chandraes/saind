@@ -6,7 +6,7 @@ $password = \App\Models\PasswordKonfirmasi::first();
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>DASHBOARD</u></h1>
+            <h1><u>PENGATURAN</u></h1>
         </div>
     </div>
     @if (session('success'))
@@ -18,24 +18,25 @@ $password = \App\Models\PasswordKonfirmasi::first();
             )
     </script>
     @endif
-    <div class="row justify-content-left mt-5">
+    <div class="row justify-content-left mt-5 mb-5">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-        <div class="col-md-3 text-center mb-5">
+        <h2>PENGGUNA</h2>
+        <div class="col-md-3 text-center mt-5">
             <a href="{{route('pengguna.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/worker.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Pengguna</h4>
+                <img src="{{asset('images/pengguna.svg')}}" alt="" width="70">
+                <h5 class="mt-3">AKUN</h5>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mt-5">
             <a href="{{route('pengaturan.wa')}}" class="text-decoration-none">
-                <img src="{{asset('images/wa.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Whatsapp</h4>
+                <img src="{{asset('images/wa.svg')}}" alt="" width="70">
+                <h5 class="mt-3">GROUP WHATSAPP</h5>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5">
+        <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#passwordKonfirmasi">
-                <img src="{{asset('images/password.svg')}}" alt="" width="80">
-                <h4 class="mt-3">Password Konfirmasi</h4>
+                <img src="{{asset('images/password.svg')}}" alt="" width="70">
+                <h5 class="mt-3">PASSWORD KONFIRMASI</h5>
             </a>
             <div class="modal fade" id="passwordKonfirmasi" tabindex="-1" data-bs-backdrop="static"
                 data-bs-keyboard="false" role="dialog" aria-labelledby="pkTitle" aria-hidden="true">
@@ -69,19 +70,38 @@ $password = \App\Models\PasswordKonfirmasi::first();
             </div>
         </div>
     </div>
-    <div class="col-md-3 text-center mb-5">
-        <a href="{{route('pengaturan.nota-transaksi')}}" class="text-decoration-none">
-            <img src="{{asset('images/konfigurasi.svg')}}" alt="" width="80">
-            <h4 class="mt-3">Konfigurasi Nota Transaksi</h4>
-        </a>
+    <br>
+    <hr>
+    <div class="row justify-content-left">
+        <h2>OTHERS</h2>
+        <div class="col-md-3 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h5 class="mt-3">APLIKASI</h5>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('pengaturan.nota-transaksi')}}" class="text-decoration-none">
+                <img src="{{asset('images/limitasi.svg')}}" alt="" width="70">
+                <h5 class="mt-3">BATASAN</h5>
+            </a>
+        </div>
+        <div class="col-md-3 text-center mt-5">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h5 class="mt-3">HISTORI PESAN WA</h5>
+            </a>
+        </div>
+        @endif
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{route('home')}}" class="text-decoration-none">
+                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
+                <h5 class="mt-3">DASHBOARD</h5>
+            </a>
+        </div>
     </div>
-    @endif
-    <div class="col-md-3 text-center">
-        <a href="{{route('home')}}" class="text-decoration-none">
-            <img src="{{asset('images/dashboard.svg')}}" alt="" width="80">
-            <h4 class="mt-3">Dashboard</h4>
-        </a>
-    </div>
+
+
 </div>
 </div>
 @endsection
