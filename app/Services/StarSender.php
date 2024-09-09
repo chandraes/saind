@@ -143,10 +143,15 @@ class StarSender
 
         $result = json_decode($response, true);
 
-        if ($result['success'] == true) {
-            return true;
+        if(isset($result['status'])){
+            if ($result['status'] == true) {
+                return $result;
+            } else {
+                return false;
+            }
         } else {
-            return false;
+            dd($result);
+            return $result;
         }
     }
 
