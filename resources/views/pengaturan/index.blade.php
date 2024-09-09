@@ -89,7 +89,7 @@ $password = \App\Models\PasswordKonfirmasi::first();
         <div class="col-md-3 text-center mt-5">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h5 class="mt-3">HISTORI PESAN WA</h5>
+                <h5 class="mt-3">HISTORI PESAN WHATSAPP</h5>
             </a>
         </div>
         @endif
@@ -100,9 +100,6 @@ $password = \App\Models\PasswordKonfirmasi::first();
             </a>
         </div>
     </div>
-
-
-</div>
 </div>
 @endsection
 @push('js')
