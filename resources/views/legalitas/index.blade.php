@@ -23,14 +23,17 @@
                             <img src="{{asset('images/jabatan.svg')}}" alt="dokumen" width="30"> Tambah Kategori
                         </a>
                     </td>
-                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalCreate"><img src="{{asset('images/legalitas.svg')}}"
-                                alt="add-document" width="30"> Tambah Legalitas</a>
+                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#modalCreate"><img
+                                src="{{asset('images/legalitas.svg')}}" alt="add-document" width="30"> Tambah
+                            Legalitas</a>
                     </td>
                 </tr>
             </table>
         </div>
     </div>
 </div>
+
+
 <div class="container mt-5 table-responsive ">
     <table class="table table-hover table-bordered" id="karyawan-data">
         <thead class="table-success">
@@ -38,7 +41,6 @@
                 <th class="text-center align-middle" style="width: 7%">No</th>
                 <th class="text-center align-middle">Kategori</th>
                 <th class="text-center align-middle">Nama Dokumen</th>
-                <th class="text-center align-middle" style="width: 20%">Dokumen</th>
                 <th class="text-center align-middle" style="width: 20%">Action</th>
             </tr>
         </thead>
@@ -48,51 +50,32 @@
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$k->kategori ? $k->kategori->nama : '-'}}</td>
                 <td class="text-start align-middle">{{$k->nama}}</td>
-                <td class="text-center align-middle" >
-                    <div class="row px-4">
-                        <div class="col-md-12">
-                            <div class="row mb-2">
-                                <a class="btn btn-primary btn-sm" href="{{asset($k->file)}}" target="_blank">Lihat Dokumen <i class="fa fa-file"></i></a>
+                <td class="text-center align-middle position-relative">
+                    <div class="dropdown open">
+                        <div class="row px-3">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="triggerId"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Aksi
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="triggerId">
+                                <a class="dropdown-item" href="{{asset($k->file)}}" target="_blank"><i
+                                    class="fa fa-file"></i> Lihat Dokumen</a>
+                                <button class="dropdown-item" data-bs-toggle="modal"
+                                    data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})"><i
+                                    class="fa fa-whatsapp"></i> Kirim Whatsapp </button>
+                                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalEdit"
+                                    onclick="editFun({{$k}})"><i class="fa fa-edit"></i> Edit </button>
+                                <form action="{{route('legalitas.destroy', $k->id)}}" method="post">
+                                    @csrf
+                                    @method('delete')
+                                    <button type="submit" class="dropdown-item"
+                                        onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i
+                                            class="fa fa-trash"></i> Hapus </button>
+                                </form>
                             </div>
-
-                        </div>
-                        <div class="col-md-12">
-                            <div class="row ">
-                                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})">Kirim Whatsapp <i class="fa fa-whatsapp"></i></button>
-                            </div>
-
-                        </div>
-                    </div>
-                </td>
-                <td class="text-center align-middle" >
-
-                    <div class="row px-4">
-                        <div class="col-md-12">
-                            <div class="row mb-2">
-                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit" onclick="editFun({{$k}})">Edit <i
-                                    class="fa fa-edit"></i></button>
-                                {{-- <a href="{{route('karyawan.edit', $k->id)}}" class="btn btn-warning btn-sm">Edit <i
-                                    class="fa fa-edit"></i></a> --}}
-                            </div>
-
-                        </div>
-                        <div class="col-md-12">
-                            <form action="{{route('legalitas.destroy', $k->id)}}" method="post">
-                                @csrf
-                                @method('delete')
-                                <div class="row">
-                                    <button type="submit" class="btn btn-danger btn-sm "
-                                    onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"> Hapus <i
-                                        class="fa fa-trash"></i></button>
-                                </div>
-
-                            </form>
                         </div>
 
                     </div>
-
-                    {{-- delete button --}}
-
                 </td>
             </tr>
             @endforeach
