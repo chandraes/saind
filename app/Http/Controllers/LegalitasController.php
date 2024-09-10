@@ -101,7 +101,8 @@ class LegalitasController extends Controller
         // dd($data);
         // baseurl + file
         $file = url($legalitas->file);
-
+        ini_set('post_max_size', '15M');
+        ini_set('upload_max_filesize', '15M');
         // dd($file, $data);
         $service = new StarSender($data['tujuan'], $data['pesan'], $file);
 
@@ -110,7 +111,7 @@ class LegalitasController extends Controller
         if ($res == 'true') {
             return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
         } else {
-            return redirect()->back()->with('error', 'Dokumen gagal dikirim'. json_encode($res));
+            return redirect()->back()->with('error', 'Dokumen gagal dikirim '. json_encode($res));
         }
 
     }
