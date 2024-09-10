@@ -33,25 +33,25 @@
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-2">PURCHASE<br>ORDER</h4>
+                <h4 class="mt-3">PURCHASE<br>ORDER</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-2">INVENTARIS</h4>
+                <h4 class="mt-3">INVENTARIS</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-2">PAJAK</h4>
+                <h4 class="mt-3">PAJAK</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-2">LAPORAN<br>KEUANGAN</h4>
+                <h4 class="mt-3">LAPORAN<br>KEUANGAN</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5 mt-3">
@@ -63,13 +63,13 @@
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('legalitas')}}" class="text-decoration-none">
                 <img src="{{asset('images/legalitas.svg')}}" alt="" width="70">
-                <h4 class="mt-2">LEGALITAS</h4>
+                <h4 class="mt-3">LEGALITAS</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-2">STRUKTUR<br>ORGANISASI</h4>
+                <h4 class="mt-3">STRUKTUR<br>ORGANISASI</h4>
             </a>
         </div>
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
@@ -90,7 +90,7 @@
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-2">COMPANY PROFILE</h4>
+                <h4 class="mt-3">COMPANY PROFILE</h4>
             </a>
         </div>
         <div class="col-md-3 text-center mb-5 mt-3">
