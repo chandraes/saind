@@ -6,7 +6,6 @@ use App\Models\Legalitas\LegalitasDokumen;
 use App\Models\Legalitas\LegalitasKategori;
 use App\Services\StarSender;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class LegalitasController extends Controller
