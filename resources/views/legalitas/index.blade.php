@@ -44,7 +44,52 @@
                 <th class="text-center align-middle" style="width: 20%">Action</th>
             </tr>
         </thead>
+
         <tbody>
+            @foreach ($data as $kategoriId => $documents)
+                @php
+                    $rowspan = $documents->count();
+                    $kategori = $documents->first()->kategori ? $documents->first()->kategori->nama : '-';
+                @endphp
+                @foreach ($documents as $index => $k)
+                    <tr>
+                        @if ($index == 0)
+                            <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $loop->parent->iteration }}</td>
+                            <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $kategori }}</td>
+                        @endif
+                        <td class="text-start align-middle">{{ $k->nama }}</td>
+                        <td class="text-center align-middle">
+                            <div class="row px-4">
+                                <div class="col-md-12">
+                                    <div class="row mb-2">
+                                        <a class="btn btn-primary btn-sm" href="{{ asset($k->file) }}" target="_blank">Lihat Dokumen <i class="fa fa-file"></i></a>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <div class="row">
+                                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{ $k }})">Kirim Whatsapp <i class="fa fa-whatsapp"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <div class="row">
+                                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit" onclick="editFun({{ $k }})">Edit <i class="fa fa-edit"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <form action="{{ route('legalitas.destroy', $k->id) }}" method="post">
+                                        @csrf
+                                        @method('delete')
+                                        <div class="row">
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i class="fa fa-trash"></i> Hapus</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            @endforeach
+        </tbody>       {{-- <tbody>
             @foreach ($data as $k)
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
@@ -87,7 +132,7 @@
                 </td>
             </tr>
             @endforeach
-        </tbody>
+        </tbody> --}}
     </table>
 </div>
 @endsection
