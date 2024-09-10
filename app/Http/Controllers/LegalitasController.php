@@ -27,7 +27,7 @@ class LegalitasController extends Controller
         $data = $request->validate([
             'legalitas_kategori_id' => 'required',
             'nama' => 'required',
-            'file' => 'required|file|mimes:pdf'
+            'file' => 'required|file|mimes:pdf|max:10240'
         ]);
 
         // Define the storage path
@@ -55,7 +55,7 @@ class LegalitasController extends Controller
         $data = $request->validate([
             'legalitas_kategori_id' => 'required',
             'nama' => 'required',
-            'file' => 'nullable|file|mimes:pdf'
+            'file' => 'nullable|file|mimes:pdf|max:10240'
         ]);
 
         if ($request->hasFile('file')) {

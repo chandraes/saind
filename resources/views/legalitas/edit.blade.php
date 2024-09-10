@@ -29,7 +29,7 @@
                                 <input type="text" class="form-control" name="nama" id="edit_nama" required>
                             </div>
                             <div class="mb-3">
-                                <label for="file" class="form-label">File <span class="text-danger">(Kosongkan jika tidak ingin mengganti file!)</span></label>
+                                <label for="file" class="form-label">File <span class="text-danger">(Kosongkan jika tidak ingin mengganti file!) (Max 10Mb!)</span></label>
                                 <input type="file" class="form-control" name="file" id="edit_file">
                             </div>
                         </div>
