@@ -17,10 +17,6 @@
                                 <label for="tujuan" class="form-label">Nomor HP</label>
                                 <input type="text" class="form-control" name="tujuan" id="tujuan" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="pesan" class="form-label">Pesan</label>
-                                <textarea class="form-control" name="pesan" id="pesan" required></textarea>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -50,31 +50,39 @@
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$k->kategori ? $k->kategori->nama : '-'}}</td>
                 <td class="text-start align-middle">{{$k->nama}}</td>
-                <td class="text-center align-middle position-relative">
-                    <div class="dropdown open">
-                        <div class="row px-3">
-                            <button class="btn btn-primary dropdown-toggle" type="button" id="triggerId"
-                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Aksi
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="triggerId">
-                                <a class="dropdown-item" href="{{asset($k->file)}}" target="_blank"><i
-                                    class="fa fa-file"></i> Lihat Dokumen</a>
-                                <button class="dropdown-item" data-bs-toggle="modal"
-                                    data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})"><i
-                                    class="fa fa-whatsapp"></i> Kirim Whatsapp </button>
-                                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalEdit"
-                                    onclick="editFun({{$k}})"><i class="fa fa-edit"></i> Edit </button>
-                                <form action="{{route('legalitas.destroy', $k->id)}}" method="post">
-                                    @csrf
-                                    @method('delete')
-                                    <button type="submit" class="dropdown-item"
-                                        onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i
-                                            class="fa fa-trash"></i> Hapus </button>
-                                </form>
+                <td class="text-center align-middle">
+                    <div class="row px-4">
+                        <div class="col-md-12">
+                            <div class="row mb-2">
+                                <a class="btn btn-primary btn-sm" href="{{asset($k->file)}}" target="_blank">Lihat
+                                    Dokumen <i class="fa fa-file"></i></a>
                             </div>
                         </div>
-
+                        <div class="col-md-12 mb-2">
+                            <div class="row ">
+                                <button class="btn btn-success btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})">Kirim Whatsapp <i
+                                        class="fa fa-whatsapp"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-2">
+                            <div class="row ">
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#kirimWaModal" onclick="kirimWa({{$k}})">Edit <i
+                                        class="fa fa-edit"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <form action="{{route('legalitas.destroy', $k->id)}}" method="post">
+                                @csrf
+                                @method('delete')
+                                <div class="row">
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i
+                                            class="fa fa-trash"></i> Hapus </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </td>
             </tr>

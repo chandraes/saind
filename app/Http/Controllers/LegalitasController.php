@@ -94,10 +94,10 @@ class LegalitasController extends Controller
     {
         $data = $request->validate([
             'tujuan' => 'required',
-            'pesan' => 'nullable'
         ]);
 
         $data['tujuan'] = str_replace('-', '', $data['tujuan']);
+        $data['pesan'] = $legalitas->nama;
         // dd($data);
         // baseurl + file
         $file = url($legalitas->file);
