@@ -28,7 +28,7 @@
                                 <input type="text" class="form-control" name="nama" id="nama" required>
                             </div>
                             <div class="mb-3">
-                                <label for="file" class="form-label">File <span class="text-danger">(Max 10Mb!)</span></label>
+                                <label for="file" class="form-label">File <span class="text-danger">(Max 5Mb!)</span></label>
                                 <input type="file" class="form-control" name="file" id="file" required>
                             </div>
                         </div>

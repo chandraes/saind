@@ -41,7 +41,7 @@
                 <th class="text-center align-middle" style="width: 7%">No</th>
                 <th class="text-center align-middle">Kategori</th>
                 <th class="text-center align-middle">Nama Dokumen</th>
-                <th class="text-center align-middle" style="width: 20%">Action</th>
+                <th class="text-center align-middle" style="width: 40%">Action</th>
             </tr>
         </thead>
 
@@ -59,31 +59,15 @@
                         @endif
                         <td class="text-start align-middle">{{ $k->nama }}</td>
                         <td class="text-center align-middle">
-                            <div class="row px-4">
-                                <div class="col-md-12">
-                                    <div class="row mb-2">
-                                        <a class="btn btn-primary btn-sm" href="{{ asset($k->file) }}" target="_blank">Lihat Dokumen <i class="fa fa-file"></i></a>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 mb-2">
-                                    <div class="row">
-                                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{ $k }})">Kirim Whatsapp <i class="fa fa-whatsapp"></i></button>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 mb-2">
-                                    <div class="row">
-                                        <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit" onclick="editFun({{ $k }})">Edit <i class="fa fa-edit"></i></button>
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <form action="{{ route('legalitas.destroy', $k->id) }}" method="post">
-                                        @csrf
-                                        @method('delete')
-                                        <div class="row">
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"><i class="fa fa-trash"></i> Hapus</button>
-                                        </div>
-                                    </form>
-                                </div>
+                            <div class="d-flex justify-content-center flex-wrap gap-3">
+                                <a class="btn btn-primary btn-sm" href="{{ asset($k->file) }}" target="_blank">View <i class="ms-2 fa fa-file"></i></a>
+                                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{ $k }})">Kirim Whatsapp <i class="ms-2 fa fa-whatsapp"></i></button>
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit" onclick="editFun({{ $k }})">Edit <i class="ms-2 fa fa-edit"></i></button>
+                                <form action="{{ route('legalitas.destroy', $k->id) }}" method="post" class="d-inline">
+                                    @csrf
+                                    @method('delete')
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"> Hapus <i class="ms-2 fa fa-trash"></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>
