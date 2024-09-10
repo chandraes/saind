@@ -13,6 +13,6 @@ class LegalitasKategori extends Model
 
     public function dokumen()
     {
-        return $this->hasMany(LegalitasDokumen::class);
+        return $this->hasMany(LegalitasDokumen::class, 'legalitas_kategori_id');
     }
 }
