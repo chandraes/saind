@@ -110,7 +110,7 @@ class LegalitasController extends Controller
         if ($res == 'true') {
             return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
         } else {
-            return redirect()->back()->with('error', 'Dokumen gagal dikirim'. $res);
+            return redirect()->back()->with('error', 'Dokumen gagal dikirim'. json_encode($res));
         }
 
     }
