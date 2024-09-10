@@ -153,8 +153,12 @@ class StarSender
                 return false;
             }
         } else {
-            dd($result);
-            return $result;
+            if ($result['success'] == true) {
+                return true;
+            } else {
+                return false;
+            }
+
         }
     }
 
