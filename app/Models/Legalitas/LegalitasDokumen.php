@@ -2,6 +2,7 @@
 
 namespace App\Models\Legalitas;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,4 +16,5 @@ class LegalitasDokumen extends Model
     {
         return $this->belongsTo(LegalitasKategori::class, 'legalitas_kategori_id');
     }
+
 }

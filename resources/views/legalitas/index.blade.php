@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    use Carbon\Carbon;
+@endphp
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
@@ -52,12 +55,22 @@
                     $kategori = $documents->first()->kategori ? $documents->first()->kategori->nama : '-';
                 @endphp
                 @foreach ($documents as $index => $k)
+                @php
+                    $isDanger = false;
+                    if ($k->tanggal_expired) {
+                        $tanggalExpired = Carbon::parse($k->tanggal_expired);
+                        $now = Carbon::now();
+                        echo $now;
+                        $diffInDays = $tanggalExpired->diffInDays($now, true); // false to get negative values if in the future
+                        $isDanger = $diffInDays <= 45 && $diffInDays >= 0;
+                    }
+                @endphp
                     <tr>
                         @if ($index == 0)
                             <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $loop->parent->iteration }}</td>
                             <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $kategori }}</td>
                         @endif
-                        <td class="text-start align-middle">{{ $k->nama }}</td>
+                        <td class="text-start align-middle {{ $isDanger ? 'bg-danger' : '' }}">{{ $k->nama }}</td>
                         <td class="text-center align-middle">
                             <div class="d-flex justify-content-center flex-wrap gap-3">
                                 <a class="btn btn-primary btn-sm" href="{{ asset($k->file) }}" target="_blank">View <i class="ms-2 fa fa-file"></i></a>
@@ -122,8 +135,10 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
@@ -135,6 +150,25 @@
     function editFun(data) {
         document.getElementById('editForm').action = '/legalitas/update/'+data.id;
         document.getElementById('edit_legalitas_kategori_id').value = data.legalitas_kategori_id;
+        if (data.tanggal_expired) {
+            document.getElementById('edit_apa_expired').checked = true;
+            document.getElementById('edit_tgl_ex').style.display = 'block';
+            const dateParts = data.tanggal_expired.split('-');
+            const year = dateParts[0];
+            const month = dateParts[1];
+            const day = dateParts[2];
+
+            // Format the date to d-m-Y
+            const formattedDate = `${day}-${month}-${year}`;
+
+            // Set the value of the input field
+            document.getElementById('edit_tanggal_expired').value = formattedDate;
+            document.getElementById('edit_tanggal_expired').flatpickr({
+                dateFormat: 'd-m-Y',
+                allowInput: true,
+            });
+
+        }
         document.getElementById('edit_nama').value = data.nama;
     }
 

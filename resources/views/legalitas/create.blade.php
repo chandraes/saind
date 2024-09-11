@@ -11,7 +11,6 @@
             <form action="{{route('legalitas.store')}}" method="post" enctype="multipart/form-data" id="createForm">
                 @csrf
                 <div class="modal-body">
-
                     <div class="row">
                         <div class="col-md-12">
                             <div class="mb-3">
@@ -31,6 +30,16 @@
                                 <label for="file" class="form-label">File <span class="text-danger">(Max 5Mb!)</span></label>
                                 <input type="file" class="form-control" name="file" id="file" required>
                             </div>
+                            <div class="mb-3">
+                                <label class="btn btn-primary active">
+                                    <input type="checkbox" class="me-2" name="apa_expired" id="apa_expired" autocomplete="off" onclick="checkApaExpired()" />
+                                    Apakah dokumen memiliki masa berlaku?
+                                </label>
+                            </div>
+                            <div class="mb-3" id="tgl_ex" style="display: none;">
+                                <label for="tanggal_expired" class="form-label">Tanggal Expired</label>
+                                <input type="text" readonly class="form-control" name="tanggal_expired" id="tanggal_expired">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -44,3 +53,31 @@
         </div>
     </div>
 </div>
+@push('css')
+<link href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}" rel="stylesheet">
+@endpush
+@push('js')
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
+    <script>
+        function checkApaExpired() {
+        var checkBox = document.getElementById("apa_expired");
+        var tgl_ex = document.getElementById("tgl_ex");
+        var tanggalExpired = document.getElementById("tanggal_expired");
+
+        if (checkBox.checked) {
+            tgl_ex.style.display = "block";
+            tanggalExpired.flatpickr({
+                enableTime: false,
+                dateFormat: "d-m-Y",
+            });
+            // make tanggal_expired required
+            tanggalExpired.required = true;
+        } else {
+            tgl_ex.style.display = "none";
+            tanggalExpired.value = '';
+            // make tanggal_expired not required
+            tanggalExpired.required = false;
+        }
+    }
+    </script>
+@endpush

@@ -26,8 +26,12 @@ class LegalitasController extends Controller
         $data = $request->validate([
             'legalitas_kategori_id' => 'required',
             'nama' => 'required',
-            'file' => 'required|file|mimes:pdf|max:5120'
+            'file' => 'required|file|mimes:pdf|max:5120',
+            'apa_expired' => 'nullable',
+            'tanggal_expired' => 'required_if:apa_expired,on'
         ]);
+
+        // dd($data);
 
         // Define the storage path
         $path = public_path('files/legalitas');
@@ -44,6 +48,13 @@ class LegalitasController extends Controller
 
         // Save the data
         $data['file'] = 'files/legalitas/' . $filename;
+
+        if ($request->filled('apa_expired')) {
+            unset($data['apa_expired']);
+            $data['tanggal_expired'] = date('Y-m-d', strtotime($data['tanggal_expired']));
+            // dd($data);
+        }
+
         LegalitasDokumen::create($data);
 
         return redirect()->back()->with('success', 'Dokumen berhasil ditambahkan');
@@ -54,7 +65,9 @@ class LegalitasController extends Controller
         $data = $request->validate([
             'legalitas_kategori_id' => 'required',
             'nama' => 'required',
-            'file' => 'nullable|file|mimes:pdf|max:5120'
+            'file' => 'nullable|file|mimes:pdf|max:5120',
+            'apa_expired' => 'nullable',
+            'tanggal_expired' => 'required_if:apa_expired,on'
         ]);
 
         if ($request->hasFile('file')) {
@@ -69,6 +82,14 @@ class LegalitasController extends Controller
             $file->move(public_path('files/legalitas'), $filename);
 
             $data['file'] = 'files/legalitas/' . $filename;
+        }
+
+        if ($request->filled('apa_expired')) {
+            unset($data['apa_expired']);
+            $data['tanggal_expired'] = date('Y-m-d', strtotime($data['tanggal_expired']));
+            // dd($data);
+        } else {
+            $data['tanggal_expired'] = null;
         }
 
         $legalitas->update($data);
