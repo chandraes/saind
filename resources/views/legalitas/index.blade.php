@@ -60,7 +60,6 @@
                     if ($k->tanggal_expired) {
                         $tanggalExpired = Carbon::parse($k->tanggal_expired);
                         $now = Carbon::now();
-                        echo $now;
                         $diffInDays = $tanggalExpired->diffInDays($now, true); // false to get negative values if in the future
                         $isDanger = $diffInDays <= 45 && $diffInDays >= 0;
                     }
