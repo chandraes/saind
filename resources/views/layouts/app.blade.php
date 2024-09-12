@@ -111,24 +111,7 @@
         </main>
     </div>
 
-    <script>
-        $(document).ready(function(){
-            var clockElement = document.getElementById('clock');
-            function clock() {
-                clockElement.textContent = new Date().toLocaleString('id-ID', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    second: 'numeric',
-                    hour12: false
-                });
-            }
-            setInterval(clock, 1000);
-        });
 
-    </script>
     @stack('js')
 
 </body>

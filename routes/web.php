@@ -64,7 +64,17 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::post('/statistik/ban-luar/store', [App\Http\Controllers\BanController::class, 'log_store'])->name('statistik.ban-luar.store');
 
-        Route::get('/dokumen', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
+        Route::prefix('dokumen')->group(function(){
+            Route::get('/', [App\Http\Controllers\DokumenController::class, 'index'])->name('dokumen');
+
+            Route::prefix('mutasi-rekening')->group(function(){
+                Route::get('/', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening'])->name('dokumen.mutasi-rekening');
+                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_store'])->name('dokumen.mutasi-rekening.store');
+                Route::delete('/destroy/{mutasi}', [App\Http\Controllers\DokumenController::class, 'mutasi_rekening_destroy'])->name('dokumen.mutasi-rekening.destroy');
+                Route::post('/kirim-wa/{mutasi}', [App\Http\Controllers\DokumenController::class, 'kirim_wa'])->name('dokumen.mutasi-rekening.kirim-wa');
+            });
+        });
+
 
 
         Route::prefix('database')->group(function(){
