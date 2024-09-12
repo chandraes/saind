@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\KasBesar;
 use App\Models\Rekening;
 use App\Models\GroupWa;
+use App\Models\Legalitas\LegalitasDokumen;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
+use Carbon\Carbon;
 
 class FormKasBesarController extends Controller
 {
@@ -72,6 +74,22 @@ class FormKasBesarController extends Controller
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
 
+        // check if there is legalitas that 45 day again expired
+        $checkLegalitas = LegalitasDokumen::whereNotNull('tanggal_expired')
+                        ->where('tanggal_expired', '<', Carbon::now()->addDays(45))->get();
+
+        $addPesan = '';
+
+        if($checkLegalitas->count() > 0){
+            $addPesan = "\n==========================\nWARNING : \n";
+            $no = 1;
+            foreach($checkLegalitas as $legalitas){
+                $addPesan .= $no++.". ".$legalitas->nama." - ".date('d-m-Y', strtotime($legalitas->tanggal_expired))."\n";
+            }
+        }
+
+
+
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Form Permintaan Deposit*\n".
@@ -87,8 +105,8 @@ class FormKasBesarController extends Controller
                 "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                "Terima kasih 🙏🙏🙏\n";
-        
+                "Terima kasih 🙏🙏🙏\n".
+                $addPesan;
 
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
@@ -146,6 +164,19 @@ class FormKasBesarController extends Controller
         if(!$store){
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
+
+        $checkLegalitas = LegalitasDokumen::whereNotNull('tanggal_expired')
+        ->where('tanggal_expired', '<', Carbon::now()->addDays(45))->get();
+
+        $addPesan = '';
+
+        if($checkLegalitas->count() > 0){
+            $addPesan = "\n==========================\nWARNING : \n";
+            $no = 1;
+            foreach($checkLegalitas as $legalitas){
+            $addPesan .= $no++.". ".$legalitas->nama." - ".date('d-m-Y', strtotime($legalitas->tanggal_expired))."\n";
+            }
+        }
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -161,7 +192,8 @@ class FormKasBesarController extends Controller
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
+                    "Terima kasih 🙏🙏🙏\n".
+                    $addPesan;
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
