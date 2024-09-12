@@ -34,7 +34,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="btn btn-primary active">
-                                    <input type="checkbox" class="me-2" name="apa_expired" id="edit_apa_expired" autocomplete="off" onclick="checkApaExpired()" />
+                                    <input type="checkbox" class="me-2" name="apa_expired" id="edit_apa_expired" autocomplete="off" onclick="checkApaExpiredEdit()" />
                                     Apakah dokumen memiliki masa berlaku?
                                 </label>
                             </div>
@@ -55,3 +55,31 @@
         </div>
     </div>
 </div>
+@push('css')
+<link href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}" rel="stylesheet">
+@endpush
+@push('js')
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
+    <script>
+        function checkApaExpiredEdit() {
+        var checkBox = document.getElementById("edit_apa_expired");
+        var tgl_ex = document.getElementById("edit_tgl_ex");
+        var tanggalExpired = document.getElementById("edit_tanggal_expired");
+
+        if (checkBox.checked) {
+            tgl_ex.style.display = "block";
+            tanggalExpired.flatpickr({
+                enableTime: false,
+                dateFormat: "d-m-Y",
+            });
+            // make tanggal_expired required
+            tanggalExpired.required = true;
+        } else {
+            tgl_ex.style.display = "none";
+            tanggalExpired.value = '';
+            // make tanggal_expired not required
+            tanggalExpired.required = false;
+        }
+    }
+    </script>
+@endpush

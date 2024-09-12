@@ -149,6 +149,7 @@
     function editFun(data) {
         document.getElementById('editForm').action = '/legalitas/update/'+data.id;
         document.getElementById('edit_legalitas_kategori_id').value = data.legalitas_kategori_id;
+
         if (data.tanggal_expired) {
             document.getElementById('edit_apa_expired').checked = true;
             document.getElementById('edit_tgl_ex').style.display = 'block';
@@ -167,7 +168,12 @@
                 allowInput: true,
             });
 
+        } else {
+            document.getElementById('edit_apa_expired').checked = false;
+            document.getElementById('edit_tanggal_expired').value = '';
+            document.getElementById('edit_tgl_ex').style.display = 'none';
         }
+
         document.getElementById('edit_nama').value = data.nama;
     }
 
