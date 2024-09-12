@@ -143,6 +143,7 @@
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
     function kirimWa(data) {
+        document.getElementById('nama_dokumen_wa').value = data.nama;
        document.getElementById('waForm').action = '/legalitas/kirim-wa/'+data.id;
     }
 

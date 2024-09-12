@@ -14,6 +14,10 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="mb-3">
+                                <label for="nama_dokumen" class="form-label">Nama Dokumen</label>
+                                <input type="text" class="form-control" id="nama_dokumen_wa" disabled>
+                            </div>
+                            <div class="mb-3">
                                 <label for="tujuan" class="form-label">Nomor HP</label>
                                 <input type="text" class="form-control" name="tujuan" id="tujuan" required>
                             </div>
