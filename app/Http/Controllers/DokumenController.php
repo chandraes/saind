@@ -63,7 +63,7 @@ class DokumenController extends Controller
         $request->validate([
             'tahun' => 'required|numeric',
             'bulan' => 'required|numeric',
-            'file' => 'required|file|mimes:pdf'
+            'file' => 'required|file|mimes:pdf|max:5120'
         ]);
 
         $path = public_path('files/dokumen/mutasi-rekening');
