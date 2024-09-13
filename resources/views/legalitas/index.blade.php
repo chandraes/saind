@@ -50,41 +50,43 @@
 
         <tbody>
             @foreach ($data as $kategoriId => $documents)
-                @php
-                    $rowspan = $documents->count();
-                    $kategori = $documents->first()->kategori ? $documents->first()->kategori->nama : '-';
-                @endphp
-                @foreach ($documents as $index => $k)
-                @php
-                    $isDanger = false;
-                    if ($k->tanggal_expired) {
-                        $tanggalExpired = Carbon::parse($k->tanggal_expired);
-                        $now = Carbon::now();
-                        $diffInDays = $tanggalExpired->diffInDays($now, true); // false to get negative values if in the future
-                        $isDanger = $diffInDays <= 45 && $diffInDays >= 0;
-                    }
-                @endphp
-                    <tr>
-                        @if ($index == 0)
-                            <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $loop->parent->iteration }}</td>
-                            <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $kategori }}</td>
-                        @endif
-                        <td class="text-start align-middle {{ $isDanger ? 'bg-danger' : '' }}">{{ $k->nama }}</td>
-                        <td class="text-center align-middle">
-                            <div class="d-flex justify-content-center flex-wrap gap-3">
-                                <a class="btn btn-primary btn-sm" href="{{ asset($k->file) }}" target="_blank">View <i class="ms-2 fa fa-file"></i></a>
-                                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{ $k }})">Kirim Whatsapp <i class="ms-2 fa fa-whatsapp"></i></button>
-                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit" onclick="editFun({{ $k }})">Edit <i class="ms-2 fa fa-edit"></i></button>
-                                <form action="{{ route('legalitas.destroy', $k->id) }}" method="post" class="d-inline">
-                                    @csrf
-                                    @method('delete')
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"> Hapus <i class="ms-2 fa fa-trash"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                @endforeach
+            @php
+                $rowspan = $documents->count();
+                $kategori = $documents->first()->kategori ? $documents->first()->kategori->nama : '-';
+            @endphp
+            @foreach ($documents as $index => $k)
+            @php
+                $isDanger = false;
+                if ($k->tanggal_expired) {
+                    $tanggalExpired = Carbon::parse($k->tanggal_expired);
+                    $now = Carbon::now();
+                    $diffInDays = $tanggalExpired->diffInDays($now, true); // false to allow negative values if the date is in the past
+
+                    // Kondisi untuk menentukan apakah "bahaya" atau tidak
+                    $isDanger = ($diffInDays <= 45 && $diffInDays >= 0) || $tanggalExpired->isPast();
+                }
+            @endphp
+                <tr>
+                    @if ($index == 0)
+                        <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $loop->parent->iteration }}</td>
+                        <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $kategori }}</td>
+                    @endif
+                    <td class="text-start align-middle {{ $isDanger ? 'bg-danger' : '' }}">{{ $k->nama }}</td>
+                    <td class="text-center align-middle">
+                        <div class="d-flex justify-content-center flex-wrap gap-3">
+                            <a class="btn btn-primary btn-sm" href="{{ asset($k->file) }}" target="_blank">View <i class="ms-2 fa fa-file"></i></a>
+                            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#kirimWaModal" onclick="kirimWa({{ $k }})">Kirim Whatsapp <i class="ms-2 fa fa-whatsapp"></i></button>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalEdit" onclick="editFun({{ $k }})">Edit <i class="ms-2 fa fa-edit"></i></button>
+                            <form action="{{ route('legalitas.destroy', $k->id) }}" method="post" class="d-inline">
+                                @csrf
+                                @method('delete')
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Apakah anda yakin untuk menghapus data ini?')"> Hapus <i class="ms-2 fa fa-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
             @endforeach
+        @endforeach
         </tbody>       {{-- <tbody>
             @foreach ($data as $k)
             <tr>
