@@ -222,4 +222,156 @@ class DokumenController extends Controller
         }
     }
 
+    public function kontrak_vendor()
+    {
+        $data = DokumenData::kontrakVendor()->get();
+
+        return view('dokumen.kontrak-vendor.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function kontrak_vendor_store(Request $request)
+    {
+        $request->validate([
+            'nama' => 'required',
+            'file' => 'required|file|mimes:pdf|max:5120',
+            // 'tanggal_expired' => 'required|date'
+        ]);
+
+        $path = public_path('files/dokumen/kontrak-vendor');
+
+        // Check if directory exists, if not create it
+        if (!File::exists($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
+
+        // Store the file
+        $file = $request->file('file');
+        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $file->move($path, $filename);
+
+        // Save the data
+        $data['file'] = 'files/dokumen/kontrak-vendor/' . $filename;
+
+        DokumenData::create([
+            'jenis_dokumen' => 2,
+            'nama' => $request->nama,
+            'file' => $data['file'],
+            // 'tanggal_expired' => $request->tanggal_expired
+        ]);
+
+        return redirect()->route('dokumen.kontrak-vendor')->with('success', 'Data berhasil disimpan');
+    }
+
+    public function kontrak_vendor_destroy(DokumenData $kontrak_vendor)
+    {
+        $path = public_path($kontrak_vendor->file);
+
+        if(File::exists($path)) {
+            File::delete($path);
+        }
+
+        $kontrak_vendor->delete();
+
+        return redirect()->route('dokumen.kontrak-vendor')->with('success', 'Data berhasil dihapus');
+    }
+
+    public function kirim_wa_vendor(DokumenData $kontrak_vendor, Request $request)
+    {
+        $data = $request->validate([
+            'tujuan' => 'required',
+        ]);
+
+        $data['tujuan'] = str_replace('-', '', $data['tujuan']);
+
+        $data['pesan'] = $kontrak_vendor->nama;
+
+        $file = url($kontrak_vendor->file);
+
+        $res = $this->sendingWa($data['tujuan'], $data['pesan'], $file);
+
+        if ($res == 'true') {
+            return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
+        } else {
+            return redirect()->back()->with('error', 'Dokumen gagal dikirim ');
+        }
+    }
+
+    public function sph()
+    {
+        $data = DokumenData::sph()->get();
+
+        return view('dokumen.sph.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function sph_store(Request $request)
+    {
+        $request->validate([
+            'nama' => 'required',
+            'file' => 'required|file|mimes:pdf|max:5120',
+            // 'tanggal_expired' => 'required|date'
+        ]);
+
+        $path = public_path('files/dokumen/sph');
+
+        // Check if directory exists, if not create it
+        if (!File::exists($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
+
+        // Store the file
+        $file = $request->file('file');
+        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $file->move($path, $filename);
+
+        // Save the data
+        $data['file'] = 'files/dokumen/sph/' . $filename;
+
+        DokumenData::create([
+            'jenis_dokumen' => 3,
+            'nama' => $request->nama,
+            'file' => $data['file'],
+            // 'tanggal_expired' => $request->tanggal_expired
+        ]);
+
+        return redirect()->route('dokumen.sph')->with('success', 'Data berhasil disimpan');
+    }
+
+    public function sph_destroy(DokumenData $sph)
+    {
+        $path = public_path($sph->file);
+
+        if(File::exists($path)) {
+            File::delete($path);
+        }
+
+        $sph->delete();
+
+        return redirect()->route('dokumen.sph')->with('success', 'Data berhasil dihapus');
+    }
+
+    public function kirim_wa_sph(DokumenData $sph, Request $request)
+    {
+        $data = $request->validate([
+            'tujuan' => 'required',
+        ]);
+
+        $data['tujuan'] = str_replace('-', '', $data['tujuan']);
+
+        $data['pesan'] = $sph->nama;
+
+        $file = url($sph->file);
+
+        $res = $this->sendingWa($data['tujuan'], $data['pesan'], $file);
+
+        if ($res == 'true') {
+            return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
+        } else {
+            return redirect()->back()->with('error', 'Dokumen gagal dikirim ');
+        }
+    }
+
 }

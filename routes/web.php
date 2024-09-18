@@ -74,18 +74,25 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/kirim-wa/{mutasi}', [App\Http\Controllers\DokumenController::class, 'kirim_wa'])->name('dokumen.mutasi-rekening.kirim-wa');
             });
 
-            Route::prefix('kontrak-vendor')->group(function(){
-                Route::get('/', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor'])->name('dokumen.kontrak-vendor');
-                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor_store'])->name('dokumen.kontrak-vendor.store');
-                Route::delete('/destroy/{kontrak}', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor_destroy'])->name('dokumen.kontrak-vendor.destroy');
-                Route::post('/kirim-wa/{kontrak}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_vendor'])->name('dokumen.kontrak-vendor.kirim-wa');
-            });
-
             Route::prefix('kontrak-tambang')->group(function(){
                 Route::get('/', [App\Http\Controllers\DokumenController::class, 'kontrak_tambang'])->name('dokumen.kontrak-tambang');
                 Route::post('/store', [App\Http\Controllers\DokumenController::class, 'kontrak_tambang_store'])->name('dokumen.kontrak-tambang.store');
                 Route::delete('/destroy/{kontrak_tambang}', [App\Http\Controllers\DokumenController::class, 'kontrak_tambang_destroy'])->name('dokumen.kontrak-tambang.destroy');
                 Route::post('/kirim-wa/{kontrak_tambang}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_tambang'])->name('dokumen.kontrak-tambang.kirim-wa');
+            });
+
+            Route::prefix('kontrak-vendor')->group(function(){
+                Route::get('/', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor'])->name('dokumen.kontrak-vendor');
+                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor_store'])->name('dokumen.kontrak-vendor.store');
+                Route::delete('/destroy/{kontrak_vendor}', [App\Http\Controllers\DokumenController::class, 'kontrak_vendor_destroy'])->name('dokumen.kontrak-vendor.destroy');
+                Route::post('/kirim-wa/{kontrak_vendor}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_vendor'])->name('dokumen.kontrak-vendor.kirim-wa');
+            });
+
+            Route::prefix('sph')->group(function(){
+                Route::get('/', [App\Http\Controllers\DokumenController::class, 'sph'])->name('dokumen.sph');
+                Route::post('/store', [App\Http\Controllers\DokumenController::class, 'sph_store'])->name('dokumen.sph.store');
+                Route::delete('/destroy/{sph}', [App\Http\Controllers\DokumenController::class, 'sph_destroy'])->name('dokumen.sph.destroy');
+                Route::post('/kirim-wa/{sph}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_sph'])->name('dokumen.sph.kirim-wa');
             });
         });
 

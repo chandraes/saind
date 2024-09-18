@@ -36,15 +36,15 @@
             </a>
         </div>
         <div class="col-md-3 text-center mb-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="{{route('dokumen.kontrak-vendor')}}" class="text-decoration-none">
+                <img src="{{asset('images/kontrak-vendor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">KONTRAK VENDOR</h4>
             </a>
         </div>
         {{-- SPH ISI SAMA DENGAN COMPANY PROFILE BATASI 5MB --}}
         <div class="col-md-3 text-center mb-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="{{route('dokumen.sph')}}" class="text-decoration-none">
+                <img src="{{asset('images/sph.svg')}}" alt="" width="70">
                 <h4 class="mt-3">SPH</h4>
             </a>
         </div>
