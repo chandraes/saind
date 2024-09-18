@@ -201,7 +201,7 @@ class DokumenController extends Controller
 
     }
 
-    public function kirim_wa_tambang(DokumenData $kontrak, Request $request)
+    public function kirim_wa_tambang(DokumenData $kontrak_tambang, Request $request)
     {
         $data = $request->validate([
             'tujuan' => 'required',
@@ -209,9 +209,9 @@ class DokumenController extends Controller
 
         $data['tujuan'] = str_replace('-', '', $data['tujuan']);
 
-        $data['pesan'] = $kontrak->nama;
+        $data['pesan'] = $kontrak_tambang->nama;
 
-        $file = url($kontrak->file);
+        $file = url($kontrak_tambang->file);
 
         $res = $this->sendingWa($data['tujuan'], $data['pesan'], $file);
 
