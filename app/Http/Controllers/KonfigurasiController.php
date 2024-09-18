@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Konfigurasi;
+use App\Models\Pengaturan;
 use Illuminate\Http\Request;
 
 class KonfigurasiController extends Controller
@@ -10,7 +11,8 @@ class KonfigurasiController extends Controller
     public function index()
     {
         $data = Konfigurasi::all();
-        return view('pengaturan.konfigurasi-transaksi', ['data' => $data]);
+        $batasanUmum = Pengaturan::all();
+        return view('pengaturan.konfigurasi-transaksi', ['data' => $data, 'batasanUmum' => $batasanUmum]);
     }
 
     public function update(Konfigurasi $konfigurasi)

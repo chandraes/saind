@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dokumen\DokumenData;
 use App\Models\Dokumen\MutasiRekening;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
@@ -13,6 +14,19 @@ class DokumenController extends Controller
     public function index()
     {
         return view('dokumen.index');
+    }
+
+    private function sendingWa($tujuan, $pesan, $file)
+    {
+
+        ini_set('post_max_size', '15M');
+        ini_set('upload_max_filesize', '15M');
+
+        $service = new StarSender($tujuan, $pesan, $file);
+
+        $res = $service->sendWaLama();
+
+        return $res;
     }
 
     public function mutasi_rekening(Request $request)
@@ -129,6 +143,83 @@ class DokumenController extends Controller
             return redirect()->back()->with('error', 'Dokumen gagal dikirim ');
         }
 
+    }
+
+    public function kontrak_tambang()
+    {
+        $data = DokumenData::kontrakTambang()->get();
+
+        return view('dokumen.kontrak-tambang.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function kontrak_tambang_store(Request $request)
+    {
+        $request->validate([
+            'nama' => 'required',
+            'file' => 'required|file|mimes:pdf|max:5120',
+            // 'tanggal_expired' => 'required|date'
+        ]);
+
+        $path = public_path('files/dokumen/kontrak-tambang');
+
+        // Check if directory exists, if not create it
+        if (!File::exists($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
+
+        // Store the file
+        $file = $request->file('file');
+        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $file->move($path, $filename);
+
+        // Save the data
+        $data['file'] = 'files/dokumen/kontrak-tambang/' . $filename;
+
+        DokumenData::create([
+            'jenis_dokumen' => 1,
+            'nama' => $request->nama,
+            'file' => $data['file'],
+            // 'tanggal_expired' => $request->tanggal_expired
+        ]);
+
+        return redirect()->route('dokumen.kontrak-tambang')->with('success', 'Data berhasil disimpan');
+    }
+
+    public function kontrak_tambang_destroy(DokumenData $kontrak_tambang)
+    {
+        $path = public_path($kontrak_tambang->file);
+
+        if(File::exists($path)) {
+            File::delete($path);
+        }
+
+        $kontrak_tambang->delete();
+
+        return redirect()->route('dokumen.kontrak-tambang')->with('success', 'Data berhasil dihapus');
+
+    }
+
+    public function kirim_wa_tambang(DokumenData $kontrak, Request $request)
+    {
+        $data = $request->validate([
+            'tujuan' => 'required',
+        ]);
+
+        $data['tujuan'] = str_replace('-', '', $data['tujuan']);
+
+        $data['pesan'] = $kontrak->nama;
+
+        $file = url($kontrak->file);
+
+        $res = $this->sendingWa($data['tujuan'], $data['pesan'], $file);
+
+        if ($res == 'true') {
+            return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
+        } else {
+            return redirect()->back()->with('error', 'Dokumen gagal dikirim ');
+        }
     }
 
 }

@@ -20,6 +20,33 @@
         </div>
     </div>
     <div class="row mt-3">
+        <h2>Batasan Umum</h2>
+        <table class="table table-bordered table-hover">
+            <thead class="table-success">
+                <tr>
+                    <th class="text-center align-middle">No</th>
+                    <th class="text-center align-middle">PENGGUNAAN</th>
+                    <th class="text-center align-middle">NILAI</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($batasanUmum as $b)
+                <tr>
+                    <td class="text-center align-middle">{{$loop->iteration}}</td>
+                    <td class="text-center align-middle">{{$b->untuk}}</td>
+                    <td class="text-end align-middle">
+                        <div class="row px-5">
+                            <button class="btn btn-outline-dark" data-bs-toggle="modal"
+                                data-bs-target="#editModal" onclick="edit({{$b}}, {{$b->id}})">{{$b->nf_nilai}}</button>
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div class="row mt-3">
+        <h2>Batasan Khusus</h2>
         <table class="table table-bordered table-hover">
             <thead class="table-success">
                 <tr>
@@ -119,5 +146,15 @@
                 }
             })
         });
+
+        function edit(data, id)
+        {
+                document.getElementById('nilai').value = data.nf_nilai;
+                // Populate other fields...
+                document.getElementById('editForm').action = '/pengaturan/batasan/update/' + id;
+
+        }
+
+        confirmAndSubmit('#editForm', "Apakah anda yakin?");
 </script>
 @endpush
