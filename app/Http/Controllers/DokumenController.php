@@ -237,10 +237,11 @@ class DokumenController extends Controller
 
     public function kontrak_vendor_store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'nama' => 'required',
             'file' => 'required|file|mimes:pdf|max:5120',
-            // 'tanggal_expired' => 'required|date'
+            'apa_expired' => 'nullable',
+            'tanggal_expired' => 'required_if:apa_expired,on'
         ]);
 
         $path = public_path('files/dokumen/kontrak-vendor');
@@ -258,12 +259,15 @@ class DokumenController extends Controller
         // Save the data
         $data['file'] = 'files/dokumen/kontrak-vendor/' . $filename;
 
-        DokumenData::create([
-            'jenis_dokumen' => 2,
-            'nama' => $request->nama,
-            'file' => $data['file'],
-            // 'tanggal_expired' => $request->tanggal_expired
-        ]);
+        if ($request->filled('apa_expired')) {
+            unset($data['apa_expired']);
+            $data['tanggal_expired'] = date('Y-m-d', strtotime($data['tanggal_expired']));
+
+        }
+        
+        $data['jenis_dokumen'] = 2;
+
+        DokumenData::create($data);
 
         return redirect()->route('dokumen.kontrak-vendor')->with('success', 'Data berhasil disimpan');
     }

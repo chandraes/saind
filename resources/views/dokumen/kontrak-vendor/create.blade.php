@@ -21,7 +21,7 @@
                                 <label for="file" class="form-label">File <span class="text-danger">(Max 5Mb!)</span></label>
                                 <input type="file" class="form-control" name="file" id="file" required>
                             </div>
-                            {{-- <div class="mb-3">
+                            <div class="mb-3">
                                 <label class="btn btn-primary active">
                                     <input type="checkbox" class="me-2" name="apa_expired" id="apa_expired" autocomplete="off" onclick="checkApaExpired()" />
                                     Apakah dokumen memiliki masa berlaku?
@@ -30,7 +30,7 @@
                             <div class="mb-3" id="tgl_ex" style="display: none;">
                                 <label for="tanggal_expired" class="form-label">Tanggal Expired</label>
                                 <input type="text" readonly class="form-control" name="tanggal_expired" id="tanggal_expired">
-                            </div> --}}
+                            </div>
                         </div>
                     </div>
                 </div>
