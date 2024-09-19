@@ -156,10 +156,11 @@ class DokumenController extends Controller
 
     public function kontrak_tambang_store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'nama' => 'required',
             'file' => 'required|file|mimes:pdf|max:5120',
-            // 'tanggal_expired' => 'required|date'
+            'apa_expired' => 'nullable',
+            'tanggal_expired' => 'required_if:apa_expired,on'
         ]);
 
         $path = public_path('files/dokumen/kontrak-tambang');
@@ -177,12 +178,15 @@ class DokumenController extends Controller
         // Save the data
         $data['file'] = 'files/dokumen/kontrak-tambang/' . $filename;
 
-        DokumenData::create([
-            'jenis_dokumen' => 1,
-            'nama' => $request->nama,
-            'file' => $data['file'],
-            // 'tanggal_expired' => $request->tanggal_expired
-        ]);
+        if ($request->filled('apa_expired')) {
+            unset($data['apa_expired']);
+            $data['tanggal_expired'] = date('Y-m-d', strtotime($data['tanggal_expired']));
+
+        }
+
+        $data['jenis_dokumen'] = 1;
+
+        DokumenData::create($data);
 
         return redirect()->route('dokumen.kontrak-tambang')->with('success', 'Data berhasil disimpan');
     }
@@ -364,6 +368,82 @@ class DokumenController extends Controller
         $data['pesan'] = $sph->nama;
 
         $file = url($sph->file);
+
+        $res = $this->sendingWa($data['tujuan'], $data['pesan'], $file);
+
+        if ($res == 'true') {
+            return redirect()->back()->with('success', 'Dokumen berhasil dikirim');
+        } else {
+            return redirect()->back()->with('error', 'Dokumen gagal dikirim ');
+        }
+    }
+
+    public function company_profile()
+    {
+        $data = DokumenData::companyProfil()->get();
+
+        return view('company-profile.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function company_profile_store(Request $request)
+    {
+        $request->validate([
+            'nama' => 'required',
+            'file' => 'required|file|mimes:pdf|max:10000',
+            // 'tanggal_expired' => 'required|date'
+        ]);
+
+        $path = public_path('files/dokumen/company-profile');
+
+        // Check if directory exists, if not create it
+        if (!File::exists($path)) {
+            File::makeDirectory($path, 0755, true);
+        }
+
+        // Store the file
+        $file = $request->file('file');
+        $filename = time() . '.' . $file->getClientOriginalExtension();
+        $file->move($path, $filename);
+
+        // Save the data
+        $data['file'] = 'files/dokumen/company-profile/' . $filename;
+
+        DokumenData::create([
+            'jenis_dokumen' => 4,
+            'nama' => $request->nama,
+            'file' => $data['file'],
+            // 'tanggal_expired' => $request->tanggal_expired
+        ]);
+
+        return redirect()->route('company-profile')->with('success', 'Data berhasil disimpan');
+    }
+
+    public function company_profile_destroy(DokumenData $company_profile)
+    {
+        $path = public_path($company_profile->file);
+
+        if(File::exists($path)) {
+            File::delete($path);
+        }
+
+        $company_profile->delete();
+
+        return redirect()->route('company-profile')->with('success', 'Data berhasil dihapus');
+    }
+
+    public function kirim_wa_cp(DokumenData $company_profile, Request $request)
+    {
+        $data = $request->validate([
+            'tujuan' => 'required',
+        ]);
+
+        $data['tujuan'] = str_replace('-', '', $data['tujuan']);
+
+        $data['pesan'] = $company_profile->nama;
+
+        $file = url($company_profile->file);
 
         $res = $this->sendingWa($data['tujuan'], $data['pesan'], $file);
 

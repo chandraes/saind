@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('content')
+@php
+    use Carbon\Carbon;
+@endphp
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
@@ -35,15 +38,28 @@
             <tr>
                 <th class="text-center align-middle" style="width: 7%">No</th>
                 <th class="text-center align-middle">Nama Dokumen</th>
+                <th class="text-center align-middle">Tgl Kadaluarsa</th>
                 <th class="text-center align-middle" style="width: 40%">Action</th>
             </tr>
         </thead>
 
         <tbody>
             @foreach ($data as $d)
-                <tr>
+            @php
+                $isDanger = false;
+                if ($d->tanggal_expired) {
+                    $tanggalExpired = Carbon::parse($d->tanggal_expired);
+                    $now = Carbon::now();
+                    $diffInDays = $tanggalExpired->diffInDays($now, true); // false to allow negative values if the date is in the past
+
+                    // Kondisi untuk menentukan apakah "bahaya" atau tidak
+                    $isDanger = ($diffInDays <= 45 && $diffInDays >= 0) || $tanggalExpired->isPast();
+                }
+            @endphp
+                <tr class="{{ $isDanger ? 'table-danger' : '' }}">
                     <td class="text-center align-middle"><b>{{ $loop->iteration }}</b></td>
                     <td class="text-start align-middle">{{ $d->nama }}</td>
+                    <td class="text-center align-middle">{{ $d->id_tanggal_expired }}</td>
                     <td class="text-center align-middle">
                         <div class="d-flex justify-content-center flex-wrap gap-3">
                             <a class="btn btn-primary btn-sm" href="{{ asset($d->file) }}" target="_blank">View <i class="ms-2 fa fa-file"></i></a>

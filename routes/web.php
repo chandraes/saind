@@ -96,6 +96,13 @@ Route::group(['middleware' => ['auth']], function() {
             });
         });
 
+        Route::prefix('company-profile')->group(function(){
+            Route::get('/', [App\Http\Controllers\DokumenController::class, 'company_profile'])->name('company-profile');
+            Route::post('/store', [App\Http\Controllers\DokumenController::class, 'company_profile_store'])->name('company-profile.store');
+            Route::delete('/destroy/{company_profile}', [App\Http\Controllers\DokumenController::class, 'company_profile_destroy'])->name('company-profile.destroy');
+            Route::post('/kirim-wa/{company_profile}', [App\Http\Controllers\DokumenController::class, 'kirim_wa_cp'])->name('company-profile.kirim-wa');
+        });
+
 
 
         Route::prefix('database')->group(function(){

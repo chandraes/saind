@@ -84,7 +84,7 @@
                             </form>
                         </div>
                     </td>
-                </tr>
+                </tr> 
             @endforeach
         @endforeach
         </tbody>       {{-- <tbody>
