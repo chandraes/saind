@@ -44,6 +44,7 @@
                 <th class="text-center align-middle" style="width: 7%">No</th>
                 <th class="text-center align-middle">Kategori</th>
                 <th class="text-center align-middle">Nama Dokumen</th>
+                <th class="text-center align-middle">Tanggal<br>Kadaluarsa</th>
                 <th class="text-center align-middle" style="width: 40%">Action</th>
             </tr>
         </thead>
@@ -72,6 +73,7 @@
                         <td class="text-center align-middle" rowspan="{{ $rowspan }}">{{ $kategori }}</td>
                     @endif
                     <td class="text-start align-middle {{ $isDanger ? 'bg-danger' : '' }}">{{ $k->nama }}</td>
+                    <td class="text-center align-middle {{ $isDanger ? 'bg-danger' : '' }}">{{ $k->tanggal_expired ? Carbon::parse($k->tanggal_expired)->format('d-m-Y') : '-' }}</td>
                     <td class="text-center align-middle">
                         <div class="d-flex justify-content-center flex-wrap gap-3">
                             <a class="btn btn-primary btn-sm" href="{{ asset($k->file) }}" target="_blank">View <i class="ms-2 fa fa-file"></i></a>
@@ -84,7 +86,7 @@
                             </form>
                         </div>
                     </td>
-                </tr> 
+                </tr>
             @endforeach
         @endforeach
         </tbody>       {{-- <tbody>
