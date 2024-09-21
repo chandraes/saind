@@ -1174,4 +1174,81 @@ class RekapController extends Controller
            ]);
     }
 
+    public function tagihan_invoice()
+    {
+        $customer = Customer::where('status', 1)->get();
+
+        $data = [];
+
+        foreach ($customer as $c) {
+            $transaksi = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                ->where('kuj.customer_id', $c->id)
+                ->where('transaksis.status', 3)
+                ->where('transaksis.void', 0)
+                ->where('transaksis.tagihan', 0)
+                ->select('transaksis.*')
+                ->first();
+
+            $invoice = InvoiceTagihan::where('customer_id', $c->id)
+                ->where('lunas', 0)
+                ->first();
+
+            if ($transaksi || $invoice) {
+                $customerData = [
+                    'customer' => $c->singkatan,
+                    'total_transaksi' => 0,
+                    'tanggal_awal' => null,
+                    'tanggal_akhir' => null,
+                    'invoices' => [],
+                    'total_invoice' => 0,
+                ];
+
+                if ($transaksi) {
+                    $transaksiRecords = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                        ->where('kuj.customer_id', $c->id)
+                        ->where('transaksis.status', 3)
+                        ->where('transaksis.void', 0)
+                        ->where('transaksis.tagihan', 0)
+                        ->select('transaksis.*', 'kuj.tanggal as tanggal_kuj')
+                        ->orderBy('transaksis.id')
+                        ->get();
+
+                    $customerData['total_transaksi'] = $transaksiRecords->sum('nominal_tagihan') * 0.98;
+
+                    if ($transaksiRecords->isNotEmpty()) {
+                        $tAwal = $transaksiRecords->first();
+                        $tAkhir = $transaksiRecords->last();
+
+                        $customerData['tanggal_awal'] = Carbon::parse($tAwal->tanggal_kuj)->translatedFormat('d-m-Y');
+                        $customerData['tanggal_akhir'] = Carbon::parse($tAkhir->tanggal_kuj)->translatedFormat('d-m-Y');
+                    }
+                }
+
+                if ($invoice) {
+                    $inv = InvoiceTagihan::where('customer_id', $c->id)
+                        ->where('lunas', 0)
+                        ->orderBy('no_invoice', 'asc')
+                        ->get();
+
+                    foreach ($inv as $i) {
+                        $customerData['invoices'][] = [
+                            'periode' => $i->no_invoice,
+                            'tanggal_submit_softcopy' => Carbon::parse($i->tanggal)->translatedFormat('d-m-Y'),
+                            'total_tagihan' => $i->total_tagihan,
+                        ];
+                    }
+
+                    $customerData['total_invoice'] = $inv->sum('total_tagihan');
+                }
+
+                $data[] = $customerData;
+            }
+        }
+        // dd($data);
+
+        return view('rekap.tagihan-invoice', [
+            'data' => $data,
+        ]);
+    }
+
 }

@@ -514,6 +514,10 @@ Route::group(['middleware' => ['auth']], function() {
         Route::prefix('rekap')->group(function(){
             Route::get('/', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap.index');
 
+            Route::prefix('tagihan-invoice')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'tagihan_invoice'])->name('rekap.tagihan-invoice');
+            });
+
             Route::prefix('cost-opertaional')->group(function(){
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'cost_operational'])->name('rekap.cost-operational');
             });

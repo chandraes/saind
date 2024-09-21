@@ -259,6 +259,15 @@
             </a>
         </div>
     </div>
+    <div class="row justify-content-left">
+        <h2 class="mt-3">KHUSUS</h2>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('rekap.tagihan-invoice')}}" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h5 class="mt-3">TAGIHAN & INVOICE</h5>
+            </a>
+        </div>
+    </div>
     @endif
 </div>
 @endsection
