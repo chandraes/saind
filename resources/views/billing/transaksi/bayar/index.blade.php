@@ -215,7 +215,7 @@
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td class="align-middle text-center">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
-                <td class="align-middle text-end">
+                <td class="align-middle text-center">
                     {{number_format($total_uang_jalan, 0, ',', '.')}}
                 </td>
                 <td class="align-middle text-end">
