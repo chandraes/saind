@@ -16,8 +16,10 @@
                         <label for="tipe" class="form-label">Perusahaan / Perseorangan</label>
                         <select class="form-select" name="tipe" id="tipe-vendor" onchange="changeTipe()" required>
                             <option value=""> - Pilih -</option>
-                            <option value="perusahaan" {{$vendor->tipe == 'perusahaan' ? 'selected' : ''}}>Perusahaan</option>
-                            <option value="perorangan" {{$vendor->tipe == 'perorangan' ? 'selected' : ''}}>Perorangan</option>
+                            <option value="perusahaan" {{$vendor->tipe == 'perusahaan' ? 'selected' : ''}}>Perusahaan
+                            </option>
+                            <option value="perorangan" {{$vendor->tipe == 'perorangan' ? 'selected' : ''}}>Perorangan
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -33,21 +35,22 @@
                     @endif
                 </div>
                 <div class="col-md-6 mb-3">
-                        <label for="jabatan" class="form-label">Jabatan</label>
-                        <select class="form-select" name="jabatan" id="jabatan" required>
-                            @if ($vendor->jabatan)
-                            <option value="{{$vendor->jabatan}}" selected>{{$vendor->jabatan}}</option>
-                            @endif
-                        </select>
-                        @if ($errors->has('jabatan'))
-                        <span class="text-danger">
-                            <strong>{{ $errors->first('jabatan') }}</strong>
-                        </span>
+                    <label for="jabatan" class="form-label">Jabatan</label>
+                    <select class="form-select" name="jabatan" id="jabatan" required>
+                        @if ($vendor->jabatan)
+                        <option value="{{$vendor->jabatan}}" selected>{{$vendor->jabatan}}</option>
                         @endif
+                    </select>
+                    @if ($errors->has('jabatan'))
+                    <span class="text-danger">
+                        <strong>{{ $errors->first('jabatan') }}</strong>
+                    </span>
+                    @endif
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="nickname" class="form-label">Nickname</label>
-                    <input type="text" class="form-control {{$errors->has('nickname') ? 'is-invalid' : ''}}" name="nickname" id="nickname" placeholder="" value="{{$vendor->nickname}}" required>
+                    <input type="text" class="form-control {{$errors->has('nickname') ? 'is-invalid' : ''}}"
+                        name="nickname" id="nickname" placeholder="" value="{{$vendor->nickname}}" required>
                     @if ($errors->has('nickname'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('nickname') }}</strong>
@@ -58,7 +61,8 @@
             <div class="row">
                 <div class="col-md-6 mb-3" id="perusahaan-row" hidden>
                     <label for="perusahaan" class="form-label">Nama Perusahaan</label>
-                    <input type="text" class="form-control {{$errors->has('perusahaan') ? 'is-invalid' : ''}}" name="perusahaan" id="perusahaan" placeholder="" value="{{$vendor->perusahaan}}" >
+                    <input type="text" class="form-control {{$errors->has('perusahaan') ? 'is-invalid' : ''}}"
+                        name="perusahaan" id="perusahaan" placeholder="" value="{{$vendor->perusahaan}}">
                     @if ($errors->has('perusahaan'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('perusahaan') }}</strong>
@@ -67,7 +71,8 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="npwp" class="form-label">NPWP / NIK</label>
-                    <input type="text" class="form-control {{$errors->has('npwp') ? 'is-invalid' : ''}}" name="npwp" id="npwp" placeholder="" value="{{$vendor->npwp}}" required>
+                    <input type="text" class="form-control {{$errors->has('npwp') ? 'is-invalid' : ''}}" name="npwp"
+                        id="npwp" placeholder="" value="{{$vendor->npwp}}" required>
                     @if ($errors->has('npwp'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('npwp') }}</strong>
@@ -76,7 +81,8 @@
                 </div>
                 <div class="col-md-12 mb-3">
                     <label for="alamat" class="form-label">Alamat</label>
-                    <textarea class="form-control {{$errors->has('alamat') ? 'is-invalid' : ''}}" name="alamat" id="alamat" rows="3" required>{{$vendor->alamat}}</textarea>
+                    <textarea class="form-control {{$errors->has('alamat') ? 'is-invalid' : ''}}" name="alamat"
+                        id="alamat" rows="3" required>{{$vendor->alamat}}</textarea>
                     @if ($errors->has('alamat'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('alamat') }}</strong>
@@ -91,18 +97,29 @@
             <div class="row mt-3 mb-3">
                 <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
                     <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="support_operational" id="support_operational" {{$vendor->support_operational == 1 ? 'checked' : ''}} autocomplete="off"> Support Operational
+                        <input type="checkbox" class="me-2" name="support_operational" id="support_operational"
+                            {{$vendor->support_operational == 1 ? 'checked' : ''}} autocomplete="off"> Support
+                        Operational
                     </label>
                     <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}} autocomplete="off"> PPN & PPh
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}}
+                        autocomplete="off"> PPN
                     </label>
-                   </div>
+                        <label class="btn btn-warning">
+                            <input type="checkbox" class="me-2" name="pph" id="pph" {{$vendor->pph == 1 ? 'checked' :
+                            ''}} autocomplete="off"> PPh
+                        </label>
+                </div>
+                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+
+                </div>
             </div>
             <hr>
             <div class="row mt-3 mb-3">
                 <div class="col-md-4 mb-3">
                     <label for="no_hp" class="form-label">No. HP</label>
-                    <input type="text" class="form-control {{$errors->has('no_hp') ? 'is-invalid' : ''}}" name="no_hp" id="no_hp" placeholder="" value="{{$vendor->no_hp}}" required>
+                    <input type="text" class="form-control {{$errors->has('no_hp') ? 'is-invalid' : ''}}" name="no_hp"
+                        id="no_hp" placeholder="" value="{{$vendor->no_hp}}" required>
                     @if ($errors->has('no_hp'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('no_hp') }}</strong>
@@ -111,7 +128,8 @@
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="text" class="form-control {{$errors->has('email') ? 'is-invalid' : ''}}" name="email" id="email" placeholder="" value="{{$vendor->email}}" required>
+                    <input type="text" class="form-control {{$errors->has('email') ? 'is-invalid' : ''}}" name="email"
+                        id="email" placeholder="" value="{{$vendor->email}}" required>
                     @if ($errors->has('email'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('email') }}</strong>
@@ -120,10 +138,12 @@
                 </div>
                 <div class="col-md-4 mb-3">
                     <label for="sponsor_select" class="form-label">Sponsor</label>
-                    <select class="form-select {{$errors->has('sponsor_id') ? 'is-invalid' : ''}}" name="sponsor_id" id="sponsor_select">
+                    <select class="form-select {{$errors->has('sponsor_id') ? 'is-invalid' : ''}}" name="sponsor_id"
+                        id="sponsor_select">
                         <option value="">-- Pilih Sponsor --</option>
                         @foreach ($sponsor as $s)
-                        <option value="{{$s->id}}" {{$vendor->sponsor_id == $s->id ? 'selected' : ''}}>{{$s->nama}}</option>
+                        <option value="{{$s->id}}" {{$vendor->sponsor_id == $s->id ? 'selected' : ''}}>{{$s->nama}}
+                        </option>
                         @endforeach
                     </select>
                     @if ($errors->has('sponsor_id'))
@@ -137,9 +157,9 @@
             <div class="row mt-3 mb-3">
                 <label for="pembayaran" class="form-label">Pembayaran</label>
                 <select class="form-select" name="pembayaran" id="pembayaran">
-                      <option value="opname" {{$vendor->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
-                      <option value="titipan" {{$vendor->pembayaran == 'titipan' ? 'selected' : ''}}>Titipan</option>
-                  </select>
+                    <option value="opname" {{$vendor->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
+                    <option value="titipan" {{$vendor->pembayaran == 'titipan' ? 'selected' : ''}}>Titipan</option>
+                </select>
             </div>
             <hr>
             <div class="row mt-3 mb-3">
@@ -149,7 +169,8 @@
                         <span class="input-group-text" id="basic-addon1">Rp</span>
                         <input type="text" class="form-control @if ($errors->has('plafon_titipan'))
                         is-invalid
-                    @endif" name="plafon_titipan" id="plafon_titipan" required data-thousands="." value="{{number_format($vendor->plafon_titipan, 0, ',','.')}}">
+                    @endif" name="plafon_titipan" id="plafon_titipan" required data-thousands="."
+                            value="{{number_format($vendor->plafon_titipan, 0, ',','.')}}">
                     </div>
                 </div>
                 <div class="col-6">
@@ -158,7 +179,8 @@
                         <span class="input-group-text" id="basic-addon1">Rp</span>
                         <input type="text" class="form-control @if ($errors->has('plafon_lain'))
                             is-invalid
-                        @endif" name="plafon_lain" id="plafon_lain" required data-thousands="." value="{{number_format($vendor->plafon_lain, 0, ',','.')}}">
+                        @endif" name="plafon_lain" id="plafon_lain" required data-thousands="."
+                            value="{{number_format($vendor->plafon_lain, 0, ',','.')}}">
                     </div>
                 </div>
             </div>
@@ -167,7 +189,8 @@
                 <h3 class="mb-3">Rekening Vendor</h3>
                 <div class="col-md-6 mb-3">
                     <label for="no_rekening" class="form-label">No. Rekening</label>
-                    <input type="text" class="form-control {{$errors->has('no_rekening') ? 'is-invalid' : ''}}" name="no_rekening" id="no_rekening" placeholder="" value="{{$vendor->no_rekening}}" required>
+                    <input type="text" class="form-control {{$errors->has('no_rekening') ? 'is-invalid' : ''}}"
+                        name="no_rekening" id="no_rekening" placeholder="" value="{{$vendor->no_rekening}}" required>
                     @if ($errors->has('no_rekening'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('no_rekening') }}</strong>
@@ -176,7 +199,8 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank" class="form-label">Nama Bank</label>
-                    <input type="text" class="form-control {{$errors->has('bank') ? 'is-invalid' : ''}}" name="bank" id="bank" placeholder="" value="{{$vendor->bank}}" required>
+                    <input type="text" class="form-control {{$errors->has('bank') ? 'is-invalid' : ''}}" name="bank"
+                        id="bank" placeholder="" value="{{$vendor->bank}}" required>
                     @if ($errors->has('bank'))
                     <span class="text-danger">
                         <strong>{{ $errors->first('bank') }}</strong>
@@ -185,19 +209,22 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="nama_rekening" class="form-label">Nama Pemilik Rekening</label>
-                    <input type="text" class="form-control {{$errors->has('nama_rekening') ? 'is-invalid' : ''}}" name="nama_rekening" id="nama_rekening" placeholder="" value="{{$vendor->nama_rekening}}"
+                    <input type="text" class="form-control {{$errors->has('nama_rekening') ? 'is-invalid' : ''}}"
+                        name="nama_rekening" id="nama_rekening" placeholder="" value="{{$vendor->nama_rekening}}"
                         required>
-                        @if ($errors->has('nama_rekening'))
-                        <span class="text-danger">
-                            <strong>{{ $errors->first('nama_rekening') }}</strong>
-                        </span>
-                        @endif
+                    @if ($errors->has('nama_rekening'))
+                    <span class="text-danger">
+                        <strong>{{ $errors->first('nama_rekening') }}</strong>
+                    </span>
+                    @endif
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="status" class="form-label">Status</label>
-                    <select name="status" id="status" class="form-control {{$errors->has('status') ? 'is-invalid' : ''}}">
+                    <select name="status" id="status"
+                        class="form-control {{$errors->has('status') ? 'is-invalid' : ''}}">
                         <option value="aktif" {{$vendor->status == 'aktif' ? 'selected' : ''}}>Aktif</option>
-                        <option value="nonaktif" {{$vendor->status == 'nonaktif' ? 'selected' : ''}}>Tidak Aktif</option>
+                        <option value="nonaktif" {{$vendor->status == 'nonaktif' ? 'selected' : ''}}>Tidak Aktif
+                        </option>
                     </select>
                     @if ($errors->has('status'))
                     <span class="text-danger">

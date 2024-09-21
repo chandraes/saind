@@ -108,7 +108,10 @@
                         <input type="checkbox" class="me-2" name="support_operational" id="support_operational" autocomplete="off"> Support Operational
                     </label>
                     <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off" > PPN & PPh
+                        <input type="checkbox" class="me-2" name="ppn" id="ppn" autocomplete="off" > PPN
+                    </label>
+                    <label class="btn btn-warning">
+                        <input type="checkbox" class="me-2" name="ppn" id="pph" autocomplete="off" > Pph
                     </label>
                 </div>
             </div>

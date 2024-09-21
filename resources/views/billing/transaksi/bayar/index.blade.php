@@ -215,10 +215,10 @@
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td class="align-middle text-center">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle text-end">
                     {{number_format($total_uang_jalan, 0, ',', '.')}}
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle text-end">
                     {{number_format($total_netto, 0, ',', '.')}}
                 </td>
             </tr>
@@ -228,7 +228,7 @@
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td class="align-middle"></td>
                 <td></td>
-                <td class="text-center align-middle">
+                <td class="text-end align-middle">
                     {{number_format($ppn, 0, ',', '.')}}
                 </td>
             </tr>
@@ -239,7 +239,7 @@
                 <td class="text-center align-middle"><strong>PPh</strong></td>
                 <td class="align-middle"></td>
                 <td></td>
-                <td class="align-middle text-center">
+                <td class="align-middle text-end">
                     {{number_format($pph, 0, ',', '.')}}
                 </td>
             </tr>
@@ -251,7 +251,7 @@
                 <td class="align-middle">
                 </td>
                 <td></td>
-                <td class="align-middle text-center">
+                <td class="align-middle text-end">
                     <strong>
                         {{number_format($grant_total, 0, ',', '.')}}
                     </strong>
@@ -292,6 +292,7 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
+            "scrollX": true,
             "fixedColumns": {
                 "leftColumns": 3,
                 "rightColumns": 1

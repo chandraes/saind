@@ -19,7 +19,7 @@ class DokumenData extends Model
         1 => 'Kontrak Tambang',
         2 => 'Kontrak Vendor',
         3 => 'SPH',
-        4 => 'Company Profil',
+        4 => 'Company Profile',
     ];
 
     // scope
