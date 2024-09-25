@@ -252,19 +252,21 @@
                 <h5 class="mt-3">INVOICE CSR<br>(TERTENTU)</h5>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
-            <a href="{{route('home')}}" class="text-decoration-none">
-                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
-                <h5 class="mt-3">DASHBOARD</h5>
-            </a>
-        </div>
     </div>
+    <hr>
+    <br>
     <div class="row justify-content-left">
         <h2 class="mt-3">KHUSUS</h2>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.tagihan-invoice')}}" class="text-decoration-none">
                 <img src="{{asset('images/tagihan-invoice.svg')}}" alt="" width="70">
                 <h5 class="mt-3">TAGIHAN & INVOICE</h5>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('home')}}" class="text-decoration-none">
+                <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
+                <h5 class="mt-3">DASHBOARD</h5>
             </a>
         </div>
     </div>

@@ -100,13 +100,13 @@
                                 @if ($index > 0)
                                     <tr>
                                 @endif
-                                <td class="text-end align-middle">{{ number_format($invoice['total_tagihan'], 0,',','.') }}</td>
-                                <td class="text-center align-middle"></td>
+                                <td class="text-end align-middle">{{ number_format($invoice['tagihan_awal'], 0,',','.') }}</td>
+                                <td class="text-end align-middle">{{ number_format($invoice['penyesuaian'], 0,',','.') }}</td>
                                 <td class="text-end align-middle">{{ number_format($invoice['total_tagihan'], 0,',','.') }}</td>
                                 <td class="text-center align-middle">{{ $invoice['periode'] }}</td>
                                 <td class="text-center align-middle">{{ $invoice['tanggal_submit_softcopy'] }}</td>
-                                <td class="text-center align-middle">{{ $invoice['tanggal_submit_hardcopy'] ?? '-' }}</td>
-                                <td class="text-center align-middle">{{ $invoice['estimasi_tgl_pembayaran'] ?? '-' }}</td>
+                                <td class="text-center align-middle">{{ $invoice['tanggal_hardcopy'] ?? '-' }}</td>
+                                <td class="text-center align-middle">{{ $invoice['estimasi_pembayaran'] ?? '-' }}</td>
                                 @if ($index > 0)
                                     </tr>
                                 @endif

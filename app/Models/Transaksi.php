@@ -47,6 +47,46 @@ class Transaksi extends Model
                 ->where('status', 3)
                 ->where('transaksis.void', 0)
                 ->where('tagihan', 0)
+                ->where('keranjang', 0)
+                ->where('kuj.customer_id', $customerId)
+                ->when($ruteId, function ($query, $ruteId) {
+                    return $query->where('kuj.rute_id', $ruteId);
+                });
+
+        if ($tanggalFilter && $filter) {
+            if (strpos($tanggalFilter, 'to') !== false) {
+                // $tanggalFilter is a date range
+                $dates = explode('to', $tanggalFilter);
+                $startDate = Carbon::createFromFormat('d-m-Y', trim($dates[0]))->startOfDay();
+                $endDate = Carbon::createFromFormat('d-m-Y', trim($dates[1]))->endOfDay();
+
+                // dd($startDate, $endDate, $filter, $tanggalFilter);
+
+                $query->whereBetween($filter, [$startDate, $endDate]);
+            } else {
+                // $tanggalFilter is a single date
+                $date = Carbon::createFromFormat('d-m-Y', trim($tanggalFilter));
+
+                $query->where($filter, '>=', $date);
+            }
+        }
+
+         // If $filter is not null, order by the $filter column
+        if ($filter) {
+            $query->orderBy($filter)->orderBy('kas_uang_jalan_id');
+        }
+
+        return $query->select('transaksis.*', 'kuj.tanggal as tanggal')->get();
+    }
+
+    public static function getKeranjangTagihanData($customerId, $ruteId = null, $filter = null, $tanggalFilter = null)
+    {
+        $query = self::with('kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'do_checker')
+                ->join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                ->where('status', 3)
+                ->where('transaksis.void', 0)
+                ->where('tagihan', 0)
+                ->where('keranjang', 1)
                 ->where('kuj.customer_id', $customerId)
                 ->when($ruteId, function ($query, $ruteId) {
                     return $query->where('kuj.rute_id', $ruteId);

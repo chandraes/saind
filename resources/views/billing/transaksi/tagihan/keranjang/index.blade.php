@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Nota Tagihan</u></h1>
+            <h1><u>Keranjang Tagihan</u></h1>
         </div>
     </div>
     @php
@@ -38,23 +38,34 @@
     @endif
 
     <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
-                                alt="dokumen" width="30"> Billing</a></td>
-                    <td class="align-middle"><a href="{{route('transaksi.nota-tagihan.keranjang', ['customer' => $customer->id])}}"><i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang @if ($keranjang > 0) <span
-                            class="badge bg-danger">{{$keranjang}}</span> @endif</a></td>
+                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
+                                width="30"> Billing</a></td>
+                    <td><a href="{{route('transaksi.nota-tagihan', ['customer'=>$customer->id])}}"><img
+                                src="{{asset('images/back.svg')}}" alt="dokumen" width="30"> Kembali</a></td>
+                    <td>
+                        <form target="_blank" action="{{route('transaksi.nota-tagihan.keranjang.export', $customer)}}"
+                            method="get">
+                            <input type="hidden" name="rute_id" value="{{$rute_id}}">
+                            <input type="hidden" name="tanggal_filter" value="{{$tanggal_filter}}">
+                            <input type="hidden" name="filter_date" value="{{$filter_date}}">
+                            <div class="row">
+                                <button class="btn btn-success" type="submit">Export</button>
+                            </div>
 
+                        </form>
+                    </td>
                 </tr>
             </table>
         </div>
     </div>
 </div>
-@include('billing.transaksi.tagihan.filter')
-@include('billing.transaksi.tagihan.show-new')
+@include('billing.transaksi.tagihan.keranjang.filter')
+@include('billing.transaksi.tagihan.keranjang.show-new')
 
 <div class="container-fluid mt-3 table-responsive ">
     <div class="dropdown open mb-3">
@@ -69,42 +80,53 @@
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">
-                    Select
-                    {{-- select all --}}
-                    <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
-                </th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif  class="text-center align-middle">No</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tanggal UJ</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Kode</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">NOLAM</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Vendor</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Rute</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Jarak (Km)</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Harga</th>
+
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">No</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Tanggal UJ</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Kode</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">NOLAM</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Vendor</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Rute</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Jarak (Km)</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Harga</th>
                 @if ($customer->tanggal_muat == 1)
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle" id="tanggal_muat_column">Tanggal Muat</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle" id="tanggal_muat_column">Tanggal Muat</th>
                 @endif
                 @if ($customer->nota_muat == 1)
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Nota Muat</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Nota Muat</th>
                 @endif
                 @if ($customer->tonase == 1)
-                <th @if($customer->gt_muat == 1) colspan="3" @elseif($customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tonase Muat</th>
+                <th @if($customer->gt_muat == 1) colspan="3" @elseif($customer->gt_bongkar == 1) rowspan="2" @endif
+                    class="text-center align-middle">Tonase Muat</th>
                 @endif
                 @if ($customer->tanggal_bongkar == 1)
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle" id="tanggal_bongkar_column">Tanggal Bongkar</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle" id="tanggal_bongkar_column">Tanggal Bongkar</th>
                 @endif
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Nota Bongkar</th>
-                <th @if($customer->gt_bongkar == 1) colspan="3" @elseif($customer->gt_muat == 1) rowspan="2" @endif class="text-center align-middle">Tonase Bongkar</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Nota Bongkar</th>
+                <th @if($customer->gt_bongkar == 1) colspan="3" @elseif($customer->gt_muat == 1) rowspan="2" @endif
+                    class="text-center align-middle">Tonase Bongkar</th>
                 @if ($customer->selisih == 1)
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Selisih (Ton)</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Selisih (%)</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Selisih (Ton)</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Selisih (%)</th>
                 @endif
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tagihan</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit (%)</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">DO Fisik</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Action</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Tagihan</th>
+                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
+                    align-middle">Action</th>
             </tr>
             @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1)
             <tr>
@@ -124,13 +146,6 @@
         <tbody>
             @foreach ($data as $d)
             <tr>
-                {{-- check list --}}
-                <td class="text-center align-middle">
-                    {{-- checklist on check push $d->id to $selectedData --}}
-                    <input style="height: 25px; width:25px" type="checkbox" value="{{$d->id}}"
-                        data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})"
-                        id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
-                </td>
                 <td class="text-center align-middle"></td>
                 <td class="text-center align-middle">
                     {{$d->kas_uang_jalan->tanggal}} <br>
@@ -161,10 +176,10 @@
                 <td class="text-center align-middle">{{$d->nota_muat}}</td>
                 @endif
                 @if ($customer->tonase == 1)
-                    @if ($customer->gt_muat == 1)
-                    <td class="text-center align-middle">{{$d->gross_muat}}</td>
-                    <td class="text-center align-middle">{{$d->tarra_muat}}</td>
-                    @endif
+                @if ($customer->gt_muat == 1)
+                <td class="text-center align-middle">{{$d->gross_muat}}</td>
+                <td class="text-center align-middle">{{$d->tarra_muat}}</td>
+                @endif
                 <td class="text-center align-middle">{{$d->tonase}}</td>
                 @endif
                 @if ($customer->tanggal_bongkar == 1)
@@ -189,94 +204,15 @@
                     {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
                     @endif
                 </td>
-                <td class="text-end align-middle">
-                    {{number_format($d->profit, 0, ',', '.')}}
-
-                </td>
                 <td class="text-center align-middle">
-                    {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
-                </td>
-                <td class="text-center align-middle">
-                    @if ($d->nota_fisik == 0)
-                    <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
-                        <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : ''
-                        }} onchange="this.form.submit()">
+                    <form
+                        action="{{route('transaksi.nota-tagihan.keranjang.delete', ['customer' => $customer->id, 'transaksi' => $d->id])}}"
+                        method="post" id="masukForm{{$d->id}}">
+                        @csrf
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fa fa-trash"></i>
+                        </button>
                     </form>
-                    @else
-                    <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }}
-                    onclick="event.preventDefault(); showUncheckModal({{$d}}).catch(() => this.checked = true)">
-                    @endif
-                    @if ($d->nota_fisik == 1 && $d->do_checker_id != null)
-                    <br>
-                    Checker: <strong>{{$d->do_checker->name}}</strong>
-                    @endif
-                </td>
-                <td class="text-center align-middle">
-                    @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-                    <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
-                        data-bs-target="#backModal-{{$d->id}}">
-                        Edit
-                    </button>
-
-                    <!-- Modal Body -->
-                    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-                    <div class="modal fade" id="backModal-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
-                        data-bs-keyboard="false" role="dialog" aria-labelledby="Title-{{$d->id}}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="Title-{{$d->id}}">Masukkan Password</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <form action="{{route('transaksi.nota-tagihan.edit', $d)}}" method="post">
-                                    @csrf
-                                    <div class="modal-body">
-                                        <input type="password" class="form-control" id="password" name="password"
-                                            placeholder="Password" aria-label="Password" aria-describedby="password"
-                                            required>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Tutup</button>
-                                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="btn btn-warning btn-block m-2" type="button" data-bs-toggle="modal"
-                        data-bs-target="#modalVoid-{{$d->id}}">Void</button>
-
-                    <div class="modal fade" id="modalVoid-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
-                        data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
-                            role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">Masukan Password </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <form action="{{route('transaksi.tagihan.void', $d->id)}}" method="post">
-                                    @csrf
-                                    <div class="modal-body">
-                                        <input type="password" class="form-control" id="password" name="password"
-                                            placeholder="Password" aria-label="Password" aria-describedby="password"
-                                            required>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-                                        <button type="submit" class="btn btn-primary">Save</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
                 </td>
             </tr>
             <script>
@@ -284,7 +220,8 @@
                   e.preventDefault();
 
                   Swal.fire({
-                      title: 'Apakah anda yakin data sudah benar?',
+                      title: 'Apakah anda yakin?',
+                      text: "Data akan kembali ke nota tagihan!!",
                       icon: 'warning',
                       showCancelButton: true,
                       confirmButtonColor: '#3085d6',
@@ -302,33 +239,20 @@
         <tfoot>
             <tr>
                 <td class=""
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-                    <div class="row text-center">
-                        <div class="col-md-4 mt-2">
-                            <label for="" class="form-label">Total Tagihan Dipilih : </label>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="input-group">
-                                <span class="input-group-text" id="basic-addon1">Rp</span>
-                                <input type="text" class="form-control text-bold" name="total_tagih_diplay"
-                                    id="total_tagihan_display">
-                            </div>
-                        </div>
-                    </div>
+
                 </td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td class="text-end align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
-                <td class="text-end align-middle">{{number_format($profit, 0, ',', '.')}}</td>
-                <td class="text-end align-middle">{{number_format($profit_persen, 2, ',', '.')}}%</td>
-                <td></td>
                 <td></td>
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+                </td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td class="text-end align-middle">
 
@@ -336,13 +260,10 @@
 
                 </td>
                 <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
@@ -352,13 +273,10 @@
 
                 </td>
                 <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
@@ -366,28 +284,82 @@
                         {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
             </tr>
         </tfoot>
     </table>
 </div>
 <input type="hidden" name="total_tagihan" id="total_tagihan" value="0">
-<div class="container-fluid mt-3 mb-3">
-    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-        <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
-            @csrf
-            <input type="hidden" name="selectedData" required>
-            <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilihan</button>
-        </form>
-        <form target="_blank" action="{{route('transaksi.nota-tagihan.export', $customer)}}" method="get">
-            <input type="hidden" name="rute_id" value="{{$rute_id}}">
-            <input type="hidden" name="tanggal_filter" value="{{$tanggal_filter}}">
-            <input type="hidden" name="filter_date" value="{{$filter_date}}">
-            <button class="btn btn-success btn-lg" type="submit">Export</button>
-        </form>
+<hr>
+<div class="container mt-3 mb-3">
+    @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
+    <div class="card border-primary">
+        <div class="card-body">
+            <form action="{{route('transaksi.nota-tagihan.keranjang.lanjut', $customer)}}" method="post"
+                id="lanjutForm">
+                @csrf
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="total" class="form-label">Total</label>
+                            <input type="text" class="form-control" name="total" id="total"
+                                value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="Ppn" class="form-label">Ppn</label>
+                            <input type="text" class="form-control" name="Ppn" id="Ppn"
+                                value="{{number_format($ppn, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="Pph" class="form-label">Pph</label>
+                            <input type="text" class="form-control" name="Pph" id="Pph"
+                                value="{{number_format($pph, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="tagi" class="form-label">Total Tagihan</label>
+                            <input type="text" class="form-control" name="tagi" id="tagi"
+                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="penyesuaian" class="form-label">Penyesuaian</label>
+                            <input type="text" class="form-control" name="penyesuaian" id="penyesuaian" required
+                                value="0" onkeyup="calculateTotal()" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="grand_total" class="form-label">Grand Total </label>
+                            <input type="text" class="form-control" name="grand_total" id="grand_total" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="tanggal_hardcopy" class="form-label">Tanggal Submit Hardcopy</label>
+                            <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy" required/>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="estimasi_pembayaran" class="form-label">Estimasi Pembayaran</label>
+                            <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran" required/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row px-5 mt-3">
+                    <button class="btn btn-primary me-md-3" type="submit">Lanjutkan Pilihan</button>
+                </div>
+
+            </form>
+        </div>
     </div>
+    @endif
 </div>
 
 @endsection
@@ -403,13 +375,36 @@
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script src="https://cdn.datatables.net/plug-ins/1.10.22/sorting/datetime-moment.js"></script>
-{{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script> --}}
+
 <script>
+    function calculateTotal()
+    {
+        var total = parseFloat($('#tagi').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var penyesuaian = parseFloat($('#penyesuaian').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var grandTotal = total + penyesuaian;
+
+        $('#grand_total').val(grandTotal.toLocaleString('id-ID'));
+    }
+
+
     $(document).ready(function() {
+        calculateTotal();
         $('#spinner').show();
+
+        var penyesuaian = new Cleave('#penyesuaian', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
+
+        flatpickr("#tanggal_hardcopy", {
+            dateFormat: "d-m-Y",
+        });
+
+        flatpickr("#estimasi_pembayaran", {
+            dateFormat: "d-m-Y",
+        });
 
         $.fn.dataTable.moment('DD-MM-YYYY');
 
@@ -469,7 +464,7 @@
             "drawCallback": function (settings) {
                 var api = this.api();
                 var startIndex = api.context[0]._iDisplayStart; // Get the start index for the current page
-                api.column(1, {page: 'current'}).nodes().each(function (cell, i) {
+                api.column(0, {page: 'current'}).nodes().each(function (cell, i) {
                     cell.innerHTML = startIndex + i + 1; // Update the numbering column
                 });
             }
@@ -565,49 +560,6 @@
         console.log(value);
     }
 
-    // check all checkbox and push all id to $selectedData and check all checkbox
-    function checkAll(checkbox, id) {
-        $('#total_tagihan').val(0);
-        $('#total_tagihan_display').val(0);
-        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
-
-        if (checkbox.checked) {
-            $('input[name="selectedData"]').val(function(i, v) {
-                // if end of string, remove comma
-                @foreach ($data as $d)
-                if({{$d->nota_fisik}} == 1) {
-                var tagihan = parseFloat($('#idSelect-{{$d->id}}').data('tagihan'));
-                totalTagihan += tagihan;
-
-                    v = v + {{$d->id}} + ',';
-                    $('#idSelect-{{$d->id}}').prop('checked', true);
-                }
-                @endforeach
-                return v;
-            });
-        } else {
-            $('input[name="selectedData"]').val(function(i, v) {
-                // remove id from string
-                @foreach ($data as $d)
-                    v = v.replace({{$d->id}} + ',', '');
-                    $('#idSelect-{{$d->id}}').prop('checked', false);
-                @endforeach
-                return v;
-            });
-            totalTagihan = 0;
-        }
-
-        $('#total_tagihan').val(totalTagihan);
-        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
-
-        value = $('input[name="selectedData"]').val();
-
-        if(value.slice(-1) == ','){
-            // remove comma from last number
-            value = value.slice(0, -1);
-        }
-        console.log(value);
-    }
 
 
     $('#lanjutForm').submit(function(e){

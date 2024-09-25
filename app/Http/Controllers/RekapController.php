@@ -1234,6 +1234,10 @@ class RekapController extends Controller
                         $customerData['invoices'][] = [
                             'periode' => $i->no_invoice,
                             'tanggal_submit_softcopy' => Carbon::parse($i->tanggal)->translatedFormat('d-m-Y'),
+                            'tanggal_hardcopy' => $i->tanggal_hardcopy ? Carbon::parse($i->tanggal_hardcopy)->translatedFormat('d-m-Y') : '-',
+                            'estimasi_pembayaran' => $i->estimasi_pembayaran ? Carbon::parse($i->estimasi_pembayaran)->translatedFormat('d-m-Y') : '-',
+                            'penyesuaian' => $i->penyesuaian,
+                            'tagihan_awal' => $i->total_awal,
                             'total_tagihan' => $i->total_tagihan,
                         ];
                     }

@@ -22,6 +22,7 @@ use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
@@ -257,6 +258,7 @@ class TransaksiController extends Controller
         $rute = $customer->rute;
 
         $data = Transaksi::getTagihanData($customer->id, $rute_id, $filter_date, $tanggal_filter);
+        $keranjang = Transaksi::getKeranjangTagihanData($customer->id)->count();
 
         return view('billing.transaksi.tagihan.index', [
             'data' => $data,
@@ -265,6 +267,7 @@ class TransaksiController extends Controller
             'rute_id' => $rute_id,
             'filter_date' => $req['filter_date'] ?? null,
             'tanggal_filter' => $req['tanggal_filter'] ?? null,
+            'keranjang' => $keranjang,
         ]);
     }
 
@@ -621,53 +624,213 @@ class TransaksiController extends Controller
 
     }
 
+    // tagihan lanjut update jadi keranjang
     public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
     {
         $data = $request->validate([
             'selectedData' => 'required',
         ]);
-        // trim string selectedData
+
         $data['selectedData'] = trim($data['selectedData'], ',');
-        // make string selectedData to array
         $data['selectedData'] = explode(',', $data['selectedData']);
 
-        // dd($data['selectedData']);
+        $keranjang = Transaksi::whereIn('id', $data['selectedData'])->update([
+            'keranjang' => 1,
+        ]);
 
-        $tagihan = Transaksi::whereIn('id', $data['selectedData'])->get();
+        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil memindahkan data ke Keranjang. Silahkan cek keranjang untuk validasi lanjutan!!');
 
+
+    }
+
+    public function keranjang_tagihan(Request $request, Customer $customer)
+    {
+        $req = $request->validate([
+            'rute_id' => 'nullable|exists:rutes,id',
+            'filter_date' => 'nullable|required_if:tanggal_filter,!=, null|in:tanggal_muat,tanggal_bongkar,tanggal',
+            'tanggal_filter' => 'nullable|required_if:filter_date,tanggal_muat,tanggal_bongkar,tanggal',
+        ]);
+
+        $rute_id = $req['rute_id'] ?? null;
+        $filter_date = $req['filter_date'] ?? null;
+        $tanggal_filter = $req['tanggal_filter'] ?? null;
+
+        /** @var \Illuminate\Routing\UrlGenerator */
+        $url = url();
+
+        // Store current URL in session
+        session(['previous_url' => $url->full()]);
+
+        $rute = $customer->rute;
+
+        $data = Transaksi::getKeranjangTagihanData($customer->id, $rute_id, $filter_date, $tanggal_filter);
+
+        return view('billing.transaksi.tagihan.keranjang.index', [
+            'data' => $data,
+            'customer' => $customer,
+            'rute' => $rute,
+            'rute_id' => $rute_id,
+            'filter_date' => $req['filter_date'] ?? null,
+            'tanggal_filter' => $req['tanggal_filter'] ?? null,
+
+        ]);
+
+    }
+
+    public function keranjang_tagihan_lanjut(Request $request, Customer $customer)
+    {
+        $data = $request->validate([
+            'penyesuaian' => 'required',
+            'tanggal_hardcopy' => 'required',
+            'estimasi_pembayaran' => 'required',
+        ]);
+
+        $data['tanggal_hardcopy'] = Carbon::createFromFormat('d-m-Y', $data['tanggal_hardcopy'])->format('Y-m-d');
+        $data['estimasi_pembayaran'] = Carbon::createFromFormat('d-m-Y', $data['estimasi_pembayaran'])->format('Y-m-d');
+        $data['penyesuaian'] = str_replace('.', '', $data['penyesuaian']);
+        $data['lunas'] = 0;
+        $data['tanggal'] = Carbon::now()->format('Y-m-d');
+
+        $tagihan = Transaksi::getKeranjangTagihanData($customer->id);
         $total = $tagihan->sum('nominal_tagihan');
 
         $ppn = $customer->ppn == 1 ? $total * 0.11 : 0;
         $pph = $customer->pph == 1 ? $total * 0.02 : 0;
 
-        $total_tagihan = $total + $ppn - $pph;
+        $data['total_awal'] = $total + $ppn - $pph;
 
-        $invoiceTagihan['tanggal'] = date('Y-m-d');
-        // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
-        $invoiceTagihan['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->max('no_invoice') + 1;
-        $invoiceTagihan['customer_id'] = $customer->id;
-        $invoiceTagihan['total_bayar'] = 0;
-        $invoiceTagihan['sisa_tagihan'] = $total_tagihan;
-        $invoiceTagihan['total_tagihan'] = $total_tagihan;
-        $invoiceTagihan['lunas'] = 0;
-        $invoiceTagihan['periode'] = "Periode ".$invoiceTagihan['no_invoice'];
+        $total_tagihan = ($total + $ppn - $pph) + $data['penyesuaian'];
 
-        $invoice = InvoiceTagihan::create($invoiceTagihan);
+        $data['ppn'] = $ppn;
+        $data['pph'] = $pph;
+        $data['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->max('no_invoice') + 1;
+        $data['customer_id'] = $customer->id;
+        $data['total_bayar'] = 0;
+        $data['sisa_tagihan'] = $total_tagihan;
+        $data['total_tagihan'] = $total_tagihan;
+        $data['lunas'] = 0;
+        $data['periode'] = "Periode ".$data['no_invoice'];
 
-        foreach ($tagihan as $key => $value) {
-            $value->update([
-                'tagihan' => 1,
-            ]);
+        try {
+            DB::beginTransaction();
 
-            InvoiceTagihanDetail::create([
-                'invoice_tagihan_id' => $invoice->id,
-                'transaksi_id' => $value->id,
-            ]);
+            $invoice = InvoiceTagihan::create($data);
+
+            foreach ($tagihan as $key => $value) {
+                $value->update([
+                    'tagihan' => 1,
+                    'keranjang' => 0,
+                ]);
+
+                InvoiceTagihanDetail::create([
+                    'invoice_tagihan_id' => $invoice->id,
+                    'transaksi_id' => $value->id,
+                ]);
+            }
+
+            DB::commit();
+
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)->with('error', 'Terdapat kesalahan!!');
         }
 
-        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
 
+
+        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
     }
+
+    public function keranjang_tagihan_export(Customer $customer, Request $request)
+    {
+        $req = $request->validate([
+            'rute_id' => 'nullable|exists:rutes,id',
+            'filter_date' => 'nullable|required_if:tanggal_filter,!=, null|in:tanggal_muat,tanggal_bongkar,tanggal',
+            'tanggal_filter' => 'nullable|required_if:filter_date,tanggal_muat,tanggal_bongkar,tanggal',
+        ]);
+
+        $rute_id = $req['rute_id'] ?? null;
+        $filter_date = $req['filter_date'] ?? null;
+        $tanggal_filter = $req['tanggal_filter'] ?? null;
+
+        $data = Transaksi::getKeranjangTagihanData($customer->id, $rute_id, $filter_date, $tanggal_filter);
+
+        // get latest data from month before current month
+        // dd($bulan);
+        if (auth()->user()->role == 'admin') {
+            $pdf = PDF::loadview('billing.transaksi.tagihan.export-admin', [
+                'data' => $data,
+                'customer' => $customer,
+            ])->setPaper('a4', 'landscape');
+        } else{
+            $pdf = PDF::loadview('billing.transaksi.tagihan.export', [
+                'data' => $data,
+                'customer' => $customer,
+            ])->setPaper('a4', 'landscape');
+        }
+
+
+        return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
+    }
+
+    public function keranjang_tagihan_delete(Customer $customer, Transaksi $transaksi)
+    {
+        $transaksi->update([
+            'keranjang' => 0,
+        ]);
+
+        return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)->with('success', 'Berhasil menghapus data!!');
+
+}
+    // public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
+    // {
+    //     $data = $request->validate([
+    //         'selectedData' => 'required',
+    //     ]);
+    //     // trim string selectedData
+    //     $data['selectedData'] = trim($data['selectedData'], ',');
+    //     // make string selectedData to array
+    //     $data['selectedData'] = explode(',', $data['selectedData']);
+
+    //     // dd($data['selectedData']);
+
+    //     $tagihan = Transaksi::whereIn('id', $data['selectedData'])->get();
+
+    //     $total = $tagihan->sum('nominal_tagihan');
+
+    //     $ppn = $customer->ppn == 1 ? $total * 0.11 : 0;
+    //     $pph = $customer->pph == 1 ? $total * 0.02 : 0;
+
+    //     $total_tagihan = $total + $ppn - $pph;
+
+    //     $invoiceTagihan['tanggal'] = date('Y-m-d');
+    //     // no_invoice from invoice tagihan where customer_id = $customer->id and max no_invoice
+    //     $invoiceTagihan['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->max('no_invoice') + 1;
+    //     $invoiceTagihan['customer_id'] = $customer->id;
+    //     $invoiceTagihan['total_bayar'] = 0;
+    //     $invoiceTagihan['sisa_tagihan'] = $total_tagihan;
+    //     $invoiceTagihan['total_tagihan'] = $total_tagihan;
+    //     $invoiceTagihan['lunas'] = 0;
+    //     $invoiceTagihan['periode'] = "Periode ".$invoiceTagihan['no_invoice'];
+
+    //     $invoice = InvoiceTagihan::create($invoiceTagihan);
+
+    //     foreach ($tagihan as $key => $value) {
+    //         $value->update([
+    //             'tagihan' => 1,
+    //         ]);
+
+    //         InvoiceTagihanDetail::create([
+    //             'invoice_tagihan_id' => $invoice->id,
+    //             'transaksi_id' => $value->id,
+    //         ]);
+    //     }
+
+    //     return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
+
+    // }
 
     public function invoice_tagihan_detail_export(InvoiceTagihan $invoice, Customer $customer)
     {
