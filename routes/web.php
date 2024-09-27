@@ -122,6 +122,14 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::delete('/destroy/{cost}', [App\Http\Controllers\DatabaseController::class, 'cost_operational_delete'])->name('database.cost-operational.delete');
              });
 
+
+             Route::prefix('kreditor')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kreditor'])->name('database.kreditor');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kreditor_store'])->name('database.kreditor.store');
+                Route::patch('/update/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_update'])->name('database.kreditor.update');
+                Route::delete('/destroy/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_destroy'])->name('database.kreditor.destroy');
+             });
+
             Route::post('/persentase-awal-store', [App\Http\Controllers\PersentaseAwalController::class, 'store'])->name('database.persentase-awal-store');
             Route::patch('/persentase-awal-update/{awal}', [App\Http\Controllers\PersentaseAwalController::class, 'update'])->name('database.persentase-awal-update');
             Route::delete('/persentase-awal-destroy/{awal}', [App\Http\Controllers\PersentaseAwalController::class, 'destroy'])->name('database.persentase-awal-destroy');
