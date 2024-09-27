@@ -151,8 +151,8 @@
                     <th colspan="2" class="text-start align-middle">Grand Total</th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
-                    <th colspan="4" class="text-center align-middle">{{number_format($grandTotal, 0, ',','.')}}</th>
                     <th class="text-end align-middle"></th>
+                    <th colspan="4" class="text-center align-middle">{{number_format($grandTotal, 0, ',','.')}}</th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
