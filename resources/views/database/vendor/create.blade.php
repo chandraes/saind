@@ -159,7 +159,7 @@
                     <label for="pembayaran" class="form-label">Pembayaran</label>
                     <select class="form-select" name="pembayaran" id="pembayaran">
                         <option value="opname">Opname</option>
-                        <option value="titipan">Titipan</option>
+                        <option value="titipan">Khusus</option>
                     </select>
                 </div>
             </div>

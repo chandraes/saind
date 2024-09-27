@@ -158,7 +158,7 @@
                 <label for="pembayaran" class="form-label">Pembayaran</label>
                 <select class="form-select" name="pembayaran" id="pembayaran">
                     <option value="opname" {{$vendor->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
-                    <option value="titipan" {{$vendor->pembayaran == 'titipan' ? 'selected' : ''}}>Titipan</option>
+                    <option value="titipan" {{$vendor->pembayaran == 'titipan' ? 'selected' : ''}}>Khusus</option>
                 </select>
             </div>
             <hr>
