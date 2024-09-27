@@ -82,6 +82,12 @@
                 <h4 class="mt-3">PERSENTASE PAJAK</h4>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-3 mb-3">
+            <a href="#" class="text-decoration-none">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <h4 class="mt-3">PERSENTASE BUNGA PINJAMAN</h4>
+            </a>
+        </div>
     </div>
     <hr>
     <div class="row justify-content-left">
