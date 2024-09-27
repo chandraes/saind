@@ -403,6 +403,12 @@ Route::group(['middleware' => ['auth']], function() {
                 });
             });
 
+            // Form Bunga Investor
+            Route::prefix('bunga-investor')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
+                Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
+            });
+
 
             // form kasbon
             Route::prefix('kasbon')->group(function(){
