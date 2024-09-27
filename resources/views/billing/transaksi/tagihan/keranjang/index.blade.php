@@ -243,8 +243,41 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
 
                 </td>
-                <td class="text-center align-middle"><strong>Total</strong></td>
+                <td class="text-center align-middle"><strong>Total Dpp</strong></td>
                 <td class="text-end align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class=""
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+
+                </td>
+                <td class="text-center align-middle"><strong>Penyesuaian</strong></td>
+                <td class="text-end align-middle">{{number_format(0, 0, ',', '.')}}
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class=""
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+
+                </td>
+                <td class="text-center align-middle"><strong>Penalti</strong></td>
+                <td class="text-end align-middle">{{number_format(0, 0, ',', '.')}}
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class=""
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+
+                </td>
+                <td class="text-center align-middle"><strong>Grand Total Dpp</strong></td>
+                <td class="text-end align-middle">{{number_format(0, 0, ',', '.')}}
                 </td>
                 <td></td>
             </tr>
@@ -279,7 +312,7 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
-                <td class="text-center align-middle"><strong>Tagihan</strong></td>
+                <td class="text-center align-middle"><strong>Total Tagihan</strong></td>
                 <td class="text-end align-middle"> <strong>
                         {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
@@ -300,7 +333,7 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="total" class="form-label">Total</label>
+                            <label for="total" class="form-label">Total Dpp</label>
                             <input type="text" class="form-control" name="total" id="total"
                                 value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
                         </div>
@@ -471,7 +504,7 @@
         });
 
         var dropdownMenu = $('#columnFilter');
-
+ 
         // Clear the existing dropdown menu
         dropdownMenu.empty();
 

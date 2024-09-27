@@ -66,6 +66,7 @@
                     <th class="text-center align-middle">Nominal Tagihan</th>
                     <th class="text-center align-middle">Estimasi Nominal Invoice</th>
                     <th class="text-center align-middle">Penyesuaian</th>
+                    <th class="text-center align-middle">Penalti</th>
                     <th class="text-center align-middle">Pembayaran Invoice</th>
                     <th class="text-center align-middle">Periode</th>
                     <th class="text-center align-middle">Tgl Submit Softcopy</th>
@@ -102,6 +103,7 @@
                                 @endif
                                 <td class="text-end align-middle">{{ number_format($invoice['tagihan_awal'], 0,',','.') }}</td>
                                 <td class="text-end align-middle">{{ number_format($invoice['penyesuaian'], 0,',','.') }}</td>
+                                <td class="text-end align-middle">0</td>
                                 <td class="text-end align-middle">{{ number_format($invoice['total_tagihan'], 0,',','.') }}</td>
                                 <td class="text-center align-middle">{{ $invoice['periode'] }}</td>
                                 <td class="text-center align-middle">{{ $invoice['tanggal_submit_softcopy'] }}</td>
@@ -117,7 +119,8 @@
                             @endforeach
                             @else
                                 <td class="text-end align-middle">0</td>
-                                <td class="text-center align-middle"></td>
+                                <td class="text-end align-middle">0</td>
+                                <td class="text-end align-middle">0</td>
                                 <td class="text-end align-middle">0</td>
                                 <td class="text-center align-middle">-</td>
                                 <td class="text-center align-middle">-</td>
@@ -142,12 +145,14 @@
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle"></th>
                 </tr>
                 <tr>
                     <th colspan="2" class="text-start align-middle">Grand Total</th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th colspan="4" class="text-center align-middle">{{number_format($grandTotal, 0, ',','.')}}</th>
+                    <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
