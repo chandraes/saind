@@ -731,6 +731,7 @@ class RekapController extends Controller
         return view('rekap.nota-lunas-detail', [
             'data' => $invoice->transaksi,
             'customer' => $customer,
+            'invoice' => $invoice,
             'periode' => $periode,
             'invoice_id' => $invoice->id
         ]);

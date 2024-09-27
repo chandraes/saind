@@ -56,6 +56,7 @@ class InvoiceController extends Controller
             'data' => $data,
             'customer' => $customer,
             'periode' => $periode,
+            "invoice" => $invoice,
             'invoice_id' => $invoice->id
         ]);
     }

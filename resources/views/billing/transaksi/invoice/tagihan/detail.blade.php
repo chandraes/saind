@@ -193,7 +193,7 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
-                <td align="right" class="align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
+                <td align="right" class="align-middle text-end">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
                 <td>{{number_format($profit, 0, ',', '.')}}</td>
                 <td>{{number_format($profit_persen, 2, ',', '.')}}%</td>
@@ -205,7 +205,7 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
-                <td align="right" class="align-middle">
+                <td align="right" class="align-middle text-end">
 
                     {{number_format($ppn, 0, ',', '.')}}
 
@@ -220,7 +220,7 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
-                <td align="right" class="align-middle">
+                <td align="right" class="align-middle text-end">
 
                     {{number_format($pph, 0, ',', '.')}}
 
@@ -235,8 +235,34 @@
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
-                <td align="right" class="align-middle"> <strong>
+                <td align="right" class="align-middle text-end"> <strong>
                         {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Penyesuaian</strong></td>
+                <td align="right" class="text-end align-middle"> <strong>
+                        {{number_format($invoice->penyesuaian, 0, ',', '.')}}</strong>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Grand Total</strong></td>
+                <td align="right" class="text-end align-middle"> <strong>
+                        {{number_format($invoice->total_tagihan, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
                 <td></td>
