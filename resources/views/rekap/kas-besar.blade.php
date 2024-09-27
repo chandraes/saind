@@ -111,23 +111,23 @@
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->uraian}}</td>
+                    <td class="text-start align-middle">{{$d->uraian}}</td>
                     <td class="text-center align-middle">{{$d->nomor_kode_deposit ?
                         $d->kode_deposit.sprintf("%02d",$d->nomor_kode_deposit) : ''}}</td>
                     <td class="text-center align-middle">{{$d->nomor_kode_kas_kecil ?
                         $d->kode_kas_kecil.sprintf("%02d",$d->nomor_kode_kas_kecil) : ''}}</td>
                     <td class="text-center align-middle">{{$d->nomor_kode_kas_uang_jalan ?
                         $d->kode_kas_uang_jalan.sprintf("%02d",$d->nomor_kode_kas_uang_jalan) : ''}}</td>
-                    <td class="text-center align-middle">{{$d->jenis_transaksi->id === 1 ?
+                    <td class="text-end align-middle">{{$d->jenis_transaksi->id === 1 ?
                         number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
                     </td>
-                    <td class="text-center align-middle text-danger">{{$d->jenis_transaksi->id === 2 ?
+                    <td class="text-end align-middle text-danger">{{$d->jenis_transaksi->id === 2 ?
                         number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
                     </td>
-                    <td class="text-center align-middle">{{number_format($d->saldo, 0, ',', '.')}}</td>
+                    <td class="text-end align-middle">{{number_format($d->saldo, 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{$d->transfer_ke}}</td>
                     <td class="text-center align-middle">{{$d->bank}}</td>
-                    <td class="text-center align-middle">{{number_format($d->modal_investor, 0, ',', '.')}}</td>
+                    <td class="text-end align-middle">{{number_format($d->modal_investor, 0, ',', '.')}}</td>
                 </tr>
                 @endforeach
                 <tr>
@@ -148,12 +148,12 @@
                 <tr>
                     <td colspan="4" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
                     <td></td>
-                    <td class="text-center align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
+                    <td class="text-end align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
                             1)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
-                    <td class="text-center align-middle text-danger"><strong>{{number_format($data->where('jenis_transaksi_id',
+                    <td class="text-end align-middle text-danger"><strong>{{number_format($data->where('jenis_transaksi_id',
                             2)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
                     {{-- latest saldo --}}
-                    <td class="text-center align-middle">
+                    <td class="text-end align-middle">
                         <strong>
                             {{number_format($data->where('jenis_transaksi_id',
                             1)->sum('nominal_transaksi') - $data->where('jenis_transaksi_id',
@@ -162,7 +162,7 @@
                     </td>
                     <td></td>
                     <td></td>
-                    <td class="text-center align-middle">
+                    <td class="text-end align-middle">
                         <strong>
                             {{$data->last() ? number_format($data->last()->modal_investor_terakhir, 0, ',', '.') : ''}}
                         </strong>
