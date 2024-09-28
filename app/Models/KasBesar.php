@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\db\Kreditor;
+use App\Models\Rekap\BungaInvestor;
 use App\Services\StarSender;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +16,7 @@ class KasBesar extends Model
 
     public function lastKasBesar()
     {
-        return $this->latest()->orderBy('id', 'desc')->first();
+        return $this->orderBy('id', 'desc')->first();
     }
 
     public function jenis_transaksi()
@@ -34,12 +36,12 @@ class KasBesar extends Model
 
     public function saldoTerakhir()
     {
-        return $this->latest()->orderBy('id', 'desc')->first()->saldo ?? 0;
+        return $this->orderBy('id', 'desc')->first()->saldo ?? 0;
     }
 
     public function modalInvestorTerakhir()
     {
-        return $this->latest()->orderBy('id', 'desc')->first()->modal_investor_terakhir ?? 0;
+        return $this->orderBy('id', 'desc')->first()->modal_investor_terakhir ?? 0;
     }
 
     public function insert_bypass($data)
@@ -212,6 +214,87 @@ class KasBesar extends Model
                     'message' => $th->getMessage(),
                 ];
 
+        }
+    }
+
+    public function bunga_investor($data)
+    {
+        $kreditor = Kreditor::find($data['kreditor_id']);
+        $data['nominal'] = str_replace('.', '', $data['nominal_transaksi']);
+        $data['pph'] = $kreditor->apa_pph == 1 ? $data['nominal'] * 0.02 : 0;
+        $data['total'] = $data['nominal'] - $data['pph'];
+
+        $saldo = $this->saldoTerakhir();
+
+        if($data['total'] > $saldo){
+            return [
+                'status' => 'error',
+                'message' => 'Saldo kas besar tidak mencukupi!! Sisa Saldo : Rp. '.number_format($saldo, 0, ',', '.'),
+            ];
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $storeBunga = BungaInvestor::create([
+                'kreditor_id' => $data['kreditor_id'],
+                'nominal' => $data['nominal'],
+                'pph' => $data['pph'],
+                'total' => $data['total'],
+            ]);
+
+            $kas = [
+                'tanggal' => date('Y-m-d'),
+                'uraian' => 'Bunga Investor '.$kreditor->nama,
+                'jenis_transaksi_id' => 2,
+                'nominal_transaksi' => $storeBunga->total,
+                'saldo' => $this->saldoTerakhir() - $storeBunga->total,
+                'transfer_ke' => substr($data['transfer_ke'], 0, 15),
+                'bank' => $data['bank'],
+                'no_rekening' => $data['no_rekening'],
+                'modal_investor_terakhir' => $this->modalInvestorTerakhir(),
+
+            ];
+
+            $storeKas = $this->create($kas);
+
+            $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "*Form Bunga Investor*\n".
+                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                        "Nama Kreditor : ".$kreditor->nama."\n\n".
+                        "Nominal : *Rp. ".number_format($storeBunga->nominal, 0, ',', '.')."*\n".
+                        "PPH        : *Rp. ".number_format($storeBunga->pph, 0, ',', '.')."*\n".
+                        "Total      : *Rp. ".number_format($storeBunga->total, 0, ',', '.')."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank      : ".$storeKas->bank."\n".
+                        "Nama    : ".$storeKas->transfer_ke."\n".
+                        "No. Rek : ".$storeKas->no_rekening."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Besar : \n".
+                        "Rp. ".number_format($this->saldoTerakhir(), 0, ',', '.')."\n\n".
+                        "Total Modal Investor : \n".
+                        "Rp. ".number_format($this->modalInvestorTerakhir(), 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+            DB::commit();
+
+            $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+
+            $this->sendWa($tujuan, $pesan);
+
+            return [
+                'status' => 'success',
+                'message' => 'Berhasil menambahkan data',
+            ];
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollback();
+
+            return [
+                'status' => 'error',
+                'message' => "Gagal Menyimpan Data. " . $th->getMessage(),
+            ];
         }
     }
 

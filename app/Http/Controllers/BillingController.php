@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CostOperational;
 use App\Models\Customer;
+use App\Models\db\Kreditor;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
 use App\Models\InvoiceCsr;
@@ -142,5 +143,39 @@ class BillingController extends Controller
         $res = $db->cost_operational_masuk($data);
 
         return redirect()->route('billing.form-cost-operational')->with($res['status'], $res['message']);
+    }
+
+    public function bunga_investor()
+    {
+        $kreditor = Kreditor::where('is_active', 1)->get();
+
+        if($kreditor->isEmpty()) {
+            return redirect()->route('database.kreditor')->with('error', 'Data kreditor kosong, silahkan tambahkan data kreditor terlebih dahulu');
+        }
+        $db = new KasBesar();
+        $modal = $db->modalInvestorTerakhir() < 0 ? $db->modalInvestorTerakhir() * -1 : 0;
+
+        return view('billing.form-bunga-investor.index', [
+            'kreditor' => $kreditor,
+            'modal' => $modal,
+        ]);
+    }
+
+    public function bunga_investor_store(Request $request)
+    {
+        $data = $request->validate([
+            'kreditor_id' => 'required|exists:kreditors,id',
+            'nominal_transaksi' => 'required',
+            'transfer_ke' => 'required',
+            'no_rekening' => 'required',
+            'bank' => 'required',
+        ]);
+
+        $db = new KasBesar();
+
+        $res = $db->bunga_investor($data);
+
+        return redirect()->route('billing.index')->with($res['status'], $res['message']);
+
     }
 }

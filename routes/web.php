@@ -122,6 +122,14 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::delete('/destroy/{cost}', [App\Http\Controllers\DatabaseController::class, 'cost_operational_delete'])->name('database.cost-operational.delete');
              });
 
+
+             Route::prefix('kreditor')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'kreditor'])->name('database.kreditor');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'kreditor_store'])->name('database.kreditor.store');
+                Route::patch('/update/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_update'])->name('database.kreditor.update');
+                Route::delete('/destroy/{kreditor}', [App\Http\Controllers\DatabaseController::class, 'kreditor_destroy'])->name('database.kreditor.destroy');
+             });
+
             Route::post('/persentase-awal-store', [App\Http\Controllers\PersentaseAwalController::class, 'store'])->name('database.persentase-awal-store');
             Route::patch('/persentase-awal-update/{awal}', [App\Http\Controllers\PersentaseAwalController::class, 'update'])->name('database.persentase-awal-update');
             Route::delete('/persentase-awal-destroy/{awal}', [App\Http\Controllers\PersentaseAwalController::class, 'destroy'])->name('database.persentase-awal-destroy');
@@ -395,6 +403,12 @@ Route::group(['middleware' => ['auth']], function() {
                 });
             });
 
+            // Form Bunga Investor
+            Route::prefix('bunga-investor')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
+                Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
+            });
+
 
             // form kasbon
             Route::prefix('kasbon')->group(function(){
@@ -521,6 +535,10 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('rekap')->group(function(){
             Route::get('/', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap.index');
+
+            Route::prefix('bunga-investor')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'bunga_investor'])->name('rekap.bunga-investor');
+            });
 
             Route::prefix('tagihan-invoice')->group(function(){
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'tagihan_invoice'])->name('rekap.tagihan-invoice');

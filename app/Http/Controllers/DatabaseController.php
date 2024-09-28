@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AktivasiMaintenance;
 use App\Models\BarangMaintenance;
 use App\Models\CostOperational;
+use App\Models\db\Kreditor;
 use App\Models\KategoriBarangMaintenance;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
@@ -261,6 +262,56 @@ class DatabaseController extends Controller
     public function cost_operational_delete(CostOperational $cost)
     {
         $cost->delete();
+
+        return redirect()->back()->with('success', 'Data berhasil dihapus');
+    }
+
+    public function kreditor()
+    {
+        $data = Kreditor::where('is_active', 1)->get();
+
+        return view('database.kreditor.index', [
+            'data' => $data
+        ]);
+    }
+
+    public function kreditor_store(Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required',
+            'persen' => 'required',
+            'npwp' => 'required',
+            'no_rek' => 'required',
+            'nama_rek' => 'required',
+            'bank' => 'required',
+            'apa_pph' => 'required',
+        ]);
+
+        Kreditor::create($data);
+
+        return redirect()->back()->with('success', 'Data berhasil ditambahkan');
+    }
+
+    public function kreditor_update(Kreditor $kreditor, Request $request)
+    {
+        $data = $request->validate([
+            'nama' => 'required',
+            'persen' => 'required',
+            'npwp' => 'required',
+            'no_rek' => 'required',
+            'nama_rek' => 'required',
+            'bank' => 'required',
+            'apa_pph' => 'required',
+        ]);
+
+        $kreditor->update($data);
+
+        return redirect()->back()->with('success', 'Data berhasil diubah');
+    }
+
+    public function kreditor_destroy(Kreditor $kreditor)
+    {
+        $kreditor->update(['is_active' => 0]);
 
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }

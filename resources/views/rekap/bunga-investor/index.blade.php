@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>REKAP KAS BESAR</u></h1>
+            <h1><u>REKAP BUNGA INVESTOR</u></h1>
             <h1>{{$stringBulanNow}} {{$tahun}}</h1>
         </div>
     </div>
@@ -39,7 +39,7 @@
     </div>
 </div>
 <div class="container-fluid mt-5">
-    <form action="{{route('rekap.kas-besar')}}" method="get">
+    <form action="{{route('rekap.bunga-investor')}}" method="get">
         <div class="row">
             <div class="col-md-3 mb-3">
                 <label for="bulan" class="form-label">Bulan</label>
@@ -70,10 +70,10 @@
                 <label for="tahun" class="form-label">&nbsp;</label>
                 <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
             </div>
-            <div class="col-md-3 mb-3">
+            {{-- <div class="col-md-3 mb-3">
                 <label for="showPrint" class="form-label">&nbsp;</label>
                 <a href="{{route('rekap.kas-besar.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank" class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
-            </div>
+            </div> --}}
         </div>
     </form>
 </div>
@@ -83,90 +83,35 @@
             <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Uraian</th>
-                <th class="text-center align-middle">Deposit</th>
-                <th class="text-center align-middle">Kas Kecil</th>
-                <th class="text-center align-middle">Kas Uang Jalan</th>
-                <th class="text-center align-middle">Masuk</th>
-                <th class="text-center align-middle">Keluar</th>
-                <th class="text-center align-middle">Saldo</th>
-                <th class="text-center align-middle">Transfer Ke Rekening</th>
-                <th class="text-center align-middle">Bank</th>
-                <th class="text-center align-middle">Modal Investor</th>
+                <th class="text-center align-middle">Kreditor</th>
+                <th class="text-center align-middle">Nominal</th>
+                <th class="text-center align-middle">PPh</th>
             </tr>
-            <tr class="table-warning">
 
-                <td colspan="6" class="text-center align-middle">Saldo Bulan
-                    {{$stringBulan}} {{$tahunSebelumnya}}</td>
-                <td></td>
-                <td class="text-center align-middle">Rp. {{$dataSebelumnya ? number_format($dataSebelumnya->saldo,
-                    0, ',','.') : ''}}</td>
-                <td></td>
-                <td></td>
-                <td class="text-center align-middle">Rp. {{$dataSebelumnya ?
-                    number_format($dataSebelumnya->modal_investor_terakhir, 0,',','.') : ''}}</td>
-            </tr>
             </thead>
             <tbody>
                 @foreach ($data as $d)
                 <tr>
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-start align-middle">{{$d->uraian}}</td>
-                    <td class="text-center align-middle">{{$d->nomor_kode_deposit ?
-                        $d->kode_deposit.sprintf("%02d",$d->nomor_kode_deposit) : ''}}</td>
-                    <td class="text-center align-middle">{{$d->nomor_kode_kas_kecil ?
-                        $d->kode_kas_kecil.sprintf("%02d",$d->nomor_kode_kas_kecil) : ''}}</td>
-                    <td class="text-center align-middle">{{$d->nomor_kode_kas_uang_jalan ?
-                        $d->kode_kas_uang_jalan.sprintf("%02d",$d->nomor_kode_kas_uang_jalan) : ''}}</td>
-                    <td class="text-end align-middle">{{$d->jenis_transaksi->id === 1 ?
-                        number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
+                    <td class="text-start align-middle">{{$d->kreditor->nama}}</td>
+                    <td class="text-end align-middle">
+                        {{$d->nf_nominal}}
                     </td>
-                    <td class="text-end align-middle text-danger">{{$d->jenis_transaksi->id === 2 ?
-                        number_format($d->nominal_transaksi, 0, ',', '.') : ''}}
+                    <td class="text-end align-middle">
+                        {{$d->nf_pph}}
                     </td>
-                    <td class="text-end align-middle">{{number_format($d->saldo, 0, ',', '.')}}</td>
-                    <td class="text-center align-middle">{{$d->transfer_ke}}</td>
-                    <td class="text-center align-middle">{{$d->bank}}</td>
-                    <td class="text-end align-middle">{{number_format($d->modal_investor, 0, ',', '.')}}</td>
                 </tr>
                 @endforeach
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4" class="text-center align-middle"><strong>GRAND TOTAL</strong></td>
-                    <td></td>
-                    <td class="text-end align-middle"><strong>{{number_format($data->where('jenis_transaksi_id',
-                            1)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
-                    <td class="text-end align-middle text-danger"><strong>{{number_format($data->where('jenis_transaksi_id',
-                            2)->sum('nominal_transaksi'), 0, ',', '.')}}</strong></td>
-                    {{-- latest saldo --}}
-                    <td class="text-end align-middle">
-                        <strong>
-                            {{number_format($data->where('jenis_transaksi_id',
-                            1)->sum('nominal_transaksi') - $data->where('jenis_transaksi_id',
-                            2)->sum('nominal_transaksi') + ($dataSebelumnya ? $dataSebelumnya->saldo : 0), 0,',','.')}}
-                        </strong>
-                    </td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-end align-middle">
-                        <strong>
-                            {{$data->last() ? number_format($data->last()->modal_investor_terakhir, 0, ',', '.') : ''}}
-                        </strong>
-                    </td>
+                    <th colspan="2" class="text-end align-middle">Total</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('nominal'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('pph'), 0, ',','.')}}</th>
+                </tr>
+                <tr>
+                    <th colspan="2" class="text-end align-middle">Grand Total</th>
+                    <th colspan="2" class="text-end align-middle">{{number_format($data->sum('nominal') + $data->sum('pph'), 0, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>
@@ -191,7 +136,7 @@
             "ordering": false,
             "searching": false,
             "scrollCollapse": true,
-            "scrollY": "550px",
+            "scrollY": "450px",
             "fixedColumns": {
                 "leftColumns": 4,
                 "rightColumns": 2
