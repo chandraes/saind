@@ -28,6 +28,7 @@ use App\Models\MaintenanceLog;
 use App\Models\OdoLog;
 use App\Services\StarSender;
 use App\Models\PasswordKonfirmasi;
+use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapBarang;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -1254,6 +1255,34 @@ class RekapController extends Controller
         return view('rekap.tagihan-invoice', [
             'data' => $data,
         ]);
+    }
+
+    public function bunga_investor(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+           $tahun = $request->tahun ?? date('Y');
+           $dataTahun = BungaInvestor::selectRaw('YEAR(created_at) tahun')->groupBy('tahun')->get();
+
+           $data = BungaInvestor::whereMonth('created_at', $bulan)->whereYear('created_at', $tahun)->get();
+
+           $bulanSebelumnya = $bulan - 1;
+           $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
+           $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
+           $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+           $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+           // get latest data from month before current month
+        //    $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
+           // dd($bulan);
+           return view('rekap.bunga-investor.index', [
+               'data' => $data,
+               'dataTahun' => $dataTahun,
+            //    'dataSebelumnya' => $dataSebelumnya,
+               'stringBulan' => $stringBulan,
+               'tahun' => $tahun,
+               'tahunSebelumnya' => $tahunSebelumnya,
+               'bulan' => $bulan,
+               'stringBulanNow' => $stringBulanNow,
+           ]);
     }
 
 }

@@ -12,7 +12,7 @@ class BungaInvestor extends Model
 
     protected $guarded = ['id'];
 
-    protected $appends = ['tanggal'];
+    protected $appends = ['tanggal', 'nf_nominal', 'nf_pph'];
 
     public function kreditor()
     {
@@ -22,5 +22,15 @@ class BungaInvestor extends Model
     public function getTanggalAttribute()
     {
         return date('d-m-Y', strtotime($this->created_at));
+    }
+
+    public function getNfNominalAttribute()
+    {
+        return number_format($this->nominal, 0, ',', '.');
+    }
+
+    public function getNfPphAttribute()
+    {
+        return number_format($this->pph, 0, ',', '.');
     }
 }
