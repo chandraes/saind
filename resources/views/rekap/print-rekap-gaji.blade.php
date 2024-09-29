@@ -2,7 +2,7 @@
 @section('content')
 <div class="container-fluid">
     <center>
-        <h2>REKAP GAJI KARYAWANR</h2>
+        <h2>REKAP GAJI KARYAWAN</h2>
         <h2>{{$bulan}} {{$tahun}}</h2>
     </center>
 </div>
