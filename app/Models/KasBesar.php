@@ -226,7 +226,7 @@ class KasBesar extends Model
 
         $saldo = $this->saldoTerakhir();
         $pesan = [];
-        
+
         if($data['total'] > $saldo){
             return [
                 'status' => 'error',
@@ -283,9 +283,9 @@ class KasBesar extends Model
                     'jenis_transaksi_id' => 2,
                     'nominal_transaksi' => $storeBunga->pph,
                     'saldo' => $this->saldoTerakhir() - $storeBunga->pph,
-                    'transfer_ke' => substr($data['transfer_ke'], 0, 15),
-                    'bank' => $data['bank'],
-                    'no_rekening' => $data['no_rekening'],
+                    'transfer_ke' => substr("Pajak", 0, 15),
+                    'bank' => "Pajak",
+                    'no_rekening' => "Rekening Pajak",
                     'modal_investor_terakhir' => $this->modalInvestorTerakhir(),
 
                 ];
@@ -308,7 +308,7 @@ class KasBesar extends Model
                             "Terima kasih 🙏🙏🙏\n";
             }
 
-            // DB::commit();
+            DB::commit();
 
             $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
 
