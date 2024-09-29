@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>FORM BUNGA INVESTOR</u></h1>
+            <h1><u>FORM BUNGA KREDITUR</u></h1>
         </div>
     </div>
     @include('swal')
@@ -17,7 +17,7 @@
                 @endif" name="tanggal" id="tanggal" value="{{date('d M Y')}}" disabled>
             </div>
             <div class="col-md-8 mb-3">
-                <label for="uraian" class="form-label">Kreditor</label>
+                <label for="uraian" class="form-label">Kreditur</label>
                 <select class="form-select" name="kreditor_id" id="kreditor_id" required onchange="checkKreditor()">
                     <option value="" disabled selected>-- Pilih Salah Satu --</option>
                     @foreach ($kreditor as $d)
@@ -27,7 +27,7 @@
 
             </div>
             <div class="col-md-4 mb-3">
-                <label for="nominal_transaksi" class="form-label">Nominal</label>
+                <label for="nominal_transaksi" class="form-label">Nilai</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('nominal_transaksi'))
@@ -55,7 +55,7 @@
                 @endif
             </div>
             <div class="col-md-4 mb-3">
-                <label for="grand_total" class="form-label">Grand Total</label>
+                <label for="grand_total" class="form-label">Bunga Kreditur</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
                     <input type="text" class="form-control @if ($errors->has('grand_total'))

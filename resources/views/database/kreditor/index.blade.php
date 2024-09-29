@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>BIODATA KREDITOR</u></h1>
+            <h1><u>BIODATA KREDITUR</u></h1>
         </div>
     </div>
     <div class="flex-row justify-content-between mt-3">
@@ -15,7 +15,7 @@
                     <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
                             Database</a></td>
                     <td><a href="#" data-bs-toggle="modal" data-bs-target="#createInvestor"><img
-                                src="{{asset('images/kreditor.svg')}}" width="30"> Tambah Biodata Kreditor</a>
+                                src="{{asset('images/kreditor.svg')}}" width="30"> Tambah Biodata Kreditur</a>
 
                     </td>
                 </tr>

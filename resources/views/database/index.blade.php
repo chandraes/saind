@@ -85,7 +85,7 @@
         <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.kreditor')}}" class="text-decoration-none">
                 <img src="{{asset('images/kreditor.svg')}}" alt="" width="70">
-                <h4 class="mt-3">BIODATA KREDITOR</h4>
+                <h4 class="mt-3">BIODATA KREDITUR</h4>
             </a>
         </div>
     </div>

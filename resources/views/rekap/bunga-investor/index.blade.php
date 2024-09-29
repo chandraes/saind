@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>REKAP BUNGA INVESTOR</u></h1>
+            <h1><u>REKAP BUNGA KREDITUR</u></h1>
             <h1>{{$stringBulanNow}} {{$tahun}}</h1>
         </div>
     </div>
@@ -83,8 +83,8 @@
             <thead class=" table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Kreditor</th>
-                <th class="text-center align-middle">Nominal</th>
+                <th class="text-center align-middle">Kreditur</th>
+                <th class="text-center align-middle">Nilai</th>
                 <th class="text-center align-middle">PPh</th>
             </tr>
 
@@ -95,7 +95,7 @@
                     <td class="text-center align-middle">{{$d->tanggal}}</td>
                     <td class="text-start align-middle">{{$d->kreditor->nama}}</td>
                     <td class="text-end align-middle">
-                        {{$d->nf_nominal}}
+                        {{$d->nf_total}}
                     </td>
                     <td class="text-end align-middle">
                         {{$d->nf_pph}}
@@ -106,12 +106,12 @@
             <tfoot>
                 <tr>
                     <th colspan="2" class="text-end align-middle">Total</th>
-                    <th class="text-end align-middle">{{number_format($data->sum('nominal'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->sum('total'), 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->sum('pph'), 0, ',','.')}}</th>
                 </tr>
                 <tr>
                     <th colspan="2" class="text-end align-middle">Grand Total</th>
-                    <th colspan="2" class="text-end align-middle">{{number_format($data->sum('nominal') + $data->sum('pph'), 0, ',','.')}}</th>
+                    <th colspan="2" class="text-end align-middle">{{number_format($data->sum('total') + $data->sum('pph'), 0, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>

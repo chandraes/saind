@@ -225,7 +225,8 @@ class KasBesar extends Model
         $data['total'] = $data['nominal'] - $data['pph'];
 
         $saldo = $this->saldoTerakhir();
-
+        $pesan = [];
+        
         if($data['total'] > $saldo){
             return [
                 'status' => 'error',
@@ -245,7 +246,7 @@ class KasBesar extends Model
 
             $kas = [
                 'tanggal' => date('Y-m-d'),
-                'uraian' => 'Bunga Investor '.$kreditor->nama,
+                'uraian' => 'Bunga Kreditur '.$kreditor->nama,
                 'jenis_transaksi_id' => 2,
                 'nominal_transaksi' => $storeBunga->total,
                 'saldo' => $this->saldoTerakhir() - $storeBunga->total,
@@ -258,13 +259,11 @@ class KasBesar extends Model
 
             $storeKas = $this->create($kas);
 
-            $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                        "*Form Bunga Investor*\n".
+            $pesan[] =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "*Form Bunga Kreditur*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                        "Nama Kreditor : ".$kreditor->nama."\n\n".
-                        "Nominal : *Rp. ".number_format($storeBunga->nominal, 0, ',', '.')."*\n".
-                        "PPH        : *Rp. ".number_format($storeBunga->pph, 0, ',', '.')."*\n".
-                        "Total      : *Rp. ".number_format($storeBunga->total, 0, ',', '.')."*\n\n".
+                        "Nama Kreditur : ".$kreditor->nama."\n\n".
+                        "Nilai      : *Rp. ".number_format($storeBunga->total, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
                         "Bank      : ".$storeKas->bank."\n".
                         "Nama    : ".$storeKas->transfer_ke."\n".
@@ -276,11 +275,46 @@ class KasBesar extends Model
                         "Rp. ".number_format($this->modalInvestorTerakhir(), 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
-            DB::commit();
+            if ($kreditor->apa_pph == 1) {
+
+                $kasPph = [
+                    'tanggal' => date('Y-m-d'),
+                    'uraian' => 'PPH Bunga Kreditur '.$kreditor->nama,
+                    'jenis_transaksi_id' => 2,
+                    'nominal_transaksi' => $storeBunga->pph,
+                    'saldo' => $this->saldoTerakhir() - $storeBunga->pph,
+                    'transfer_ke' => substr($data['transfer_ke'], 0, 15),
+                    'bank' => $data['bank'],
+                    'no_rekening' => $data['no_rekening'],
+                    'modal_investor_terakhir' => $this->modalInvestorTerakhir(),
+
+                ];
+
+                $storePph = $this->create($kasPph);
+
+                $pesan[] =   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                            "*Form PPh Bunga Kreditur*\n".
+                            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                            "Nilai PPH        : *Rp. ".number_format($storePph->nominal_transaksi, 0, ',', '.')."*\n\n".
+                            "Ditransfer ke rek:\n\n".
+                            "Bank      : ".$storePph->bank."\n".
+                            "Nama    : ".$storePph->transfer_ke."\n".
+                            "No. Rek : ".$storePph->no_rekening."\n\n".
+                            "==========================\n".
+                            "Sisa Saldo Kas Besar : \n".
+                            "Rp. ".number_format($this->saldoTerakhir(), 0, ',', '.')."\n\n".
+                            "Total Modal Investor : \n".
+                            "Rp. ".number_format($this->modalInvestorTerakhir(), 0, ',', '.')."\n\n".
+                            "Terima kasih 🙏🙏🙏\n";
+            }
+
+            // DB::commit();
 
             $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
 
-            $this->sendWa($tujuan, $pesan);
+            foreach ($pesan as $key => $value) {
+                $this->sendWa($tujuan, $value);
+            }
 
             return [
                 'status' => 'success',

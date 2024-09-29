@@ -33,4 +33,9 @@ class BungaInvestor extends Model
     {
         return number_format($this->pph, 0, ',', '.');
     }
+
+    public function getNfTotalAttribute()
+    {
+        return number_format($this->total, 0, ',', '.');
+    }
 }
