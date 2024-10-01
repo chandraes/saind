@@ -248,7 +248,7 @@
                 </td>
                 <td></td>
             </tr>
-            <tr>
+            {{-- <tr>
                 <td class=""
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
@@ -317,7 +317,7 @@
                         {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
-            </tr>
+            </tr> --}}
         </tfoot>
     </table>
 </div>
@@ -375,7 +375,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="tagi" class="form-label">Grand Total Tagihan</label>
+                            <label for="tagi" class="form-label"><strong>Grand Total Tagihan</strong></label>
                             <input type="text" class="form-control" name="tagi" id="tagi"
                                 value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
                         </div>
