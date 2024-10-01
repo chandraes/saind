@@ -248,7 +248,7 @@
                 </td>
                 <td></td>
             </tr>
-            <tr>
+            {{-- <tr>
                 <td class=""
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
@@ -317,7 +317,7 @@
                         {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
-            </tr>
+            </tr> --}}
         </tfoot>
     </table>
 </div>
@@ -340,27 +340,6 @@
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="Ppn" class="form-label">Ppn</label>
-                            <input type="text" class="form-control" name="Ppn" id="Ppn"
-                                value="{{number_format($ppn, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="Pph" class="form-label">Pph</label>
-                            <input type="text" class="form-control" name="Pph" id="Pph"
-                                value="{{number_format($pph, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="tagi" class="form-label">Total Tagihan</label>
-                            <input type="text" class="form-control" name="tagi" id="tagi"
-                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
                             <label for="penyesuaian" class="form-label">Penyesuaian</label>
                             <input type="text" class="form-control" name="penyesuaian" id="penyesuaian" required
                                 value="0" onkeyup="calculateTotal()" />
@@ -368,10 +347,41 @@
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="grand_total" class="form-label">Grand Total </label>
-                            <input type="text" class="form-control" name="grand_total" id="grand_total" disabled />
+                            <label for="penalty" class="form-label">Penalti</label>
+                            <input type="text" class="form-control" name="penalty" id="penalty" required
+                                value="0" onkeyup="calculateTotal()" />
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="gt_dpp" class="form-label">Grand Total DPP</label>
+                            <input type="text" class="form-control" name="gt_dpp" id="gt_dpp"
+                                value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="ppn" class="form-label">Ppn</label>
+                            <input type="text" class="form-control" name="ppn" id="ppn"
+                                value="{{number_format($ppn, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="Pph" class="form-label">Pph</label>
+                            <input type="text" class="form-control" name="pph" id="pph"
+                                value="{{number_format($pph, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="tagi" class="form-label"><strong>Grand Total Tagihan</strong></label>
+                            <input type="text" class="form-control" name="tagi" id="tagi"
+                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="tanggal_hardcopy" class="form-label">Tanggal Submit Hardcopy</label>
@@ -412,11 +422,22 @@
 <script>
     function calculateTotal()
     {
-        var total = parseFloat($('#tagi').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var total = parseFloat($('#total').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penyesuaian = parseFloat($('#penyesuaian').val().replace(/\./g, '').replace(',', '.')) || 0;
-        var grandTotal = total + penyesuaian;
+        var penalty = parseFloat($('#penalty').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var grandTotal = total + penyesuaian - penalty;
 
-        $('#grand_total').val(grandTotal.toLocaleString('id-ID'));
+        $('#gt_dpp').val(grandTotal.toLocaleString('id-ID'));
+
+        var ppn = Math.round(grandTotal * 0.11);
+        $('#ppn').val(ppn.toLocaleString('id-ID'));
+
+        var pph = Math.round(grandTotal * 0.02);
+        $('#pph').val(pph.toLocaleString('id-ID'));
+
+        var totalTagihan = grandTotal + ppn - pph;
+        $('#tagi').val(totalTagihan.toLocaleString('id-ID'));
+
     }
 
 
@@ -425,6 +446,13 @@
         $('#spinner').show();
 
         var penyesuaian = new Cleave('#penyesuaian', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
+
+            var penalty = new Cleave('#penalty', {
                 numeral: true,
                 numeralThousandsGroupStyle: 'thousand',
                 numeralDecimalMark: ',',
@@ -504,7 +532,7 @@
         });
 
         var dropdownMenu = $('#columnFilter');
- 
+
         // Clear the existing dropdown menu
         dropdownMenu.empty();
 
@@ -561,40 +589,6 @@
 
     });
 
-    function check(checkbox, id) {
-        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
-        var tagihan = parseFloat($(checkbox).data('tagihan'));
-
-        if (checkbox.checked) {
-            totalTagihan += tagihan;
-            $('input[name="selectedData"]').val(function(i, v) {
-                // if end of string, remove comma
-                return v + id + ',';
-
-            });
-        } else {
-            totalTagihan -= tagihan;
-
-            $('input[name="selectedData"]').val(function(i, v) {
-                // remove id from string
-                return v.replace(id + ',', '');
-            });
-        }
-
-        $('#total_tagihan').val(totalTagihan);
-        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
-
-        value = $('input[name="selectedData"]').val();
-
-        if(value.slice(-1) == ','){
-            // remove comma from last number
-            value = value.slice(0, -1);
-        }
-        console.log(value);
-    }
-
-
-
     $('#lanjutForm').submit(function(e){
             e.preventDefault();
             Swal.fire({
@@ -642,50 +636,5 @@
 
         }
 
-        function showUncheckModal(data) {
-            Swal.fire({
-                title: "Masukan Password",
-                input: "password",
-                inputAttributes: {
-                    autocapitalize: "off"
-                },
-                showCancelButton: true,
-                confirmButtonText: "Lanjutkan",
-                showLoaderOnConfirm: true,
-                preConfirm: async (password) => {
-                    const response = await fetch(`/transaksi/nota-tagihan/${data.id}/uncheck`, { // replace with your endpoint
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}' // for CSRF protection in Laravel
-                        },
-                        body: JSON.stringify({
-                            password: password,
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || response.statusText);
-                    }
-
-                    return response.json();
-                },
-                allowOutsideClick: () => !Swal.isLoading()
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Data Berhasil disimpan.',
-                        icon: 'success'
-                    }).then(() => {
-                        $('#spinner').show();
-                        location.reload();
-                    });
-                }
-            }).catch(error => {
-                Swal.fire('Error!', error.message, 'error');
-            });
-        }
 </script>
 @endpush

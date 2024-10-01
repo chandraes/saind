@@ -46,7 +46,7 @@
         </div>
     </div>
 </div>
-<div class="container-fluid mt-5">
+<div class="container-fluid mt-5 table-responsive">
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
@@ -192,8 +192,8 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
-                <td class="text-center align-middle"><strong>Total</strong></td>
-                <td align="right" class="align-middle text-end">{{number_format($total_tagihan, 0, ',', '.')}}
+                <td class="text-end align-middle"><strong>Total DPP</strong></td>
+                <td align="right" class="align-middle text-end">{{number_format($invoice->total_awal, 0, ',', '.')}}
                 </td>
                 <td>{{number_format($profit, 0, ',', '.')}}</td>
                 <td>{{number_format($profit_persen, 2, ',', '.')}}%</td>
@@ -204,10 +204,10 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
-                <td class="text-center align-middle"><strong>PPN</strong></td>
+                <td class="text-end align-middle"><strong>Penyesuaian</strong></td>
                 <td align="right" class="align-middle text-end">
 
-                    {{number_format($ppn, 0, ',', '.')}}
+                    {{number_format($invoice->penyesuaian, 0, ',', '.')}}
 
                 </td>
                 <td></td>
@@ -215,14 +215,44 @@
                 <td></td>
             </tr>
             <tr>
-                <td class="align-middle"
+                <td class="text-center align-middle"
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
-                <td class="text-center align-middle"><strong>PPh</strong></td>
+                <td class="text-end align-middle"><strong>Penalti</strong></td>
                 <td align="right" class="align-middle text-end">
 
-                    {{number_format($pph, 0, ',', '.')}}
+                    {{number_format($invoice->penalty, 0, ',', '.')}}
+
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="text-center align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-end align-middle"><strong>Grand Total DPP</strong></td>
+                <td align="right" class="align-middle text-end">
+
+                    {{number_format($invoice->total_awal + $invoice->penyesuaian - $invoice->penalty, 0, ',', '.')}}
+
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="text-center align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-end align-middle"><strong>PPN</strong></td>
+                <td align="right" class="align-middle text-end">
+
+                    {{number_format($invoice->ppn, 0, ',', '.')}}
 
                 </td>
                 <td></td>
@@ -234,9 +264,11 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
-                <td class="text-center align-middle"><strong>Tagihan</strong></td>
-                <td align="right" class="align-middle text-end"> <strong>
-                        {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
+                <td class="text-end align-middle"><strong>PPh</strong></td>
+                <td align="right" class="align-middle text-end">
+
+                    {{number_format($invoice->pph, 0, ',', '.')}}
+
                 </td>
                 <td></td>
                 <td></td>
@@ -247,20 +279,7 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
-                <td class="text-center align-middle"><strong>Penyesuaian</strong></td>
-                <td align="right" class="text-end align-middle"> <strong>
-                        {{number_format($invoice->penyesuaian, 0, ',', '.')}}</strong>
-                </td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-                </td>
-                <td class="text-center align-middle"><strong>Grand Total</strong></td>
+                <td class="text-center align-middle"><strong>Grand Total Tagihan</strong></td>
                 <td align="right" class="text-end align-middle"> <strong>
                         {{number_format($invoice->total_tagihan, 0, ',', '.')}}</strong>
                 </td>
@@ -288,6 +307,7 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
+            "scrollX": true,
             "fixedColumns": {
                 "leftColumns": 4,
                 "rightColumns": 2

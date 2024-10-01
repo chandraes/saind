@@ -16,6 +16,7 @@ use App\Models\UpahGendong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 class StatistikController extends Controller
 {
@@ -832,6 +833,8 @@ class StatistikController extends Controller
         $grand_total_gaji = 0;
         $grand_total_kas_kecil = 0;
         $grand_total_bunga_investor = 0;
+        $gt_penyesuaian = 0;
+        $gt_penalty = 0;
 
         for ($bulan = 1; $bulan <= 12; $bulan++) {
 
@@ -843,6 +846,15 @@ class StatistikController extends Controller
                                 ->whereYear('tanggal', $tahun)
                                 ->where('transaksis.void', 0)
                                 ->get();
+
+            $invoiceData = InvoiceTagihan::whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('lunas', 1)
+                            ->select(DB::raw('SUM(penyesuaian) as penyesuaian, SUM(penalty) as penalty'))
+                            ->first();
+
+            $penyesuaian = $invoiceData->penyesuaian ?? 0;
+            $penalty = $invoiceData->penalty ?? 0;
 
             $bungaInvestor = BungaInvestor::whereMonth('created_at', $bulan)
                                 ->whereYear('created_at', $tahun)
@@ -879,6 +891,10 @@ class StatistikController extends Controller
             $grant_total_co += $total_co;
             $grand_total_kas_kecil += $pengeluaran_kas_kecil;
             $grand_total_bunga_investor += $bungaInvestor;
+            $gt_penyesuaian += $penyesuaian;
+            $gt_penalty += $penalty;
+
+            $total_pengeluaran = $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penyesuaian+$penalty;
 
             $statistics[$bulan] = [
                 'nama_bulan' => $nama_bulan[$bulan],
@@ -887,8 +903,10 @@ class StatistikController extends Controller
                 'total_co' => $total_co,
                 'kas_kecil' => $pengeluaran_kas_kecil,
                 'bunga_investor' => $bungaInvestor,
-                'pengeluaran' => $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor,
-                'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor),
+                'penyesuaian' => $penyesuaian,
+                'penalty' => $penalty,
+                'pengeluaran' => $total_pengeluaran,
+                'bersih' => $data->sum('profit') - $total_pengeluaran,
             ];
 
         }
@@ -905,6 +923,8 @@ class StatistikController extends Controller
             'grand_total_co' => $grant_total_co,
             'grand_total_kas_kecil' => $grand_total_kas_kecil,
             'grand_total_bunga_investor' => $grand_total_bunga_investor,
+            'gt_penyesuaian' => $gt_penyesuaian,
+            'gt_penalty' => $gt_penalty,
         ]);
     }
 

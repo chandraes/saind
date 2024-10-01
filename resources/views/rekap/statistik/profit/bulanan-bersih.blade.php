@@ -78,8 +78,8 @@
                     <td class="text-end align-middle">{{number_format($s['total_gaji'], 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format(0, 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($s['bunga_investor'], 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format(0, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format(0, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($s['penyesuaian'], 0, ',','.')}}</td>
+                    <td class="text-end align-middle">{{number_format($s['penalty'], 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($s['bersih'], 0, ',','.')}}</td>
                 </tr>
 
@@ -95,8 +95,8 @@
                     <th class="text-end align-middle">{{number_format($grand_total_gaji, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format(0, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grand_total_bunga_investor, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format(0, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format(0, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($gt_penyesuaian, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($gt_penalty, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grand_total_bersih, 0, ',','.')}}</th>
                 </tr>
             </tfoot>

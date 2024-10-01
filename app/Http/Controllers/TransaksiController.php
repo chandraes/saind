@@ -681,6 +681,7 @@ class TransaksiController extends Controller
     {
         $data = $request->validate([
             'penyesuaian' => 'required',
+            'penalty' => 'required',
             'tanggal_hardcopy' => 'required',
             'estimasi_pembayaran' => 'required',
         ]);
@@ -688,18 +689,20 @@ class TransaksiController extends Controller
         $data['tanggal_hardcopy'] = Carbon::createFromFormat('d-m-Y', $data['tanggal_hardcopy'])->format('Y-m-d');
         $data['estimasi_pembayaran'] = Carbon::createFromFormat('d-m-Y', $data['estimasi_pembayaran'])->format('Y-m-d');
         $data['penyesuaian'] = str_replace('.', '', $data['penyesuaian']);
+        $data['penalty'] = str_replace('.', '', $data['penalty']);
         $data['lunas'] = 0;
         $data['tanggal'] = Carbon::now()->format('Y-m-d');
 
         $tagihan = Transaksi::getKeranjangTagihanData($customer->id);
-        $total = $tagihan->sum('nominal_tagihan');
+        
+        $total = $tagihan->sum('nominal_tagihan') + $data['penyesuaian'] - $data['penalty'];
 
         $ppn = $customer->ppn == 1 ? $total * 0.11 : 0;
         $pph = $customer->pph == 1 ? $total * 0.02 : 0;
 
-        $data['total_awal'] = $total + $ppn - $pph;
+        $data['total_awal'] = $tagihan->sum('nominal_tagihan');
 
-        $total_tagihan = ($total + $ppn - $pph) + $data['penyesuaian'];
+        $total_tagihan = ($total + $ppn - $pph);
 
         $data['ppn'] = $ppn;
         $data['pph'] = $pph;
