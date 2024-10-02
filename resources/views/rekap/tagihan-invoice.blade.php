@@ -103,7 +103,7 @@
                                 @endif
                                 <td class="text-end align-middle">{{ number_format($invoice['tagihan_awal'], 0,',','.') }}</td>
                                 <td class="text-end align-middle">{{ number_format($invoice['penyesuaian'], 0,',','.') }}</td>
-                                <td class="text-end align-middle">0</td>
+                                <td class="text-end align-middle">{{ number_format($invoice['penalty'], 0,',','.') }}</td>
                                 <td class="text-end align-middle">{{ number_format($invoice['total_tagihan'], 0,',','.') }}</td>
                                 <td class="text-center align-middle">{{ $invoice['periode'] }}</td>
                                 <td class="text-center align-middle">{{ $invoice['tanggal_submit_softcopy'] }}</td>

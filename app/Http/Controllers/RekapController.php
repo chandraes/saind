@@ -1239,6 +1239,9 @@ class RekapController extends Controller
                             'tanggal_hardcopy' => $i->tanggal_hardcopy ? Carbon::parse($i->tanggal_hardcopy)->translatedFormat('d-m-Y') : '-',
                             'estimasi_pembayaran' => $i->estimasi_pembayaran ? Carbon::parse($i->estimasi_pembayaran)->translatedFormat('d-m-Y') : '-',
                             'penyesuaian' => $i->penyesuaian,
+                            'penalty' => $i->penalty,
+                            'ppn' => $i->ppn,
+                            'pph' => $i->pph,
                             'tagihan_awal' => $i->total_awal,
                             'total_tagihan' => $i->total_tagihan,
                         ];
