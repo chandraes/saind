@@ -125,4 +125,26 @@ class BanController extends Controller
 
         return redirect()->back()->with('success', 'Berhasil menghapus data!!');
     }
+
+    public function histori_update($histori, Request $request)
+    {
+        $data = $request->validate([
+            'created_at' => 'required',
+            'password' => 'required',
+        ]);
+
+        $dbP = PasswordKonfirmasi::first();
+
+        if ($data['password'] != $dbP->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        unset($data['password']);
+
+        $banLog = BanLog::findOrFail($histori);
+
+        $banLog->update($data);
+
+        return redirect()->back()->with('success', 'Berhasil mengubah data!!');
+    }
 }

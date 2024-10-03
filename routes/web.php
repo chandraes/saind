@@ -603,6 +603,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\BanController::class, 'histori'])->name('statistik.ban-luar.histori');
                 Route::get('/histori-data', [App\Http\Controllers\BanController::class, 'histori_data'])->name('statistik.ban-luar.histori-data');
                 Route::post('/histori-destroy/{histori}', [App\Http\Controllers\BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
+                Route::patch('/histori-update/{histori}', [App\Http\Controllers\BanController::class, 'histori_update'])->name('statistik.ban-luar.histori-update');
             });
         });
 

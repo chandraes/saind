@@ -25,9 +25,52 @@
                     @csrf
                     <div class="modal-body">
 
-                        <input class="form-control" type="password" id="password" name="password" placeholder="Password" required>
+                        <input class="form-control" type="password" id="password" name="password" placeholder="Password"
+                            required>
                         <input type="hidden" id="itemId" name="itemId">
 
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Tutup
+                        </button>
+                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+        role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitleId">
+                        Ubah Tanggal Ganti Ban
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="updateForm">
+                    @csrf
+                    @method('PATCH')
+                    <div class="modal-body">
+                        <div class="row">
+
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="created_at" class="form-label">Tanggal Ganti Ban</label>
+                                    <input type="text" class="form-control" name="created_at" id="created_at" required readonly/>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="created_at" class="form-label">Password</label>
+                                    <input class="form-control" type="password" id="password" name="password" placeholder="Password"
+                                    required>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -89,6 +132,7 @@
 @push('js')
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script src="{{asset('assets/js/moment.min.js')}}"></script>
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script>
     $(document).ready(function(){
         $(document).on('click', '.delete-btn', function() {
@@ -98,6 +142,20 @@
             // set action to password form
             $('#passwordForm').attr('action', "{{route('statistik.ban-luar.histori-destroy', ['histori' => ':id'])}}".replace(':id', id));
             console.log("{{route('statistik.ban-luar.histori-destroy', ['histori' => ':id'])}}".replace(':id', id));
+        });
+
+        $(document).on('click', '.edit-btn', function() {
+            var id = $(this).data('id');
+            var createdAt = $(this).data('created-at');
+            $('#updateForm').attr('action', "{{route('statistik.ban-luar.histori-update', ['histori' => ':id'])}}".replace(':id', id));
+            $('#created_at').val(createdAt);
+            var tanggalInput = document.getElementById("created_at");
+
+            tanggalInput.flatpickr({
+                enableTime: false,
+                dateFormat: "d-m-Y",
+            });
+            console.log("Edit button clicked for ID: " + id + " with created_at: " + createdAt);
         });
 
         $('#rekapTable').DataTable({
@@ -133,13 +191,14 @@
                     }
                 },
                 {
-                    data: null,
-                    name: 'ACT',
-                    class:"text-center align-middle",
-                    "render": function (data, type, row, meta) {
-                        return '<button class="btn btn-danger delete-btn" data-id="' + row.id + '"  data-bs-toggle="modal" data-bs-target="#passwordModal">Delete</button>';
-                    }
-                },
+                data: null,
+                name: 'ACT',
+                class:"text-center align-middle",
+                "render": function (data, type, row, meta) {
+                    return '<button class="btn btn-primary edit-btn mx-2" data-id="' + row.id + '" data-created-at="' + moment(row.created_at).format('DD-MM-YYYY') + '" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>' +
+                           '<button class="btn btn-danger delete-btn" data-id="' + row.id + '" data-bs-toggle="modal" data-bs-target="#passwordModal">Delete</button>';
+                }
+            },
             ]
         });
 
