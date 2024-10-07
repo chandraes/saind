@@ -684,6 +684,7 @@ class TransaksiController extends Controller
             'penalty' => 'required',
             'tanggal_hardcopy' => 'required',
             'estimasi_pembayaran' => 'required',
+            'no_resi' => 'required',
         ]);
 
         $data['tanggal_hardcopy'] = Carbon::createFromFormat('d-m-Y', $data['tanggal_hardcopy'])->format('Y-m-d');
@@ -694,7 +695,7 @@ class TransaksiController extends Controller
         $data['tanggal'] = Carbon::now()->format('Y-m-d');
 
         $tagihan = Transaksi::getKeranjangTagihanData($customer->id);
-        
+
         $total = $tagihan->sum('nominal_tagihan') + $data['penyesuaian'] - $data['penalty'];
 
         $ppn = $customer->ppn == 1 ? $total * 0.11 : 0;

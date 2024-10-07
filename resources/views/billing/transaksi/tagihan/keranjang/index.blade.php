@@ -394,6 +394,12 @@
                             <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran" required/>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="no_resi" class="form-label">Nomor Resi</label>
+                            <input type="text" class="form-control" name="no_resi" id="no_resi" required/>
+                        </div>
+                    </div>
                 </div>
                 <div class="row px-5 mt-3">
                     <button class="btn btn-primary me-md-3" type="submit">Lanjutkan Pilihan</button>
