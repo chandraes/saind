@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
             <h1><u>Tagihan & Invoice</u></h1>
@@ -72,6 +72,7 @@
                     <th class="text-center align-middle">Tgl Submit Softcopy</th>
                     <th class="text-center align-middle">Tgl Submit Hardcopy</th>
                     <th class="text-center align-middle">Estimasi Tgl Pembayaran</th>
+                    <th class="text-center align-middle">No Resi</th>
                 </tr>
             </thead>
             <tbody>
@@ -109,6 +110,7 @@
                                 <td class="text-center align-middle">{{ $invoice['tanggal_submit_softcopy'] }}</td>
                                 <td class="text-center align-middle">{{ $invoice['tanggal_hardcopy'] ?? '-' }}</td>
                                 <td class="text-center align-middle">{{ $invoice['estimasi_pembayaran'] ?? '-' }}</td>
+                                <td class="text-center align-middle">{{ $invoice['no_resi'] ?? '-' }}</td>
                                 @if ($index > 0)
                                     </tr>
                                 @endif
@@ -122,6 +124,7 @@
                                 <td class="text-end align-middle">0</td>
                                 <td class="text-end align-middle">0</td>
                                 <td class="text-end align-middle">0</td>
+                                <td class="text-center align-middle">-</td>
                                 <td class="text-center align-middle">-</td>
                                 <td class="text-center align-middle">-</td>
                                 <td class="text-center align-middle">-</td>
@@ -146,12 +149,14 @@
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
+                    <th class="text-end align-middle"></th>
                 </tr>
                 <tr>
                     <th colspan="2" class="text-start align-middle">Grand Total</th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th colspan="5" class="text-center align-middle">{{number_format($grandTotal, 0, ',','.')}}</th>
+                    <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
                     <th class="text-end align-middle"></th>
