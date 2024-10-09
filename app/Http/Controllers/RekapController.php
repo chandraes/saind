@@ -1245,6 +1245,7 @@ class RekapController extends Controller
                             'tagihan_awal' => $i->total_awal,
                             'total_tagihan' => $i->total_tagihan,
                             'no_resi' => $i->no_resi,
+                            'no_validasi' => $i->no_validasi,
                         ];
                     }
 

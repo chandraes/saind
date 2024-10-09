@@ -381,6 +381,7 @@
                         </div>
                     </div>
                 </div>
+                <hr>
                 <div class="row">
                     <div class="col-md-3">
                         <div class="mb-3">
@@ -398,6 +399,12 @@
                         <div class="mb-3">
                             <label for="no_resi" class="form-label">Nomor Resi</label>
                             <input type="text" class="form-control" name="no_resi" id="no_resi" required/>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="no_validasi" class="form-label">Nomor Validasi</label>
+                            <input type="text" class="form-control" name="no_validasi" id="no_validasi" required/>
                         </div>
                     </div>
                 </div>

@@ -685,6 +685,7 @@ class TransaksiController extends Controller
             'tanggal_hardcopy' => 'required',
             'estimasi_pembayaran' => 'required',
             'no_resi' => 'required',
+            'no_validasi' => 'required',
         ]);
 
         $data['tanggal_hardcopy'] = Carbon::createFromFormat('d-m-Y', $data['tanggal_hardcopy'])->format('Y-m-d');
