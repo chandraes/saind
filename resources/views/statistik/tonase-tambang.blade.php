@@ -104,11 +104,18 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-center align-middle">Grand Total</th>
+                    @php
+                        $totalBongkar = array_sum($monthlyTotalBongkar);
+                    @endphp
+                    <th class="text-center align-middle" rowspan="2">Total</th>
                     @foreach ($dbRute as $rute)
                         <th class="text-center align-middle">{{ number_format($monthlyTotalMuat[$rute->id], 2, ',','.') ?? 0 }}</th>
                         <th class="text-center align-middle">{{ number_format($monthlyTotalBongkar[$rute->id], 2, ',','.') ?? 0 }}</th>
                     @endforeach
+                </tr>
+                <tr>
+                    <th class="text-center align-middle" colspan="{{count($dbRute)*2-1}}">Grand Total</th>
+                    <th class="text-center align-middle">{{ number_format($totalBongkar, 2, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>
