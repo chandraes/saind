@@ -17,16 +17,15 @@
                                 width="30"> Dashboard</a></td>
                     <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
                                 width="30"> STATISTIK</a></td>
-                    {{-- <td>
-                        <form target="_blank" action="{{route('statistik.profit-harian.pdf')}}" method="get">
-                            <input type="hidden" name="offset" value="{{$offset}}">
+                    <td>
+                        <form target="_blank" action="{{route('statistik.tonase-tambang.pdf', $customer)}}" method="get">
                             <input type="hidden" name="bulan" value="{{$bulan_angka}}">
                             <input type="hidden" name="tahun" value="{{$tahun}}">
                             <button class="btn" type="submit">
                                 <img src="{{asset('images/document.svg')}}" alt="dokumen" width="30"> Print Rekap
                             </button>
                         </form>
-                    </td> --}}
+                    </td>
                 </tr>
             </table>
         </div>
@@ -112,7 +111,7 @@
                     @endphp
                     <th class="text-center align-middle" rowspan="2">Total</th>
                     @foreach ($dbRute as $rute)
-                        <th class="text-center align-middle">{{ number_format($monthlyTotalRitase[$rute->id], 2, ',','.') ?? 0 }}</th>
+                        <th class="text-center align-middle">{{ number_format($monthlyTotalRitase[$rute->id], 0, ',','.') ?? 0 }}</th>
                         <th class="text-center align-middle">{{ number_format($monthlyTotalMuat[$rute->id], 2, ',','.') ?? 0 }}</th>
                         <th class="text-center align-middle">{{ number_format($monthlyTotalBongkar[$rute->id], 2, ',','.') ?? 0 }}</th>
                     @endforeach

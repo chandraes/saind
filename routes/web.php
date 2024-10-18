@@ -277,6 +277,7 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('tonase-tambang')->group(function(){
                 Route::get('/{customer}', [App\Http\Controllers\StatistikController::class, 'tonase_tambang'])->name('statistik.tonase-tambang');
+                Route::get('/{customer}/pdf', [App\Http\Controllers\StatistikController::class, 'tonase_tambang_download'])->name('statistik.tonase-tambang.pdf');
             });
         });
 
