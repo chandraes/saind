@@ -660,6 +660,11 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('nota-lunas/data', [App\Http\Controllers\PerCustomerController::class, 'nota_lunas_data'])->name('per-customer.nota-lunas.data');
             Route::get('nota-lunas/{invoice}/detail', [App\Http\Controllers\PerCustomerController::class, 'nota_lunas_detail'])->name('per-customer.nota-lunas.detail');
 
+            Route::prefix('tonase-tambang')->group(function(){
+                Route::get('/', [App\Http\Controllers\PerCustomerController::class, 'tonase_tambang'])->name('per-customer.tonase-tambang');
+                Route::get('/pdf', [App\Http\Controllers\PerCustomerController::class, 'tonase_tambang_download'])->name('per-customer.tonase-tambang.pdf');
+            });
+
         });
     });
 

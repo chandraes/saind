@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\InvoiceTagihan;
+use App\Models\Rute;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class PerCustomerController extends Controller
 {
@@ -173,5 +175,201 @@ class PerCustomerController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    public function tonase_tambang(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        $customer = Customer::findOrFail(auth()->user()->customer_id);
+
+        // nama bulan dalam indonesia berdasarkan $bulan
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date from $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        $dataMuat = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                    ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+                    ->whereMonth('transaksis.tanggal_muat', $bulan)
+                    ->whereYear('transaksis.tanggal_muat', $tahun)
+                    ->where('transaksis.void', 0)
+                    ->whereNull('transaksis.timbangan_bongkar')
+                    ->where('kuj.customer_id', $customer->id)
+                    ->get();
+
+        $dataBongkar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+                            ->whereMonth('transaksis.tanggal_bongkar', $bulan)
+                            ->whereYear('transaksis.tanggal_bongkar', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->where('kuj.customer_id', $customer->id)
+                            ->get();
+
+        $ruteIds = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->where('kuj.customer_id', $customer->id)
+                            ->pluck('r.id');
+
+        $dbRute = Rute::whereIn('id', $ruteIds)->get();
+
+        $statistics = [];
+
+        for ($i = 1; $i <= $date; $i++) {
+            $day = sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun;
+
+            foreach ($dbRute as $rute) {
+                $filteredDataMuat = $dataMuat->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal_muat)->day == $i &&
+                           Carbon::parse($item->tanggal_muat)->month == $bulan &&
+                           Carbon::parse($item->tanggal_muat)->year == $tahun &&
+                           $item->rute_id == $rute->id;
+                });
+
+                $filteredDataBongkar = $dataBongkar->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal_bongkar)->day == $i &&
+                           Carbon::parse($item->tanggal_bongkar)->month == $bulan &&
+                           Carbon::parse($item->tanggal_bongkar)->year == $tahun &&
+                           $item->rute_id == $rute->id;
+                });
+                $ritaseMuat = $filteredDataMuat->count();
+                $ritaseBongkar = $filteredDataBongkar->count();
+                $tonase_muat = $filteredDataMuat->sum('tonase');
+                $tonase_bongkar = $filteredDataBongkar->sum('timbangan_bongkar');
+
+                $statistics[$i][$rute->id] = [
+                    'day' => $day,
+                    'rute_id' => $rute->id,
+                    'rute' => $rute->nama,
+                    'data' => [
+                        'ritase' => $ritaseMuat+$ritaseBongkar,
+                        'tonase_muat' => $tonase_muat,
+                        'tonase_bongkar' => $tonase_bongkar,
+                    ],
+                ];
+            }
+        }
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
+
+        return view('per-customer.tonase-tambang.index', [
+            'statistics' => $statistics,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'dbRute' => $dbRute,
+            'customer' => $customer,
+            'bulan_angka' => $bulan,
+            'dataTahun' => $dataTahun,
+        ]);
+    }
+
+    public function tonase_tambang_download(Request $request)
+    {
+        $bulan = $request->bulan;
+        $tahun = $request->tahun;
+
+        $customer = Customer::findOrFail(auth()->user()->customer_id);
+        // nama bulan dalam indonesia berdasarkan $bulan
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date from $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        $dataMuat = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                    ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+                    ->whereMonth('transaksis.tanggal_muat', $bulan)
+                    ->whereYear('transaksis.tanggal_muat', $tahun)
+                    ->where('transaksis.void', 0)
+                    ->whereNull('transaksis.timbangan_bongkar')
+                    ->where('kuj.customer_id', $customer->id)
+                    ->get();
+
+        $dataBongkar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+                            ->whereMonth('transaksis.tanggal_bongkar', $bulan)
+                            ->whereYear('transaksis.tanggal_bongkar', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->where('kuj.customer_id', $customer->id)
+                            ->get();
+
+        $ruteIds = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->where('kuj.customer_id', $customer->id)
+                            ->pluck('r.id');
+
+        $dbRute = Rute::whereIn('id', $ruteIds)->get();
+
+        $statistics = [];
+
+        for ($i = 1; $i <= $date; $i++) {
+            $day = sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun;
+
+            foreach ($dbRute as $rute) {
+                $filteredDataMuat = $dataMuat->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal_muat)->day == $i &&
+                           Carbon::parse($item->tanggal_muat)->month == $bulan &&
+                           Carbon::parse($item->tanggal_muat)->year == $tahun &&
+                           $item->rute_id == $rute->id;
+                });
+
+                $filteredDataBongkar = $dataBongkar->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal_bongkar)->day == $i &&
+                           Carbon::parse($item->tanggal_bongkar)->month == $bulan &&
+                           Carbon::parse($item->tanggal_bongkar)->year == $tahun &&
+                           $item->rute_id == $rute->id;
+                });
+                $ritaseMuat = $filteredDataMuat->count();
+                $ritaseBongkar = $filteredDataBongkar->count();
+                $tonase_muat = $filteredDataMuat->sum('tonase');
+                $tonase_bongkar = $filteredDataBongkar->sum('timbangan_bongkar');
+
+                $statistics[$i][$rute->id] = [
+                    'day' => $day,
+                    'rute_id' => $rute->id,
+                    'rute' => $rute->nama,
+                    'data' => [
+                        'ritase' => $ritaseMuat+$ritaseBongkar,
+                        'tonase_muat' => $tonase_muat,
+                        'tonase_bongkar' => $tonase_bongkar,
+                    ],
+                ];
+            }
+        }
+
+        $pdf = PDF::loadview('per-customer.tonase-tambang.pdf', [
+            'statistics' => $statistics,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'dbRute' => $dbRute,
+            'customer' => $customer,
+            'bulan_angka' => $bulan,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Statistik Tonase_'.$bulan.'_'.$tahun.'.pdf');
+
+
     }
 }
