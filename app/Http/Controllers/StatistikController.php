@@ -12,6 +12,7 @@ use App\Models\KasBesar;
 use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
+use App\Models\Rute;
 use App\Models\UpahGendong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -24,10 +25,12 @@ class StatistikController extends Controller
     {
         $data = UpahGendong::with(['vehicle'])->get();
         $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
+        $customer = Customer::where('status', 1)->get();
 
         return view('rekap.statistik.index', [
             'data' => $data,
             'vehicle' => $vehicle,
+            'customer' => $customer,
         ]);
     }
 
@@ -1628,6 +1631,87 @@ class StatistikController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Grand Total Tahunan Bersih.pdf');
+    }
+
+
+    public function tonase_tambang(Request $request, Customer $customer)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        $offset = $request->offset ?? 0;
+
+        // nama bulan dalam indonesia berdasarkan $bulan
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date from $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->where('kuj.customer_id', $customer->id)
+                            ->get();
+
+        $ruteIds = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->where('kuj.customer_id', $customer->id)
+                            ->pluck('r.id');
+
+        $dbRute = Rute::whereIn('id', $ruteIds)->get();
+
+        $statistics = [];
+
+        for ($i = 1; $i <= $date; $i++) {
+            $day = sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun;
+
+            foreach ($dbRute as $rute) {
+                $filteredData = $data->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal)->day == $i &&
+                           Carbon::parse($item->tanggal)->month == $bulan &&
+                           Carbon::parse($item->tanggal)->year == $tahun &&
+                           $item->rute_id == $rute->id;
+                });
+
+                $tonase_muat = $filteredData->whereNull('timbangan_bongkar')->sum('tonase');
+                $tonase_bongkar = $filteredData->sum('timbangan_bongkar');
+
+                $statistics[$i][$rute->id] = [
+                    'day' => $day,
+                    'rute_id' => $rute->id,
+                    'rute' => $rute->nama,
+                    'data' => [
+                        'tonase_muat' => $tonase_muat,
+                        'tonase_bongkar' => $tonase_bongkar,
+                    ],
+                ];
+            }
+        }
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
+
+        return view('statistik.tonase-tambang', [
+            'statistics' => $statistics,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'offset' => $offset,
+            'dbRute' => $dbRute,
+            'customer' => $customer,
+            'bulan_angka' => $bulan,
+            'dataTahun' => $dataTahun,
+        ]);
     }
 
 }

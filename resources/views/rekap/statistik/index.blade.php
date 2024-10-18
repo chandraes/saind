@@ -157,6 +157,13 @@
                 <h5 class="mt-3">STATISTIK CUSTOMER</h5>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal"
+            data-bs-target="#tonaseTambang">
+                <img src="{{asset('images/kosong.svg')}}" alt="" width="80">
+                <h5 class="mt-3">STATISTIK TONASE</h5>
+            </a>
+        </div>
         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/back.svg')}}" alt="" width="80">
@@ -170,6 +177,64 @@
             </a>
         </div>
     </div>
+
+    <div
+        class="modal fade"
+        id="tonaseTambang"
+        tabindex="-1"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false"
+
+        role="dialog"
+        aria-labelledby="modalTitleId"
+        aria-hidden="true"
+    >
+        <div
+            class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl"
+            role="document"
+        >
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitleId">
+                        Pilih Customer
+                    </h5>
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        @foreach ($customer as $c)
+                        <div class="col-md-2 text-center mt-5">
+                           <a href="{{route('statistik.tonase-tambang', $c)}}" class="text-decoration-none">
+                               <img src="{{asset('images/tambang.svg')}}" alt="" width="70">
+                               <h4 class="mt-3">{{$c->singkatan}}
+
+                               </h4>
+                           </a>
+                       </div>
+                       @endforeach
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Batalkan
+                    </button>
+                    <button type="button" class="btn btn-primary">Lanjutkan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 </div>
 @endsection
 @push('css')

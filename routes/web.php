@@ -274,6 +274,10 @@ Route::group(['middleware' => ['auth']], function() {
 
 
             Route::get('/perform-vendor/print', [App\Http\Controllers\StatistikController::class, 'perform_vendor_print'])->name('statistik.perform-vendor.print');
+
+            Route::prefix('tonase-tambang')->group(function(){
+                Route::get('/{customer}', [App\Http\Controllers\StatistikController::class, 'tonase_tambang'])->name('statistik.tonase-tambang');
+            });
         });
 
         Route::prefix('billing')->group(function(){
