@@ -160,7 +160,7 @@
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal"
             data-bs-target="#tonaseTambang">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="80">
+                <img src="{{asset('images/tonase-tambang.svg')}}" alt="" width="80">
                 <h5 class="mt-3">STATISTIK TONASE</h5>
             </a>
         </div>
