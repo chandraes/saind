@@ -76,11 +76,12 @@
                 <tr>
                     <th rowspan="2" class="text-center align-middle">Tanggal</th>
                     @foreach ($dbRute as $rute)
-                        <th colspan="2" class="text-center align-middle">{{ $rute->nama }}</th>
+                        <th colspan="3" class="text-center align-middle">{{ $rute->nama }}</th>
                     @endforeach
                 </tr>
                 <tr>
                     @foreach ($dbRute as $rute)
+                        <th class="text-center align-middle">Ritase</th>
                         <th class="text-center align-middle">Tonase Muat</th>
                         <th class="text-center align-middle">Tonase Bongkar</th>
                     @endforeach
@@ -92,10 +93,12 @@
                         <td class='text-center align-middle'>{{ sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun }}</td>
                         @foreach ($dbRute as $rute)
                             @php
-                                $dayData = $statistics[$i][$rute->id] ?? ['data' => ['tonase_muat' => 0, 'tonase_bongkar' => 0]];
+                                $dayData = $statistics[$i][$rute->id] ?? ['data' => ['ritase' => 0, 'tonase_muat' => 0, 'tonase_bongkar' => 0]];
+                                $monthlyTotalRitase[$rute->id] = ($monthlyTotalRitase[$rute->id] ?? 0) + $dayData['data']['ritase'];
                                 $monthlyTotalMuat[$rute->id] = ($monthlyTotalMuat[$rute->id] ?? 0) + $dayData['data']['tonase_muat'];
                                 $monthlyTotalBongkar[$rute->id] = ($monthlyTotalBongkar[$rute->id] ?? 0) + $dayData['data']['tonase_bongkar'];
                             @endphp
+                            <td class='text-center align-middle'>{{ ($dayData['data']['ritase']) }}</td>
                             <td class='text-center align-middle'>{{ ($dayData['data']['tonase_muat']) }}</td>
                             <td class='text-center align-middle'>{{ $dayData['data']['tonase_bongkar'] }}</td>
                         @endforeach
@@ -109,12 +112,13 @@
                     @endphp
                     <th class="text-center align-middle" rowspan="2">Total</th>
                     @foreach ($dbRute as $rute)
+                        <th class="text-center align-middle">{{ number_format($monthlyTotalRitase[$rute->id], 2, ',','.') ?? 0 }}</th>
                         <th class="text-center align-middle">{{ number_format($monthlyTotalMuat[$rute->id], 2, ',','.') ?? 0 }}</th>
                         <th class="text-center align-middle">{{ number_format($monthlyTotalBongkar[$rute->id], 2, ',','.') ?? 0 }}</th>
                     @endforeach
                 </tr>
                 <tr>
-                    <th class="text-center align-middle" colspan="{{count($dbRute)*2-1}}">Grand Total</th>
+                    <th class="text-center align-middle" colspan="{{count($dbRute)*3-1}}">Grand Total</th>
                     <th class="text-center align-middle">{{ number_format($totalBongkar, 2, ',','.')}}</th>
                 </tr>
             </tfoot>

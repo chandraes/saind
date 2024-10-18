@@ -1646,12 +1646,23 @@ class StatistikController extends Controller
         // get array list date from $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+        $dataMuat = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                    ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+                    ->whereMonth('transaksis.tanggal_muat', $bulan)
+                    ->whereYear('transaksis.tanggal_muat', $tahun)
+                    ->where('transaksis.void', 0)
+                    ->whereNull('transaksis.timbangan_bongkar')
+                    ->where('kuj.customer_id', $customer->id)
+                    ->get();
+
+        $dataBongkar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
                             ->join('rutes as r', 'r.id', 'kuj.rute_id')
                             ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
+                            ->whereMonth('transaksis.tanggal_bongkar', $bulan)
+                            ->whereYear('transaksis.tanggal_bongkar', $tahun)
                             ->where('transaksis.void', 0)
                             ->where('kuj.customer_id', $customer->id)
                             ->get();
@@ -1673,23 +1684,30 @@ class StatistikController extends Controller
             $day = sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun;
 
             foreach ($dbRute as $rute) {
-                $filteredData = $data->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
-                    return Carbon::parse($item->tanggal)->day == $i &&
-                           Carbon::parse($item->tanggal)->month == $bulan &&
-                           Carbon::parse($item->tanggal)->year == $tahun &&
+                $filteredDataMuat = $dataMuat->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal_muat)->day == $i &&
+                           Carbon::parse($item->tanggal_muat)->month == $bulan &&
+                           Carbon::parse($item->tanggal_muat)->year == $tahun &&
                            $item->rute_id == $rute->id;
                 });
 
-
-
-                $tonase_muat = $filteredData->whereNull('timbangan_bongkar')->sum('tonase');
-                $tonase_bongkar = $filteredData->sum('timbangan_bongkar');
+                $filteredDataBongkar = $dataBongkar->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal_bongkar)->day == $i &&
+                           Carbon::parse($item->tanggal_bongkar)->month == $bulan &&
+                           Carbon::parse($item->tanggal_bongkar)->year == $tahun &&
+                           $item->rute_id == $rute->id;
+                });
+                $ritaseMuat = $filteredDataMuat->count();
+                $ritaseBongkar = $filteredDataBongkar->count();
+                $tonase_muat = $filteredDataMuat->sum('tonase');
+                $tonase_bongkar = $filteredDataBongkar->sum('timbangan_bongkar');
 
                 $statistics[$i][$rute->id] = [
                     'day' => $day,
                     'rute_id' => $rute->id,
                     'rute' => $rute->nama,
                     'data' => [
+                        'ritase' => $ritaseMuat+$ritaseBongkar,
                         'tonase_muat' => $tonase_muat,
                         'tonase_bongkar' => $tonase_bongkar,
                     ],
