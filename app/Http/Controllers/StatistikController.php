@@ -1673,22 +1673,17 @@ class StatistikController extends Controller
             $day = sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun;
 
             foreach ($dbRute as $rute) {
-                $filteredMuatData = $data->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
-                    return Carbon::parse($item->tanggal_muat)->day == $i &&
-                           Carbon::parse($item->tanggal_muat)->month == $bulan &&
-                           Carbon::parse($item->tanggal_muat)->year == $tahun &&
+                $filteredData = $data->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
+                    return Carbon::parse($item->tanggal)->day == $i &&
+                           Carbon::parse($item->tanggal)->month == $bulan &&
+                           Carbon::parse($item->tanggal)->year == $tahun &&
                            $item->rute_id == $rute->id;
                 });
 
-                $filteredBongkarData = $data->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
-                    return Carbon::parse($item->tanggal_bongkar)->day == $i &&
-                           Carbon::parse($item->tanggal_bongkar)->month == $bulan &&
-                           Carbon::parse($item->tanggal_bongkar)->year == $tahun &&
-                           $item->rute_id == $rute->id;
-                });
 
-                $tonase_muat = $filteredMuatData->whereNull('timbangan_bongkar')->sum('tonase_muat');
-                $tonase_bongkar = $filteredBongkarData->sum('timbangan_bongkar');
+
+                $tonase_muat = $filteredData->whereNull('timbangan_bongkar')->sum('tonase');
+                $tonase_bongkar = $filteredData->sum('timbangan_bongkar');
 
                 $statistics[$i][$rute->id] = [
                     'day' => $day,
