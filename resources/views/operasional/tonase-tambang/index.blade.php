@@ -15,8 +15,8 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
-                                width="30"> STATISTIK</a></td>
+                    {{-- <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
+                                width="30"> STATISTIK</a></td> --}}
                     <td>
                         <form target="_blank" action="{{route('operasional.tonase-tambang.download', $customer)}}" method="get">
                             <input type="hidden" name="bulan" value="{{$bulan_angka}}">
