@@ -681,6 +681,11 @@ Route::group(['middleware' => ['auth']], function() {
 
             });
 
+            Route::prefix('statistik/{customer}')->group(function(){
+                Route::get('tonase-tambang', [App\Http\Controllers\OperasionalController::class, 'tonase_tambang'])->name('operasional.tonase-tambang');
+                Route::get('tonase-tambang/download', [App\Http\Controllers\OperasionalController::class, 'tonase_tambang_download'])->name('operasional.tonase-tambang.download');
+            });
+
             // Route::get('statistik-vendor', [App\Http\Controllers\OperasionalController::class, 'statistik_vendor'])->name('operasional.statistik-vendor');
         });
     });

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
+use App\Models\Customer;
 use App\Models\InvoiceTagihan;
 use App\Models\Transaksi;
 use App\Models\UpahGendong;
@@ -48,7 +49,8 @@ class HomeController extends Controller
             $ug = UpahGendong::all();
             $maintenance = AktivasiMaintenance::with(['vehicle'])
             ->get();
-            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance]);
+            $customer = Customer::where('status', 1)->get();
+            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance, 'customer' => $customer]);
         }
 
         if ($user->role == 'vendor') {
