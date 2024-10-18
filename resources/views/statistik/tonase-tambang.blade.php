@@ -96,7 +96,7 @@
                                 $monthlyTotalMuat[$rute->id] = ($monthlyTotalMuat[$rute->id] ?? 0) + $dayData['data']['tonase_muat'];
                                 $monthlyTotalBongkar[$rute->id] = ($monthlyTotalBongkar[$rute->id] ?? 0) + $dayData['data']['tonase_bongkar'];
                             @endphp
-                            <td class='text-center align-middle'>{{ $dayData['data']['tonase_muat'] }}</td>
+                            <td class='text-center align-middle'>{{ ($dayData['data']['tonase_muat']) }}</td>
                             <td class='text-center align-middle'>{{ $dayData['data']['tonase_bongkar'] }}</td>
                         @endforeach
                     </tr>
@@ -106,8 +106,8 @@
                 <tr>
                     <th class="text-center align-middle">Grand Total</th>
                     @foreach ($dbRute as $rute)
-                        <th class="text-center align-middle">{{ $monthlyTotalMuat[$rute->id] ?? 0 }}</th>
-                        <th class="text-center align-middle">{{ $monthlyTotalBongkar[$rute->id] ?? 0 }}</th>
+                        <th class="text-center align-middle">{{ number_format($monthlyTotalMuat[$rute->id], 2, ',','.') ?? 0 }}</th>
+                        <th class="text-center align-middle">{{ number_format($monthlyTotalBongkar[$rute->id], 2, ',','.') ?? 0 }}</th>
                     @endforeach
                 </tr>
             </tfoot>
