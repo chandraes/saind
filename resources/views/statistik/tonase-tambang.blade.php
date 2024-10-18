@@ -104,7 +104,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-center align-middle">Total</th>
+                    <th class="text-center align-middle">Grand Total</th>
                     @foreach ($dbRute as $rute)
                         <th class="text-center align-middle">{{ $monthlyTotalMuat[$rute->id] ?? 0 }}</th>
                         <th class="text-center align-middle">{{ $monthlyTotalBongkar[$rute->id] ?? 0 }}</th>
