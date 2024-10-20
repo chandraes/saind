@@ -70,6 +70,7 @@
                 $totalBongkar = 0;
                 $monthlyTotalMuat = [];
                 $monthlyTotalBongkar = [];
+                $monthlyTotalRitase = [];
             @endphp
             <thead class="table-success">
                 <tr>
