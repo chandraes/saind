@@ -1,5 +1,5 @@
 <div class="row justify-content-left mt-5">
-    <div class="col-md-3 text-center mb-5">
+    {{-- <div class="col-md-3 text-center mb-5">
         <a href="{{route('per-customer.nota-tagihan')}}" class="text-decoration-none" >
             <img src="{{asset('images/tagihan.svg')}}" alt="" width="70">
             <h5 class="mt-3">NOTA TAGIHAN
@@ -24,7 +24,7 @@
             <img src="{{asset('images/nota-lunas.svg')}}" alt="" width="70">
             <h5 class="mt-3">REKAP NOTA LUNAS</h5>
         </a>
-    </div>
+    </div> --}}
     <div class="col-md-3 text-center mb-5">
         <a href="{{route('per-customer.tonase-tambang')}}" class="text-decoration-none">
             <img src="{{asset('images/tonase-tambang.svg')}}" alt="" width="70">
