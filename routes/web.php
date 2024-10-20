@@ -691,6 +691,12 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('tonase-tambang/download', [App\Http\Controllers\OperasionalController::class, 'tonase_tambang_download'])->name('operasional.tonase-tambang.download');
             });
 
+            Route::prefix('ban-luar')->group(function(){
+                Route::get('/', [App\Http\Controllers\OperasionalController::class, 'ban_luar'])->name('operational.ban-luar');
+                Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\OperasionalController::class, 'ban_luar_histori'])->name('operational.ban-luar.histori');
+                Route::get('/histori-data', [App\Http\Controllers\OperasionalController::class, 'ban_luar_histori_data'])->name('operational.ban-luar.histori-data');
+            });
+
             // Route::get('statistik-vendor', [App\Http\Controllers\OperasionalController::class, 'statistik_vendor'])->name('operasional.statistik-vendor');
         });
     });

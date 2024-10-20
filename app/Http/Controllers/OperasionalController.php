@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
+use App\Models\BanLog;
 use App\Models\Customer;
 use App\Models\InvoiceBayar;
 use App\Models\Vendor;
@@ -10,6 +11,7 @@ use App\Models\KasVendor;
 use App\Models\KategoriBarangMaintenance;
 use App\Models\MaintenanceLog;
 use App\Models\OdoLog;
+use App\Models\PosisiBan;
 use App\Models\Rute;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -983,6 +985,90 @@ class OperasionalController extends Controller
         return $pdf->stream('Statistik Tonase_'.$bulan.'_'.$tahun.'.pdf');
 
 
+    }
+
+    public function ban_luar(Request $request)
+    {
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+        ]);
+
+        // Retrieve vehicle with driver and pengurus information
+        $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
+                          ->where('vehicles.id', $request->vehicle_id)
+                          ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus')
+                          ->first();
+
+        // Retrieve the latest BanLog for each posisi_ban_id for the given vehicle_id
+        $banLogs = BanLog::where('vehicle_id', $request->vehicle_id)
+                         ->select('posisi_ban_id', 'merk', 'no_seri', 'kondisi', 'created_at')
+                         ->orderBy('created_at', 'desc')
+                         ->get()
+                         ->unique('posisi_ban_id')
+                         ->mapWithKeys(function ($banLog) {
+                             return [$banLog->posisi_ban_id => [
+                                 'merk' => $banLog->merk,
+                                 'no_seri' => $banLog->no_seri,
+                                 'kondisi' => $banLog->kondisi,
+                                 'tanggal_ganti' => \Carbon\Carbon::parse($banLog->created_at)->format('d-m-Y'),
+                             ]];
+                         });
+
+        // Map the BanLog data to the PosisiBan
+        $ban = PosisiBan::all()->map(function ($ban) use ($banLogs) {
+            $ban->banLog = $banLogs[$ban->id] ?? null;
+            return $ban;
+        });
+
+        return view('operasional.ban-luar.index', [
+            'vehicle' => $vehicle,
+            'ban' => $ban,
+        ]);
+
+    }
+
+    public function ban_luar_histori($vehicle, $posisi)
+    {
+        $vehicle = Vehicle::find($vehicle);
+
+        return view('operasional.ban-luar.histori', [
+            'vehicle' => $vehicle,
+            'posisi' => PosisiBan::findOrFail($posisi),
+        ]);
+    }
+
+    public function ban_luar_histori_data(Request $request)
+    {
+        if ($request->ajax()) {
+            $length = $request->get('length'); // Get the requested number of records
+
+            // Define the columns for sorting
+            $columns = ['merk', 'no_seri', 'kondisi', 'created_at'];
+
+            $query = BanLog::where('vehicle_id', $request->vehicle)
+                        ->where('posisi_ban_id', $request->posisi)
+                        ->orderBy('created_at', 'desc');
+
+            // Handle the sorting
+            if ($request->has('order')) {
+                $columnIndex = $request->get('order')[0]['column']; // Get the index of the sorted column
+                $sortDirection = $request->get('order')[0]['dir']; // Get the sort direction
+                $column = $columns[$columnIndex]; // Get the column name
+
+                $query->orderBy($column, $sortDirection);
+            }
+
+            $data = $query->paginate($length); // Use the requested number of records
+
+            return response()->json([
+                'draw' => intval($request->draw),
+                'recordsTotal' => $data->total(),
+                'recordsFiltered' => $data->total(),
+                'data' => $data->items(),
+            ]);
+        }
+
+        return abort(404);
     }
 
 }

@@ -50,7 +50,8 @@ class HomeController extends Controller
             $maintenance = AktivasiMaintenance::with(['vehicle'])
             ->get();
             $customer = Customer::where('status', 1)->get();
-            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance, 'customer' => $customer]);
+            $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
+            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance, 'customer' => $customer, 'vehicle' =>$vehicle]);
         }
 
         if ($user->role == 'vendor') {
