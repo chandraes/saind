@@ -66,7 +66,7 @@
                     @endforeach
                 </tr>
                 <tr>
-                    <th class="text-center align-middle text-pdf table-pdf" colspan="{{count($dbRute)*3-1}}">Grand Total</th>
+                    <th class="text-center align-middle text-pdf table-pdf" colspan="{{count($dbRute)*3-1}}">Grand Total Tonase</th>
                     <th class="text-center align-middle text-pdf table-pdf">{{ number_format($totalBongkar, 2, ',','.')}}</th>
                 </tr>
                 <tr>
