@@ -68,8 +68,10 @@
             @php
                 $totalMuat = 0;
                 $totalBongkar = 0;
+                $totalRitase = 0;
                 $monthlyTotalMuat = [];
                 $monthlyTotalBongkar = [];
+                $monthlyTotalRitase = [];
             @endphp
             <thead class="table-success">
                 <tr>
@@ -108,8 +110,10 @@
                 <tr>
                     @php
                         $totalBongkar = array_sum($monthlyTotalBongkar);
+                        $totalMuat = array_sum($monthlyTotalMuat);
+                        $totalRitase = array_sum($monthlyTotalRitase);
                     @endphp
-                    <th class="text-center align-middle" rowspan="2">Total</th>
+                    <th class="text-center align-middle" rowspan="3">Total</th>
                     @foreach ($dbRute as $rute)
                         <th class="text-center align-middle">{{ number_format($monthlyTotalRitase[$rute->id], 0, ',','.') ?? 0 }}</th>
                         <th class="text-center align-middle">{{ number_format($monthlyTotalMuat[$rute->id], 2, ',','.') ?? 0 }}</th>
@@ -117,8 +121,12 @@
                     @endforeach
                 </tr>
                 <tr>
-                    <th class="text-center align-middle" colspan="{{count($dbRute)*3-1}}">Grand Total</th>
-                    <th class="text-center align-middle">{{ number_format($totalBongkar, 2, ',','.')}}</th>
+                    <th class="text-center align-middle" colspan="{{count($dbRute)*3-1}}">Grand Total Tonase</th>
+                    <th class="text-center align-middle">{{ number_format($totalBongkar+$totalMuat, 2, ',','.')}}</th>
+                </tr>
+                <tr>
+                    <th class="text-center align-middle" colspan="{{count($dbRute)*3-1}}">Grand Total Ritase</th>
+                    <th class="text-center align-middle">{{ number_format($totalRitase, 0, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>
