@@ -9,6 +9,7 @@ use App\Models\GroupWa;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\Customer;
+use App\Models\PesanWa;
 use App\Models\VendorUangJalan;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
@@ -208,6 +209,7 @@ class FormKasUangJalanController extends Controller
         Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
 
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
+
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengeluaran Uang Jalan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -226,8 +228,18 @@ class FormKasUangJalanController extends Controller
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
+        $storeWa = PesanWa::create([
+            'pesan' => $pesan,
+            'tujuan' => $group->nama_group,
+            'status' => 0,
+        ]);
+
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
+
+        if ($res == 'true') {
+            $storeWa->update(['status' => 1]);
+        }
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
 
