@@ -115,7 +115,10 @@
                     <th class="text-center align-middle">NO. SERI BAN</th>
                     <th class="text-center align-middle">KONDISI BAN</th>
                     <th class="text-center align-middle">TGL GANTI BAN</th>
+                    @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
                     <th class="text-center align-middle">ACTION</th>
+                    @endif
+
                 </tr>
             </thead>
             <tbody>
@@ -157,6 +160,40 @@
             });
             console.log("Edit button clicked for ID: " + id + " with created_at: " + createdAt);
         });
+        var userRole = "{{ auth()->user()->role }}";
+
+        var columns = [
+            {data: 'merk', name: 'merk', class:"text-center align-middle"},
+            {data: 'no_seri', name: 'no_seri', class:"text-center align-middle"},
+            {
+                data: 'kondisi',
+                name: 'kondisi',
+                class:"text-center align-middle",
+                "render": function (data, type, row, meta) {
+                    return data + '%';
+                }
+            },
+            {
+                data: 'created_at',
+                name: 'created_at',
+                class:"text-center align-middle",
+                "render": function (data, type, row, meta) {
+                    return moment(data).format('DD-MM-YYYY');
+                }
+            }
+        ];
+
+        if (userRole == 'admin' || userRole === 'su') {
+            columns.push({
+                data: null,
+                name: 'ACT',
+                class:"text-center align-middle",
+                "render": function (data, type, row, meta) {
+                    return '<button class="btn btn-primary edit-btn mx-2" data-id="' + row.id + '" data-created-at="' + moment(row.created_at).format('DD-MM-YYYY') + '" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>' +
+                           '<button class="btn btn-danger delete-btn" data-id="' + row.id + '" data-bs-toggle="modal" data-bs-target="#passwordModal">Delete</button>';
+                }
+            });
+        }
 
         $('#rekapTable').DataTable({
             'processing': true,
@@ -167,39 +204,11 @@
                 'url': "{{route('statistik.ban-luar.histori-data')}}",
                 'data': {
                     'vehicle': '{{$vehicle->id}}',
-                    'posisi': '{{$posisi->id}}' // Added missing closing quote
+                    'posisi': '{{$posisi->id}}'
                 },
                 'type': 'GET',
             },
-            'columns':[
-                {data: 'merk', name: 'merk', class:"text-center align-middle"},
-                {data: 'no_seri', name: 'no_seri', class:"text-center align-middle"},
-                {
-                    data: 'kondisi',
-                    name: 'kondisi',
-                    class:"text-center align-middle",
-                    "render": function (data, type, row, meta) {
-                        return data + '%';
-                    }
-                },
-                {
-                    data: 'created_at',
-                    name: 'created_at',
-                    class:"text-center align-middle",
-                    "render": function (data, type, row, meta) {
-                        return moment(data).format('DD-MM-YYYY');
-                    }
-                },
-                {
-                data: null,
-                name: 'ACT',
-                class:"text-center align-middle",
-                "render": function (data, type, row, meta) {
-                    return '<button class="btn btn-primary edit-btn mx-2" data-id="' + row.id + '" data-created-at="' + moment(row.created_at).format('DD-MM-YYYY') + '" data-bs-toggle="modal" data-bs-target="#editModal">Edit</button>' +
-                           '<button class="btn btn-danger delete-btn" data-id="' + row.id + '" data-bs-toggle="modal" data-bs-target="#passwordModal">Delete</button>';
-                }
-            },
-            ]
+            'columns': columns
         });
 
     });
