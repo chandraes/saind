@@ -29,6 +29,7 @@
                                     <option value="admin">Admin</option>
                                     <option value="operasional">Operasional</option>
                                     <option value="vendor">Vendor</option>
+                                    <option value="vendor-operational">Vendor Operational</option>
                                     <option value="user">User</option>
                                     <option value="customer">Customer</option>
                                 </select>
@@ -83,7 +84,7 @@
     <script>
         function roleChange() {
             var role = document.getElementById('role').value;
-            if (role == 'vendor') {
+            if (role == 'vendor' || role == 'vendor-operational') {
                 document.getElementById('divVendor').hidden = false;
                 document.getElementById('divCustomer').hidden = true;
                 // vendor_id required

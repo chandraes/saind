@@ -28,6 +28,7 @@
                                 <select class="form-select" name="role" id="role-{{$d->id}}" onchange="roleChangeEdit()">
                                     <option value="admin" {{$d->role == 'admin' ? 'selected' : ''}}>Admin</option>
                                     <option value="vendor" {{$d->role == 'vendor' ? 'selected' : ''}}>Vendor</option>
+                                    <option value="vendor-operational" {{$d->role == 'vendor-operational' ? 'selected' : ''}}>Vendor Operational</option>
                                     <option value="user" {{$d->role == 'user' ? 'selected' : ''}}>User</option>
                                     <option value="operasional" {{$d->role == 'operasional' ? 'selected' : ''}}>Operasional</option>
                                 </select>

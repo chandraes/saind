@@ -43,7 +43,7 @@ class UserController extends Controller
             "username" => "required|unique:users",
             "email" => "nullable",
             "password" => "required|min:6",
-            "role" => "required|in:admin,user,vendor,customer,operasional",
+            "role" => "required|in:admin,user,vendor,vendor-operational,customer,operasional",
             'vendor_id' => 'nullable',
             'customer_id' => 'nullable',
         ]);

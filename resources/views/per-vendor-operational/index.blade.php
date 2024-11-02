@@ -1,136 +1,32 @@
-@extends('layouts.app')
-@section('content')
-<div class="container">
-    @include('swal')
-    <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            <h1><u>DASHBOARD</u></h1>
-        </div>
-    </div>
-    <div class="row justify-content-left mt-5">
-        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('database')}}" class="text-decoration-none">
-                <img src="{{asset('images/database.svg')}}" alt="" width="70">
-                <h4 class="mt-3">DATABASE</h4>
-            </a>
-        </div>
-        @endif
-        @if (auth()->user()->role === 'su' || auth()->user()->role === 'admin' || auth()->user()->role === 'user')
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('billing.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/billing.svg')}}" alt="" width="70">
-                <h4 class="mt-3">BILLING</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('rekap.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/rekap.svg')}}" alt="" width="70">
-                <h4 class="mt-3">REKAP</h4>
-            </a>
-        </div>
 
+    {{-- <div class="row justify-content-left mt-5">
         <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">PURCHASE<br>ORDER</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">INVENTARIS</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">PAJAK</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">LAPORAN<br>KEUANGAN</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('statisik.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/statistik.svg')}}" alt="" width="70">
-                <h4 class="mt-3">STATISTIK</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('legalitas')}}" class="text-decoration-none">
-                <img src="{{asset('images/legalitas.svg')}}" alt="" width="70">
-                <h4 class="mt-3">LEGALITAS</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">STRUKTUR<br>ORGANISASI</h4>
-            </a>
-        </div>
-        @endif
-        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('dokumen')}}" class="text-decoration-none">
-                <img src="{{asset('images/document.svg')}}" alt="" width="70">
-                <h4 class="mt-3">DOKUMEN</h4>
-            </a>
-        </div>
-        @if (auth()->user()->role === 'su')
-        {{-- <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('bypass.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/admin.svg')}}" alt="" width="70">
-                <h4 class="mt-3">BYPASS</h4>
-            </a>
-        </div> --}}
-        @endif
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('company-profile')}}" class="text-decoration-none">
-                <img src="{{asset('images/company-profile.svg')}}" alt="" width="70">
-                <h4 class="mt-3">COMPANY PROFILE</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('pengaturan')}}" class="text-decoration-none">
-                <img src="{{asset('images/pengaturan.svg')}}" alt="" width="70">
-                <h4 class="mt-3">PENGATURAN</h4>
-            </a>
-        </div>
-        @endif
-
-    </div>
-    @if (auth()->user()->role === 'vendor')
-    <div class="row justify-content-left mt-5">
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
+            <a href="{{route('vendor-operational.kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
                 <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">Kas Vendor</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('perform-unit-pervendor.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/perform-unit.svg')}}" alt="" width="70">
-                <h4 class="mt-3">Perform Unit</h4>
-            </a>
-        </div>
+
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('statistik-pervendor.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">Statistik Vendor</h4>
             </a>
         </div>
-    </div>
-    <div class="row justify-content-left mt-5">
+    </div> --}}
+    <div class="row justify-content-left mt-3">
         {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
                 <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">DATABASE<br>UPAH GENDONG</h4>
             </a>
         </div> --}}
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{route('vendor-operational.perform-unit-pervendor.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/perform-unit.svg')}}" alt="" width="70">
+                <h4 class="mt-3">Perform Unit</h4>
+            </a>
+        </div>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
                 <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="70">
@@ -146,7 +42,7 @@
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{route('per-vendor.upah-gendong')}}" method="get">
+                        <form action="{{route('vendor-operational.per-vendor.upah-gendong')}}" method="get">
                             <div class="modal-body">
                                 <div class="col-md-12 mb-3">
                                     <select class="form-select" name="vehicle_id" id="vehicle_id">
@@ -183,7 +79,7 @@
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{route('per-vendor.maintenance-vehicle')}}" method="get">
+                        <form action="{{route('vendor-operational.per-vendor.maintenance-vehicle')}}" method="get">
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <select class="form-select" name="vehicle_id" id="vehicle_id">
@@ -220,7 +116,7 @@
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{route('per-vendor.ban-luar')}}" method="get">
+                        <form action="{{route('vendor-operational.per-vendor.ban-luar')}}" method="get">
                             <div class="modal-body">
                                 <div class="col-md-12 mb-3">
                                     <select class="form-select" name="vehicle_id" id="vehicle_ban">
@@ -286,34 +182,4 @@
             </div>
         </div>
     </div> --}}
-    @endif
-    @if (auth()->user()->role === 'vendor-operational')
-    @include('per-vendor-operational.index')
-    @endif
-    @if (auth()->user()->role === 'customer')
-    @include('per-customer.index')
-    @endif
-    @if (auth()->user()->role === 'operasional')
-    @include('operasional.index')
-    @endif
-</div>
-@endsection
-@if (auth()->user()->role === 'operasional')
-@push('css')
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
-@endpush
-@push('js')
-<script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
-<script>
-    $(document).ready(function() {
-            $('#vendor_id').select2({
-                placeholder: 'Pilih Vendor',
-                width: '100%',
-                dropdownParent: $('#vendorModal')
-            });
-        });
-</script>
-@endpush
 
-@endif

@@ -647,6 +647,37 @@ Route::group(['middleware' => ['auth']], function() {
 
     });
 
+    Route::group(['middleware' => 'role:vendor-operational'], function() {
+        Route::prefix('vendor-operational')->group(function() {
+            // Route::get('kas-per-vendor/{vendor}', [App\Http\Controllers\RekapController::class, 'kas_per_vendor'])->name('vendor-operational.kas-per-vendor.index');
+            // Route::get('kas-per-vendor/{invoiceBayar}/detail', [App\Http\Controllers\RekapController::class, 'kas_per_vendor_detail'])->name('vendor-operational.kas-per-vendor.detail');
+            // Route::get('pritn-kas-per-vendor/{vendor}/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'print_kas_per_vendor'])->name('vendor-operational.print-kas-per-vendor.index');
+            Route::get('perform-unit-pervendor', [App\Http\Controllers\PerVendorOperationalController::class, 'perform_unit_pervendor'])->name('vendor-operational.perform-unit-pervendor.index');
+            // Route::get('statistik-pervendor', [App\Http\Controllers\StatistikController::class, 'statistik_pervendor'])->name('vendor-operational.statistik-pervendor.index');
+
+            Route::prefix('per-vendor')->group(function(){
+                Route::get('/upah-gendong', [App\Http\Controllers\PerVendorOperationalController::class, 'upah_gendong'])->name('vendor-operational.per-vendor.upah-gendong');
+
+                Route::prefix('maintenance-vehicle')->group(function(){
+                    Route::get('/', [App\Http\Controllers\PerVendorOperationalController::class, 'maintenance_vehicle'])->name('vendor-operational.per-vendor.maintenance-vehicle');
+                    Route::get('/print', [App\Http\Controllers\PerVendorOperationalController::class, 'maintenance_vehicle_print'])->name('vendor-operational.per-vendor.maintenance-vehicle.print');
+                    Route::post('/store-odo', [App\Http\Controllers\PerVendorOperationalController::class, 'store_odo'])->name('vendor-operational.per-vendor.maintenance-vehicle.store-odo');
+                });
+
+                Route::prefix('ban-luar')->group(function(){
+                    Route::get('/', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_luar'])->name('vendor-operational.per-vendor.ban-luar');
+                    Route::post('/store', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_luar_store'])->name('vendor-operational.per-vendor.ban-luar.store');
+                    Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_histori'])->name('vendor-operational.per-vendor.ban-luar.histori');
+                    Route::get('/histori-data', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_histori_data'])->name('vendor-operational.per-vendor.ban-luar.histori-data');
+                    Route::post('/histori-destroy/{histori}', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_histori_delete'])->name('vendor-operational.per-vendor.ban-luar.histori-destroy');
+                });
+
+            });
+        });
+
+
+    });
+
     Route::group(['middleware' => 'role:customer'], function() {
         Route::prefix('per-customer')->group(function() {
             // Route::get('nota-tagihan', [App\Http\Controllers\PerCustomerController::class, 'nota_tagihan'])->name('per-customer.nota-tagihan');
