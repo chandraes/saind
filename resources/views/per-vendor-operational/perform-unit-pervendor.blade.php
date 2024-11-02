@@ -67,7 +67,7 @@
                 </form>
                 @endif
                 @if ($vehicle->count() > 0)
-                <form action="{{route('perform-unit-pervendor.index')}}" method="get">
+                <form action="{{route('vendor-operational.perform-unit-pervendor.index')}}" method="get">
                     <input type="hidden" name="offset" value="{{$offset+10}}">
                     <input type="hidden" name="bulan" value="{{$bulan_angka}}">
                     @if ($vendor != 0)
