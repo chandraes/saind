@@ -124,9 +124,7 @@
                 <tr>
                     <td class="text-center align-middle">{{$loop->iteration}}</td>
                     <td class="text-start align-middle">
-
-                            {{$d->nama}}
-
+                        {{$d->nama}}
                     </td>
                     <td class="text-center align-middle">{{$d->banLog ? $d->banLog['merk'] : ''}}</td>
                     <td class="text-center align-middle">{{$d->banLog ? $d->banLog['no_seri'] : ''}}</td>
