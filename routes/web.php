@@ -640,7 +640,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/store', [App\Http\Controllers\PerVendorController::class, 'ban_luar_store'])->name('per-vendor.ban-luar.store');
                 Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\PerVendorController::class, 'ban_histori'])->name('per-vendor.ban-luar.histori');
                 Route::get('/histori-data', [App\Http\Controllers\PerVendorController::class, 'ban_histori_data'])->name('per-vendor.ban-luar.histori-data');
-                // Route::post('/histori-destroy/{histori}', [App\Http\Controllers\PerVendorController::class, 'ban_histori_delete'])->name('per-vendor.ban-luar.histori-destroy');
+                Route::post('/histori-destroy/{histori}', [App\Http\Controllers\PerVendorController::class, 'ban_histori_delete'])->name('per-vendor.ban-luar.histori-destroy');
             });
 
         });
@@ -666,7 +666,7 @@ Route::group(['middleware' => ['auth']], function() {
 
                 Route::prefix('ban-luar')->group(function(){
                     Route::get('/', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_luar'])->name('vendor-operational.per-vendor.ban-luar');
-                    Route::post('/store', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_luar_store'])->name('vendor-operational.per-vendor.ban-luar.store');
+                    // Route::post('/store', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_luar_store'])->name('vendor-operational.per-vendor.ban-luar.store');
                     Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_histori'])->name('vendor-operational.per-vendor.ban-luar.histori');
                     Route::get('/histori-data', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_histori_data'])->name('vendor-operational.per-vendor.ban-luar.histori-data');
                     // Route::post('/histori-destroy/{histori}', [App\Http\Controllers\PerVendorOperationalController::class, 'ban_histori_delete'])->name('vendor-operational.per-vendor.ban-luar.histori-destroy');

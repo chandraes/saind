@@ -68,7 +68,7 @@
                     <th class="text-center align-middle">NO. SERI BAN</th>
                     <th class="text-center align-middle">KONDISI BAN</th>
                     <th class="text-center align-middle">TGL GANTI BAN</th>
-                    {{-- <th class="text-center align-middle">ACTION</th> --}}
+                    <th class="text-center align-middle">ACTION</th>
                 </tr>
             </thead>
             <tbody>
@@ -87,6 +87,13 @@
 <script src="{{asset('assets/js/moment.min.js')}}"></script>
 <script>
     $(document).ready(function(){
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            $('#itemId').val(id);
+            // $('#passwordModal').modal('open');
+            // set action to password form
+            $('#passwordForm').attr('action', "{{route('per-vendor.ban-luar.histori-destroy', ['histori' => ':id'])}}".replace(':id', id));
+        });
 
         $('#rekapTable').DataTable({
             'processing': true,
@@ -120,7 +127,14 @@
                         return moment(data).format('DD-MM-YYYY');
                     }
                 },
-
+                {
+                    data: null,
+                    name: 'ACT',
+                    class:"text-center align-middle",
+                    "render": function (data, type, row, meta) {
+                        return '<button class="btn btn-danger delete-btn" data-id="' + row.id + '"  data-bs-toggle="modal" data-bs-target="#passwordModal">Delete</button>';
+                    }
+                },
             ]
         });
 

@@ -8,7 +8,7 @@
         </div>
     </div>
     @include('swal')
-    @include('per-vendor-operational.ban-luar.tambah')
+    {{-- @include('per-vendor-operational.ban-luar.tambah') --}}
     @if ($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <strong>Whoops!</strong> Terjadi kesalahan.<br><br>
@@ -124,9 +124,9 @@
                 <tr>
                     <td class="text-center align-middle">{{$loop->iteration}}</td>
                     <td class="text-start align-middle">
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#tambahModal" onclick="tambah({{$d}})">
+
                             {{$d->nama}}
-                        </a>
+
                     </td>
                     <td class="text-center align-middle">{{$d->banLog ? $d->banLog['merk'] : ''}}</td>
                     <td class="text-center align-middle">{{$d->banLog ? $d->banLog['no_seri'] : ''}}</td>
