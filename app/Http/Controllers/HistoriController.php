@@ -27,9 +27,12 @@ class HistoriController extends Controller
         $res = $starSender->sendGroup();
 
         if($res == 'true'){
+
+
             $pesanWa->update([
                 'status' => 1
             ]);
+
         } else {
             return redirect()->back()->with('error', 'Gagal mengirim ulang pesan! Silahkan hubungi admin');
         }
