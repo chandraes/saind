@@ -87,8 +87,8 @@ $password = \App\Models\PasswordKonfirmasi::first();
             </a>
         </div>
         <div class="col-md-3 text-center mt-5">
-            <a href="#" class="text-decoration-none">
-                <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+            <a href="{{route('pengaturan.histori-pesan')}}" class="text-decoration-none">
+                <img src="{{asset('images/histori.svg')}}" alt="" width="70">
                 <h5 class="mt-3">HISTORI PESAN WHATSAPP</h5>
             </a>
         </div>

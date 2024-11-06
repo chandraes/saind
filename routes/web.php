@@ -170,6 +170,10 @@ Route::group(['middleware' => ['auth']], function() {
             Route::patch('/nota-transaksi/update/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update'])->name('pengaturan.konfigurasi-transaksi.update');
 
             Route::patch('/nota-transaksi/update-jam/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update_jam'])->name('pengaturan.konfigurasi-transaksi.update-jam');
+
+            Route::get('/histori-pesan', [App\Http\Controllers\HistoriController::class, 'index'])->name('pengaturan.histori-pesan');
+            Route::post('/histori-pesan/resend/{pesanWa}', [App\Http\Controllers\HistoriController::class, 'resend'])->name('pengaturan.histori.resend');
+            Route::delete('/histori-pesan/delete-sended', [App\Http\Controllers\HistoriController::class, 'delete_sended'])->name('pengaturan.histori.delete-sended');
         });
 
         Route::resource('direksi', App\Http\Controllers\DireksiController::class);
