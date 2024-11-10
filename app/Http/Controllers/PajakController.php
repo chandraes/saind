@@ -23,9 +23,9 @@ class PajakController extends Controller
     {
         $db = new PpnMasukan();
 
-        $data = $db->with(['invoiceBelanja.supplier'])->where('keranjang', 0)->where('onhold', 0)->where('selesai', 0)->get();
-        $keranjang = $db->with(['invoiceBelanja.supplier'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->count();
-        $keranjangData = $db->with(['invoiceBelanja.supplier'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->get();
+        $data = $db->with(['invoiceBayar.vendor'])->where('keranjang', 0)->where('onhold', 0)->where('selesai', 0)->get();
+        $keranjang = $db->with(['invoiceBayar.vendor'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->count();
+        $keranjangData = $db->with(['invoiceBayar.vendor'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->get();
 
         $total_faktur = 0;
         $total_blm_faktur = 0;
@@ -234,7 +234,7 @@ class PajakController extends Controller
         $dataMasukan = RekapMasukanDetail::where('masukan_id', $masukan_id)->pluck('ppn_masukan_id');
         // dd($dataMasukan);
         $db = new PpnMasukan();
-        $data = $db->with(['invoiceBelanja.supplier'])->whereIn('id', $dataMasukan)->get();
+        $data = $db->with(['invoiceBayar.vendor'])->whereIn('id', $dataMasukan)->get();
 
         return view('pajak.rekap-ppn.masukan-detail', [
             'data' => $data

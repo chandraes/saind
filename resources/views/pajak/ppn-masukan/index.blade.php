@@ -66,7 +66,7 @@
                     </th>
                     <th class="text-center align-middle">Tanggal Input</th>
                     <th class="text-center align-middle">Nota</th>
-                    <th class="text-center align-middle">Supplier</th>
+                    <th class="text-center align-middle">Vendor</th>
                     <th class="text-center align-middle">Uraian</th>
                     {{-- <th class="text-center align-middle">Tanggal Bayar</th> --}}
                     <th class="text-center align-middle">Sebelum<br>Terbit<br>Faktur</th>
@@ -84,17 +84,17 @@
                             {{$d->is_faktur == 0 ? 'disabled' : ''}}>
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->invoiceBelanja ? $d->invoiceBelanja->tanggal : $d->tanggal}}
+                        {{$d->invoiceBayar ? $d->invoiceBayar->tanggal : $d->tanggal}}
                     </td>
                     <td class="text-center align-middle">
-                        @if ($d->invoiceBelanja)
-                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d->invoice_belanja_id])}}">
-                            {{$d->invoiceBelanja->kode}}
+                        @if ($d->invoiceBayar)
+                        <a href="{{route('invoice.bayar.detail', ['invoiceBayar' => $d->invoice_bayar_id])}}">
+                            {{$d->invoiceBayar->periode}}
                         </a>
                         @endif
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->invoiceBelanja ? $d->invoiceBelanja->supplier->nama : '-'}}
+                        {{$d->invoiceBayar ? $d->invoiceBayar->vendor->nama : '-'}}
                     </td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
@@ -162,7 +162,7 @@
 
         const d = getDataById(id);
 
-        $('#nota').val(d.invoice_belanja_id != null ? d.invoice_belanja.kode : 'Nota Belum Terisi');
+        $('#nota').val(d.invoice_bayar_id != null ? d.invoice_bayar.periode : 'Nota Belum Terisi');
         $('#nominal').val(d.nf_nominal);
         $('#no_faktur').val(d.is_faktur == 1 ? d.no_faktur : '');
     }

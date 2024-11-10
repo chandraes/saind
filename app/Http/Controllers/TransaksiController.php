@@ -923,7 +923,7 @@ class TransaksiController extends Controller
             if ($ppn > 0) {
                 PpnMasukan::create([
                     'invoice_bayar_id' => $invoice->id,
-                    'uraian' => 'PPN '. $invoice->periode,
+                    'uraian' => $vendor->nickname.' PPN '. $invoice->periode,
                     'nominal' => $ppn,
                 ]);
             }
@@ -931,7 +931,7 @@ class TransaksiController extends Controller
             if ($pph > 0) {
                 PphSimpan::create([
                     'invoice_bayar_id' => $invoice->id,
-                    'uraian' => 'PPh '. $invoice->periode,
+                    'uraian' => $vendor->nickname.' PPh '. $invoice->periode,
                     'nominal' => $pph
                 ]);
             }

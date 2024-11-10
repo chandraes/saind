@@ -36,7 +36,7 @@
 
                     <th class="text-center align-middle">Tanggal Input</th>
                     <th class="text-center align-middle">Nota</th>
-                    <th class="text-center align-middle">Supplier</th>
+                    <th class="text-center align-middle">Vendor</th>
                     <th class="text-center align-middle">Uraian</th>
                     <th class="text-center align-middle">No Faktur</th>
                     <th class="text-center align-middle">Nominal</th>
@@ -47,17 +47,17 @@
                 <tr>
 
                     <td class="text-center align-middle">
-                        {{$d->invoiceBelanja->tanggal}}
+                        {{$d->invoiceBayar->tanggal}}
                     </td>
                     <td class="text-center align-middle">
-                        @if ($d->invoiceBelanja)
-                        <a href="{{route('billing.invoice-supplier.detail', ['invoice' => $d->invoice_belanja_id])}}">
-                            {{$d->invoiceBelanja->kode}}
+                        @if ($d->invoiceBayar)
+                        <a href="{{route('invoice.bayar.detail', ['invoiceBayar' => $d->invoice_bayar_id])}}">
+                            {{$d->invoiceBayar->periode}}
                         </a>
                         @endif
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->invoiceBelanja->supplier->nama}}
+                        {{$d->invoiceBayar->vendor->nickname}}
                     </td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}

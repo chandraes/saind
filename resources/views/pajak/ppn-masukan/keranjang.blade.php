@@ -14,6 +14,7 @@
                         <tr>
                             <th class="text-center align-middle">No</th>
                             <th class="text-center align-middle">Nota</th>
+                            <th class="text-center align-middle">Vendor</th>
                             <th class="text-center align-middle">Faktur</th>
                             <th class="text-center align-middle">Nominal</th>
                             <th class="text-center align-middle">Act</th>
@@ -24,11 +25,18 @@
                         <tr>
                             <td class="text-center align-middle">{{$loop->iteration}}</td>
                             <td class="text-center align-middle">
-                                @if ($k->invoiceBelanja)
+                                @if ($k->invoiceBayar)
                                 <a
-                                    href="{{route('billing.invoice-supplier.detail', ['invoice' => $k->invoice_belanja_id])}}">
-                                    {{$k->invoiceBelanja->kode}}
+                                    href="{{route('invoice.bayar.detail', ['invoiceBayar' => $k->invoice_bayar_id])}}">
+                                    {{$k->invoiceBayar->periode}}
                                 </a>
+                                @else
+                                -
+                                @endif
+                            </td>
+                            <td class="text-center align-middle">
+                                @if ($k->invoiceBayar)
+                                    {{$k->invoiceBayar->vendor->nickname}}
                                 @else
                                 -
                                 @endif
@@ -52,7 +60,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th class="text-end align-middle" colspan="3">Grand Total</th>
+                            <th class="text-end align-middle" colspan="4">Grand Total</th>
                             <th class="text-end align-middle">{{number_format($keranjangData->sum('nominal'), 0,
                                 ',','.')}}</th>
                             <th></th>
