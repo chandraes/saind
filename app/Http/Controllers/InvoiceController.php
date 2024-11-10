@@ -14,6 +14,8 @@ use App\Models\Vendor;
 use App\Models\KasVendor;
 use App\Models\Rekening;
 use App\Models\GroupWa;
+use App\Models\Pajak\PphPerusahaan;
+use App\Models\Pajak\PpnKeluaran;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
@@ -55,8 +57,8 @@ class InvoiceController extends Controller
         return view('billing.transaksi.invoice.tagihan.detail', [
             'data' => $data,
             'customer' => $customer,
+            'invoice' => $invoice,
             'periode' => $periode,
-            "invoice" => $invoice,
             'invoice_id' => $invoice->id
         ]);
     }
@@ -88,10 +90,27 @@ class InvoiceController extends Controller
             'lunas' => 1
         ]);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
-        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
+        $ppn = PpnKeluaran::where('invoice_tagihan_id', $invoice->id)->first();
 
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
+        if ($ppn) {
+            $ppn->update([
+                'onhold' => 0
+            ]);
+        }
+
+        $pph = PphPerusahaan::where('invoice_tagihan_id', $invoice->id)->first();
+
+        if ($pph) {
+            $pph->update([
+                'onhold' => 0
+            ]);
+        }
+
+        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        // $last = KasBesar::latest()->first();
+
+        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
 
         if($lastNomor == null)
         {
@@ -100,11 +119,14 @@ class InvoiceController extends Controller
             $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
         }
 
-        if ($last) {
+        // if ($last) {
+
+            $dbKasBesar = new KasBesar();
+
             $data['uraian'] = $invoice->customer->singkatan.' - '.$invoice->periode;
             $data['jenis_transaksi_id'] = 1;
             $data['nominal_transaksi'] = $total_bayar;
-            $data['saldo'] = $last->saldo + $total_bayar;
+            $data['saldo'] = $dbKasBesar->saldoTerakhir() + $total_bayar;
             $data['tanggal'] = date('Y-m-d');
 
             $rekening = Rekening::where('untuk', 'kas-besar')->first();
@@ -113,9 +135,9 @@ class InvoiceController extends Controller
             $data['no_rekening'] = $rekening->nomor_rekening;
             $data['bank'] = $rekening->nama_bank;
 
-            $data['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+            $data['modal_investor_terakhir'] = $dbKasBesar->modalInvestorTerakhir();
 
-            $store = KasBesar::create($data);
+            $store = $dbKasBesar->create($data);
 
             $invoiceSisa = InvoiceTagihan::where('customer_id', $invoice->customer_id)->where('lunas', 0)->get();
 
@@ -152,11 +174,13 @@ class InvoiceController extends Controller
                 "Tagihan : \n".
                 "Rp. ".number_format($totalNotaTagihan, 0, ',', '.')."\n\n".
                 "Invoice : \n".
-                $invoiceSisaString."\n".
+                $invoiceSisaString."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
-            $send = new StarSender($group->nama_group, $pesan);
-            $res = $send->sendGroup();
-        }
+
+            $dbKasBesar->sendWa($group->nama_group, $pesan);
+            // $send = new StarSender($group->nama_group, $pesan);
+            // $res = $send->sendGroup();
+        // }
 
         return redirect()->back()->with('success', 'Invoice berhasil di lunasi');
     }
@@ -177,7 +201,11 @@ class InvoiceController extends Controller
         if ($data['cicilan'] == $invoice->sisa_tagihan) {
             $data['lunas'] = 1;
 
-            $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
+            PpnKeluaran::where('invoice_tagihan_id', $invoice->id)->update([
+                'onhold' => 0
+            ]);
+
+            $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
 
             if($lastNomor == null)
             {
@@ -186,23 +214,32 @@ class InvoiceController extends Controller
                 $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
             }
 
+        } else {
+            $data['lunas'] = 0;
+            $data['nomor_kode_tagihan'] = null;
         }
 
         $data['total_bayar'] = $data['cicilan'] + $invoice->total_bayar;
 
         $data['sisa_tagihan'] = $invoice->sisa_tagihan - $data['cicilan'];
 
-        $invoice->update($data);
+        $invoice->update([
+            'total_bayar' => $data['total_bayar'],
+            'sisa_tagihan' => $data['sisa_tagihan'],
+            'lunas' => $data['lunas']
+        ]);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
-        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
+        // $last = KasBesar::latest()->first();
 
-        if ($last) {
+        // if ($last) {
+            $dbKas = new KasBesar();
+
             $data['uraian'] = 'Cicil '.$invoice->customer->singkatan.' - '.$invoice->periode;
             $data['jenis_transaksi_id'] = 1;
             $data['nominal_transaksi'] = $data['cicilan'];
-            $data['saldo'] = $last->saldo + $data['cicilan'];
+            $data['saldo'] = $dbKas->saldoTerakhir() + $data['cicilan'];
             $data['tanggal'] = date('Y-m-d');
 
             $rekening = Rekening::where('untuk', 'kas-besar')->first();
@@ -211,14 +248,25 @@ class InvoiceController extends Controller
             $data['no_rekening'] = $rekening->nomor_rekening;
             $data['bank'] = $rekening->nama_bank;
 
-            $data['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+            $data['modal_investor_terakhir'] = $dbKas->modalInvestorTerakhir();
 
-            $store = KasBesar::create($data);
+            $store = $dbKas->create([
+                'uraian' => $data['uraian'],
+                'jenis_transaksi_id' => $data['jenis_transaksi_id'],
+                'nominal_transaksi' => $data['nominal_transaksi'],
+                'nomor_kode_tagihan' => $data['nomor_kode_tagihan'],
+                'saldo' => $data['saldo'],
+                'tanggal' => $data['tanggal'],
+                'transfer_ke' => $data['transfer_ke'],
+                'no_rekening' => $data['no_rekening'],
+                'bank' => $data['bank'],
+                'modal_investor_terakhir' => $data['modal_investor_terakhir']
+            ]);
 
             $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                "*Cicilan Invoice*\n".
+                "*CICILAN INVOICE*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                 "Tambang : ".$invoice->customer->singkatan."\n".
+                 "Customer : ".$invoice->customer->singkatan."\n".
                 "Periode : ".$invoice->periode."\n\n".
                  "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                  "Ditransfer ke rek:\n\n".
@@ -231,9 +279,11 @@ class InvoiceController extends Controller
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
-            $send = new StarSender($group->nama_group, $pesan);
-            $res = $send->sendGroup();
-        }
+
+            $dbKas->sendWa($group->nama_group, $pesan);
+            // $send = new StarSender($group->nama_group, $pesan);
+            // $res = $send->sendGroup();
+        // }
 
         return redirect()->back()->with('success', 'Invoice berhasil di cicil');
     }
@@ -469,6 +519,8 @@ class InvoiceController extends Controller
                 'tagihan' => 0
             ]);
         }
+
+        PpnKeluaran::where('invoice_tagihan_id', $invoice->id)->delete();
 
         $invoice->delete();
 

@@ -248,76 +248,6 @@
                 </td>
                 <td></td>
             </tr>
-            {{-- <tr>
-                <td class=""
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-
-                </td>
-                <td class="text-center align-middle"><strong>Penyesuaian</strong></td>
-                <td class="text-end align-middle">{{number_format(0, 0, ',', '.')}}
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class=""
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-
-                </td>
-                <td class="text-center align-middle"><strong>Penalti</strong></td>
-                <td class="text-end align-middle">{{number_format(0, 0, ',', '.')}}
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class=""
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-
-                </td>
-                <td class="text-center align-middle"><strong>Grand Total Dpp</strong></td>
-                <td class="text-end align-middle">{{number_format(0, 0, ',', '.')}}
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="text-center align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-                </td>
-                <td class="text-center align-middle"><strong>PPN</strong></td>
-                <td class="text-end align-middle">
-
-                    {{number_format($ppn, 0, ',', '.')}}
-
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-                </td>
-                <td class="text-center align-middle"><strong>PPh</strong></td>
-                <td class="text-end align-middle">
-
-                    {{number_format($pph, 0, ',', '.')}}
-
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="align-middle"
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
-                </td>
-                <td class="text-center align-middle"><strong>Total Tagihan</strong></td>
-                <td class="text-end align-middle"> <strong>
-                        {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
-                </td>
-                <td></td>
-            </tr> --}}
         </tfoot>
     </table>
 </div>
@@ -380,31 +310,41 @@
                                 value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="ppn" class="form-label">Ppn Disetor Oleh</label>
+                            <select name="ppn_dipungut" id="ppn_dipungut" class="form-select" required onchange="calculateTotal()">
+                                <option value="">-- Pilih Salah Satu --</option>
+                                <option value="1">Sendiri</option>
+                                <option value="0">Customer</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <hr>
                 <div class="row">
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="tanggal_hardcopy" class="form-label">Tanggal Submit Hardcopy</label>
-                            <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy" required/>
+                            <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy" value="{{old('tanggal_hardcopy')}}" required>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="estimasi_pembayaran" class="form-label">Estimasi Pembayaran</label>
-                            <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran" required/>
+                            <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran" value="{{old('estimasi_pembayaran')}}" required>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="no_resi" class="form-label">Nomor Resi</label>
-                            <input type="text" class="form-control" name="no_resi" id="no_resi" required/>
+                            <input type="text" class="form-control" name="no_resi" id="no_resi" value="{{old('no_resi')}}" required/>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="no_validasi" class="form-label">Nomor Validasi</label>
-                            <input type="text" class="form-control" name="no_validasi" id="no_validasi" required/>
+                            <input type="text" class="form-control" name="no_validasi" id="no_validasi" value="{{old('no_validasi')}}" required/>
                         </div>
                     </div>
                 </div>
@@ -438,6 +378,8 @@
         var total = parseFloat($('#total').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penyesuaian = parseFloat($('#penyesuaian').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penalty = parseFloat($('#penalty').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var dipungut = $('#ppn_dipungut').val() || 1;
+
         var grandTotal = total + penyesuaian - penalty;
 
         $('#gt_dpp').val(grandTotal.toLocaleString('id-ID'));
@@ -448,7 +390,12 @@
         var pph = Math.round(grandTotal * 0.02);
         $('#pph').val(pph.toLocaleString('id-ID'));
 
-        var totalTagihan = grandTotal + ppn - pph;
+        if(dipungut == 1){
+            var totalTagihan = grandTotal + ppn - pph;
+        } else {
+            var totalTagihan = grandTotal - pph;
+        }
+
         $('#tagi').val(totalTagihan.toLocaleString('id-ID'));
 
     }
@@ -474,10 +421,12 @@
 
         flatpickr("#tanggal_hardcopy", {
             dateFormat: "d-m-Y",
+
         });
 
         flatpickr("#estimasi_pembayaran", {
             dateFormat: "d-m-Y",
+
         });
 
         $.fn.dataTable.moment('DD-MM-YYYY');

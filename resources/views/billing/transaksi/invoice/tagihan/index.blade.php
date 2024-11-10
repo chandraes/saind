@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>INVOICE CUSTOMER</u></h1>
+            <h1><u>INVOICE TAGIHAN</u></h1>
         </div>
     </div>
     @include('swal')
@@ -31,21 +31,24 @@
         </div>
     </div>
 </div>
-<div class="container mt-5 table-responsive ">
+<div class="container-fluid mt-5 table-responsive ">
     <table class="table table-bordered table-hover" id="data-table">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
                 <th class="text-center align-middle">Tambang</th>
                 <th class="text-center align-middle">Invoice</th>
-                <th class="text-center align-middle">Estimasi Nominal Invoice</th>
-                {{-- penyesuaian --}}
-                {{-- pembayaran invoice --}}
+                <th class="text-center align-middle">DPP</th>
+                <th class="text-center align-middle">Penyesuaian</th>
+                <th class="text-center align-middle">Penalti</th>
+                <th class="text-center align-middle">Ppn</th>
+                <th class="text-center align-middle">Pph</th>
+                <th class="text-center align-middle">Total Tagihan</th>
                 <th class="text-center align-middle">Balance</th>
-                <th class="text-center align-middle">Sisa Invoice</th>
+                <th class="text-center align-middle">Sisa Tagihan</th>
                 <th class="text-center align-middle">Lunas</th>
                 <th class="text-center align-middle">Cicil</th>
-                @if (auth()->user()->role === 'su')
+                @if (auth()->user()->username === 'admin')
                 <th class="text-center align-middle">Action</th>
                 @endif
             </tr>
@@ -53,10 +56,25 @@
         <tbody>
             @foreach ($data as $d)
             <tr>
-                <td class="text-center align-middle">{{$d->tanggal}}</td>
+                <td class="text-center align-middle">{{$d->id_tanggal}}</td>
                 <td class="text-center align-middle">{{$d->customer->singkatan}}</td>
                 <td class="text-center align-middle">
                     <a href="{{route('invoice.tagihan.detail', $d)}}"> {{$d->periode}}</a>
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->nf_total_awal}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->nf_penyesuaian}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->nf_penalty}}
+                </td>
+                <td class="text-end align-middle @if ($d->ppn_dipungut == 0) table-danger @endif">
+                    {{$d->nf_ppn}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->nf_pph}}
                 </td>
                 <td class="text-end align-middle">
                     {{number_format($d->total_tagihan, 0, ',', '.')}}
@@ -118,7 +136,7 @@
 
                     </script>
                 </td>
-                @if (auth()->user()->role === 'su')
+                @if (auth()->user()->username === 'admin')
                 <td class="text-center align-middle">
                     <a class="btn btn-danger" href="{{route('invoice.tagihan-back.execute', $d)}}">Kembalikan</a>
                 </td>
@@ -175,7 +193,9 @@
 
 
     $(document).ready(function() {
-        $('#data-table').DataTable();
+        $('#data-table').DataTable({
+            "order": [[2, "asc"]] // Sort by the second column (index 1) in ascending order
+        });
 
     } );
 
