@@ -79,7 +79,9 @@ class FormKasbonController extends Controller
 
         $kasBesar = KasBesar::create($kas);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Kasbon Direksi*\n".
@@ -100,8 +102,7 @@ class FormKasbonController extends Controller
                     "Rp. ".number_format($store->sisa_kas, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Kasbon berhasil ditambahkan');
 
@@ -166,7 +167,9 @@ class FormKasbonController extends Controller
 
         $store = KasBesar::create($kas);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
         $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Form Bayar Kasbon Direksi*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -185,8 +188,8 @@ class FormKasbonController extends Controller
                 "Total Kasbon : \n".
                 "Rp. ".number_format($d['sisa_kas'], 0, ',', '.')."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Pembayaran berhasil disimpan!!');
 
@@ -233,7 +236,9 @@ class FormKasbonController extends Controller
 
         $store = KasBesar::create($kas);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Kasbon Staff*\n".
@@ -252,9 +257,7 @@ class FormKasbonController extends Controller
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
-
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Kasbon berhasil ditambahkan');
     }
@@ -297,7 +300,7 @@ class FormKasbonController extends Controller
         $data['cicilan_nominal'] = $data['nominal'] / $data['cicil_kali'];
 
         $gapok = $karyawan->gaji_pokok * 0.3;
-        
+
         if ($gapok < $data['cicilan_nominal']) {
             return redirect()->back()->with('error', 'Cicilan melebihi 30% dari Gaji Pokok!!');
         }
@@ -316,7 +319,9 @@ class FormKasbonController extends Controller
 
         $store = KasBesar::create($k);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         // buat nama bulan dari $data['mulai_bulan'] dengan bahasa indonesia
         $bulan = Carbon::createFromDate($data['mulai_tahun'], $data['mulai_bulan'], 1)->locale('id')->monthName;
@@ -339,8 +344,7 @@ class FormKasbonController extends Controller
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Kasbon berhasil ditambahkan');
     }

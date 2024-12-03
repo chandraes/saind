@@ -67,16 +67,28 @@ class FormKasKecilController extends Controller
 
         $data['jenis_transaksi_id'] = 1;
 
-        $store = KasKecil::create($data);
+        try {
+            DB::beginTransaction();
 
-        $data['saldo'] = $kb->saldo - 1000000;
-        $data['jenis_transaksi_id'] = 2;
-        $data['nominal_transaksi'] = 1000000;
-        $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
+            $store = KasKecil::create($data);
 
-        $store2 = KasBesar::create($data);
+            $data['saldo'] = $kb->saldo - 1000000;
+            $data['jenis_transaksi_id'] = 2;
+            $data['nominal_transaksi'] = 1000000;
+            $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
 
-        $group = GroupWa::where('untuk', 'kas-kecil')->first();
+            $store2 = KasBesar::create($data);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Data gagal disimpan');
+        }
+
+
+        $dbWa = new GroupWa();
+        $group = $dbWa->where('untuk', 'kas-kecil')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Kecil*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -92,8 +104,8 @@ class FormKasKecilController extends Controller
                     "Sisa Saldo Kas Kecil : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+                    
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
 

@@ -53,8 +53,9 @@ class FormLainController extends Controller
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
 
+        $dbWa = new GroupWa();
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
         $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Form Lain2 (Dana Masuk)*\n".
                  "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -70,8 +71,8 @@ class FormLainController extends Controller
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
     }
@@ -120,7 +121,9 @@ class FormLainController extends Controller
             return redirect()->back()->with('error', 'Data gagal disimpan');
         }
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
         $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                 "*Form Lain2 (Dana Keluar)*\n".
                  "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -136,8 +139,8 @@ class FormLainController extends Controller
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
     }
