@@ -51,7 +51,10 @@ class FormDevidenController extends Controller
         }
 
         $persentase = PersentaseAwal::all();
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $dbWa = new GroupWa();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
+        
         $month = Carbon::now()->locale('id')->monthName;
 
         $isiPesan = [];
@@ -105,8 +108,7 @@ class FormDevidenController extends Controller
         // looping $isiPesan
         foreach ($isiPesan as $pesan) {
 
-            $send = new StarSender($group->nama_group, $pesan);
-            $res = $send->sendGroup();
+            $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         }
 

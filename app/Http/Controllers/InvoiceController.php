@@ -495,7 +495,8 @@ class InvoiceController extends Controller
 
         $store = KasBesar::create($kasBesar);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $dbWa = new GroupWa();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Invoice CSR*\n".
@@ -514,8 +515,7 @@ class InvoiceController extends Controller
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.invoice-csr')->with('success', 'Invoice berhasil di lunasi');
 
