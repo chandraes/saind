@@ -78,7 +78,7 @@ class KaryawanController extends Controller
 
         $data['nomor'] = $last ? $last->nomor + 1 : 1;
 
-        $data['bank'] = "BCA";
+        // $data['bank'] = "BCA";
         $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
         $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
         $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);

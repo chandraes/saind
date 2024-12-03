@@ -156,7 +156,7 @@
             // remove . and convert to number
             nominal = parseInt(nominal.replace(/\./g, ''));
             if (kreditor) {
-                var pph = kreditor.apa_pph == 1 ? nominal * 0.02 : 0;
+                var pph = kreditor.apa_pph == 1 ? nominal * 0.15 : 0;
                 document.getElementById('pph').value = pph.toLocaleString('id-ID');
                 document.getElementById('grand_total').value = (nominal - pph).toLocaleString('id-ID');
 
@@ -177,7 +177,7 @@
                 var nominal = kreditor.persen * modal / 100;
                 document.getElementById('nominal_transaksi').value = nominal.toLocaleString('id-ID');
 
-                var pph = kreditor.apa_pph == 1 ? nominal * 0.02 : 0;
+                var pph = kreditor.apa_pph == 1 ? nominal * 0.15 : 0;
                 document.getElementById('pph').value = pph.toLocaleString('id-ID');
                 document.getElementById('grand_total').value = (nominal - pph).toLocaleString('id-ID');
             }

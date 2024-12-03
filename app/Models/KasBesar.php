@@ -221,7 +221,7 @@ class KasBesar extends Model
     {
         $kreditor = Kreditor::find($data['kreditor_id']);
         $data['nominal'] = str_replace('.', '', $data['nominal_transaksi']);
-        $data['pph'] = $kreditor->apa_pph == 1 ? $data['nominal'] * 0.02 : 0;
+        $data['pph'] = $kreditor->apa_pph == 1 ? $data['nominal'] * 0.15 : 0;
         $data['total'] = $data['nominal'] - $data['pph'];
 
         $saldo = $this->saldoTerakhir();

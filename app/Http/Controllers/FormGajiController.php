@@ -221,9 +221,9 @@ class FormGajiController extends Controller
             return redirect()->back()->with('error', 'Terjadi Kesalahan');
         }
 
+        $dbWa = new GroupWa();
 
-
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Gaji Karyawan*\n".
@@ -237,8 +237,8 @@ class FormGajiController extends Controller
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($storeKasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+                    
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Form Gaji Berhasil Dibuat');
 

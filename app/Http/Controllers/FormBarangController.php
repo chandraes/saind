@@ -15,6 +15,7 @@ use App\Models\Rekening;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FormBarangController extends Controller
 {
@@ -108,30 +109,41 @@ class FormBarangController extends Controller
         $kas['bank'] = $data['bank'];
         $kas['no_rekening'] = $data['no_rekening'];
 
-        foreach ($keranjang as $k) {
-            $data = [
-                'tanggal' => now(),
-                'jenis_transaksi' => 1,
-                'barang_id' => $k->barang_id,
-                'nama_barang' => $k->barang->nama,
-                'jumlah' => $k->jumlah,
-                'harga_satuan' => $k->harga_satuan,
-                'total' => $k->total,
-            ];
+        try {
+            DB::beginTransaction();
 
-            // increment stok barang
-            $barang = Barang::find($k->barang_id);
-            $barang->stok += $k->jumlah;
-            $barang->save();
+            foreach ($keranjang as $k) {
+                $data = [
+                    'tanggal' => now(),
+                    'jenis_transaksi' => 1,
+                    'barang_id' => $k->barang_id,
+                    'nama_barang' => $k->barang->nama,
+                    'jumlah' => $k->jumlah,
+                    'harga_satuan' => $k->harga_satuan,
+                    'total' => $k->total,
+                ];
 
-            RekapBarang::create($data);
+                // increment stok barang
+                $barang = Barang::find($k->barang_id);
+                $barang->stok += $k->jumlah;
+                $barang->save();
+
+                RekapBarang::create($data);
+            }
+
+            $store = KasBesar::create($kas);
+
+            KeranjangBelanja::where('user_id', $user_id)->delete();
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->route('billing.form-barang.beli')->with('error', 'Gagal menyimpan data! ', $th->getMessage());
         }
 
-        $store = KasBesar::create($kas);
+        $dbWa = new GroupWa();
 
-        KeranjangBelanja::where('user_id', $user_id)->delete();
-
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Beli Barang*\n".
@@ -149,8 +161,7 @@ class FormBarangController extends Controller
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.form-barang.beli')->with('success', 'Berhasil membeli barang');
 
@@ -226,14 +237,26 @@ class FormBarangController extends Controller
             return redirect()->back()->with('error', 'Kas sudah melebihi plafon');
         }
 
-        $store = KasVendor::create($kas);
+        try {
+            DB::beginTransaction();
 
-        RekapBarang::create($data);
+            $store = KasVendor::create($kas);
 
-        $barang->stok -= $data['jumlah'];
-        $barang->save();
+            RekapBarang::create($data);
 
-        $group = GroupWa::where('untuk', 'team')->first();
+            $barang->stok -= $data['jumlah'];
+            $barang->save();
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Gagal menyimpan data! ', $th->getMessage());
+        }
+
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'team')->first();
 
         $pesan =    "==========================\n".
                     "*Form Jual Barang*\n".
@@ -247,8 +270,7 @@ class FormBarangController extends Controller
                     "Total Kasbon: Rp. ".number_format($store->sisa, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $res = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Berhasil menjual barang');
 

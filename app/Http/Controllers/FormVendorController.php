@@ -10,6 +10,7 @@ use App\Models\Rekening;
 use App\Models\GroupWa;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FormVendorController extends Controller
 {
@@ -36,7 +37,7 @@ class FormVendorController extends Controller
         $data['nilai'] = str_replace('.', '', $data['nilai']);
 
         $data['uraian'] = substr($data['uraian'], 0, 20);
-        
+
         $v = Vendor::find($data['id']);
 
         $sisa = KasVendor::where('vendor_id', $data['id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
@@ -79,11 +80,23 @@ class FormVendorController extends Controller
             $kas['sisa'] = $d['nominal_transaksi'];
         }
 
-        $store2 = KasVendor::create($kas);
+        try {
+            DB::beginTransaction();
 
-        $store = KasBesar::create($d);
+            $store2 = KasVendor::create($kas);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+            $store = KasBesar::create($d);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan. '. $th->getMessage());
+        }
+
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Titipan Vendor*\n".
@@ -103,8 +116,8 @@ class FormVendorController extends Controller
                     "Total Kasbon Vendor : \n".
                     "Rp. ".number_format($store2->sisa, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
@@ -194,8 +207,8 @@ class FormVendorController extends Controller
         $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
 
         $store2 = KasVendor::create($vendor);
-
-        $store = KasBesar::create($kas);
+        $dbKasBesar = new KasBesar();
+        $store = $dbKasBesar->create($kas);
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
@@ -217,8 +230,10 @@ class FormVendorController extends Controller
                     "Rp. ".number_format($store2->sisa, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $dbKasBesar->sendWa($group->nama_group, $pesan);
+
+        // $send = new StarSender($group->nama_group, $pesan);
+        // $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 

@@ -216,7 +216,7 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="bank" class="form-label">Nama Bank</label>
-                <input type="text" class="form-control @if ($errors->has('bank')) is-invalid @endif" name="bank" id="bank" value="BCA" readonly required>
+                <input type="text" class="form-control @if ($errors->has('bank')) is-invalid @endif" name="bank" id="bank" value="{{$karyawan->bank}}" required>
                 @if ($errors->has('bank'))
                 <div class="invalid-feedback">
                     {{$errors->first('bank')}}
