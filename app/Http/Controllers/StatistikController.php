@@ -888,7 +888,7 @@ class StatistikController extends Controller
 
             $grand_total_profit += $data->sum('profit');
             $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor;
-            $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor);
+            $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty) + $penyesuaian;
 
             $grand_total_gaji += $total_gaji_bersih;
             $grant_total_co += $total_co;
