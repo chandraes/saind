@@ -897,7 +897,7 @@ class StatistikController extends Controller
             $gt_penyesuaian += $penyesuaian;
             $gt_penalty += $penalty;
 
-            $total_pengeluaran = $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penyesuaian+$penalty;
+            $total_pengeluaran = $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty;
 
             $statistics[$bulan] = [
                 'nama_bulan' => $nama_bulan[$bulan],
@@ -909,7 +909,7 @@ class StatistikController extends Controller
                 'penyesuaian' => $penyesuaian,
                 'penalty' => $penalty,
                 'pengeluaran' => $total_pengeluaran,
-                'bersih' => $data->sum('profit') - $total_pengeluaran,
+                'bersih' => ($data->sum('profit') - $total_pengeluaran) + $penyesuaian,
             ];
 
         }
