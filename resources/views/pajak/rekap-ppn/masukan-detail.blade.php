@@ -72,8 +72,16 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th class="text-end align-middle" colspan="5">Grand Total</th>
+                    <th class="text-end align-middle" colspan="5">Total</th>
                     <th class="text-end align-middle">{{number_format($data->sum('nominal'), 0, ',','.')}}</th>
+                </tr>
+                <tr>
+                    <th class="text-end align-middle" colspan="5">Penyesuaian</th>
+                    <th class="text-end align-middle">{{number_format($rekapPpn->penyesuaian, 0, ',','.')}}</th>
+                </tr>
+                <tr>
+                    <th class="text-end align-middle" colspan="5">Grand Total</th>
+                    <th class="text-end align-middle">{{number_format($rekapPpn->nominal, 0, ',','.')}}</th>
                 </tr>
             </tfoot>
         </table>

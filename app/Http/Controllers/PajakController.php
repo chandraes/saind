@@ -90,11 +90,16 @@ class PajakController extends Controller
         return redirect()->back()->with('success', 'Berhasil menghapus data dari keranjang!');
     }
 
-    public function ppn_masukan_keranjang_lanjut()
+    public function ppn_masukan_keranjang_lanjut(Request $request)
     {
-        $db = new RekapPpn();
 
-        $res = $db->keranjang_masukan_lanjut();
+        $data = $request->validate([
+            'penyesuaian' => 'required',
+        ]);
+
+        $db = new RekapPpn();
+        $penyesuaian = str_replace('.', '', $data['penyesuaian']);
+        $res = $db->keranjang_masukan_lanjut($penyesuaian);
 
         return redirect()->back()->with($res['status'], $res['message']);
 
@@ -179,11 +184,17 @@ class PajakController extends Controller
         ]);
     }
 
-    public function ppn_keluaran_keranjang_lanjut()
+    public function ppn_keluaran_keranjang_lanjut(Request $request)
     {
+        $data = $request->validate([
+            'penyesuaian' => 'required',
+        ]);
+
+        $penyesuaian = str_replace('.', '', $data['penyesuaian']);
+
         $db = new RekapPpn();
 
-        $res = $db->keranjang_keluaran_lanjut();
+        $res = $db->keranjang_keluaran_lanjut($penyesuaian);
 
         return redirect()->route('pajak.ppn-keluaran')->with($res['status'], $res['message']);
     }
@@ -237,7 +248,8 @@ class PajakController extends Controller
         $data = $db->with(['invoiceBayar.vendor'])->whereIn('id', $dataMasukan)->get();
 
         return view('pajak.rekap-ppn.masukan-detail', [
-            'data' => $data
+            'data' => $data,
+            'rekapPpn' => $rekapPpn
         ]);
     }
 
@@ -250,7 +262,8 @@ class PajakController extends Controller
         $data = $db->with(['invoiceTagihan.customer'])->whereIn('id', $dataKeluaran)->get();
 
         return view('pajak.rekap-ppn.keluaran-detail', [
-            'data' => $data
+            'data' => $data,
+            'rekapPpn' => $rekapPpn
         ]);
     }
 

@@ -24,7 +24,7 @@
 
     </div>
 </div>
-
+@include('swal')
 <div class="container table-responsive ml-3">
     <div class="row mt-3">
         <table class="table table-hover table-bordered" id="rekapTable">
@@ -53,7 +53,8 @@
                         @endif
 
                     </td>
-                    <td class="text-center align-middle">{{$d->invoiceTagihan->customer ? $d->invoiceTagihan->customer->singkatan : ''}}</td>
+                    <td class="text-center align-middle">{{$d->invoiceTagihan->customer ?
+                        $d->invoiceTagihan->customer->singkatan : ''}}</td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
                     </td>
@@ -88,8 +89,10 @@
             <tfoot>
                 <tr>
                     <th class="text-end align-middle" colspan="5">Total</th>
-                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}</th>
-                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 0)->sum('nominal'), 0, ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 1)->sum('nominal'), 0,
+                        ',', '.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->where('dipungut', 0)->sum('nominal'), 0,
+                        ',', '.')}}</th>
                     <th></th>
                 </tr>
             </tfoot>
@@ -98,51 +101,80 @@
     <hr>
     <div class="row justify-content-end">
         <div class="col-md-6">
-            <div class="row">
-                <div class="col-md-7 pt-2 text-end">
-                    <label for="ppn_keluaran" class="form-label">Saldo PPN Masukan :</label>
-                </div>
-                <div class="col-md-5">
-                    <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran" value="{{number_format($saldoMasukan, 0, ',','.')}}" disabled/>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-7 pt-2 text-end">
-                    <label for="ppn_keluaran" class="form-label">PPN Keluaran : </label>
-                </div>
-                <div class="col-md-5">
-                    <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran" value="{{number_format($data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}" disabled/>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-7 pt-2 text-end">
-                    <label for="ppn_keluaran" class="form-label">Saldo Setelah Pengurangan : </label>
-                </div>
-                <div class="col-md-5">
-                    <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran" value="{{number_format($saldoMasukan-$data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}" disabled/>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-7 pt-2 text-end">
-                    <label for="ambil_dari_kas" class="form-label">Ambil dari Kas Besar : </label>
-                </div>
-                <div class="col-md-5">
-                    <input type="text" class="form-control text-end" name="ambil_dari_kas" id="ambil_dari_kas" value="{{ $dariKas }}" disabled/>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-md-7 pt-2 text-end">
-
-                </div>
-                <div class="col-md-5">
-                    <form action="{{route('pajak.ppn-keluaran.keranjang-lanjut')}}" method="post" id="lanjutForm">
-                        @csrf
-                    <div class="row px-3">
-                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
+            <form action="{{route('pajak.ppn-keluaran.keranjang-lanjut')}}" method="post" id="lanjutForm">
+                @csrf
+                <div class="row">
+                    <div class="col-md-7 pt-2 text-end">
+                        <label for="ppn_keluaran" class="form-label">Saldo PPN Masukan :</label>
                     </div>
-                </form>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran"
+                            value="{{number_format($saldoMasukan, 0, ',','.')}}" disabled />
+                    </div>
                 </div>
-            </div>
+                <div class="row">
+                    <div class="col-md-7 pt-2 text-end">
+                        <label for="ppn_keluaran" class="form-label">PPN Keluaran : </label>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control text-end" name="ppn_keluaran" id="ppn_keluaran"
+                            value="{{number_format($data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}"
+                            disabled />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-7 pt-2 text-end">
+                        <label for="ppn_keluaran" class="form-label">Penyesuaian PPN Keluaran : </label>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control text-end" name="penyesuaian" id="penyesuaian" value="0"
+                            required onkeyup="checkPenyesuaian()" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-7 pt-2 text-end">
+                        <label for="ppn_keluaran" class="form-label">Total PPN Keluaran : </label>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control text-end" name="ppn_keluaran_total"
+                            id="ppn_keluaran_total"
+                            value="{{number_format($data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}"
+                            disabled />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-7 pt-2 text-end">
+                        <label for="ppn_keluaran" class="form-label">Saldo Setelah Pengurangan : </label>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control text-end" name="ppn_keluaran_plus_penyesuaian"
+                            id="ppn_keluaran_plus_penyesuaian"
+                            value="{{number_format($saldoMasukan-$data->where('dipungut', 1)->sum('nominal'), 0, ',', '.')}}"
+                            disabled />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-7 pt-2 text-end">
+                        <label for="ambil_dari_kas" class="form-label">Ambil dari Kas Besar : </label>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control text-end" name="ambil_dari_kas" id="ambil_dari_kas"
+                            value="{{ $dariKas }}" disabled />
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-7 pt-2 text-end">
+
+                    </div>
+                    <div class="col-md-5">
+
+                        <div class="row px-3">
+                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
         </div>
 
     </div>
@@ -154,6 +186,33 @@
 @push('js')
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
+    function checkPenyesuaian() {
+        var penyesuaian = $('#penyesuaian').val() ?? 0;
+        var ppnKeluaran = {{$data->where('dipungut', 1)->sum('nominal')}};
+
+        var dariKas = {{$dariKas}};
+
+        // hilangkan '.' dari penyesuaian dan convert ke integer
+        penyesuaian = parseInt(penyesuaian.replace(/\./g, ''));
+
+        // tambahkan penyesuaian ke ppnKeluaran dan
+        var totalPpnKeluaran = ppnKeluaran + penyesuaian;
+        document.getElementById('ppn_keluaran_total').value = new Intl.NumberFormat('id-ID').format(totalPpnKeluaran);
+
+        // kurangkan totalPpnKeluaran dari saldoSetelahPpn
+        var saldoSetelahPpn = {{$saldoMasukan}} - totalPpnKeluaran;
+        document.getElementById('ppn_keluaran_plus_penyesuaian').value = new Intl.NumberFormat('id-ID').format(saldoSetelahPpn);
+
+        // jadikan saldo seleteh ppn menjadi positif jika negatif
+        if (saldoSetelahPpn < 0) {
+            var ambilDariKas = saldoSetelahPpn * -1;
+            document.getElementById('ambil_dari_kas').value = new Intl.NumberFormat('id-ID').format(ambilDariKas);
+        } else {
+            document.getElementById('ambil_dari_kas').value = 0;
+        }
+
+    }
+
     $(document).ready(function() {
 
 

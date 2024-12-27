@@ -28,7 +28,7 @@
 </div>
 @include('pajak.ppn-keluaran.faktur-modal')
 @include('pajak.ppn-keluaran.show-faktur')
-
+@include('swal')
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <form action="{{route('pajak.ppn-keluaran.keranjang-store')}}" method="post" id="keranjangForm">

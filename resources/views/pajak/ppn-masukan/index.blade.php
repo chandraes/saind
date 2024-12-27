@@ -28,6 +28,7 @@
 @include('pajak.ppn-masukan.faktur-modal')
 @include('pajak.ppn-masukan.show-faktur')
 @include('pajak.ppn-masukan.keranjang')
+@include('swal')
 <div class="container-fluid table-responsive ml-3">
     <div class="row mt-3">
         <form action="{{route('pajak.ppn-masukan.keranjang-store')}}" method="post" id="keranjangForm">

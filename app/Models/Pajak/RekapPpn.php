@@ -86,13 +86,13 @@ class RekapPpn extends Model
         return $this->orderBy('id', 'desc')->first()->saldo ?? 0;
     }
 
-    public function keranjang_masukan_lanjut()
+    public function keranjang_masukan_lanjut($penyesuaian = 0)
     {
         $db = new PpnMasukan();
 
         $data = $db->where('keranjang', 1)->where('selesai', 0)->get();
 
-        $total = $data->sum('nominal');
+        $total = $data->sum('nominal') + $penyesuaian;
 
         try {
             DB::beginTransaction();
@@ -101,6 +101,7 @@ class RekapPpn extends Model
                 'masukan_id' => $this->generateMasukanId(),
                 'nominal' => $total,
                 'saldo' => $this->saldoTerakhir() + $total,
+                'penyesuaian' => $penyesuaian,
                 'jenis' => 1,
                 'uraian' => 'PPN Masukan',
             ]);
@@ -136,13 +137,13 @@ class RekapPpn extends Model
         }
     }
 
-    public function keranjang_keluaran_lanjut()
+    public function keranjang_keluaran_lanjut($penyesuaian = 0)
     {
         $db = new PpnKeluaran();
 
         $data = $db->where('onhold', 0)->where('keranjang', 1)->where('selesai', 0)->get();
 
-        $total = $data->where('dipungut', 1)->sum('nominal');
+        $total = $data->where('dipungut', 1)->sum('nominal') + $penyesuaian;
 
         $saldo = $this->saldoTerakhir() - $total;
 
@@ -157,6 +158,7 @@ class RekapPpn extends Model
                 'keluaran_id' => $this->generateKeluaranId(),
                 'nominal' => $total,
                 'saldo' => $saldo,
+                'penyesuaian' => $penyesuaian,
                 'jenis' => 0,
                 'uraian' => 'PPN Keluaran',
             ]);
