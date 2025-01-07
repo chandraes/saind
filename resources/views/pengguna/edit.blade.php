@@ -30,6 +30,8 @@
                                     <option value="vendor" {{$d->role == 'vendor' ? 'selected' : ''}}>Vendor</option>
                                     <option value="vendor-operational" {{$d->role == 'vendor-operational' ? 'selected' : ''}}>Vendor Operational</option>
                                     <option value="user" {{$d->role == 'user' ? 'selected' : ''}}>User</option>
+                                    <option value="customer" {{$d->role == 'customer' ? 'selected' : ''}}>Customer</option>
+                                    <option value="customer-admin" {{$d->role == 'customer-admin' ? 'selected' : ''}}>Customer Admin</option>
                                     <option value="operasional" {{$d->role == 'operasional' ? 'selected' : ''}}>Operasional</option>
                                 </select>
                             </div>

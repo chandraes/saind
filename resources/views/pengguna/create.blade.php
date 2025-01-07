@@ -32,6 +32,7 @@
                                     <option value="vendor-operational">Vendor Operational</option>
                                     <option value="user">User</option>
                                     <option value="customer">Customer</option>
+                                    <option value="customer-admin">Customer Admin</option>
                                 </select>
                             </div>
                             <div class="col-md-12 mt-3" id="divVendor" hidden>
@@ -91,7 +92,7 @@
                 document.getElementById('vendor_id').disabled = false;
                 document.getElementById('vendor_id').required = true;
                 document.getElementById('customer_id').required = false;
-            } else if(role == 'customer') {
+            } else if(role == 'customer' || role == 'customer-admin') {
                 document.getElementById('divCustomer').hidden = false;
                 document.getElementById('divVendor').hidden = true;
                 // vendor_id required

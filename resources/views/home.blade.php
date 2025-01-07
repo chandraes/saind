@@ -293,6 +293,9 @@
     @if (auth()->user()->role === 'customer')
     @include('per-customer.index')
     @endif
+    @if (auth()->user()->role === 'customer-admin')
+    @include('per-customer-admin.index')
+    @endif
     @if (auth()->user()->role === 'operasional')
     @include('operasional.index')
     @endif

@@ -145,8 +145,10 @@ class BillingController extends Controller
         return redirect()->route('billing.form-cost-operational')->with($res['status'], $res['message']);
     }
 
-    public function bunga_investor()
+    public function bunga_investor(Request $request)
     {
+
+     
         $kreditor = Kreditor::where('is_active', 1)->get();
 
         if($kreditor->isEmpty()) {

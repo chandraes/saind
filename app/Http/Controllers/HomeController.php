@@ -43,6 +43,18 @@ class HomeController extends Controller
             ]);
 
         }
+        
+        if ($user->role == 'customer-admin') {
+
+            $db = new Transaksi();
+            $tagihan = $db->countNotaTagihan(auth()->user()->customer_id);
+            $invoice = InvoiceTagihan::where('customer_id', auth()->user()->customer_id)->where('lunas', 0)->count();
+            return view('home', [
+                'tagihan' => $tagihan,
+                'invoice' => $invoice
+            ]);
+
+        }
 
         if ($user->role == 'operasional') {
             $db = Vendor::all();

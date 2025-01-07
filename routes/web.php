@@ -739,6 +739,27 @@ Route::group(['middleware' => ['auth']], function() {
         });
     });
 
+    Route::group(['middleware' => 'role:customer-admin'], function() {
+        Route::prefix('per-customer-admin')->group(function() {
+            Route::get('nota-tagihan', [App\Http\Controllers\PerCustomerAdminController::class, 'nota_tagihan'])->name('per-customer-admin.nota-tagihan');
+            Route::get('nota-tagihan/print', [App\Http\Controllers\PerCustomerAdminController::class, 'nota_tagihan_print'])->name('per-customer-admin.nota-tagihan.print');
+
+            Route::get('invoice-tagihan', [App\Http\Controllers\PerCustomerAdminController::class, 'invoice'])->name('per-customer-admin.invoice-tagihan');
+            Route::get('invoice-tagihan/{invoice}/detail', [App\Http\Controllers\PerCustomerAdminController::class, 'invoice_detail'])->name('per-customer-admin.invoice-tagihan.detail');
+            Route::get('invoice-tagihan/{invoice}/export', [App\Http\Controllers\PerCustomerAdminController::class, 'invoice_export'])->name('per-customer-admin.invoice-tagihan.export');
+
+            Route::get('nota-lunas', [App\Http\Controllers\PerCustomerAdminController::class, 'nota_lunas'])->name('per-customer-admin.nota-lunas');
+            Route::get('nota-lunas/data', [App\Http\Controllers\PerCustomerAdminController::class, 'nota_lunas_data'])->name('per-customer-admin.nota-lunas.data');
+            Route::get('nota-lunas/{invoice}/detail', [App\Http\Controllers\PerCustomerAdminController::class, 'nota_lunas_detail'])->name('per-customer-admin.nota-lunas.detail');
+
+            Route::prefix('tonase-tambang')->group(function(){
+                Route::get('/', [App\Http\Controllers\PerCustomerAdminController::class, 'tonase_tambang'])->name('per-customer-admin.tonase-tambang');
+                Route::get('/pdf', [App\Http\Controllers\PerCustomerAdminController::class, 'tonase_tambang_download'])->name('per-customer-admin.tonase-tambang.pdf');
+            });
+
+        });
+    });
+
     Route::group(['middleware' => 'role:operasional'], function() {
         Route::prefix('operasional')->group(function() {
             // Route::get('kas-vendor', [App\Http\Controllers\OperasionalController::class, 'kas_vendor'])->name('operasional.kas-vendor');
