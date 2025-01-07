@@ -67,7 +67,7 @@
                     searchable: true,
                     orderData: [1],
                     render: function(data, type, row) {
-                        return '<a href="/per-customer/nota-lunas/' + row.id + '/detail">' + data + '</a>';
+                        return '<a href="/per-customer-admin/invoice-tagihan/' + row.id + '/detail">' + data + '</a>';
                     }
                 },
                 {
