@@ -34,7 +34,7 @@
     <table class="table table-bordered table-hover" id="data-table">
         <thead class="table-success">
             <tr>
-                <th class="text-center align-middle">Tanggal</th>
+                {{-- <th class="text-center align-middle">Tanggal</th> --}}
                 {{-- <th class="text-center align-middle">Tambang</th> --}}
                 <th class="text-center align-middle">Invoice</th>
                 <th class="text-center align-middle">DPP</th>
@@ -55,7 +55,7 @@
         <tbody>
             @foreach ($data as $d)
             <tr>
-                <td class="text-center align-middle">{{$d->id_tanggal}}</td>
+                {{-- <td class="text-center align-middle">{{$d->id_tanggal}}</td> --}}
                 {{-- <td class="text-center align-middle">{{$d->customer->singkatan}}</td> --}}
                 <td class="text-center align-middle">
                     <a href="{{route('per-customer-admin.invoice-tagihan.detail', $d)}}"> {{$d->periode}}</a>
