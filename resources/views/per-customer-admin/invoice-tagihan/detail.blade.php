@@ -179,7 +179,7 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                 </td>
-                <td class="text-center align-middle"><strong>Penyesuaian</strong></td>
+                <td class="text-center align-middle"><strong>Penyesuaian BBM</strong></td>
                 <td align="right" class="align-middle text-end">
 
                     {{number_format($invoice->penyesuaian, 0, ',', '.')}}

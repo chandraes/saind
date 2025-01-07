@@ -39,7 +39,7 @@
                 <th class="text-center align-middle">Tambang</th>
                 <th class="text-center align-middle">Invoice</th>
                 <th class="text-center align-middle">DPP</th>
-                <th class="text-center align-middle">Penyesuaian</th>
+                <th class="text-center align-middle">Penyesuaian BBM</th>
                 <th class="text-center align-middle">Penalti</th>
                 <th class="text-center align-middle">Ppn</th>
                 <th class="text-center align-middle">Pph</th>

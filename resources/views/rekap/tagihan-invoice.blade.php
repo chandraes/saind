@@ -65,7 +65,7 @@
                     <th class="text-center align-middle">Smpai Tgl Tagihan</th>
                     <th class="text-center align-middle">Nominal Tagihan</th>
                     <th class="text-center align-middle">Estimasi Nominal Invoice</th>
-                    <th class="text-center align-middle">Penyesuaian</th>
+                    <th class="text-center align-middle">Penyesuaian BBM</th>
                     <th class="text-center align-middle">Penalti</th>
                     <th class="text-center align-middle">Pembayaran Invoice</th>
                     <th class="text-center align-middle">Periode</th>
