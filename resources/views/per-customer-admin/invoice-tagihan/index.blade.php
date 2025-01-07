@@ -4,6 +4,7 @@
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>INVOICE TAGIHAN</u></h1>
+            <h1><u>{{$customer->singkatan}}</u></h1>
         </div>
     </div>
     @include('swal')
@@ -34,7 +35,7 @@
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Tambang</th>
+                {{-- <th class="text-center align-middle">Tambang</th> --}}
                 <th class="text-center align-middle">Invoice</th>
                 <th class="text-center align-middle">DPP</th>
                 <th class="text-center align-middle">Penyesuaian</th>
@@ -42,8 +43,8 @@
                 <th class="text-center align-middle">Ppn</th>
                 <th class="text-center align-middle">Pph</th>
                 <th class="text-center align-middle">Total Tagihan</th>
-                <th class="text-center align-middle">Balance</th>
-                <th class="text-center align-middle">Sisa Tagihan</th>
+                {{-- <th class="text-center align-middle">Balance</th> --}}
+                {{-- <th class="text-center align-middle">Sisa Tagihan</th> --}}
                 <th class="text-center align-middle">Tgl Submit<br>Softcopy</th>
                 <th class="text-center align-middle">Tgl Submit<br>Hardcopy</th>
                 <th class="text-center align-middle">Tgl Pembayaran</th>
@@ -55,7 +56,7 @@
             @foreach ($data as $d)
             <tr>
                 <td class="text-center align-middle">{{$d->id_tanggal}}</td>
-                <td class="text-center align-middle">{{$d->customer->singkatan}}</td>
+                {{-- <td class="text-center align-middle">{{$d->customer->singkatan}}</td> --}}
                 <td class="text-center align-middle">
                     <a href="{{route('per-customer-admin.invoice-tagihan.detail', $d)}}"> {{$d->periode}}</a>
                 </td>
@@ -77,12 +78,12 @@
                 <td class="text-end align-middle">
                     {{number_format($d->total_tagihan, 0, ',', '.')}}
                 </td>
-                <td class="text-end align-middle">
+                {{-- <td class="text-end align-middle">
                     {{number_format($d->total_bayar, 0, ',', '.')}}
-                </td>
-                <td class="text-end align-middle">
+                </td> --}}
+                {{-- <td class="text-end align-middle">
                     {{number_format($d->sisa_tagihan, 0, ',', '.')}}
-                </td>
+                </td> --}}
                 <td class="text-end align-middle">
                     {{$d->id_tanggal_softcopy}}
                 </td>

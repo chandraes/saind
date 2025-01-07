@@ -67,8 +67,10 @@ class PerCustomerAdminController extends Controller
     public function invoice()
     {
         $data = InvoiceTagihan::where('customer_id', auth()->user()->customer_id)->where('lunas', 0)->get();
+        $customer = Customer::find(auth()->user()->customer_id);
         return view('per-customer-admin.invoice-tagihan.index', [
             'data' => $data,
+            'customer' => $customer,
         ]);
     }
 
