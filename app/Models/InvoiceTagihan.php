@@ -10,7 +10,7 @@ class InvoiceTagihan extends Model
     use HasFactory;
     protected $guarded = [];
 
-    protected $appends = ['id_tanggal', 'nf_total_tagihan', 'nf_total_awal', 'nf_penyesuaian', 'nf_penalty', 'nf_ppn', 'nf_pph', 'nf_sisa_tagihan', 'nf_total_bayar', 'total_dpp'];
+    protected $appends = ['id_tanggal', 'nf_total_tagihan', 'nf_total_awal', 'nf_penyesuaian', 'nf_penalty', 'nf_ppn', 'nf_pph', 'nf_sisa_tagihan', 'nf_total_bayar', 'total_dpp', 'id_tanggal_hardcopy', 'id_tanggal_softcopy'];
 
     public function customer()
     {
@@ -20,6 +20,21 @@ class InvoiceTagihan extends Model
     public function getIdTanggalAttribute()
     {
         return date('d-m-Y', strtotime($this->tanggal));
+    }
+
+    public function getIdTanggalHardcopyAttribute()
+    {
+        return date('d-m-Y', strtotime($this->tanggal_hardcopy));
+    }
+
+    public function getIdTanggalSoftcopyAttribute()
+    {
+        return date('d-m-Y', strtotime($this->created_at));
+    }
+
+    public function getIdEstimasiPembayaranAttribute()
+    {
+        return date('d-m-Y', strtotime($this->estimasi_pembayaran));
     }
 
     public function getTotalDppAttribute()

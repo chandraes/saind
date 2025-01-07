@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>INVOICE TAGIHAN</u></h1>
@@ -29,7 +29,7 @@
         </div>
     </div>
 </div>
-<div class="container mt-5 table-responsive ">
+<div class="container-fluid mt-5 table-responsive ">
     <table class="table table-bordered table-hover" id="data-table">
         <thead class="table-success">
             <tr>
@@ -44,6 +44,11 @@
                 <th class="text-center align-middle">Total Tagihan</th>
                 <th class="text-center align-middle">Balance</th>
                 <th class="text-center align-middle">Sisa Tagihan</th>
+                <th class="text-center align-middle">Tgl Submit<br>Softcopy</th>
+                <th class="text-center align-middle">Tgl Submit<br>Hardcopy</th>
+                <th class="text-center align-middle">Tgl Pembayaran</th>
+                <th class="text-center align-middle">No Resi</th>
+                <th class="text-center align-middle">No Validasi</th>
             </tr>
         </thead>
         <tbody>
@@ -77,6 +82,21 @@
                 </td>
                 <td class="text-end align-middle">
                     {{number_format($d->sisa_tagihan, 0, ',', '.')}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->id_tanggal_softcopy}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->id_tanggal_hardcopy}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->id_estimasi_pembayaran}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->no_resi}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->no_validasi}}
                 </td>
             </tr>
             {{-- <button class="btn btn-primary">Test</button> --}}
