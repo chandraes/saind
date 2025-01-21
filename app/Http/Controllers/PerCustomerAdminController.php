@@ -369,7 +369,7 @@ class PerCustomerAdminController extends Controller
             'dbRute' => $dbRute,
             'customer' => $customer,
             'bulan_angka' => $bulan,
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Statistik Tonase_'.$bulan.'_'.$tahun.'.pdf');
 
