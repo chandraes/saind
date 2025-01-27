@@ -96,7 +96,7 @@
         $('#masukForm').submit(function(e){
             e.preventDefault();
             Swal.fire({
-                title: 'Apakah anda yakin untuk Permintaan Dana ini?',
+                title: 'Apakah anda yakin?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',

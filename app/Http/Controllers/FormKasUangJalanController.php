@@ -9,12 +9,12 @@ use App\Models\GroupWa;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\Customer;
-use App\Models\PesanWa;
 use App\Models\VendorUangJalan;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\StarSender;
+use Carbon\Carbon;
 
 class FormKasUangJalanController extends Controller
 {
@@ -152,7 +152,6 @@ class FormKasUangJalanController extends Controller
     public function keluar_store(Request $request)
     {
 
-        // dd($request->all());
         $data = $request->validate([
             'customer_id' => 'required',
             'vehicle_id' => 'required',
@@ -201,14 +200,86 @@ class FormKasUangJalanController extends Controller
             $data['saldo'] = $last->saldo - $data['nominal_transaksi'];
         }
 
+        // cek lock uj vehicle lalu cek tanggal kimper dan sim
+        $dbVehicle = Vehicle::find($data['vehicle_id']);
 
-        $store = KasUangJalan::create($data);
-        $transaksi['kas_uang_jalan_id'] = $store->id;
+        if ($dbVehicle->lock_uj == 1) {
+            $today = date('Y-m-d');
+            $kimperExpired = $dbVehicle->tanggal_kimper < $today;
+            $simExpired = $dbVehicle->tanggal_sim < $today;
+            $kimperNotSet = is_null($dbVehicle->tanggal_kimper);
+            $simNotSet = is_null($dbVehicle->tanggal_sim);
 
-        Transaksi::create($transaksi);
-        Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
+            if ($kimperExpired || $simExpired || $kimperNotSet || $simNotSet) {
+                $m = ($kimperExpired || $simExpired) ? 'KIMPER atau SIM sudah kadaluarsa! ' : 'Tanggal kadaluarsa KIMPER atau SIM belum diinput! ';
+                return redirect()->back()->with('error', $m);
+            }
+        }
 
-        $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
+        try {
+            DB::beginTransaction();
+
+            $store = KasUangJalan::create($data);
+            $transaksi['kas_uang_jalan_id'] = $store->id;
+
+            Transaksi::create($transaksi);
+            Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+
+            DB::rollback();
+            return redirect()->back()->with('error', 'Data Gagal Ditambahkan. '. $th->getMessage());
+        }
+
+        $additionalMessage = '';
+        $today = Carbon::today();
+        $nextMonth = $today->copy()->addMonth();
+
+        $additionalMessage = '';
+
+        // Check if dates are input
+        if ($dbVehicle->tanggal_kimper == null) {
+            $additionalMessage .= "Tanggal KIMPER belum diinput. \n\n";
+        } elseif (Carbon::parse($dbVehicle->tanggal_kimper)->lessThan($today)) {
+            $additionalMessage .= 'KIMPER sudah expired sejak ' . Carbon::parse($dbVehicle->tanggal_kimper)->format('d-m-Y') . ".\n\n ";
+        } elseif (Carbon::parse($dbVehicle->tanggal_kimper)->lessThanOrEqualTo($nextMonth)) {
+            $additionalMessage .= 'KIMPER akan kadaluarsa pada ' . Carbon::parse($dbVehicle->tanggal_kimper)->format('d-m-Y') . ".\n\n ";
+        }
+
+        if ($dbVehicle->tanggal_sim == null) {
+            $additionalMessage .= 'Tanggal SIM belum diinput. ';
+        } elseif (Carbon::parse($dbVehicle->tanggal_sim)->lessThan($today)) {
+            $additionalMessage .= 'SIM sudah expired sejak ' . Carbon::parse($dbVehicle->tanggal_sim)->format('d-m-Y') . ".\n\n ";
+        } elseif (Carbon::parse($dbVehicle->tanggal_sim)->lessThanOrEqualTo($nextMonth)) {
+            $additionalMessage .= 'SIM akan kadaluarsa pada ' . Carbon::parse($dbVehicle->tanggal_sim)->format('d-m-Y') .".\n\n ";
+        }
+
+        if ($dbVehicle->tanggal_pajak_stnk == null) {
+            $additionalMessage .= 'Tanggal Pajak STNK belum diinput. ';
+        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThan($today)) {
+            $additionalMessage .= 'Pajak STNK sudah expired sejak ' . Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y') . ".\n\n ";
+        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($nextMonth)) {
+            $additionalMessage .= 'Pajak STNK akan kadaluarsa pada ' . Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y') . ".\n\n ";
+        }
+
+        if ($dbVehicle->tanggal_kir == null) {
+            $additionalMessage .= 'Tanggal KIR belum diinput. ';
+        } elseif (Carbon::parse($dbVehicle->tanggal_kir)->lessThan($today)) {
+            $additionalMessage .= 'KIR sudah expired sejak ' . Carbon::parse($dbVehicle->tanggal_kir)->format('d-m-Y') . ".\n\n ";
+        } elseif (Carbon::parse($dbVehicle->tanggal_kir)->lessThanOrEqualTo($nextMonth)) {
+            $additionalMessage .= 'KIR akan kadaluarsa pada ' . Carbon::parse($dbVehicle->tanggal_kir)->format('d-m-Y') . ".\n\n ";
+        }
+
+        if ($additionalMessage != '') {
+            // tambahkan "==========================\n" pada awal pesan
+            $additionalMessage = "==========================\n" . $additionalMessage;
+            // tambankan "\n" pada akhir pesan
+        }
+
+        $dbWa = new GroupWa();
+        $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengeluaran Uang Jalan*\n".
@@ -226,19 +297,32 @@ class FormKasUangJalanController extends Controller
                     "==========================\n".
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    $additionalMessage.
                     "Terima kasih 🙏🙏🙏\n";
 
-        $storeWa = PesanWa::create([
-            'pesan' => $pesan,
-            'tujuan' => $group->nama_group,
-            'status' => 0,
-        ]);
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $dbVendor = Vendor::find($vendor);
 
-        if ($res == 'true') {
-            $storeWa->update(['status' => 1]);
+        if ($dbVendor->no_hp != null || $dbVendor->no_hp != '' || $dbVendor->no_hp != '-') {
+            $pesanVendor =  "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                            "*Form Pengeluaran Uang Jalan*\n".
+                            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                            "*UJ".sprintf("%02d",$data['nomor_uang_jalan'])."*\n\n".
+                            "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+                            "Vendor : ".$store->vendor->nama."\n\n".
+                            "Tambang : ".$store->customer->singkatan."\n".
+                            "Rute : ".$store->rute->nama."\n\n".
+                            "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
+                            "Ditransfer ke rek:\n\n".
+                            "Bank     : ".$data['bank']."\n".
+                            "Nama    : ".$data['transfer_ke']."\n".
+                            "No. Rek : ".$data['no_rekening']."\n\n".
+                            "==========================\n".
+                            $additionalMessage.
+                            "Terima kasih 🙏🙏🙏\n";
+
+            $sendVendor = $dbWa->sendWa($dbVendor->no_hp, $pesanVendor);
         }
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');

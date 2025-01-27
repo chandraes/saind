@@ -457,36 +457,47 @@ class TransaksiController extends Controller
         $data['nota_muat'] = null;
         $data['nota_bongkar'] = null;
 
-        $transaksi->update($data);
-
         $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
         $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
 
-        $store = KasUangJalan::create([
-            'void' => 1,
-            'kode_void' => "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan),
-            'jenis_transaksi_id' => 1,
-            'nominal_transaksi' => $transaksi->kas_uang_jalan->nominal_transaksi,
-            'tanggal' => date('Y-m-d'),
-            'saldo' => $last->saldo + $transaksi->kas_uang_jalan->nominal_transaksi,
-            'transfer_ke' => substr($rek->nama_rekening, 0, 15),
-            'bank' => $rek->nama_bank,
-            'no_rekening' => $rek->nomor_rekening,
-        ]);
-
-        $cekMobil = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                            ->where('kuj.vehicle_id', $transaksi->kas_uang_jalan->vehicle_id)
-                            ->where('transaksis.status', '<', 3)
-                            ->where('transaksis.void', 0)
-                            ->first();
-
-        if (!$cekMobil) {
-            $transaksi->kas_uang_jalan->vehicle->update([
-                'status' => 'aktif',
+        try {
+            DB::beginTransaction();
+            $transaksi->update($data);
+            $store = KasUangJalan::create([
+                'void' => 1,
+                'kode_void' => "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan),
+                'jenis_transaksi_id' => 1,
+                'nominal_transaksi' => $transaksi->kas_uang_jalan->nominal_transaksi,
+                'tanggal' => date('Y-m-d'),
+                'saldo' => $last->saldo + $transaksi->kas_uang_jalan->nominal_transaksi,
+                'transfer_ke' => substr($rek->nama_rekening, 0, 15),
+                'bank' => $rek->nama_bank,
+                'no_rekening' => $rek->nomor_rekening,
             ]);
+
+            $cekMobil = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                                ->where('kuj.vehicle_id', $transaksi->kas_uang_jalan->vehicle_id)
+                                ->where('transaksis.status', '<', 3)
+                                ->where('transaksis.void', 0)
+                                ->first();
+
+            if (!$cekMobil) {
+                $transaksi->kas_uang_jalan->vehicle->update([
+                    'status' => 'aktif',
+                ]);
+            }
+
+            DB::commit();
+
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal menyimpan data! '. $th->getMessage());
         }
 
-        $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
+        $dbWa = new GroupWa;
+        $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
         $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Void Uang Jalan*\n".
@@ -507,11 +518,9 @@ class TransaksiController extends Controller
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
-
-        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+        return redirect()->route('billing.index')->with('success', 'Berhasil menyimpan data!!');
 
     }
 
