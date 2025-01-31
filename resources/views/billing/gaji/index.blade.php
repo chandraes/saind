@@ -125,34 +125,29 @@
                     <td class="text-end align-middle">{{number_format($pendapatan_kotor, 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($pendapatan_bersih, 0, ',','.')}}</td>
                     <td class="text-end align-middle">
-                        @if ($i->kas_bon_cicilan->where('lunas', 0)->first())
                         @php
-                            $cicilan = $i->kas_bon_cicilan->where('lunas', 0)->first();
-                            // create tanggal from $cicilan->mulai_bulan and $cicilan->mulai_tahun
-                            $mulai = $cicilan->mulai_tahun.'-'.$cicilan->mulai_bulan.'-01';
-                            $mulai = date('Y-m-d', strtotime($mulai));
-                            // check if $mulai month and year is > from now
-                            // $tahun = $tahun;
-                            $bulan = $bulan;
+                        $cicilan = $i->kas_bon_cicilan->where('lunas', 0)->first();
+                        $kasbon_cicil = 0;
 
-                            // $now = create y-m-d from $tahun $bulan
-                            $now = date('Y-m-d', strtotime($tahun.'-'.$bulan.'-01'));
-                            // if true, then $mulai = $now
-                            if($mulai < $now){
-                                $kasbon_cicil = $i->kas_bon_cicilan->where('lunas', 0)->first()->cicilan_nominal;
-                            }else {
-                                $kasbon_cicil = 0;
+                        if ($cicilan) {
+                            // Create tanggal from $cicilan->mulai_bulan and $cicilan->mulai_tahun
+                            $mulai = Carbon\Carbon::createFromDate($cicilan->mulai_tahun, $cicilan->mulai_bulan, 1)->timestamp;
+                            // Create current date from $tahun and $bulan
+                            $now = Carbon\Carbon::createFromDate($tahun, $bulan, 1)->timestamp;
+
+                            // Check if the current month and year is the same as the installment start month and year
+                            if ($now >= $mulai) {
+                                $kasbon_cicil = $cicilan->cicilan_nominal;
                             }
-                            $kasbon = $i->kas_bon->where('lunas', 0)->sum('nominal');
-                            $total_kasbon = $kasbon_cicil + $kasbon;
-                        @endphp
-                            {{number_format($total_kasbon, 0, ',','.')}}
-                        @else
-                            @php
-                                $total_kasbon = $i->kas_bon->where('lunas', 0)->sum('nominal');
-                            @endphp
-                            {{number_format($total_kasbon, 0, ',','.')}}
-                        @endif
+
+
+                        }
+
+                        $kasbon = $i->kas_bon->where('lunas', 0)->sum('nominal');
+                        $total_kasbon = $kasbon_cicil + $kasbon;
+                    @endphp
+
+                    {{ number_format($total_kasbon, 0, ',', '.') }}
                     </td>
                     <td class="text-end align-middle">
                         @php
