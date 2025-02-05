@@ -72,6 +72,7 @@ class FormGajiController extends Controller
         try {
 
             DB::beginTransaction();
+            
             $rekap = RekapGaji::create([
                 'uraian' => "Gaji Bulan ".$month." Tahun ".$tahun,
                 'bulan' => $ds['bulan'],
@@ -237,7 +238,7 @@ class FormGajiController extends Controller
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($storeKasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
-                    
+
         $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Form Gaji Berhasil Dibuat');
