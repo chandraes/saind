@@ -58,7 +58,7 @@ class VehicleController extends Controller
             'tanggal_kir' => 'required',
             'tanggal_kimper' => 'required',
             'tanggal_sim' => 'required',
-            'lock_uj' => 'reqired|boolean',
+            'lock_uj' => 'required|boolean',
         ]);
 
         $data['tanggal_pajak_stnk'] = date('Y-m-d', strtotime($data['tanggal_pajak_stnk']));
