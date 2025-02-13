@@ -24,6 +24,7 @@ use App\Models\Pajak\PpnMasukan;
 use App\Services\StarSender;
 use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -389,7 +390,7 @@ class TransaksiController extends Controller
             'no_rekening' => $rek->nomor_rekening,
         ]);
 
-        $vehicle = $transaksi->kas_uang_jalan->vehicle;
+        $vehicle = Vehicle::find($transaksi->kas_uang_jalan->vehicle_id);
 
         if($transaksi->nota_fisik == 0) {
             $vehicle->update([
