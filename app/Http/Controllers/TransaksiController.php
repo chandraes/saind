@@ -200,7 +200,7 @@ class TransaksiController extends Controller
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
 
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
         }
 
         $data['nominal_csr'] = 0;
@@ -623,7 +623,7 @@ class TransaksiController extends Controller
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
 
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
         }
 
         $data['nominal_csr'] = 0;
