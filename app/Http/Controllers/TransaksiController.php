@@ -24,6 +24,7 @@ use App\Models\Pajak\PpnMasukan;
 use App\Services\StarSender;
 use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -199,7 +200,7 @@ class TransaksiController extends Controller
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
 
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
         }
 
         $data['nominal_csr'] = 0;
@@ -389,7 +390,7 @@ class TransaksiController extends Controller
             'no_rekening' => $rek->nomor_rekening,
         ]);
 
-        $vehicle = $transaksi->kas_uang_jalan->vehicle;
+        $vehicle = Vehicle::find($transaksi->kas_uang_jalan->vehicle_id);
 
         if($transaksi->nota_fisik == 0) {
             $vehicle->update([
@@ -457,12 +458,14 @@ class TransaksiController extends Controller
         $data['nota_muat'] = null;
         $data['nota_bongkar'] = null;
 
-        $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
-        $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
-
         try {
             DB::beginTransaction();
+
             $transaksi->update($data);
+
+            $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
+            $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
+
             $store = KasUangJalan::create([
                 'void' => 1,
                 'kode_void' => "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan),
@@ -487,16 +490,26 @@ class TransaksiController extends Controller
                 ]);
             }
 
+            $vehicle = Vehicle::find($transaksi->kas_uang_jalan->vehicle_id);
+
+            if($transaksi->nota_fisik == 0) {
+                if ($vehicle->do_count > 0) {
+                    $vehicle->update([
+                        'do_count' => $vehicle->do_count - 1,
+                    ]);
+                }
+            }
+
             DB::commit();
-
-
         } catch (\Throwable $th) {
             //throw $th;
+
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal menyimpan data! '. $th->getMessage());
+
+            return redirect()->back()->with('error', 'Terdapat Error pada saat menyimpan data!!');
         }
 
-        $dbWa = new GroupWa;
+        $dbWa = new GroupWa();
         $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
         $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
@@ -520,7 +533,8 @@ class TransaksiController extends Controller
 
         $send = $dbWa->sendWa($group->nama_group, $pesan);
 
-        return redirect()->route('billing.index')->with('success', 'Berhasil menyimpan data!!');
+
+        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
 
     }
 
@@ -609,7 +623,7 @@ class TransaksiController extends Controller
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
 
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 500 : 250;
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
         }
 
         $data['nominal_csr'] = 0;
