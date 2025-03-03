@@ -121,9 +121,12 @@
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
+<script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
+
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
     // hide alert after 5 seconds

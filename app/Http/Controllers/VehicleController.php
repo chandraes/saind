@@ -54,7 +54,17 @@ class VehicleController extends Controller
             'bank' => 'required',
             'no_rekening' => 'required',
             'gps' => 'nullable',
+            'tanggal_pajak_stnk' => 'required',
+            'tanggal_kir' => 'required',
+            'tanggal_kimper' => 'required',
+            'tanggal_sim' => 'required',
+            'lock_uj' => 'required|boolean',
         ]);
+
+        $data['tanggal_pajak_stnk'] = date('Y-m-d', strtotime($data['tanggal_pajak_stnk']));
+        $data['tanggal_kir'] = date('Y-m-d', strtotime($data['tanggal_kir']));
+        $data['tanggal_kimper'] = date('Y-m-d', strtotime($data['tanggal_kimper']));
+        $data['tanggal_sim'] = date('Y-m-d', strtotime($data['tanggal_sim']));
 
         $data['nomor_lambung'] = Vehicle::nextNomorLambung();
 
@@ -65,6 +75,7 @@ class VehicleController extends Controller
         }   else {
             $data['gps'] = 0;
         }
+
 
         if ($data['nomor_lambung'] === 1) {
             $data['nomor_lambung'] = 101;
@@ -116,6 +127,11 @@ class VehicleController extends Controller
             'no_rekening' => 'required',
             'support_operational'=> 'nullable',
             'gps' => 'nullable',
+            'tanggal_pajak_stnk' => 'required',
+            'tanggal_kir' => 'required',
+            'tanggal_kimper' => 'required',
+            'tanggal_sim' => 'required',
+            'lock_uj' => 'required|boolean',
         ]);
 
         if ($vehicle->status == 'proses') {
@@ -138,12 +154,18 @@ class VehicleController extends Controller
             $data['gps'] = 0;
         }
 
+        $data['tanggal_pajak_stnk'] = date('Y-m-d', strtotime($data['tanggal_pajak_stnk']));
+        $data['tanggal_kir'] = date('Y-m-d', strtotime($data['tanggal_kir']));
+        $data['tanggal_kimper'] = date('Y-m-d', strtotime($data['tanggal_kimper']));
+        $data['tanggal_sim'] = date('Y-m-d', strtotime($data['tanggal_sim']));
+
+
         $data['updated_by'] = auth()->user()->id;
         // update data vehicle and if database error, return to previous page with error message
         try {
             $vehicle->update($data);
         } catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'Terdapat nopol, no rangka, atau no mesin yang sama');
+            return redirect()->back()->with('error', 'Terdapat nopol, no rangka, atau no mesin yang sama. '. $th->getMessage());
         }
         // $vehicle->update($data);
 

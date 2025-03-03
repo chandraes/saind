@@ -270,7 +270,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="penyesuaian" class="form-label">Penyesuaian</label>
+                            <label for="penyesuaian" class="form-label">Penyesuaian BBM</label>
                             <input type="text" class="form-control" name="penyesuaian" id="penyesuaian" required
                                 value="0" onkeyup="calculateTotal()" />
                         </div>

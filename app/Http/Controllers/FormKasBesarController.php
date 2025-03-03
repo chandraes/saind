@@ -143,6 +143,7 @@ class FormKasBesarController extends Controller
 
 
         $last = KasBesar::latest()->orderBy('id', 'desc')->first();
+        
         if($last == null){
             $data['saldo'] = 0 - $data['nominal_transaksi'];
             $data['modal_investor'] = $data['nominal_transaksi'];
@@ -177,7 +178,9 @@ class FormKasBesarController extends Controller
             $addPesan .= $no++.". ".$legalitas->nama." - ".date('d-m-Y', strtotime($legalitas->tanggal_expired))."\n";
             }
         }
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+        $dbWa = new GroupWa();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengembalian Deposit*\n".
@@ -194,8 +197,8 @@ class FormKasBesarController extends Controller
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n".
                     $addPesan;
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 
