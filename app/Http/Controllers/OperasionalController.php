@@ -491,6 +491,7 @@ class OperasionalController extends Controller
                                 ->where('transaksis.void', 0)
                                 ->where('kuj.vehicle_id', $vehicle)
                                 ->whereBetween('tanggal', [$startDate, $endDate])
+                                ->orderBy('kuj.tanggal', 'asc')
                                 ->get();
 
             } else {
@@ -504,6 +505,7 @@ class OperasionalController extends Controller
                                 ->where('transaksis.void', 0)
                                 ->where('kuj.vehicle_id', $vehicle)
                                 ->where('tanggal', '>=', $date)
+                                ->orderBy('kuj.tanggal', 'asc')
                                 ->get();
 
             }
@@ -517,6 +519,7 @@ class OperasionalController extends Controller
                         ->whereYear('tanggal', $tahun)
                         ->where('transaksis.void', 0)
                         ->where('kuj.vehicle_id', $vehicle)
+                        ->orderBy('kuj.tanggal', 'asc')
                         ->get();
         }
 
