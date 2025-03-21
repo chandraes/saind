@@ -150,7 +150,7 @@ class FormVendorController extends Controller
 
     public function get_kas_vendor(Request $request)
     {
-        $data = KasVendor::where('vendor_id', $request->vendor_id)->latest()->orderBy('id', 'desc')->first();
+        $data = KasVendor::where('vendor_id', $request->vendor_id)->orderBy('id', 'desc')->first();
 
         $sisa = $data ? $data->sisa : 0;
 
@@ -173,28 +173,34 @@ class FormVendorController extends Controller
             'nominal' => 'required',
         ]);
 
+        $dbKasBesar = new KasBesar();
         // make $data['nominal'] into positive number
         $data['nominal'] = $data['nominal'] * -1;
+
         $v = Vendor::find($data['vendor_id']);
-        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
+
+        $last = $dbKasBesar->lastKasBesar();
 
         if ($last == null || $last->saldo < $data['nominal']) {
             return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
         }
 
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
+        $sisa = KasVendor::where('vendor_id', $data['vendor_id'])->orderBy('id', 'desc')->first()->sisa;
 
-        if ($lastNomor)  {
-            $kas['nomor_kode_tagihan'] = 1;
-        } else {
-            $kas['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
+        // make $sisa into positive number
+        $sisaPositif = $sisa * -1;
+
+        if ($sisaPositif < $data['nominal']) {
+            return redirect()->back()->with('error', 'Nominal melebihi sisa tagihan');
         }
+
+        $kas['nomor_kode_tagihan'] = $dbKasBesar->generateNomorTagihan();
 
         $vendor['vendor_id'] = $data['vendor_id'];
         $vendor['tanggal'] = date('Y-m-d');
         $vendor['uraian'] = "Pelunasan Vendor";
         $vendor['pinjaman'] = $data['nominal'];
-        $vendor['sisa'] = 0;
+        $vendor['sisa'] = $sisa + $data['nominal'];
 
         $kas['tanggal'] = date('Y-m-d');
         $kas['uraian'] = "Pelunasan Vendor ".$v->nama;
@@ -206,9 +212,20 @@ class FormVendorController extends Controller
         $kas['no_rekening'] = $v->no_rekening;
         $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
 
-        $store2 = KasVendor::create($vendor);
-        $dbKasBesar = new KasBesar();
-        $store = $dbKasBesar->create($kas);
+        try {
+            DB::beginTransaction();
+
+            $store2 = KasVendor::create($vendor);
+
+            $store = $dbKasBesar->create($kas);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan. '. $th->getMessage());
+        }
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
@@ -231,9 +248,6 @@ class FormVendorController extends Controller
                     "Terima kasih 🙏🙏🙏\n";
 
         $dbKasBesar->sendWa($group->nama_group, $pesan);
-
-        // $send = new StarSender($group->nama_group, $pesan);
-        // $res = $send->sendGroup();
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
 

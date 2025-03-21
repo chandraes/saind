@@ -284,7 +284,8 @@
     $(document).ready(function () {
         $('#vendor').select2({
             theme: 'bootstrap-5',
-            placeholder: '-- Pilih Vendor --'
+            placeholder: '-- Pilih Vendor --',
+            dropdownParent: $('#vendorModal')
         });
 
         $('#vehicle_id').select2({

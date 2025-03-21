@@ -44,9 +44,12 @@
                 <label for="nilai" class="form-label">Nilai Tagihan</label>
                 <div class="input-group mb-3">
                     <span class="input-group-text" id="basic-addon1">Rp</span>
-                    <input type="text" class="form-control @if ($errors->has('nilai'))
-                    is-invalid
-                @endif" name="nilai" id="nilai" data-thousands="." disabled>
+                    @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
+                    <input type="text" class="form-control" name="nilai" id="nilai" onkeyup="changeNominal()" required>
+                    @else
+                    <input type="text" class="form-control" name="nilai" id="nilai" data-thousands="." disabled>
+                    @endif
+
                 <input type="hidden" name="nominal" id="nominal">
                   </div>
             </div>
@@ -59,17 +62,28 @@
     </form>
 </div>
 @endsection
+@push('css')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+@endpush
 @push('js')
-{{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-    <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
-    <script>
-        $(function() {
-             $('#nilai').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
-            });
-        });
+<script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
+
+<script>
+
+$('#vendor_id').select2({
+    theme: 'bootstrap-5',
+    placeholder: '-- Pilih Vendor --'
+});
+
+var nominal = new Cleave('#nilai', {
+    numeral: true,
+    numeralThousandsGroupStyle: 'thousand',
+    numeralDecimalMark: ',',
+    delimiter: '.'
+});
+
 
         $('#masukForm').submit(function(e){
             e.preventDefault();
@@ -112,11 +126,25 @@
                         // mask money
                         // show button ok
                         $('#ok').removeAttr('hidden');
-                        $('#nilai').maskMoney('mask', data);
+                        var nilai = parseInt(data) * -1;
+                        console.log(nilai);
+                        // make data to local String id-ID
+                        nilai = nilai.toLocaleString('id-ID');
+
+                        $('#nilai').val(nilai);
+
                         $('#nominal').val(data);
                     }
                 }
             });
+        }
+
+        function changeNominal() {
+            var nominal = $('#nilai').val();
+            var nominal = nominal.replace(/\./g, '');
+            var nominal = parseInt(nominal) * -1;
+            $('#nominal').val(nominal);
+            console.log(nominal);
         }
 
     </script>

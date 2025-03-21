@@ -14,6 +14,11 @@ class KasBesar extends Model
     use HasFactory;
     protected $guarded = [];
 
+    public function generateNomorTagihan() : int
+    {
+        return $this->max('nomor_kode_tagihan') + 1;
+    }
+
     public function lastKasBesar()
     {
         return $this->orderBy('id', 'desc')->first();
