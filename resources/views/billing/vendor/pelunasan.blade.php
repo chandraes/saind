@@ -127,7 +127,6 @@ var nominal = new Cleave('#nilai', {
                         // show button ok
                         $('#ok').removeAttr('hidden');
                         var nilai = parseInt(data) * -1;
-                        console.log(nilai);
                         // make data to local String id-ID
                         nilai = nilai.toLocaleString('id-ID');
 
@@ -144,7 +143,6 @@ var nominal = new Cleave('#nilai', {
             var nominal = nominal.replace(/\./g, '');
             var nominal = parseInt(nominal) * -1;
             $('#nominal').val(nominal);
-            console.log(nominal);
         }
 
     </script>

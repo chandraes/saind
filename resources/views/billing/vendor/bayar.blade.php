@@ -67,14 +67,13 @@
 </div>
 @endsection
 @push('js')
-{{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
-    <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script>
         $(function() {
-             $('#nilai').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+            var nilai = new Cleave('#nilai', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
         });
 
@@ -97,6 +96,8 @@
 
         function funGetKas() {
             var vendor_id = $('#vendor_id').val();
+            var role = {!! json_encode(Auth::user()->role) !!};
+
             $.ajax({
                 url: "{{route('billing.vendor.get-kas-vendor')}}",
                 type: "GET",
@@ -104,11 +105,27 @@
                     vendor_id: vendor_id
                 },
                 success: function(data){
+                    if (role == 'admin' || role == 'su') {
+                        $('#ok').removeAttr('hidden');
+
+                        if (data < 0) {
+                            $('#nilai').val(0);
+                            $('#nominal').val(0);
+                            return;
+                        }
+
+                        $('#nilai').val(data.toLocaleString('id-ID'));
+                        $('#nominal').val(data);
+
+                        return;
+                    }
+
                     if (data > 0) {
                         // swal tidak ada tagihan
 
                         $('#ok').removeAttr('hidden');
-                        $('#nilai').maskMoney('mask', data);
+
+                        $('#nilai').val(data.toLocaleString('id-ID'));
                         $('#nominal').val(data);
 
 

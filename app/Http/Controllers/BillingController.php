@@ -24,8 +24,6 @@ class BillingController extends Controller
         $bulan = $check->bulan + 1 == 13 ? 1 : $check->bulan + 1;
         $tahun = $check->bulan + 1 == 13 ? $check->tahun + 1 : $check->tahun;
 
-
-
         $customer = Customer::all();
 
         $invoice = InvoiceTagihan::where('lunas', 0)->count();
@@ -148,7 +146,6 @@ class BillingController extends Controller
     public function bunga_investor(Request $request)
     {
 
-     
         $kreditor = Kreditor::where('is_active', 1)->get();
 
         if($kreditor->isEmpty()) {

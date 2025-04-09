@@ -270,35 +270,34 @@ class FormVendorController extends Controller
             'uraian' => 'required',
         ]);
 
+        $role = auth()->user()->role;
+
+        $dbKasBesar = new KasBesar();
+
         $data['nominal'] = str_replace('.', '', $data['nilai']);
 
         $v = Vendor::find($data['vendor_id']);
-        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->orderBy('id', 'desc')->first();
+        // $last = $dbKasBesar->orderBy('id', 'desc')->first();
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
-        if ($lastNomor == null)  {
-            $kas['nomor_kode_tagihan'] = 1;
-        } else {
-            $kas['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
-        }
-
+        $kas['nomor_kode_tagihan'] = $dbKasBesar->generateNomorTagihan();
         $kas['tanggal'] = date('Y-m-d');
         $kas['uraian'] = $data['uraian'];
         $kas['jenis_transaksi_id'] = 1;
         $kas['nominal_transaksi'] = $data['nominal'];
-        $kas['saldo'] = $last->saldo + $data['nominal'];
+        $kas['saldo'] = $dbKasBesar->saldoTerakhir() + $data['nominal'];
         $kas['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
         $kas['bank'] = $rekening->nama_bank;
         $kas['no_rekening'] = $rekening->nomor_rekening;
-        $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
+        $kas['modal_investor_terakhir'] = $dbKasBesar->modalInvestorTerakhir();
 
-        $sisaTerakhir = KasVendor::where('vendor_id', $data['vendor_id'])->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
+        $sisaTerakhir = KasVendor::where('vendor_id', $data['vendor_id'])->orderBy('id', 'desc')->first()->sisa ?? 0;
 
-        if ($sisaTerakhir < $data['nominal']) {
-            return redirect()->back()->with('error', 'Nilai melebihi sisa tagihan');
+        if ($role != 'admin' && $role != 'su') {
+            if ($sisaTerakhir < $data['nominal']) {
+                return redirect()->back()->with('error', 'Nilai melebihi sisa tagihan');
+            }
         }
-        // dd($data['nominal']);
 
         $vendor['vendor_id'] = $data['vendor_id'];
         $vendor['tanggal'] = date('Y-m-d');
@@ -306,11 +305,24 @@ class FormVendorController extends Controller
         $vendor['bayar'] = $data['nominal'];
         $vendor['sisa'] = $sisaTerakhir - $vendor['bayar'];
 
-        $store2 = KasVendor::create($vendor);
+        try {
+            DB::beginTransaction();
 
-        $store = KasBesar::create($kas);
+            $store2 = KasVendor::create($vendor);
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+            $store = $dbKasBesar->create($kas);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan. '. $th->getMessage());
+        }
+
+        $dbWa = new GroupWa();
+
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Form Pelunasan dari Vendor*\n".
@@ -331,8 +343,7 @@ class FormVendorController extends Controller
                     "Rp. ".number_format($store2->sisa, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+        $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
     }

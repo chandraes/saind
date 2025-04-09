@@ -187,7 +187,7 @@
                 <input type="hidden" name="tahun" value="{{$tahun}}">
                 <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
             </form>
-            <a href="{{route('billing.form-cost-operational')}}" class="btn btn-secondary btn-lg">Batalkan</a>
+            <a href="{{route('billing.index')}}" class="btn btn-secondary btn-lg">Batalkan</a>
             {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
           </div>
     </div>
