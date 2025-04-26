@@ -216,6 +216,16 @@ class FormKasUangJalanController extends Controller
             }
         }
 
+        // check tanggal pajak stnk, jika null maka return back error, else if jika tanggal 30 pajak stnk 30 hari lagi akan expired dan auth()->user()->role != admin, maka return redirect back
+        $nextMonth = Carbon::today()->addMonth();
+
+        if ($dbVehicle->tanggal_pajak_stnk == null) {
+            return redirect()->back()->with('error', 'Tanggal Pajak STNK belum diinput!');
+        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($nextMonth) && auth()->user()->role != 'admin') {
+            return redirect()->back()->withInput()->with('error', 'Pajak STNK kadaluarsa pada ' . Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y') . '! Silahkan hubungin Admin!');
+        }
+
+
         try {
             DB::beginTransaction();
 
@@ -236,6 +246,7 @@ class FormKasUangJalanController extends Controller
         $additionalMessage = '';
         $today = Carbon::today();
         $nextMonth = $today->copy()->addMonth();
+        $monthAndHalf = $today->copy()->addDays(45);
 
         $additionalMessage = '';
 
@@ -260,7 +271,7 @@ class FormKasUangJalanController extends Controller
             $additionalMessage .= 'Tanggal Pajak STNK belum diinput. ';
         } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThan($today)) {
             $additionalMessage .= 'Pajak STNK sudah expired sejak ' . Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y') . ".\n\n ";
-        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($nextMonth)) {
+        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($monthAndHalf)) {
             $additionalMessage .= 'Pajak STNK akan kadaluarsa pada ' . Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y') . ".\n\n ";
         }
 
