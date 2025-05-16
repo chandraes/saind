@@ -77,13 +77,14 @@
                 </tr>
             </thead>
             <tbody>
-                @if (count($data) > 0)
-                    @php
+                 @php
                         $no = 1;
                         $totalTagihan = 0;
                         $totalInvoice = 0;
                         $grandTotal = 0;
                     @endphp
+                @if (count($data) > 0)
+
                     @foreach ($data as $d)
                         @php
                             $span = count($d['invoices']);
