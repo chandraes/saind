@@ -21,8 +21,13 @@ class BillingController extends Controller
     {
         $check = RekapGaji::orderBy('id', 'desc')->first();
 
-        $bulan = $check->bulan + 1 == 13 ? 1 : $check->bulan + 1;
-        $tahun = $check->bulan + 1 == 13 ? $check->tahun + 1 : $check->tahun;
+        if (!$check) {
+            $bulan = date('m');
+            $tahun = date('Y');
+        } else {
+            $bulan = $check->bulan + 1 == 13 ? 1 : $check->bulan + 1;
+            $tahun = $check->bulan + 1 == 13 ? $check->tahun + 1 : $check->tahun;
+        }
 
         $customer = Customer::all();
 
