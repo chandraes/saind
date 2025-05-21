@@ -8,9 +8,11 @@
     </div>
     @php
     // $selectedData = [];
+
     $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
     $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
     $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
+
     $profit = $data->sum('profit');
     $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
     @endphp
@@ -375,6 +377,9 @@
 <script>
     function calculateTotal()
     {
+        var settingCustomerPpn = {{$customer->ppn}};
+        var settingCustomerPph = {{$customer->pph}};
+
         var total = parseFloat($('#total').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penyesuaian = parseFloat($('#penyesuaian').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penalty = parseFloat($('#penalty').val().replace(/\./g, '').replace(',', '.')) || 0;
@@ -384,10 +389,10 @@
 
         $('#gt_dpp').val(grandTotal.toLocaleString('id-ID'));
 
-        var ppn = Math.round(grandTotal * 0.11);
+        var ppn = settingCustomerPpn ? Math.round(grandTotal * 0.11) : 0;
         $('#ppn').val(ppn.toLocaleString('id-ID'));
 
-        var pph = Math.round(grandTotal * 0.02);
+        var pph = settingCustomerPph ? Math.round(grandTotal * 0.02) : 0;
         $('#pph').val(pph.toLocaleString('id-ID'));
 
         if(dipungut == 1){
