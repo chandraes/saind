@@ -10,9 +10,11 @@ use App\Models\KasDireksi;
 use App\Models\Direksi;
 use App\Models\Rekening;
 use App\Models\GroupWa;
+use App\Models\PasswordKonfirmasi;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class FormKasbonController extends Controller
 {
@@ -347,5 +349,86 @@ class FormKasbonController extends Controller
         $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Kasbon berhasil ditambahkan');
+    }
+
+    public function kas_bon_cicil_void(KasBonCicilan $kas, Request $request)
+    {
+        $data = $request->validate([
+            'password' => 'required',
+        ]);
+
+        $password = PasswordKonfirmasi::first();
+
+        if (!$password) {
+            return redirect()->back()->with('error', 'Password belum diatur!!');
+        }
+
+        if ($data['password'] != $password->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        $dbKas = new KasBesar;
+
+        $sisa = $kas->sisa_kas;
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        $k['uraian'] = 'Void Kasbon '.$kas->karyawan->nama;
+        $k['tanggal'] = date('Y-m-d');
+        $k['jenis_transaksi_id'] = 1;
+        $k['nominal_transaksi'] = $sisa;
+        $k['saldo'] = $dbKas->saldoTerakhir() + $sisa;
+        $k['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
+        $k['no_rekening'] = $rekening->nomor_rekening;
+        $k['bank'] = $rekening->nama_bank;
+        $k['modal_investor_terakhir'] = $dbKas->modalInvestorTerakhir();
+
+        // dd($kas);
+
+        try {
+
+
+
+            DB::beginTransaction();
+
+            $store = KasBesar::create($k);
+
+            $kas->update([
+                'total_bayar' => $kas->total_bayar + $sisa,
+                'sisa_kas' => 0,
+                'lunas' => 1
+            ]);
+
+
+            DB::commit();
+
+            $group = GroupWa::where('untuk', 'kas-besar')->first();
+
+            $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    "*Form Void Kasbon Staff*\n".
+                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                    "Nama : ".$kas->karyawan->nama."\n".
+                    "Uraian : ".$k['uraian']."\n\n".
+                    "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$k['bank']."\n".
+                    "Nama    : ".$k['transfer_ke']."\n".
+                    "No. Rek : ".$k['no_rekening']."\n\n".
+                    "==========================\n".
+                    "Sisa Saldo Kas Besar : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Modal Investor : \n".
+                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Terima kasih 🙏🙏🙏\n";
+
+            $dbKas->sendWa($group->nama_group, $pesan);
+
+        } catch (\Throwable $th) {
+
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus kasbon cicilan');
+        }
+
+        return redirect()->back()->with('success', 'Kasbon cicilan berhasil dihapus');
     }
 }

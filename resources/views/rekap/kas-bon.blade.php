@@ -192,7 +192,7 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="Close"></button>
                                     </div>
-                                    <form action="{{route('rekap.kas-bon.void', $c)}}" method="post">
+                                    <form action="{{route('billing.kasbon.kas-bon-cicil.void', $c)}}" method="post">
                                         @csrf
                                         <div class="modal-body">
                                             <input type="password" class="form-control" id="password" name="password"

@@ -470,7 +470,9 @@ Route::group(['middleware' => ['auth']], function() {
 
                 Route::post('/store', [App\Http\Controllers\FormKasbonController::class, 'store'])->name('billing.kasbon.store');
                 Route::view('/kas-bon-staff', 'billing.kasbon.kas-bon-staff')->name('billing.kasbon.kas-bon-staff');
+
                 Route::get('/kas-bon-cicil', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil'])->name('billing.kasbon.kas-bon-cicil');
+                Route::post('/kas-bon-cicil/void/{kas}', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil_void'])->name('billing.kasbon.kas-bon-cicil.void');
                 Route::post('/kas-bon-cicil-store', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil_store'])->name('billing.kasbon.kas-bon-cicil-store');
             });
 
