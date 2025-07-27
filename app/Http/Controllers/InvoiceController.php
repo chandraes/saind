@@ -547,4 +547,30 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', 'Invoice berhasil di batalkan');
     }
 
+    public function invoice_bayar_back(InvoiceBayar $invoice)
+    {
+        if ($invoice->lunas != 0) {
+            return redirect()->back()->with('error', 'Invoice sudah ada pembayaran');
+        }
+
+        DB::beginTransaction();
+
+        $transaksi = $invoice->transaksi;
+        // update tagihan in each transaksi
+        foreach ($transaksi as $v) {
+            $v->update([
+                'bayar' => 0
+            ]);
+        }
+
+        PpnMasukan::where('invoice_bayar_id', $invoice->id)->delete();
+
+        $invoice->delete();
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Invoice berhasil di batalkan');
+
+    }
+
 }
