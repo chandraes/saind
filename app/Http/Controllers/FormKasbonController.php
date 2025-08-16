@@ -266,6 +266,11 @@ class FormKasbonController extends Controller
 
     public function kas_bon_cicil()
     {
+
+        if(auth()->user()->role != 'admin' && auth()->user()->role != 'su') {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke menu ini!!');
+        }
+
         $kasbon = KasBonCicilan::where('lunas', 0)->pluck('karyawan_id')->unique()->toArray();
 
         // data where not in
@@ -285,6 +290,10 @@ class FormKasbonController extends Controller
             'mulai_bulan' => 'required|integer|between:1,12',
             'mulai_tahun' => 'required|integer',
         ]);
+
+        if(auth()->user()->role != 'admin' && auth()->user()->role != 'su') {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke menu ini!!');
+        }
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
