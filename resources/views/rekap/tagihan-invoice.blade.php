@@ -64,7 +64,7 @@
                     <th class="text-center align-middle">Dr Tgl Tagihan</th>
                     <th class="text-center align-middle">Smpai Tgl Tagihan</th>
                     <th class="text-center align-middle">Nominal Tagihan<br>(-PPH)</th>
-                    <th class="text-center align-middle">Estimasi Nominal Invoic <br>(DPP)</th>
+                    <th class="text-center align-middle">Nominal Invoice<br>(DPP)</th>
                     <th class="text-center align-middle">Penyesuaian BBM</th>
                     <th class="text-center align-middle">Penalti</th>
                     <th class="text-center align-middle">Pembayaran Invoice</th>
