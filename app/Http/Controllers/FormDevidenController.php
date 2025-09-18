@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\KasBesar;
 use App\Models\PemegangSaham;
 use App\Models\PersentaseAwal;
-use App\Models\Rekening;
 use App\Models\GroupWa;
 use Illuminate\Http\Request;
-use App\Services\StarSender;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class FormDevidenController extends Controller
 {
@@ -52,58 +51,69 @@ class FormDevidenController extends Controller
 
         $persentase = PersentaseAwal::all();
 
-        $dbWa = new GroupWa();
-        $group = $dbWa->where('untuk', 'kas-besar')->first();
-        
         $month = Carbon::now()->locale('id')->monthName;
 
         $isiPesan = [];
 
-        foreach ($persentase as $persen) {
+        try {
+            DB::beginTransaction();
 
-            $nilai = $data['nominal_transaksi'] * $persen->persentase / 100;
+            foreach ($persentase as $persen) {
 
-            foreach ($persen->pemegang_saham as $v) {
+                $nilai = $data['nominal_transaksi'] * $persen->persentase / 100;
 
-                usleep(50000);
+                foreach ($persen->pemegang_saham as $v) {
 
-                $last2 = KasBesar::latest()->orderBy('id', 'desc')->first();
+                    usleep(50000);
 
-                $nilai2 = $nilai * $v->persentase / 100;
+                    $last2 = KasBesar::latest()->orderBy('id', 'desc')->first();
 
-                $k['tanggal'] = date('Y-m-d');
-                $k['jenis_transaksi_id'] = 2;
-                $k['uraian'] = "Bagi Deviden ".$v->nama;
-                $k['nominal_transaksi'] = $nilai2;
-                $k['saldo'] = $last2->saldo - $nilai2;
-                $k['transfer_ke'] = substr($v->nama_rekening, 0, 15);
-                $k['bank'] = $v->bank;
-                $k['no_rekening'] = $v->nomor_rekening;
-                $k['modal_investor_terakhir'] = $last2->modal_investor_terakhir;
+                    $nilai2 = $nilai * $v->persentase / 100;
 
-                $store = KasBesar::create($k);
+                    $k['tanggal'] = date('Y-m-d');
+                    $k['jenis_transaksi_id'] = 2;
+                    $k['uraian'] = "Bagi Deviden ".$v->nama;
+                    $k['nominal_transaksi'] = $nilai2;
+                    $k['saldo'] = $last2->saldo - $nilai2;
+                    $k['transfer_ke'] = substr($v->nama_rekening, 0, 15);
+                    $k['bank'] = $v->bank;
+                    $k['no_rekening'] = $v->nomor_rekening;
+                    $k['modal_investor_terakhir'] = $last2->modal_investor_terakhir;
 
-                $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                            "*Form Deviden ".$month."*\n".
-                            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                            "Nama  : ".$v->nama."\n".
-                            "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
-                            "Ditransfer ke rek:\n\n".
-                            "Bank      : ".$k['bank']."\n".
-                            "Nama    : ".$k['transfer_ke']."\n".
-                            "No. Rek : ".$k['no_rekening']."\n\n".
-                            "==========================\n".
-                            "Sisa Saldo Kas Besar : \n".
-                            "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                            "Total Modal Investor : \n".
-                            "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                            "Terima kasih 🙏🙏🙏\n";
+                    $store = KasBesar::create($k);
+
+                    $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                                "*Form Deviden ".$month."*\n".
+                                "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                                "Nama  : ".$v->nama."\n".
+                                "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                                "Ditransfer ke rek:\n\n".
+                                "Bank      : ".$k['bank']."\n".
+                                "Nama    : ".$k['transfer_ke']."\n".
+                                "No. Rek : ".$k['no_rekening']."\n\n".
+                                "==========================\n".
+                                "Sisa Saldo Kas Besar : \n".
+                                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                                "Total Modal Investor : \n".
+                                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                                "Terima kasih 🙏🙏🙏\n";
 
 
-                array_push($isiPesan, $pesan);
+                    array_push($isiPesan, $pesan);
 
+                }
             }
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->route('billing.deviden.index')->with('error', 'Terjadi kesalahan: '.$th->getMessage());
         }
+
+        $dbWa = new GroupWa();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
 
         // looping $isiPesan
         foreach ($isiPesan as $pesan) {

@@ -838,6 +838,7 @@ class StatistikController extends Controller
         $grand_total_bunga_investor = 0;
         $gt_penyesuaian = 0;
         $gt_penalty = 0;
+        $gt_lain = 0;
 
         for ($bulan = 1; $bulan <= 12; $bulan++) {
 
@@ -875,9 +876,20 @@ class StatistikController extends Controller
                                 ->get()
                                 ->groupBy('jenis_transaksi_id');
 
+            $lainTransactions = KasBesar::whereMonth('tanggal', $bulan)
+                                ->whereYear('tanggal', $tahun)
+                                ->where('lain_lain', 1)
+                                ->whereIn('jenis_transaksi_id', [1, 2])
+                                ->get()
+                                ->groupBy('jenis_transaksi_id');
+
+            $pengeluaran_lain = $lainTransactions->has(2) ? $lainTransactions[2]->sum('nominal_transaksi') : 0;
+            $pemasukan_lain = $lainTransactions->has(1) ? $lainTransactions[1]->sum('nominal_transaksi') : 0;
+
             $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
             $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
 
+            $total_lain = $pengeluaran_lain - $pemasukan_lain;
             $total_co = $pengeluaran_co - $pemasukan_co;
 
             $gaji = RekapGaji::where('bulan', $bulan)
@@ -888,7 +900,7 @@ class StatistikController extends Controller
 
             $grand_total_profit += $data->sum('profit');
             $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor;
-            $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty) + $penyesuaian;
+            $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty+$total_lain) + $penyesuaian;
 
             $grand_total_gaji += $total_gaji_bersih;
             $grant_total_co += $total_co;
@@ -896,8 +908,9 @@ class StatistikController extends Controller
             $grand_total_bunga_investor += $bungaInvestor;
             $gt_penyesuaian += $penyesuaian;
             $gt_penalty += $penalty;
+            $gt_lain += $total_lain;
 
-            $total_pengeluaran = $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty;
+            $total_pengeluaran = $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty+$total_lain;
 
             $statistics[$bulan] = [
                 'nama_bulan' => $nama_bulan[$bulan],
@@ -907,6 +920,7 @@ class StatistikController extends Controller
                 'kas_kecil' => $pengeluaran_kas_kecil,
                 'bunga_investor' => $bungaInvestor,
                 'penyesuaian' => $penyesuaian,
+                'lain' => $total_lain,
                 'penalty' => $penalty,
                 'pengeluaran' => $total_pengeluaran,
                 'bersih' => ($data->sum('profit') - $total_pengeluaran) + $penyesuaian,
@@ -928,6 +942,7 @@ class StatistikController extends Controller
             'grand_total_bunga_investor' => $grand_total_bunga_investor,
             'gt_penyesuaian' => $gt_penyesuaian,
             'gt_penalty' => $gt_penalty,
+            'gt_lain' => $gt_lain,
         ]);
     }
 

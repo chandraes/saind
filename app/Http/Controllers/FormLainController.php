@@ -35,6 +35,7 @@ class FormLainController extends Controller
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['jenis_transaksi_id'] = 1;
         $data['tanggal'] = date('Y-m-d');
+        $data['lain_lain'] = 1;
 
          // Saldo terakhir
         $last = KasBesar::latest()->orderBy('id', 'desc')->first();
@@ -97,6 +98,8 @@ class FormLainController extends Controller
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
+
+        $data['lain_lain'] = 1;
 
          // Saldo terakhir
         $last = KasBesar::latest()->orderBy('id', 'desc')->first();
