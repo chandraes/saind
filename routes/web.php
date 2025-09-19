@@ -57,6 +57,13 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::group(['middleware' => 'role:admin,su'], function() {
 
+        Route::prefix('form-setor-pph')->group(function() {
+            Route::get('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk'])->name('form-setor-pph.masuk');
+            Route::post('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk_store'])->name('form-setor-pph.masuk.store');
+            Route::get('/keluar', [App\Http\Controllers\BillingController::class, 'form_setor_pph_keluar'])->name('form-setor-pph.keluar');
+            Route::post('/keluar', [App\Http\Controllers\BillingController::class, 'form_setor_pph_keluar_store'])->name('form-setor-pph.keluar.store');
+        });
+
         Route::get('/invoice-tagihan-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_back'])->name('invoice.tagihan-back.execute');
         Route::post('/invoice-bayar-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_back'])->name('invoice.bayar-back.execute');
 
