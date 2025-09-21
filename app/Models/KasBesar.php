@@ -337,6 +337,69 @@ class KasBesar extends Model
         }
     }
 
+    public function calculateProfitBulanan($bulan, $tahun)
+    {
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
+                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->get();
+
+        $invoiceData = InvoiceTagihan::whereMonth('tanggal', $bulan)
+                        ->whereYear('tanggal', $tahun)
+                        ->where('lunas', 1)
+                        ->select(DB::raw('SUM(penyesuaian) as penyesuaian, SUM(penalty) as penalty'))
+                        ->first();
+
+        $penyesuaian = $invoiceData->penyesuaian ?? 0;
+        $penalty = $invoiceData->penalty ?? 0;
+
+        $bungaInvestor = BungaInvestor::whereMonth('created_at', $bulan)
+                            ->whereYear('created_at', $tahun)
+                            ->sum('nominal');
+
+        $pengeluaran_kas_kecil = KasBesar::whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->whereNotNull('nomor_kode_kas_kecil')
+                            ->sum('nominal_transaksi');
+
+        $coTransactions = $this->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('cost_operational', 1)
+                            ->whereIn('jenis_transaksi_id', [1, 2])
+                            ->get()
+                            ->groupBy('jenis_transaksi_id');
+
+        $lainTransactions = $this->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('lain_lain', 1)
+                            ->whereIn('jenis_transaksi_id', [1, 2])
+                            ->get()
+                            ->groupBy('jenis_transaksi_id');
+
+        $pengeluaran_lain = $lainTransactions->has(2) ? $lainTransactions[2]->sum('nominal_transaksi') : 0;
+        $pemasukan_lain = $lainTransactions->has(1) ? $lainTransactions[1]->sum('nominal_transaksi') : 0;
+
+        $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
+        $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
+
+        $total_lain = $pengeluaran_lain - $pemasukan_lain;
+        $total_co = $pengeluaran_co - $pemasukan_co;
+
+        $gaji = RekapGaji::where('bulan', $bulan)
+                            ->where('tahun', $tahun)
+                            ->first();
+
+        $total_gaji_bersih = $gaji ? $gaji->rekap_gaji_detail->sum('pendapatan_bersih') : 0;
+        $grand_total_bersih = $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty+$total_lain) + $penyesuaian;
+
+
+        return number_format($grand_total_bersih, 0, ',', '.');
+    }
+
     public function sendWa($tujuan, $pesan)
     {
         $storeWa = PesanWa::create([
