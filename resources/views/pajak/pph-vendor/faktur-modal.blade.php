@@ -47,11 +47,7 @@
 @push('js')
 <script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
-     var no_faktur = new Cleave('#no_faktur', {
-        numericOnly: true,
-        delimiters: ['.', '-', '.'],
-        blocks: [3, 3, 2, 8],
-    });
+    
 
     $('#fakturForm').submit(function(e){
             e.preventDefault();
