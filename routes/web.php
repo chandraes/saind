@@ -359,6 +359,19 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_lanjut'])->name('pajak.ppn-keluaran.keranjang-lanjut');
             });
 
+            Route::prefix('pph-vendor')->group(function() {
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'pph_vendor'])->name('pajak.pph-vendor');
+                Route::patch('/store-faktur/{pphVendor}', [App\Http\Controllers\PajakController::class, 'pph_vendor_store_faktur'])->name('pajak.pph-vendor.store-faktur');
+                Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'pph_vendor_keranjang_store'])->name('pajak.pph-vendor.keranjang-store');
+                Route::post('/keranjang-destroy/{pphVendor}', [App\Http\Controllers\PajakController::class, 'pph_vendor_keranjang_destroy'])->name('pajak.pph-vendor.keranjang-destroy');
+                Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'pph_vendor_keranjang_lanjut'])->name('pajak.pph-vendor.keranjang-lanjut');
+            });
+
+             Route::prefix('rekap-pph-vendor')->group(function(){
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'rekap_pph_vendor'])->name('pajak.rekap-pph-vendor');
+                Route::get('/detail/{rekapPphVendor}', [App\Http\Controllers\PajakController::class, 'rekap_pph_vendor_detail'])->name('pajak.rekap-pph-vendor.detail');
+            });
+
         });
 
         Route::get('statisik', [App\Http\Controllers\StatistikController::class, 'index'])->name('statisik.index');

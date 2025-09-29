@@ -163,6 +163,7 @@ class VendorController extends Controller
             'plafon_titipan' => 'required',
             'plafon_lain' => 'required',
             'support_operational' => 'nullable',
+            'pph_val' => 'nullable|required_if:pph,on',
         ]);
 
         if (array_key_exists('ppn', $data)) {
@@ -173,6 +174,10 @@ class VendorController extends Controller
 
         if (array_key_exists('pph', $data)) {
             $data['pph'] = 1;
+            $data['pph_val'] = str_replace(',', '.', $data['pph_val']);
+            if ($data['pph_val'] == 0 ) {
+                return redirect()->back()->withInput()->withErrors(['pph_val' => 'Nilai PPh harus lebih dari 0 jika PPh dicentang']);
+            }
         } else {
             $data['pph'] = 0;
         }

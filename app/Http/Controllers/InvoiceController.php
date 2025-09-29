@@ -306,7 +306,8 @@ class InvoiceController extends Controller
         // dd($invoiceBayar);
 
         return view('billing.transaksi.invoice.bayar.detail', [
-            'data' => $invoiceBayar->transaksi,
+            'data' => $invoiceBayar->transaksi->load(['kas_uang_jalan.vendor', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.customer']),
+            'pph_simpan' => $invoiceBayar->pph_simpan?->nominal ?? 0,
             'vendor' => $vendor,
             'periode' => $periode,
             'invoice_id' => $invoiceBayar->id

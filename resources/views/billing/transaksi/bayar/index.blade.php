@@ -8,8 +8,8 @@
     </div>
     @php
         $total_tagihan = $data ? $data->sum('nominal_bayar') : 0;
-        $ppn = $vendor->ppn == 1 && $data ? $data->sum('nominal_bayar') * 0.11 : 0;
-        $pph = $vendor->pph == 1 && $data ? $data->sum('nominal_bayar') * 0.02 : 0;
+        $ppn = $vendor->ppn == 1 && $data ? floor($data->sum('nominal_bayar') * 0.11) : 0;
+        $pph = $vendor->pph == 1 && $data ? floor($data->sum('nominal_bayar') * ($vendor->pph_val/100)) : 0;
         $total_uang_jalan = $data ? $data->sum('kas_uang_jalan.nominal_transaksi') : 0;
         $total_netto = $data ? $total_tagihan - $data->sum('kas_uang_jalan.nominal_transaksi') : 0;
         $grant_total = $total_netto-$pph+$ppn;
