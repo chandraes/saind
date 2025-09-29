@@ -179,6 +179,7 @@ class VendorController extends Controller
                 return redirect()->back()->withInput()->withErrors(['pph_val' => 'Nilai PPh harus lebih dari 0 jika PPh dicentang']);
             }
         } else {
+            $data['pph_val'] = 0;
             $data['pph'] = 0;
         }
 
