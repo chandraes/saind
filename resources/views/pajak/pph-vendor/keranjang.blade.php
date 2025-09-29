@@ -15,7 +15,7 @@
                             <th class="text-center align-middle">No</th>
                             <th class="text-center align-middle">Nota</th>
                             <th class="text-center align-middle">Vendor</th>
-                            <th class="text-center align-middle">Faktur</th>
+                            <th class="text-center align-middle">Bukti Potong</th>
                             <th class="text-center align-middle">Nominal</th>
                             <th class="text-center align-middle">Act</th>
                         </tr>

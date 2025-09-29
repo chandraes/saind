@@ -106,7 +106,7 @@
                     <td class="text-center align-middle">
                         <button type="button" class="btn btn-{{$d->is_faktur == 1 ? 'warning' : 'primary'}} btn-sm"
                             data-bs-toggle="modal" data-bs-target="#modalFaktur" onclick="faktur({{$d->id}})">
-                            {{$d->is_faktur == 1 ? 'Ubah' : ''}} Faktur
+                            {{$d->is_faktur == 1 ? 'Ubah' : ''}} Bupot
                         </button>
                     </td>
                 </tr>

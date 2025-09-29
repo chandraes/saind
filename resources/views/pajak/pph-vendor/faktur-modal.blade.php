@@ -4,7 +4,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalTitleId">
-                    Faktur Pajak
+                    Bukti Potong
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -28,7 +28,7 @@
 
                         <div class="col-md-12">
                             <div class="mb-3">
-                                <label for="no_faktur" class="form-label h3">Nomor Faktur</label>
+                                <label for="no_faktur" class="form-label h3">Nomor Bukti Potong</label>
                                 <input type="text" class="form-control h3" name="no_faktur" id="no_faktur" required style="font-size: 2rem; padding: 10px;"/>
                             </div>
                         </div>
