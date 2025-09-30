@@ -301,19 +301,15 @@
          <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.nota-muat')}}" class="text-decoration-none">
                 <img src="{{asset('images/muat.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA MUAT
-                    {{-- <span class="text-danger">{{$data->where('status', 1)->count() > 0 ?
-                        "(".$data->where('status', 1)->count().")" : '' }}</span> --}}
-                        </h4>
+                <h4 class="mt-3">NOTA MUAT <span class="text-danger">{{$data->where('status', 1)->count() > 0 ?
+                        "(".$data->where('status', 1)->count().")" : '' }}</span></h4>
             </a>
         </div>
          <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
                 <img src="{{asset('images/bongkar.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA BONGKAR
-                    {{-- <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
-                        "(".$data->where('status', 2)->count().")" : '' }}</span> --}}
-                        </h4>
+                <h4 class="mt-3">NOTA BONGKAR <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
+                        "(".$data->where('status', 2)->count().")" : '' }}</span></h4>
             </a>
         </div>
         {{--  <div class="col-md-2 text-center mt-5">
@@ -331,11 +327,9 @@
          <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
                 <img src="{{asset('images/tagihan.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA TAGIHAN CUSTOMER
-                    {{-- <span class="text-danger">{{$data->where('status',
+                <h4 class="mt-3">NOTA TAGIHAN CUSTOMER <span class="text-danger">{{$data->where('status',
                         3)->where('tagihan', 0)->count() > 0
-                        ? "(".$data->where('status', 3)->where('tagihan', 0)->count().")" : '' }}</span> --}}
-                        </h4>
+                        ? "(".$data->where('status', 3)->where('tagihan', 0)->count().")" : '' }}</span></h4>
             </a>
             <div class="modal fade" id="customerId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="customerTitleId" aria-hidden="true">
@@ -352,11 +346,11 @@
                                     <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
                                         <img src="{{asset('images/tambang.svg')}}" alt="" width="70">
                                         <h4 class="mt-3">{{$c->singkatan}}
-                                            {{-- @if ($data->where('status', 3)->where('tagihan', 0)->where('customer_id',
+                                            @if ($data->where('status', 3)->where('tagihan', 0)->where('customer_id',
                                             $c->id)->count() > 0)
                                             <span class="text-danger">({{$data->where('status', 3)->where('tagihan',
                                                 0)->where('customer_id', $c->id)->count()}})</span>
-                                            @endif --}}
+                                            @endif
                                         </h4>
                                     </a>
                                 </div>
@@ -374,11 +368,9 @@
          <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
                 <img src="{{asset('images/bayar.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA BAYAR VENDOR
-                    {{-- <span class="text-danger">{{$data->where('status', 3)->where('bayar',
+                <h4 class="mt-3">NOTA BAYAR VENDOR <span class="text-danger">{{$data->where('status', 3)->where('bayar',
                         0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('bayar', 0)->count().")" : '' }}</span> --}}
-                        </h4>
+                        "(".$data->where('status', 3)->where('bayar', 0)->count().")" : '' }}</span></h4>
             </a>
             <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
@@ -394,14 +386,14 @@
                                     <select class="form-select" name="vendor_id" id="vendorSelect">
                                         <option value="">Select one</option>
                                         @foreach ($vendor as $v)
-                                        <option value="{{$v->id}}">
-                                            {{$v->nama}}
-                                            {{-- @if ($data->where('status', 3)->where('bayar', 0)->where('vendor_id',
+                                        <option value="{{$v->kas_uang_jalan->vendor->id}}">
+                                            {{$v->kas_uang_jalan->vendor->nama}}
+                                            @if ($data->where('status', 3)->where('bayar', 0)->where('vendor_id',
                                             $v->kas_uang_jalan->vendor->id)->count() > 0)
                                             <span class="text-danger">({{$data->where('status', 3)->where('bayar',
                                                 0)->where('vendor_id',
                                                 $v->kas_uang_jalan->vendor->id)->count()}})</span>
-                                            @endif --}}
+                                            @endif
                                         </option>
                                         @endforeach
                                     </select>
@@ -419,11 +411,9 @@
          <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sponsorModal">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA BONUS SPONSOR
-                    {{-- <span class="text-danger">{{$data->where('status',
+                <h4 class="mt-3">NOTA BONUS SPONSOR <span class="text-danger">{{$data->where('status',
                         3)->where('bonus', 0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('bonus', 0)->count().")" : '' }}</span> --}}
-                        </h4>
+                        "(".$data->where('status', 3)->where('bonus', 0)->count().")" : '' }}</span></h4>
             </a>
 
             <div class="modal fade" id="sponsorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -440,8 +430,8 @@
                                     <select class="form-select" name="sponsor_id" id="vendorSelect">
                                         <option selected>Select one</option>
                                         @foreach ($sponsor as $v)
-                                        <option value="{{$v->id}}">
-                                            {{$v->nama}}</option>
+                                        <option value="{{$v->kas_uang_jalan->vendor->sponsor->id}}">
+                                            {{$v->kas_uang_jalan->vendor->sponsor->nama}}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -459,10 +449,10 @@
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#csrModal">
                 <img src="{{asset('images/csr.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA CSR (TERTENTU)
-                    {{-- <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>',
+                    <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>',
                         0)->count() > 0 ?
                         "(".$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>', 0)->count().")" : ''
-                        }}</span> --}}
+                        }}</span>
                 </h4>
             </a>
 

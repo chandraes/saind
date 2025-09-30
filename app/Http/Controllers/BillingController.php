@@ -12,7 +12,9 @@ use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
 use App\Models\RekapGaji;
 use App\Models\Rekening;
+use App\Models\Sponsor;
 use App\Models\Transaksi;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 
 class BillingController extends Controller
@@ -36,45 +38,49 @@ class BillingController extends Controller
         $bonus = InvoiceBonus::where('lunas', 0)->count();
         $invoice_csr = InvoiceCsr::where('lunas', 0)->count();
 
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                ->leftJoin('vehicles as v', 'kuj.vehicle_id', 'v.id')
-                ->select('transaksis.*', 'kuj.customer_id as customer_id', 'v.vendor_id as vendor_id')
-                ->where('transaksis.void', 0)->get();
+        // $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+        //         ->leftJoin('vehicles as v', 'kuj.vehicle_id', 'v.id')
+        //         ->select('transaksis.*', 'kuj.customer_id as customer_id', 'v.vendor_id as vendor_id')
+        //         ->where('transaksis.void', 0)->get();
 
-        $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                        ->where('status', 3)
-                        ->where('transaksis.bayar', 0)
-                        ->where('transaksis.void', 0)
-                        ->get()->unique('vendor_id');
+        // $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+        //                 ->where('status', 3)
+        //                 ->where('transaksis.bayar', 0)
+        //                 ->where('transaksis.void', 0)
+        //                 ->get()->unique('vendor_id');
 
-        $sponsor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                        ->join('vendors as v', 'kuj.vendor_id', 'v.id')
-                        ->join('sponsors as s', 'v.sponsor_id', 's.id')
-                        ->where('transaksis.bonus', 0)
-                        ->where('transaksis.status', 3)
-                        ->where('transaksis.void', 0)
-                        ->get()->unique('sponsor_id');
+        $vendor = Vendor::select('id','nama')->where('status', 'aktif')->get();
 
-        $csr = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                        ->join('customers as c', 'kuj.customer_id', 'c.id')
-                        ->where('transaksis.csr', 0)
-                        ->where('transaksis.status', 3)
-                        ->where('transaksis.void', 0)
-                        ->where('c.csr', 1)
-                        ->get()->unique('customer_id');
+        $sponsor = Sponsor::select('nama', 'id')->get();
+
+        // $sponsor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+        //                 ->join('vendors as v', 'kuj.vendor_id', 'v.id')
+        //                 ->join('sponsors as s', 'v.sponsor_id', 's.id')
+        //                 ->where('transaksis.bonus', 0)
+        //                 ->where('transaksis.status', 3)
+        //                 ->where('transaksis.void', 0)
+        //                 ->get()->unique('sponsor_id');
+
+        // $csr = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+        //                 ->join('customers as c', 'kuj.customer_id', 'c.id')
+        //                 ->where('transaksis.csr', 0)
+        //                 ->where('transaksis.status', 3)
+        //                 ->where('transaksis.void', 0)
+        //                 ->where('c.csr', 1)
+        //                 ->get()->unique('customer_id');
 
         return view('billing.index',
         [
             'bulan' => $bulan,
             'tahun' => $tahun,
-            'data' => $data,
+            // 'data' => $data,
             'customer' => $customer,
             'vendor' => $vendor,
             'sponsor' => $sponsor,
             'invoice' => $invoice,
             'bayar' => $bayar,
             'bonus' => $bonus,
-            'csr' => $csr,
+            // 'csr' => $csr,
             'invoice_csr' => $invoice_csr,
         ]);
     }
