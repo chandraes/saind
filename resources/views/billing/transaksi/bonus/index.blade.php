@@ -280,6 +280,7 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
+            "scrollX": true,
             "fixedColumns": {
                 "leftColumns": 3,
                 "rightColumns": 1
