@@ -120,42 +120,42 @@ class Transaksi extends Model
 
     public function notaBonus($sponsorId,$bulan,$tahun)
     {
-        // return self::with(['kas_uang_jalan',
-        //                     'kas_uang_jalan.vendor',
-        //                     'kas_uang_jalan.vendor.sponsor',
-        //                     'kas_uang_jalan.vehicle',
-        //                     'kas_uang_jalan.customer',
-        //                     'kas_uang_jalan.rute'])
-        //                 ->whereYear('tanggal_muat', $tahun)
-        //                 ->whereMonth('tanggal_muat', $bulan)
-        //                 ->where('status', 3)
-        //                 ->where('void', 0)
-        //                 ->where('bonus', 0)
-        //                 ->whereHas('kas_uang_jalan.vendor.sponsor', function ($query) use ($sponsorId) {
-        //                     $query->where('id', $sponsorId);
-        //                 })
+        return self::with(['kas_uang_jalan',
+                            'kas_uang_jalan.vendor',
+                            'kas_uang_jalan.vendor.sponsor',
+                            'kas_uang_jalan.vehicle',
+                            'kas_uang_jalan.customer',
+                            'kas_uang_jalan.rute'])
+                        ->whereYear('tanggal_bongkar', $tahun)
+                        ->whereMonth('tanggal_bongkar', $bulan)
+                        ->where('status', 3)
+                        ->where('void', 0)
+                        ->where('bonus', 0)
+                        ->whereHas('kas_uang_jalan.vendor.sponsor', function ($query) use ($sponsorId) {
+                            $query->where('id', $sponsorId);
+                        })
 
-        //                 ->get();
+                        ->get();
 
-            return self::with([
-                    'kas_uang_jalan',
-                    'kas_uang_jalan.vendor',
-                    'kas_uang_jalan.vendor.sponsor',
-                    'kas_uang_jalan.vehicle',
-                    'kas_uang_jalan.customer',
-                    'kas_uang_jalan.rute'
-                    ])
-                    ->where('status', 3)
-                    ->where('void', 0)
-                    ->where('bonus', 0)
-                    ->whereHas('kas_uang_jalan.vendor.sponsor', function ($query) use ($sponsorId) {
-                    $query->where('id', $sponsorId);
-                    })
-                    ->whereHas('kas_uang_jalan', function ($query) use ($bulan, $tahun) {
-                    $query->whereYear('tanggal', $tahun)
-                        ->whereMonth('tanggal', $bulan);
-                    })
-            ->get();
+            // return self::with([
+            //         'kas_uang_jalan',
+            //         'kas_uang_jalan.vendor',
+            //         'kas_uang_jalan.vendor.sponsor',
+            //         'kas_uang_jalan.vehicle',
+            //         'kas_uang_jalan.customer',
+            //         'kas_uang_jalan.rute'
+            //         ])
+            //         ->where('status', 3)
+            //         ->where('void', 0)
+            //         ->where('bonus', 0)
+            //         ->whereHas('kas_uang_jalan.vendor.sponsor', function ($query) use ($sponsorId) {
+            //         $query->where('id', $sponsorId);
+            //         })
+            //         ->whereHas('kas_uang_jalan', function ($query) use ($bulan, $tahun) {
+            //                 $query->whereYear('tanggal', $tahun)
+            //                     ->whereMonth('tanggal', $bulan);
+            //                 })
+            //         ->get();
     }
 
     public function getIdNotaBonus($sponsorId, $bulan, $tahun)

@@ -72,7 +72,7 @@
                 </td>
                  @if (Auth::user()->role == 'su')
                 <td class="text-center align-middle">
-                    <form action="{{route('invoice.csr-back.execute', ['invoice' => $d->id])}}" method="post" id="backForm{{$d->id}}" class="back-form" data-id="{{ $d->id }}">
+                    <form action="{{route('invoice.bonus-back.execute', ['invoice' => $d->id])}}" method="post" id="backForm{{$d->id}}" class="back-form" data-id="{{ $d->id }}">
                         @csrf
                         <button type="submit" class="btn btn-danger">Back</button>
                     </form>
