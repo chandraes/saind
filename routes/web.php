@@ -66,6 +66,8 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::get('/invoice-tagihan-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_back'])->name('invoice.tagihan-back.execute');
         Route::post('/invoice-bayar-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_back'])->name('invoice.bayar-back.execute');
+        Route::post('/invoice-csr-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_back'])->name('invoice.csr-back.execute');
+        Route::post('/invoice-bonus-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_bonus_back'])->name('invoice.bonus-back.execute');
 
         Route::get('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor'])->name('bypass-kas-vendor.index');
         Route::post('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor_store'])->name('bypass-kas-vendor.store');

@@ -560,16 +560,19 @@ class StatistikController extends Controller
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
+        $dateRange = Carbon::createFromDate($tahun, $bulan);
+        $tanggalAwal = $dateRange->startOfMonth()->toDateTimeString(); // Hasil: '2025-09-01 00:00:00'
+        $tanggalAkhir = $dateRange->endOfMonth()->toDateTimeString();   // Hasil: '2025-09-30 23:59:59'
+
         $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
-                    ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
-                    ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
-                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
-                    ->whereMonth('kuj.tanggal', $bulan)
-                    ->whereYear('kuj.tanggal', $tahun)
+                    ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
+                    ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
                     ->where('transaksis.void', 0)
-                    ->groupBy('tanggal')
+                    ->groupBy('tanggal_bongkar')
                     ->get()
-                    ->keyBy('tanggal');
+                    ->keyBy('tanggal_bongkar');
+
+        // dd($data);
 
         $profitHarian = [];
         $grandTotal = 0;
@@ -612,7 +615,6 @@ class StatistikController extends Controller
                             ->groupBy('tahun')
                             ->get();
 
-
         return view('rekap.statistik.profit.harian-kotor', [
             'data' => $data,
             'bulan' => $bulan,
@@ -642,17 +644,28 @@ class StatistikController extends Controller
 
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+         $dateRange = Carbon::createFromDate($tahun, $bulan);
+        $tanggalAwal = $dateRange->startOfMonth()->toDateTimeString(); // Hasil: '2025-09-01 00:00:00'
+        $tanggalAkhir = $dateRange->endOfMonth()->toDateTimeString();   // Hasil: '2025-09-30 23:59:59'
 
-        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
-                    ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
-                    ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
-                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit')
-                    ->whereMonth('kuj.tanggal', $bulan)
-                    ->whereYear('kuj.tanggal', $tahun)
+        // $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+        //             ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
+        //             ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
+        //             ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit')
+        //             ->whereMonth('kuj.tanggal', $bulan)
+        //             ->whereYear('kuj.tanggal', $tahun)
+        //             ->where('transaksis.void', 0)
+        //             ->groupBy('tanggal')
+        //             ->get()
+        //             ->keyBy('tanggal');
+
+          $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+                    ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
+                    ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
                     ->where('transaksis.void', 0)
-                    ->groupBy('tanggal')
+                    ->groupBy('tanggal_bongkar')
                     ->get()
-                    ->keyBy('tanggal');
+                    ->keyBy('tanggal_bongkar');
 
         $profitHarian = [];
         $grandTotal = 0;
@@ -843,13 +856,14 @@ class StatistikController extends Controller
         for ($bulan = 1; $bulan <= 12; $bulan++) {
 
             $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
-                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                                ->whereMonth('tanggal', $bulan)
-                                ->whereYear('tanggal', $tahun)
+                                // ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                // ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->select('transaksis.*')
+                                ->whereMonth('tanggal_bongkar', $bulan)
+                                ->whereYear('tanggal_bongkar', $tahun)
                                 ->where('transaksis.void', 0)
                                 ->get();
+
 
             $invoiceData = InvoiceTagihan::whereMonth('tanggal', $bulan)
                             ->whereYear('tanggal', $tahun)
