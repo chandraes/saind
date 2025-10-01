@@ -199,6 +199,20 @@ class Transaksi extends Model
                     ->get();
     }
 
+    public function getNotaCsrNew($customerId, $bulan, $tahun)
+    {
+        return self::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle'])
+                    ->join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
+                    ->where('kuj.customer_id', $customerId)
+                    ->whereYear('transaksis.tanggal_bongkar', $tahun)->whereMonth('transaksis.tanggal_bongkar', $bulan)
+                    ->where('transaksis.status', 3)
+                    ->where('transaksis.void', 0)
+                    ->where('transaksis.csr', 0)
+                    ->where('transaksis.nominal_csr', '>', 0)
+                    ->select('transaksis.*')
+                    ->get();
+    }
+
     public function getNotaVoid($month, $year)
     {
         return self::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle'])

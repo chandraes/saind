@@ -1050,13 +1050,25 @@ class TransaksiController extends Controller
 
     public function nota_csr(Request $request)
     {
+
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        $db = new Transaksi;
+
+        $dataTahun = $db->dataTahun();
+
         $customerId = $request->customer_id;
 
-        $data = Transaksi::getNotaCsr($customerId);
+        $data = $db->getNotaCsrNew($customerId, $bulan, $tahun);
 
         return view('billing.transaksi.csr.index', [
             'data' => $data,
             'customer' => Customer::find($customerId),
+            'bulan' => $bulan,
+            'dataTahun' => $dataTahun,
+            'tahun' => $tahun
+            
         ]);
 
     }
