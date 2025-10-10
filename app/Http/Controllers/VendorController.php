@@ -13,6 +13,7 @@ use App\Models\Sponsor;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class VendorController extends Controller
 {
@@ -77,7 +78,9 @@ class VendorController extends Controller
             'plafon_titipan' => 'required',
             'plafon_lain' => 'required',
             'support_operational' => 'nullable',
+            'pph_val' => 'nullable|required_if:pph,on',
         ]);
+
 
         if (array_key_exists('ppn', $data)) {
             $data['ppn'] = 1;
@@ -85,11 +88,23 @@ class VendorController extends Controller
             $data['ppn'] = 0;
         }
 
-        if (array_key_exists('pph', $data)) {
+        // if (array_key_exists('pph', $data)) {
+        //     $data['pph'] = 1;
+        // } else {
+        //     $data['pph'] = 0;
+        // }
+          if (array_key_exists('pph', $data)) {
             $data['pph'] = 1;
+            $data['pph_val'] = str_replace(',', '.', $data['pph_val']);
+            if ($data['pph_val'] == 0 ) {
+                return redirect()->back()->withInput()->withErrors(['pph_val' => 'Nilai PPh harus lebih dari 0 jika PPh dicentang']);
+            }
         } else {
+            $data['pph_val'] = 0;
             $data['pph'] = 0;
         }
+
+        dd($data);
 
         if(array_key_exists('support_operational', $data)){
             $data['support_operational'] = 1;
@@ -241,9 +256,11 @@ class VendorController extends Controller
         ]);
 
         $id = $data['vendor_id'];
-        $checkRole = auth()->user()->role;
+        $checkRole = Auth::user()->role;
 
-        if ($checkRole !== 'admin' || $checkRole !== 'su') {
+        $role = ['admin', 'su'];
+
+        if (!in_array($checkRole, $role)) {
            for ($i=0; $i < count($data['hk_opname']); $i++) {
                 if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
                     return redirect()->back()->with('error', 'Harga opname tidak sesuai');

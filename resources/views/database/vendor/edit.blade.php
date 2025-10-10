@@ -122,7 +122,8 @@
                     <div class="row">
                         <div class="col-6">
                             <input type="text" class="form-control {{$errors->has('pph_val') ? 'is-invalid' : ''}}"
-                                name="pph_val" id="pph_value" placeholder="" value="{{str_replace('.', ',',$vendor->pph_val) ?? ''}}">
+                                name="pph_val" id="pph_value" placeholder=""
+                                value="{{str_replace('.', ',',$vendor->pph_val) ?? ''}}">
                             @if ($errors->has('pph_val'))
                             <span class="text-danger">
                                 <strong>{{ $errors->first('pph_val') }}</strong>
@@ -130,6 +131,7 @@
                             @endif
                             <label for="pph_value" class="form-label">Nilai PPh (%)</label>
                         </div>
+                    </div>
                 </div>
             </div>
             <hr>
@@ -270,7 +272,6 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
-
     function checkPphVal() {
         console.log($('#pph').is(':checked'));
         if ($('#pph').is(':checked') == true) {

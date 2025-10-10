@@ -865,8 +865,10 @@ class StatistikController extends Controller
                                 ->get();
 
 
-            $invoiceData = InvoiceTagihan::whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
+            $startDate = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
+            $endDate = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->endOfDay();
+
+            $invoiceData = InvoiceTagihan::whereBetween('updated_at', [$startDate, $endDate])
                             ->where('lunas', 1)
                             ->select(DB::raw('SUM(penyesuaian) as penyesuaian, SUM(penalty) as penalty'))
                             ->first();
