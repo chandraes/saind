@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\db\Kreditor;
 use App\Models\Rekap\BungaInvestor;
 use App\Services\StarSender;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -343,13 +344,15 @@ class KasBesar extends Model
                             ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
                             ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
+                            ->whereMonth('tanggal_bongkar', $bulan)
+                            ->whereYear('tanggal_bongkar', $tahun)
                             ->where('transaksis.void', 0)
                             ->get();
 
-        $invoiceData = InvoiceTagihan::whereMonth('tanggal', $bulan)
-                        ->whereYear('tanggal', $tahun)
+        $startDate = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
+        $endDate = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->endOfDay();
+
+        $invoiceData = InvoiceTagihan::whereBetween('updated_at', [$startDate, $endDate])
                         ->where('lunas', 1)
                         ->select(DB::raw('SUM(penyesuaian) as penyesuaian, SUM(penalty) as penalty'))
                         ->first();
