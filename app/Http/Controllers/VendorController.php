@@ -104,7 +104,7 @@ class VendorController extends Controller
             $data['pph'] = 0;
         }
 
-        dd($data);
+        // dd($data);
 
         if(array_key_exists('support_operational', $data)){
             $data['support_operational'] = 1;
