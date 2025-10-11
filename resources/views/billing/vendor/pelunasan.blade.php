@@ -8,6 +8,11 @@
     </div>
     @include('swal')
     {{-- show error first --}}
+    @php
+    $role = Auth::user()->role;
+    $roles = ['admin', 'su'];
+
+    @endphp
     @if ($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <strong>Whoops!</strong> Terjadi kesalahan.<br><br>
@@ -104,6 +109,8 @@ var nominal = new Cleave('#nilai', {
 
         function funGetKas() {
             var vendor_id = $('#vendor_id').val();
+            var role = "{!! $role !!}";
+
             $.ajax({
                 url: "{{route('billing.vendor.get-kas-vendor')}}",
                 type: "GET",
@@ -112,15 +119,22 @@ var nominal = new Cleave('#nilai', {
                 },
                 success: function(data){
                     if (data >= 0) {
-                        // swal tidak ada tagihan
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'Tidak ada tagihan yang harus dilunasi!',
-                        });
-                        $('#ok').attr('hidden', true);
-                        $('#nilai').val('');
-                        $('#nominal').val('');
+                        // swal tidak ada tagihana
+
+                    if(role != 'admin' && role != 'su'){
+                            console.log('masuk sini');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Tidak ada tagihan yang harus dilunasi!',
+                            });
+                            $('#ok').attr('hidden', true);
+                            $('#nilai').val('');
+                            $('#nominal').val('');
+                        } else {
+                            console.log('masuk');
+                            $('#ok').removeAttr('hidden');
+                        }
                     }
                     else if(data < 0){
                         // mask money
