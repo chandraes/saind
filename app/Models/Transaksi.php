@@ -164,7 +164,7 @@ class Transaksi extends Model
                             ->join('vendors as v', 'kuj.vendor_id', 'v.id')
                             ->join('sponsors as s', 'v.sponsor_id', 's.id')
                             ->select('transaksis.id')
-                            ->whereYear('kuj.tanggal', $tahun)->whereMonth('kuj.tanggal', $bulan)
+                            ->whereYear('transaksis.tanggal_bongkar', $tahun)->whereMonth('transaksis.tanggal_bongkar', $bulan)
                             ->where('transaksis.status', 3)
                             ->where('transaksis.void', 0)
                             ->where('bonus', 0)

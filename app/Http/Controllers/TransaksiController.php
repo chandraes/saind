@@ -1068,7 +1068,6 @@ class TransaksiController extends Controller
             'bulan' => $bulan,
             'dataTahun' => $dataTahun,
             'tahun' => $tahun
-            
         ]);
 
     }
@@ -1078,10 +1077,14 @@ class TransaksiController extends Controller
         $data = $request->validate([
             'total_csr' => 'required',
             'customer_id' => 'required|exists:customers,id',
+            'bulan' => 'required',
+            'tahun' => 'required',
         ]);
 
         $csr = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->where('kuj.customer_id', $data['customer_id'])
+                            ->whereMonth('transaksis.tanggal_bongkar', $data['bulan'])
+                            ->whereYear('transaksis.tanggal_bongkar', $data['tahun'])
                             ->where('transaksis.status', 3)
                             ->where('transaksis.void', 0)
                             ->where('csr', 0)

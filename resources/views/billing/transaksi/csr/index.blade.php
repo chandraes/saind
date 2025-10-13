@@ -239,6 +239,8 @@
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
         <form action="{{route('billing.nota-csr.lanjut')}}" method="post" id="lanjutForm">
             @csrf
+            <input type="hidden" name="bulan" value="{{$bulan}}">
+            <input type="hidden" name="tahun" value="{{$tahun}}">
             <input type="hidden" name="customer_id" value="{{$customer->id}}">
             <input type="hidden" name="total_csr" value="{{$total_tagihan}}">
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
