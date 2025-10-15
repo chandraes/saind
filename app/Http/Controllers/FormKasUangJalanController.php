@@ -9,6 +9,7 @@ use App\Models\GroupWa;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\Customer;
+use App\Models\Pengaturan;
 use App\Models\VendorUangJalan;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
@@ -356,5 +357,67 @@ class FormKasUangJalanController extends Controller
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
 
 
+    }
+
+     public function pengembalian()
+    {
+        $db = new KasUangJalan();
+        $saldo = $db->saldoTerakhir();
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        return view('billing.kas-uang-jalan.pengembalian', [
+            'saldo' => $saldo,
+            'rekening' => $rekening,
+        ]);
+    }
+
+    public function pengembalian_store(Request $request)
+    {
+        $data = $request->validate([
+            'nominal_transaksi' => 'required',
+        ]);
+
+        $db = new KasUangJalan();
+
+        $req = $db->pengembalian($data);
+
+        if($req['status'] == 'error'){
+            return redirect()->back()->withInput()->with('error', $req['message']);
+        }
+
+        return redirect()->route('billing.index')->with($req['status'], $req['message']);
+    }
+
+     public function penyesuaian()
+    {
+        $rekening = Rekening::where('untuk', 'kas-uang-jalan')->first();
+        $batasan = Pengaturan::where('untuk', 'kas-uang-jalan')->first()->nilai;
+
+        return view('billing.kas-uang-jalan.penyesuaian', [
+            'rekening' => $rekening,
+            'batasan' => $batasan,
+        ]);
+    }
+
+    public function penyesuaian_store(Request $request)
+    {
+        $data = $request->validate([
+            'uraian' => 'required',
+            'nominal_transaksi' => 'required',
+            'tipe' => 'required',
+            'transfer_ke' => 'required',
+            'bank' => 'required',
+            'no_rekening' => 'required',
+        ]);
+
+        $db = new KasUangJalan();
+
+        $req = $db->penyesuaian($data);
+
+        if($req['status'] == 'error'){
+            return redirect()->back()->withInput()->with('error', $req['message']);
+        }
+
+        return redirect()->route('billing.index')->with($req['status'], $req['message']);
     }
 }

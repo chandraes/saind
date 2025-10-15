@@ -414,6 +414,16 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/get-vendor', [App\Http\Controllers\FormKasUangJalanController::class, 'get_vendor'])->name('kas-uang-jalan.get-vendor');
             Route::get('/get-rute', [App\Http\Controllers\FormKasUangJalanController::class, 'get_rute'])->name('kas-uang-jalan.get-rute');
             Route::get('/get-uang-jalan', [App\Http\Controllers\FormKasUangJalanController::class, 'get_uang_jalan'])->name('kas-uang-jalan.get-uang-jalan');
+
+            Route::prefix('pengembalian')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian'])->name('kas-uang-jalan.pengembalian');
+                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian_store'])->name('kas-uang-jalan.pengembalian.store');
+            });
+
+            Route::prefix('penyesuaian')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian'])->name('kas-uang-jalan.penyesuaian');
+                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian_store'])->name('kas-uang-jalan.penyesuaian.store');
+            });
         });
 
         //Form maintenance
