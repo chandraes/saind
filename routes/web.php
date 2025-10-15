@@ -55,6 +55,15 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('spk/view/{spk}', [App\Http\Controllers\SpkController::class, 'view_file'])->name('spk.view')->middleware('role:admin,user');
     Route::get('spk/hapus-file/{spk}', [App\Http\Controllers\SpkController::class, 'delete_file'])->name('spk.hapus-file')->middleware('role:admin,user');
 
+    Route::group(['middleware' => 'role:investor'], function() {
+        Route::prefix('per-investor')->group(function(){
+            Route::get('/kas-besar', [App\Http\Controllers\PerInvestorController::class, 'kas_besar'])->name('per-investor.kas-besar');
+            Route::get('/tagihan-invoice', [App\Http\Controllers\PerInvestorController::class, 'tagihan_invoice'])->name('per-investor.tagihan-invoice');
+            Route::get('/profit-harian', [App\Http\Controllers\PerInvestorController::class, 'profit_harian'])->name('per-investor.profit-harian');
+            Route::get('/profit-bulanan', [App\Http\Controllers\PerInvestorController::class, 'profit_bulanan'])->name('per-investor.profit-bulanan');
+        });
+    });
+
     Route::group(['middleware' => 'role:admin,su'], function() {
 
         Route::prefix('form-setor-pph')->group(function() {

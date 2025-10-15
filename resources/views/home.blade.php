@@ -299,6 +299,9 @@
     @if (auth()->user()->role === 'operasional')
     @include('operasional.index')
     @endif
+     @if (auth()->user()->role === 'investor')
+    @include('per-investor.index')
+    @endif
 </div>
 @endsection
 @if (auth()->user()->role === 'operasional')
