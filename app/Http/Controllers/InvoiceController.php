@@ -427,7 +427,7 @@ class InvoiceController extends Controller
             $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Invoice Bonus*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Sponsor : ".$invoice->sponsor->nama."\n".
+                    "Uraian : Bonus ".$invoice->sponsor->nama."\n".
                     "Periode : ".$invoice->periode."\n\n".
                     "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
