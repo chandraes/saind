@@ -427,10 +427,11 @@
 
 
     $(document).ready(function() {
-        calculateTotal();
-        $('#spinner').show();
+         var role = "{{auth()->user()->role}}";
+        if (role =='admin' || role =='su') {
+           calculateTotal();
 
-        var penyesuaian = new Cleave('#penyesuaian', {
+           var penyesuaian = new Cleave('#penyesuaian', {
                 numeral: true,
                 numeralThousandsGroupStyle: 'thousand',
                 numeralDecimalMark: ',',
@@ -444,22 +445,19 @@
                 delimiter: '.'
             });
 
-            var penalty_akhir = new Cleave('#penalty_akhir', {
-                numeral: true,
-                numeralThousandsGroupStyle: 'thousand',
-                numeralDecimalMark: ',',
-                delimiter: '.'
+            flatpickr("#tanggal_hardcopy", {
+                dateFormat: "d-m-Y",
+
             });
 
-        flatpickr("#tanggal_hardcopy", {
-            dateFormat: "d-m-Y",
+            flatpickr("#estimasi_pembayaran", {
+                dateFormat: "d-m-Y",
 
-        });
+            });
 
-        flatpickr("#estimasi_pembayaran", {
-            dateFormat: "d-m-Y",
+        }
 
-        });
+        $('#spinner').show();
 
         $.fn.dataTable.moment('DD-MM-YYYY');
 
