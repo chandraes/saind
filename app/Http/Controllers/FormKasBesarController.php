@@ -36,6 +36,8 @@ class FormKasBesarController extends Controller
             'nominal_transaksi' => 'required',
         ]);
 
+        $db = new KasBesar;
+
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
@@ -43,7 +45,7 @@ class FormKasBesarController extends Controller
         $data['bank'] = $rekening->nama_bank;
 
         // Nomor Kode Kas Besar Terakhir
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_deposit')->latest()->orderBy('id', 'desc')->first();
+        $lastNomor = $db->whereNotNull('nomor_kode_deposit')->latest()->orderBy('id', 'desc')->first();
 
         if($lastNomor == null)
         {
@@ -59,6 +61,7 @@ class FormKasBesarController extends Controller
 
         // Saldo terakhir
         $last = KasBesar::latest()->orderBy('id', 'desc')->first();
+
         if($last == null){
             $data['modal_investor_terakhir']= -$data['nominal_transaksi'];
             $data['saldo'] = $data['nominal_transaksi'];
@@ -88,7 +91,7 @@ class FormKasBesarController extends Controller
             }
         }
 
-
+        $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
@@ -105,6 +108,8 @@ class FormKasBesarController extends Controller
                 "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                "Profit Bersih: \n".
+                "Rp. ".$profit."\n\n".
                 "Terima kasih 🙏🙏🙏\n".
                 $addPesan;
 
@@ -143,7 +148,7 @@ class FormKasBesarController extends Controller
 
 
         $last = KasBesar::latest()->orderBy('id', 'desc')->first();
-        
+
         if($last == null){
             $data['saldo'] = 0 - $data['nominal_transaksi'];
             $data['modal_investor'] = $data['nominal_transaksi'];
@@ -159,7 +164,9 @@ class FormKasBesarController extends Controller
             }
         }
 
-        $store = KasBesar::create($data);
+        $db = new KasBesar;
+
+        $store = $db->create($data);
 
         // check if store success
         if(!$store){
@@ -182,6 +189,8 @@ class FormKasBesarController extends Controller
         $dbWa = new GroupWa();
         $group = $dbWa->where('untuk', 'kas-besar')->first();
 
+        $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
+
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pengembalian Deposit*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -195,6 +204,8 @@ class FormKasBesarController extends Controller
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
                     "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    "Profit Bersih: \n".
+                    "Rp. ".$profit."\n\n".
                     "Terima kasih 🙏🙏🙏\n".
                     $addPesan;
 

@@ -55,10 +55,28 @@ Route::group(['middleware' => ['auth']], function() {
     Route::get('spk/view/{spk}', [App\Http\Controllers\SpkController::class, 'view_file'])->name('spk.view')->middleware('role:admin,user');
     Route::get('spk/hapus-file/{spk}', [App\Http\Controllers\SpkController::class, 'delete_file'])->name('spk.hapus-file')->middleware('role:admin,user');
 
+    Route::group(['middleware' => 'role:investor'], function() {
+        Route::prefix('per-investor')->group(function(){
+            Route::get('/kas-besar', [App\Http\Controllers\PerInvestorController::class, 'kas_besar'])->name('per-investor.kas-besar');
+            Route::get('/tagihan-invoice', [App\Http\Controllers\PerInvestorController::class, 'tagihan_invoice'])->name('per-investor.tagihan-invoice');
+            Route::get('/profit-harian', [App\Http\Controllers\PerInvestorController::class, 'profit_harian'])->name('per-investor.profit-harian');
+            Route::get('/profit-bulanan', [App\Http\Controllers\PerInvestorController::class, 'profit_bulanan'])->name('per-investor.profit-bulanan');
+        });
+    });
+
     Route::group(['middleware' => 'role:admin,su'], function() {
+
+        Route::prefix('form-setor-pph')->group(function() {
+            Route::get('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk'])->name('form-setor-pph.masuk');
+            Route::post('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk_store'])->name('form-setor-pph.masuk.store');
+            Route::get('/keluar', [App\Http\Controllers\BillingController::class, 'form_setor_pph_keluar'])->name('form-setor-pph.keluar');
+            Route::post('/keluar', [App\Http\Controllers\BillingController::class, 'form_setor_pph_keluar_store'])->name('form-setor-pph.keluar.store');
+        });
 
         Route::get('/invoice-tagihan-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_back'])->name('invoice.tagihan-back.execute');
         Route::post('/invoice-bayar-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_back'])->name('invoice.bayar-back.execute');
+        Route::post('/invoice-csr-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_back'])->name('invoice.csr-back.execute');
+        Route::post('/invoice-bonus-back/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_bonus_back'])->name('invoice.bonus-back.execute');
 
         Route::get('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor'])->name('bypass-kas-vendor.index');
         Route::post('/bypass-kas-vendor', [App\Http\Controllers\ByPassVendorController::class, 'kas_vendor_store'])->name('bypass-kas-vendor.store');
@@ -352,6 +370,19 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'ppn_keluaran_keranjang_lanjut'])->name('pajak.ppn-keluaran.keranjang-lanjut');
             });
 
+            Route::prefix('pph-vendor')->group(function() {
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'pph_vendor'])->name('pajak.pph-vendor');
+                Route::patch('/store-faktur/{pphVendor}', [App\Http\Controllers\PajakController::class, 'pph_vendor_store_faktur'])->name('pajak.pph-vendor.store-faktur');
+                Route::post('/keranjang-store', [App\Http\Controllers\PajakController::class, 'pph_vendor_keranjang_store'])->name('pajak.pph-vendor.keranjang-store');
+                Route::post('/keranjang-destroy/{pphVendor}', [App\Http\Controllers\PajakController::class, 'pph_vendor_keranjang_destroy'])->name('pajak.pph-vendor.keranjang-destroy');
+                Route::post('/keranjang-lanjut', [App\Http\Controllers\PajakController::class, 'pph_vendor_keranjang_lanjut'])->name('pajak.pph-vendor.keranjang-lanjut');
+            });
+
+             Route::prefix('rekap-pph-vendor')->group(function(){
+                Route::get('/', [App\Http\Controllers\PajakController::class, 'rekap_pph_vendor'])->name('pajak.rekap-pph-vendor');
+                Route::get('/detail/{rekapPphVendor}', [App\Http\Controllers\PajakController::class, 'rekap_pph_vendor_detail'])->name('pajak.rekap-pph-vendor.detail');
+            });
+
         });
 
         Route::get('statisik', [App\Http\Controllers\StatistikController::class, 'index'])->name('statisik.index');
@@ -383,6 +414,16 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/get-vendor', [App\Http\Controllers\FormKasUangJalanController::class, 'get_vendor'])->name('kas-uang-jalan.get-vendor');
             Route::get('/get-rute', [App\Http\Controllers\FormKasUangJalanController::class, 'get_rute'])->name('kas-uang-jalan.get-rute');
             Route::get('/get-uang-jalan', [App\Http\Controllers\FormKasUangJalanController::class, 'get_uang_jalan'])->name('kas-uang-jalan.get-uang-jalan');
+
+            Route::prefix('pengembalian')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian'])->name('kas-uang-jalan.pengembalian');
+                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian_store'])->name('kas-uang-jalan.pengembalian.store');
+            });
+
+            Route::prefix('penyesuaian')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian'])->name('kas-uang-jalan.penyesuaian');
+                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian_store'])->name('kas-uang-jalan.penyesuaian.store');
+            });
         });
 
         //Form maintenance

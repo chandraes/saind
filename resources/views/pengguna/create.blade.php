@@ -27,6 +27,7 @@
                                 <select class="form-select" name="role" id="role" onchange="roleChange()">
                                     <option selected>Pilih Role</option>
                                     <option value="admin">Admin</option>
+                                    <option value="investor">Investor</option>
                                     <option value="operasional">Operasional</option>
                                     <option value="vendor">Vendor</option>
                                     <option value="vendor-operational">Vendor Operational</option>

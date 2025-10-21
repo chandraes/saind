@@ -6,6 +6,9 @@
             <h1><u>Pembayaran Vendor</u></h1>
         </div>
     </div>
+           @php
+        $role = ['admin', 'su'];
+    @endphp
     @if (session('error'))
     <div class="row">
         <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
@@ -29,7 +32,7 @@
                             <th scope="col">Harga Kesepakatan Uang Jalan</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white">
+                    {{-- <tbody class="bg-white">
                         @foreach ($rutes as $v)
                         <tr>
                             <td class="text-center align-middle">{{$loop->iteration}}</td>
@@ -43,6 +46,32 @@
                                 @endif >
                             </td>
                         </tr>
+                        @endforeach
+                    </tbody> --}}
+                    <tbody class="bg-white">
+                        @foreach ($rutes as $v)
+                        <tr>
+                            <td class="text-center align-middle">{{$loop->iteration}}</td>
+                            <td>{{$v->nama}}</td>
+                            <td>
+                                <input type="hidden" name="vendor_id" value="{{$id}}">
+                                <input type="hidden" name="rute_id[]" value="{{$v->id}}">
+                                <input type="text" class="form-control" name="uang_jalan[]" required id="uang_jalan-{{$v->id}}"
+                                    required aria-describedby="helpId" placeholder=""
+                                   value="{{$v->uang_jalan}}"
+                                    @if(!in_array(Auth::user()->role, $role))
+                                    readonly
+                                @endif >
+                            </td>
+                        </tr>
+                        <script>
+                            var uj_{{$v->id}} = new Cleave('#uang_jalan-{{$v->id}}', {
+                                numeral: true,
+                                numeralThousandsGroupStyle: 'thousand',
+                                numeralDecimalMark: ',',
+                                delimiter: '.'
+                            });
+                        </script>
                         @endforeach
                     </tbody>
                 </table>

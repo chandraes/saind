@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Pajak\PphSimpan;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,11 @@ class InvoiceBayar extends Model
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);
+    }
+
+    public function pph_simpan()
+    {
+        return $this->hasOne(PphSimpan::class);
     }
 
     public function getIdTanggalAttribute()

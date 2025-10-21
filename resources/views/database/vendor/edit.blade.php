@@ -95,23 +95,43 @@
                 Informasi SO, PPN & PPh
             </h3>
             <div class="row mt-3 mb-3">
-                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
-                    <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="support_operational" id="support_operational"
-                            {{$vendor->support_operational == 1 ? 'checked' : ''}} autocomplete="off"> Support
-                        Operational
-                    </label>
-                    <label class="btn btn-warning active">
-                        <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked' : ''}}
-                        autocomplete="off"> PPN
-                    </label>
-                        <label class="btn btn-warning">
-                            <input type="checkbox" class="me-2" name="pph" id="pph" {{$vendor->pph == 1 ? 'checked' :
-                            ''}} autocomplete="off"> PPh
-                        </label>
-                </div>
-                <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                <div class="col-8">
+                    <div class="row">
+                        <div class="btn-group mb-3" role="group" data-bs-toggle="buttons">
+                            <label class="btn btn-warning active">
+                                <input type="checkbox" class="me-2" name="support_operational" id="support_operational"
+                                    {{$vendor->support_operational == 1 ? 'checked' : ''}} autocomplete="off"> Support
+                                Operational
+                            </label>
+                            <label class="btn btn-warning active">
+                                <input type="checkbox" class="me-2" name="ppn" id="ppn" {{$vendor->ppn == 1 ? 'checked'
+                                :
+                                ''}}
+                                autocomplete="off"> PPN
+                            </label>
+                            <label class="btn btn-warning">
+                                <input type="checkbox" class="me-2" name="pph" id="pph" {{$vendor->pph == 1 ? 'checked'
+                                :
+                                ''}} autocomplete="off" onclick="checkPphVal()"> PPh
+                            </label>
+                        </div>
+                    </div>
 
+                </div>
+                <div class="col-4" id="pph_val_row" {{$vendor->pph == 1 ? '' : 'hidden'}}>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="text" class="form-control {{$errors->has('pph_val') ? 'is-invalid' : ''}}"
+                                name="pph_val" id="pph_value" placeholder=""
+                                value="{{str_replace('.', ',',$vendor->pph_val) ?? ''}}">
+                            @if ($errors->has('pph_val'))
+                            <span class="text-danger">
+                                <strong>{{ $errors->first('pph_val') }}</strong>
+                            </span>
+                            @endif
+                            <label for="pph_value" class="form-label">Nilai PPh (%)</label>
+                        </div>
+                    </div>
                 </div>
             </div>
             <hr>
@@ -252,6 +272,19 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/js/select2.min.js')}}"></script>
 <script>
+    function checkPphVal() {
+        console.log($('#pph').is(':checked'));
+        if ($('#pph').is(':checked') == true) {
+            $('#pph_val_row').show();
+            $('#pph_val_row').removeAttr('hidden');
+            $('#pph_value').attr('required', true);
+        } else {
+            $('#pph_val_row').hide();
+            $('#pph_value').attr('required', false);
+            $('#pph_value').val(0);
+        }
+    }
+
     function changeTipe() {
         var type = $('#tipe-vendor').val();
 
@@ -293,6 +326,15 @@
                 thousands: '.',
                 decimal: ',',
                 precision: 0
+            });
+
+        var nominal = new Cleave('#pph_value', {
+                numeral: true,
+                numeralDecimalMark: ',',
+                delimiter: '.',
+                numeralIntegerScale: 3,
+                numeralDecimalScale: 2,
+                numeralPositiveOnly: true,
             });
     });
 

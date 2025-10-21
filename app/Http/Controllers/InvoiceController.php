@@ -306,7 +306,8 @@ class InvoiceController extends Controller
         // dd($invoiceBayar);
 
         return view('billing.transaksi.invoice.bayar.detail', [
-            'data' => $invoiceBayar->transaksi,
+            'data' => $invoiceBayar->transaksi->load(['kas_uang_jalan.vendor', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.customer']),
+            'pph_simpan' => $invoiceBayar->pph_simpan?->nominal ?? 0,
             'vendor' => $vendor,
             'periode' => $periode,
             'invoice_id' => $invoiceBayar->id
@@ -375,7 +376,7 @@ class InvoiceController extends Controller
         // dd($invoiceBayar);
 
         return view('billing.transaksi.invoice.invoice-bonus-detail', [
-            'data' => $invoiceBonus->transaksi,
+            'data' => $invoiceBonus->transaksi->load(['kas_uang_jalan.vendor', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute']),
             'sponsor' => $sponsor,
             'periode' => $periode,
         ]);
@@ -426,7 +427,7 @@ class InvoiceController extends Controller
             $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Invoice Bonus*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Sponsor : ".$invoice->sponsor->nama."\n".
+                    "Uraian : Bonus ".$invoice->sponsor->nama."\n".
                     "Periode : ".$invoice->periode."\n\n".
                     "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
@@ -462,7 +463,7 @@ class InvoiceController extends Controller
         $customer = Customer::find($invoiceCsr->customer_id);
 
         return view('billing.transaksi.invoice.invoice-csr-detail', [
-            'data' => $invoiceCsr->transaksi,
+            'data' => $invoiceCsr->transaksi->load(['kas_uang_jalan.vendor', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute']),
             'periode' => $periode,
             'customer' => $customer
         ]);
@@ -564,6 +565,54 @@ class InvoiceController extends Controller
         }
 
         PpnMasukan::where('invoice_bayar_id', $invoice->id)->delete();
+
+        $invoice->delete();
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Invoice berhasil di batalkan');
+
+    }
+
+    public function invoice_csr_back(InvoiceCsr $invoice)
+    {
+        if ($invoice->lunas != 0) {
+            return redirect()->back()->with('error', 'Invoice sudah ada pembayaran');
+        }
+
+        DB::beginTransaction();
+
+        $transaksi = $invoice->transaksi;
+        // update tagihan in each transaksi
+        foreach ($transaksi as $v) {
+            $v->update([
+                'csr' => 0
+            ]);
+        }
+
+        $invoice->delete();
+
+        DB::commit();
+
+        return redirect()->back()->with('success', 'Invoice berhasil di batalkan');
+
+    }
+
+    public function invoice_bonus_back(InvoiceBonus $invoice)
+    {
+        if ($invoice->lunas != 0) {
+            return redirect()->back()->with('error', 'Invoice sudah ada pembayaran');
+        }
+
+        DB::beginTransaction();
+
+        $transaksi = $invoice->transaksi;
+        // update tagihan in each transaksi
+        foreach ($transaksi as $v) {
+            $v->update([
+                'bonus' => 0
+            ]);
+        }
 
         $invoice->delete();
 

@@ -9,6 +9,7 @@ use App\Models\GroupWa;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\Customer;
+use App\Models\Pengaturan;
 use App\Models\VendorUangJalan;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
@@ -71,14 +72,29 @@ class FormKasUangJalanController extends Controller
         $data['bank'] = $rekening->nama_bank;
         $data['no_rekening'] = $rekening->nomor_rekening;
 
+        $db = new KasBesar;
 
-        $store = KasUangJalan::create($data);
+        try {
+            //code...
+            DB::beginTransaction();
 
-        $data['saldo'] = $kb->saldo - $data['nominal_transaksi'];
-        $data['jenis_transaksi_id'] = 2;
-        $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
+            $store = KasUangJalan::create($data);
 
-        $store2 = KasBesar::create($data);
+            $data['saldo'] = $kb->saldo - $data['nominal_transaksi'];
+            $data['jenis_transaksi_id'] = 2;
+            $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
+
+            $store2 = $db->create($data);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollback();
+            return redirect()->back()->with('error', 'Data Gagal Ditambahkan. '. $th->getMessage());
+        }
+
+
+        $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -95,6 +111,8 @@ class FormKasUangJalanController extends Controller
                     "Rp. ".number_format($store2->saldo, 0, ',', '.')."\n\n".
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Profit Bersih: \n".
+                    "Rp. ".$profit."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
@@ -339,5 +357,67 @@ class FormKasUangJalanController extends Controller
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
 
 
+    }
+
+     public function pengembalian()
+    {
+        $db = new KasUangJalan();
+        $saldo = $db->saldoTerakhir();
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        return view('billing.kas-uang-jalan.pengembalian', [
+            'saldo' => $saldo,
+            'rekening' => $rekening,
+        ]);
+    }
+
+    public function pengembalian_store(Request $request)
+    {
+        $data = $request->validate([
+            'nominal_transaksi' => 'required',
+        ]);
+
+        $db = new KasUangJalan();
+
+        $req = $db->pengembalian($data);
+
+        if($req['status'] == 'error'){
+            return redirect()->back()->withInput()->with('error', $req['message']);
+        }
+
+        return redirect()->route('billing.index')->with($req['status'], $req['message']);
+    }
+
+     public function penyesuaian()
+    {
+        $rekening = Rekening::where('untuk', 'kas-uang-jalan')->first();
+        $batasan = Pengaturan::where('untuk', 'kas-uang-jalan')->first()->nilai;
+
+        return view('billing.kas-uang-jalan.penyesuaian', [
+            'rekening' => $rekening,
+            'batasan' => $batasan,
+        ]);
+    }
+
+    public function penyesuaian_store(Request $request)
+    {
+        $data = $request->validate([
+            'uraian' => 'required',
+            'nominal_transaksi' => 'required',
+            'tipe' => 'required',
+            'transfer_ke' => 'required',
+            'bank' => 'required',
+            'no_rekening' => 'required',
+        ]);
+
+        $db = new KasUangJalan();
+
+        $req = $db->penyesuaian($data);
+
+        if($req['status'] == 'error'){
+            return redirect()->back()->withInput()->with('error', $req['message']);
+        }
+
+        return redirect()->route('billing.index')->with($req['status'], $req['message']);
     }
 }

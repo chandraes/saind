@@ -554,82 +554,72 @@ class StatistikController extends Controller
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
+
+        $db = new Transaksi();
+
+        $all = $db->profitHarian($bulan, $tahun, $offset);
         // nama bulan dalam indonesia berdasarkan $bulan
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        // $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
-        // get array list date vrom $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+        // // get array list date vrom $bulan
+        // $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
-                    ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
-                    ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
-                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
-                    ->whereMonth('kuj.tanggal', $bulan)
-                    ->whereYear('kuj.tanggal', $tahun)
-                    ->where('transaksis.void', 0)
-                    ->groupBy('tanggal')
-                    ->get()
-                    ->keyBy('tanggal');
+        // $dateRange = Carbon::createFromDate($tahun, $bulan);
+        // $tanggalAwal = $dateRange->startOfMonth()->toDateTimeString(); // Hasil: '2025-09-01 00:00:00'
+        // $tanggalAkhir = $dateRange->endOfMonth()->toDateTimeString();   // Hasil: '2025-09-30 23:59:59'
 
-        $profitHarian = [];
-        $grandTotal = 0;
-        $grandTotalTagihan = 0;
-        $grandTotalBayar = 0;
-        $grandTotalBonus = 0;
-        $grandTotalCsr = 0;
-        $grandTotalPenalty = 0;
+        // $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+        //             ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
+        //             ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
+        //             ->where('transaksis.void', 0)
+        //             ->groupBy('tanggal_bongkar')
+        //             ->get()
+        //             ->keyBy('tanggal_bongkar');
 
-        for ($i = 1; $i <= $date; $i++) {
-            $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $i);
-            $dailyData = $data->get($tanggal);
+        // // dd($data);
 
-            $tagihan = $dailyData ? $dailyData->total_nominal_tagihan * 0.98 : 0;
-            $bayar = $dailyData->total_nominal_bayar ?? 0;
-            $bonus = $dailyData->total_nominal_bonus ?? 0;
-            $csr = $dailyData->total_nominal_csr ?? 0;
-            $profit = $dailyData->total_nominal_profit ?? 0;
-            $penalty = ($tagihan - $bayar - $bonus - $csr - $profit);
+        // $profitHarian = [];
+        // $grandTotal = 0;
+        // $grandTotalTagihan = 0;
+        // $grandTotalBayar = 0;
+        // $grandTotalBonus = 0;
+        // $grandTotalCsr = 0;
+        // $grandTotalPenalty = 0;
 
-            $profitHarian[$tanggal] = [
-                'nominal_tagihan' => $tagihan,
-                'nominal_bayar' => $bayar,
-                'nominal_bonus' => $bonus,
-                'nominal_csr' => $csr,
-                'penalty' => $penalty,
-                'profit' => $profit,
-            ];
+        // for ($i = 1; $i <= $date; $i++) {
+        //     $tanggal = sprintf('%04d-%02d-%02d', $tahun, $bulan, $i);
+        //     $dailyData = $data->get($tanggal);
 
-            $grandTotal += $profitHarian[$tanggal]['profit'];
-            $grandTotalPenalty += $profitHarian[$tanggal]['penalty'];
-            $grandTotalTagihan += $profitHarian[$tanggal]['nominal_tagihan'];
-            $grandTotalBayar += $profitHarian[$tanggal]['nominal_bayar'];
-            $grandTotalBonus += $profitHarian[$tanggal]['nominal_bonus'];
-            $grandTotalCsr += $profitHarian[$tanggal]['nominal_csr'];
-        }
-        // dd($profitHarian);
-        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
+        //     $tagihan = $dailyData ? $dailyData->total_nominal_tagihan * 0.98 : 0;
+        //     $bayar = $dailyData->total_nominal_bayar ?? 0;
+        //     $bonus = $dailyData->total_nominal_bonus ?? 0;
+        //     $csr = $dailyData->total_nominal_csr ?? 0;
+        //     $profit = $dailyData->total_nominal_profit ?? 0;
+        //     $penalty = ($tagihan - $bayar - $bonus - $csr - $profit);
 
+        //     $profitHarian[$tanggal] = [
+        //         'nominal_tagihan' => $tagihan,
+        //         'nominal_bayar' => $bayar,
+        //         'nominal_bonus' => $bonus,
+        //         'nominal_csr' => $csr,
+        //         'penalty' => $penalty,
+        //         'profit' => $profit,
+        //     ];
 
-        return view('rekap.statistik.profit.harian-kotor', [
-            'data' => $data,
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'bulan_angka' => $bulan,
-            'nama_bulan' => $nama_bulan,
-            'date' => $date,
-            'offset' => $offset,
-            'dataTahun' => $dataTahun,
-            'profitHarian' => $profitHarian,
-            'grandTotal' => $grandTotal,
-            'grandTotalTagihan' => $grandTotalTagihan,
-            'grandTotalBayar' => $grandTotalBayar,
-            'grandTotalBonus' => $grandTotalBonus,
-            'grandTotalCsr' => $grandTotalCsr,
-            'grandTotalPenalty' => $grandTotalPenalty,
-        ]);
+        //     $grandTotal += $profitHarian[$tanggal]['profit'];
+        //     $grandTotalPenalty += $profitHarian[$tanggal]['penalty'];
+        //     $grandTotalTagihan += $profitHarian[$tanggal]['nominal_tagihan'];
+        //     $grandTotalBayar += $profitHarian[$tanggal]['nominal_bayar'];
+        //     $grandTotalBonus += $profitHarian[$tanggal]['nominal_bonus'];
+        //     $grandTotalCsr += $profitHarian[$tanggal]['nominal_csr'];
+        // }
+        // // dd($profitHarian);
+        // $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+        //                     ->selectRaw('YEAR(tanggal) tahun')
+        //                     ->groupBy('tahun')
+        //                     ->get();
+
+        return view('rekap.statistik.profit.harian-kotor', $all);
     }
 
     public function profit_harian_download(Request $request)
@@ -642,17 +632,28 @@ class StatistikController extends Controller
 
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+         $dateRange = Carbon::createFromDate($tahun, $bulan);
+        $tanggalAwal = $dateRange->startOfMonth()->toDateTimeString(); // Hasil: '2025-09-01 00:00:00'
+        $tanggalAkhir = $dateRange->endOfMonth()->toDateTimeString();   // Hasil: '2025-09-30 23:59:59'
 
-        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
-                    ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
-                    ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
-                    ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit')
-                    ->whereMonth('kuj.tanggal', $bulan)
-                    ->whereYear('kuj.tanggal', $tahun)
+        // $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+        //             ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
+        //             ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
+        //             ->selectRaw('DATE(kuj.tanggal) as tanggal, SUM(transaksis.profit) as total_nominal_profit')
+        //             ->whereMonth('kuj.tanggal', $bulan)
+        //             ->whereYear('kuj.tanggal', $tahun)
+        //             ->where('transaksis.void', 0)
+        //             ->groupBy('tanggal')
+        //             ->get()
+        //             ->keyBy('tanggal');
+
+          $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+                    ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
+                    ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
                     ->where('transaksis.void', 0)
-                    ->groupBy('tanggal')
+                    ->groupBy('tanggal_bongkar')
                     ->get()
-                    ->keyBy('tanggal');
+                    ->keyBy('tanggal_bongkar');
 
         $profitHarian = [];
         $grandTotal = 0;
@@ -804,131 +805,11 @@ class StatistikController extends Controller
     {
         $tahun = $request->tahun ?? date('Y');
 
-        $nama_bulan = [
-            1 => 'Januari',
-            2 => 'Februari',
-            3 => 'Maret',
-            4 => 'April',
-            5 => 'May',
-            6 => 'Juni',
-            7 => 'Juli',
-            8 => 'Augustus',
-            9 => 'September',
-            10 => 'Oktober',
-            11 => 'November',
-            12 => 'Desember',
-        ];
+        $db = new Transaksi();
 
-        // create statistics array
-        $statistics = [];
+        $all = $db->profitBulanan($tahun);
 
-        // get all vehicle
-
-        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
-        // looping sum profit each vehicle for each month
-        $grand_total_profit = 0;
-        $grand_total_pengeluaran = 0;
-        $grand_total_bersih = 0;
-        $grant_total_co = 0;
-        $grand_total_gaji = 0;
-        $grand_total_kas_kecil = 0;
-        $grand_total_bunga_investor = 0;
-        $gt_penyesuaian = 0;
-        $gt_penalty = 0;
-
-        for ($bulan = 1; $bulan <= 12; $bulan++) {
-
-            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
-                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                                ->whereMonth('tanggal', $bulan)
-                                ->whereYear('tanggal', $tahun)
-                                ->where('transaksis.void', 0)
-                                ->get();
-
-            $invoiceData = InvoiceTagihan::whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('lunas', 1)
-                            ->select(DB::raw('SUM(penyesuaian) as penyesuaian, SUM(penalty) as penalty'))
-                            ->first();
-
-            $penyesuaian = $invoiceData->penyesuaian ?? 0;
-            $penalty = $invoiceData->penalty ?? 0;
-
-            $bungaInvestor = BungaInvestor::whereMonth('created_at', $bulan)
-                                ->whereYear('created_at', $tahun)
-                                ->sum('nominal');
-
-            $pengeluaran_kas_kecil = KasBesar::whereMonth('tanggal', $bulan)
-                                ->whereYear('tanggal', $tahun)
-                                ->whereNotNull('nomor_kode_kas_kecil')
-                                ->sum('nominal_transaksi');
-
-            $coTransactions = KasBesar::whereMonth('tanggal', $bulan)
-                                ->whereYear('tanggal', $tahun)
-                                ->where('cost_operational', 1)
-                                ->whereIn('jenis_transaksi_id', [1, 2])
-                                ->get()
-                                ->groupBy('jenis_transaksi_id');
-
-            $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
-            $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
-
-            $total_co = $pengeluaran_co - $pemasukan_co;
-
-            $gaji = RekapGaji::where('bulan', $bulan)
-                                ->where('tahun', $tahun)
-                                ->first();
-
-            $total_gaji_bersih = $gaji ? $gaji->rekap_gaji_detail->sum('pendapatan_bersih') : 0;
-
-            $grand_total_profit += $data->sum('profit');
-            $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor;
-            $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty) + $penyesuaian;
-
-            $grand_total_gaji += $total_gaji_bersih;
-            $grant_total_co += $total_co;
-            $grand_total_kas_kecil += $pengeluaran_kas_kecil;
-            $grand_total_bunga_investor += $bungaInvestor;
-            $gt_penyesuaian += $penyesuaian;
-            $gt_penalty += $penalty;
-
-            $total_pengeluaran = $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty;
-
-            $statistics[$bulan] = [
-                'nama_bulan' => $nama_bulan[$bulan],
-                'profit' => $data->sum('profit'),
-                'total_gaji' => $total_gaji_bersih,
-                'total_co' => $total_co,
-                'kas_kecil' => $pengeluaran_kas_kecil,
-                'bunga_investor' => $bungaInvestor,
-                'penyesuaian' => $penyesuaian,
-                'penalty' => $penalty,
-                'pengeluaran' => $total_pengeluaran,
-                'bersih' => ($data->sum('profit') - $total_pengeluaran) + $penyesuaian,
-            ];
-
-        }
-
-        return view('rekap.statistik.profit.bulanan-bersih', [
-            'statistics' => $statistics,
-            'tahun' => $tahun,
-            'dataTahun' => $dataTahun,
-            'nama_bulan' => $nama_bulan,
-            'grand_total_profit' => $grand_total_profit,
-            'grand_total_pengeluaran' => $grand_total_pengeluaran,
-            'grand_total_bersih' => $grand_total_bersih,
-            'grand_total_gaji' => $grand_total_gaji,
-            'grand_total_co' => $grant_total_co,
-            'grand_total_kas_kecil' => $grand_total_kas_kecil,
-            'grand_total_bunga_investor' => $grand_total_bunga_investor,
-            'gt_penyesuaian' => $gt_penyesuaian,
-            'gt_penalty' => $gt_penalty,
-        ]);
+        return view('rekap.statistik.profit.bulanan-bersih', $all);
     }
 
     public function profit_tahunan(Request $request)

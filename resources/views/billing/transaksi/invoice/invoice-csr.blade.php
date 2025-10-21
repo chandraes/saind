@@ -40,6 +40,9 @@
                 <th class="text-center align-middle">Invoice</th>
                 <th class="text-center align-middle">Total CSR</th>
                 <th class="text-center align-middle">Bayar</th>
+                   @if (Auth::user()->role == 'su')
+                <th class="text-center align-middle">Aksi</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -59,6 +62,15 @@
                         <button type="submit" class="btn btn-success">Pembayaran </button>
                     </form>
                 </td>
+                 @if (Auth::user()->role == 'su')
+                <td class="text-center align-middle">
+                    <form action="{{route('invoice.csr-back.execute', ['invoice' => $d->id])}}" method="post" id="backForm{{$d->id}}" class="back-form" data-id="{{ $d->id }}">
+                        @csrf
+                        <button type="submit" class="btn btn-danger">Back</button>
+                    </form>
+                </td>
+                @endif
+
             </tr>
             <script>
                  $('#lunasForm-{{$d->id}}').submit(function(e){
@@ -107,5 +119,24 @@
             document.getElementById('row-input').hidden = false;
         }
     }
+
+
+     $('.back-form').submit(function(e){
+        e.preventDefault();
+        var formId = $(this).data('id');
+        Swal.fire({
+            title: 'Apakah Anda Yakin?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, simpan!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $(`#backForm${formId}`).unbind('submit').submit();
+                $('#spinner').show();
+            }
+        });
+    });
 </script>
 @endpush

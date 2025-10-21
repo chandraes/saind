@@ -427,7 +427,7 @@
 
 
     $(document).ready(function() {
-         var role = "{{auth()->user()->role}}";
+        var role = "{{auth()->user()->role}}";
         if (role =='admin' || role =='su') {
            calculateTotal();
 
@@ -458,6 +458,7 @@
         }
 
         $('#spinner').show();
+
 
         $.fn.dataTable.moment('DD-MM-YYYY');
 

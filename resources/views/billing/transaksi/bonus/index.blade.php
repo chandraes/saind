@@ -21,14 +21,14 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
-                                alt="dokumen" width="30"> Billing</a></td>
+                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
+                                width="30"> Billing</a></td>
                 </tr>
             </table>
         </div>
         <div class="col-md-6">
             <form action="{{route('transaksi.nota-bonus')}}" method="get">
-            <div class="row mt-2">
+                <div class="row mt-2">
                     <input type="hidden" name="sponsor_id" value="{{$sponsor->id}}">
                     <div class="col-md-4 mb-3">
                         <select class="form-select" name="bulan" id="bulan">
@@ -57,8 +57,8 @@
                     <div class="col-md-4 mb-3">
                         <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
                     </div>
-            </div>
-        </form>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -280,6 +280,7 @@
             "searching": false,
             "scrollCollapse": true,
             "scrollY": "550px",
+            "scrollX": true,
             "fixedColumns": {
                 "leftColumns": 3,
                 "rightColumns": 1
