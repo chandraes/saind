@@ -161,7 +161,7 @@
                         colspan="{{7 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                     ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
                     </td>
-                    <td class="table-pdf text-pdf text-center align-middle"><strong>Penalty</strong></td>
+                    <td class="table-pdf text-pdf text-center align-middle"><strong>Charges</strong></td>
                     <td align="right" class="table-pdf text-pdf align-middle"> <strong>
                             {{number_format($invoice->pinalty_akhir, 0, ',', '.')}}</strong>
                     </td>

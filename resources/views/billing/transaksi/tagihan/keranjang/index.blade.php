@@ -324,7 +324,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="penalty" class="form-label">Penalti Akhir</label>
+                            <label for="penalty" class="form-label">Charges</label>
                             <input type="text" class="form-control" name="penalty_akhir" id="penalty_akhir" required
                                 value="0" onkeyup="calculateTotal()" />
                         </div>

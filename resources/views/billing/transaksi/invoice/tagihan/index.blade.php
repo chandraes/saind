@@ -44,7 +44,7 @@
                 <th class="text-center align-middle">Ppn</th>
                 <th class="text-center align-middle">Pph</th>
                 <th class="text-center align-middle">Total Tagihan</th>
-                <th class="text-center align-middle">Penalty Akhir</th>
+                <th class="text-center align-middle">Charges</th>
                 <th class="text-center align-middle">Grand Total Tagihan</th>
                 <th class="text-center align-middle">Balance</th>
                 <th class="text-center align-middle">Sisa Tagihan</th>
