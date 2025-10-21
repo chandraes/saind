@@ -307,7 +307,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="tagi" class="form-label"><strong>Grand Total Tagihan</strong></label>
+                            <label for="tagi" class="form-label"><strong>Total Tagihan</strong></label>
                             <input type="text" class="form-control" name="tagi" id="tagi"
                                 value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
                         </div>
@@ -320,6 +320,20 @@
                                 <option value="1">Sendiri</option>
                                 <option value="0">Customer</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="penalty" class="form-label">Charges</label>
+                            <input type="text" class="form-control" name="penalty_akhir" id="penalty_akhir" required
+                                value="0" onkeyup="calculateTotal()" />
+                        </div>
+                    </div>
+                     <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="tagi" class="form-label"><strong>Grand Total Tagihan</strong></label>
+                            <input type="text" class="form-control" name="tagi_akhir" id="tagi_akhir"
+                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
                         </div>
                     </div>
                 </div>
@@ -383,6 +397,8 @@
         var total = parseFloat($('#total').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penyesuaian = parseFloat($('#penyesuaian').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penalty = parseFloat($('#penalty').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var penalty_akhir = parseFloat($('#penalty_akhir').val().replace(/\./g, '').replace(',', '.')) || 0;
+
         var dipungut = $('#ppn_dipungut').val() || 1;
 
         var grandTotal = total + penyesuaian - penalty;
@@ -401,7 +417,11 @@
             var totalTagihan = grandTotal - pph;
         }
 
+        var tagihanAkhir = totalTagihan - penalty_akhir;
+
         $('#tagi').val(totalTagihan.toLocaleString('id-ID'));
+
+        $('#tagi_akhir').val(tagihanAkhir.toLocaleString('id-ID'));
 
     }
 

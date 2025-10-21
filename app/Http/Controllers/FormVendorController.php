@@ -173,6 +173,8 @@ class FormVendorController extends Controller
             'nominal' => 'required',
         ]);
 
+        $roleAllow = ['admin', 'su'];
+
         $dbKasBesar = new KasBesar();
         // make $data['nominal'] into positive number
         $data['nominal'] = $data['nominal'] * -1;
@@ -190,9 +192,13 @@ class FormVendorController extends Controller
         // make $sisa into positive number
         $sisaPositif = $sisa * -1;
 
-        if ($sisaPositif < $data['nominal']) {
-            return redirect()->back()->with('error', 'Nominal melebihi sisa tagihan');
+        if (!in_array(Auth()->user()->role, $roleAllow)) {
+            if ($sisaPositif < $data['nominal']) {
+                return redirect()->back()->with('error', 'Nominal melebihi sisa tagihan');
+            }
         }
+
+
 
         $kas['nomor_kode_tagihan'] = $dbKasBesar->generateNomorTagihan();
 

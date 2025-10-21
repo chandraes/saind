@@ -709,6 +709,7 @@ class TransaksiController extends Controller
         $data = $request->validate([
             'penyesuaian' => 'required',
             'penalty' => 'required',
+            'penalty_akhir' => 'required',
             'tanggal_hardcopy' => 'required',
             'estimasi_pembayaran' => 'required',
             'no_resi' => 'required',
@@ -720,6 +721,7 @@ class TransaksiController extends Controller
         $data['estimasi_pembayaran'] = Carbon::createFromFormat('d-m-Y', $data['estimasi_pembayaran'])->format('Y-m-d');
         $data['penyesuaian'] = str_replace('.', '', $data['penyesuaian']);
         $data['penalty'] = str_replace('.', '', $data['penalty']);
+        $data['penalty_akhir'] = str_replace('.', '', $data['penalty_akhir']);
         $data['lunas'] = 0;
         $data['tanggal'] = Carbon::now()->format('Y-m-d');
         $dipungut = $data['ppn_dipungut'];
@@ -734,9 +736,9 @@ class TransaksiController extends Controller
         $data['total_awal'] = $tagihan->sum('nominal_tagihan');
 
         if ($dipungut == 1) {
-            $total_tagihan = ($total + $ppn - $pph);
+            $total_tagihan = ($total + $ppn - $pph) - $data['penalty_akhir'];
         } else {
-            $total_tagihan = ($total - $pph);
+            $total_tagihan = ($total - $pph) - $data['penalty_akhir'];
         }
 
         $data['ppn'] = $ppn;

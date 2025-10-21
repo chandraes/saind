@@ -66,7 +66,7 @@
                     <th class="text-center align-middle">Nominal Tagihan<br>(-PPH)</th>
                     <th class="text-center align-middle">Nominal Invoice<br>(DPP)</th>
                     <th class="text-center align-middle">Penyesuaian BBM</th>
-                    <th class="text-center align-middle">Penalti</th>
+                    <th class="text-center align-middle">Penalti + Charges</th>
                     <th class="text-center align-middle">Pembayaran Invoice</th>
                     <th class="text-center align-middle">Periode</th>
                     <th class="text-center align-middle">Tgl Submit Softcopy</th>

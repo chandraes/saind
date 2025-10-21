@@ -264,6 +264,32 @@
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
                 <td align="right" class="align-middle text-end"> <strong>
+                        {{number_format($invoice->total_tagihan+$invoice->penalty_akhir, 0, ',', '.')}}</strong>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+             <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Charges</strong></td>
+                <td align="right" class="align-middle text-end text-danger"> <strong>
+                        {{number_format($invoice->penalty_akhir, 0, ',', '.')}}</strong>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+             <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Grand Total Tagihan</strong></td>
+                <td align="right" class="align-middle text-end"> <strong>
                         {{number_format($invoice->total_tagihan, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
