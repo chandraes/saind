@@ -182,9 +182,9 @@ class RekapPpn extends Model
                     'jenis_transaksi_id' => 2,
                     'nominal_transaksi' => $nominalKasBesar,
                     'saldo' => $dbKasBesar->saldoTerakhir() - $nominalKasBesar,
-                    'no_rekening' => 'Pajak',
-                    'transfer_ke' => 'Pajak',
-                    'bank' => 'Pajak',
+                   'no_rekening' => '0218222270',
+                    'transfer_ke' => 'SUMATERA ALAM',
+                    'bank' => 'BCA',
                     'modal_investor_terakhir' => $dbKasBesar->modalInvestorTerakhir(),
                 ]);
 
