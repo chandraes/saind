@@ -86,7 +86,11 @@
 
         <div class="d-grid gap-3 mt-3">
             <button class="btn btn-success" type="submit">Simpan</button>
+             @if (auth()->user()->role == 'asisten-user')
+            <a href="{{route('home')}}" class="btn btn-secondary" type="button">Batal</a>
+            @else
             <a href="{{route('billing.index')}}" class="btn btn-secondary" type="button">Batal</a>
+            @endif
           </div>
     </form>
 </div>

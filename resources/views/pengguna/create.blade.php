@@ -32,6 +32,7 @@
                                     <option value="vendor">Vendor</option>
                                     <option value="vendor-operational">Vendor Operational</option>
                                     <option value="user">User</option>
+                                    <option value="asisten-user">Asisten User</option>
                                     <option value="customer">Customer</option>
                                     <option value="customer-admin">Customer Admin</option>
                                 </select>

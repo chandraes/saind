@@ -32,6 +32,16 @@ class HomeController extends Controller
     {
         $user = auth()->user();
 
+        if ($user->role == 'asisten-user') {
+
+             $data = UpahGendong::with(['vehicle'])->get();
+            $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
+            return view('home', [
+                'data' => $data,
+                'vehicle' => $vehicle
+            ]);
+        }
+
         if ($user->role == 'customer') {
 
             $db = new Transaksi();
@@ -43,7 +53,7 @@ class HomeController extends Controller
             ]);
 
         }
-        
+
         if ($user->role == 'customer-admin') {
 
             $db = new Transaksi();
