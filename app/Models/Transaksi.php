@@ -506,4 +506,294 @@ class Transaksi extends Model
         return $all;
     }
 
+    public function performUnit($bulan, $tahun, $offset, $vendor = null)
+    {
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date vrom $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute'])
+                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                            ->whereMonth('tanggal', $bulan)
+                            ->whereYear('tanggal', $tahun)
+                            ->where('transaksis.void', 0)
+                            ->when($vendor, function ($query, $vendor) {
+                                return $query->where('v.vendor_id', $vendor);
+                            })
+                            ->get();
+
+        $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
+                            $tonase = $transaction->timbangan_bongkar ?? 0;
+                            return $carry + $tonase;
+                        }, 0);
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+
+        $vehicle = Vehicle::with('vendor')->orderBy('nomor_lambung')
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('vendor_id', $vendor);
+            })
+            ->limit(10)
+            ->offset($offset)
+            ->get();
+
+        if ($vehicle->count() == 0) {
+            $offset = 0;
+            $vehicle = Vehicle::orderBy('nomor_lambung')
+                ->when($vendor, function ($query, $vendor) {
+                    return $query->where('vendor_id', $vendor);
+                })
+                ->limit(10)
+                ->offset(0)
+                ->get();
+        }
+
+        $statistics = [];
+
+        foreach ($vehicle as $v) {
+            $statistics[$v->nomor_lambung] = [
+                'vehicle' => $v,
+                'long_route_count' => 0,
+                'short_route_count' => 0,
+            ];
+        }
+
+        for ($i = 1; $i <= $date; $i++) {
+            foreach ($vehicle as $v) {
+                $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
+
+                $transactions = $data->filter(function ($transaction) use ($v, $dateString) {
+                    return $transaction->nomor_lambung == $v->nomor_lambung && $transaction->tanggal == $dateString && $transaction->void == 0;
+                });
+
+                $total_tonase = 0; // reset total tonase for each vehicle
+
+                if ($transactions->isEmpty()) {
+                    $statistics[$v->nomor_lambung]['data'][] = [
+                        'day' => $i,
+                        'rute' => '-',
+                        'tonase' => '-',
+                    ];
+                } else {
+                    $rutes = [];
+                    $tonases = [];
+
+                    foreach ($transactions as $transaction) {
+                        $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
+                        $jarak = $transaction->jarak ?? 0;
+
+                        if ($jarak > 50) {
+                            $statistics[$v->nomor_lambung]['long_route_count']++;
+                        } else if ($jarak > 0 && $jarak <= 50) {
+                            $statistics[$v->nomor_lambung]['short_route_count']++;
+                        }
+
+                        $tonase = $transaction->timbangan_bongkar ?? 0;
+                        $total_tonase += $tonase; // add tonase to total
+
+                        $rutes[] = $rute;
+                        $tonases[] = $tonase;
+                    }
+
+                    $statistics[$v->nomor_lambung]['data'][] = [
+                        'day' => $i,
+                        'rute' => implode(",", $rutes),
+                        'tonase' => implode(",", $tonases),
+                    ];
+                }
+
+                $statistics[$v->nomor_lambung]['total_tonase'] = $total_tonase; // store total tonase for each vehicle
+            }
+        }
+
+
+
+        foreach ($statistics as $nomor_lambung => $statistic) {
+            $total_tonase = array_reduce($statistic['data'], function ($carry, $item) {
+                if (strpos($item['tonase'], ',') !== false) {
+                    $tonases = explode(',', $item['tonase']);
+                    $tonase_sum = array_sum(array_map('floatval', $tonases));
+                } else {
+                    $tonase_sum = is_numeric($item['tonase']) ? $item['tonase'] : 0;
+                }
+
+                return $carry + $tonase_sum;
+            }, 0);
+
+            $statistics[$nomor_lambung]['total_tonase'] = $total_tonase;
+        }
+        // dd($statistics);
+        $vendors = Vendor::all();
+
+        $all = [
+            'statistics' => $statistics,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'vendor' => $vendor,
+            'bulan_angka' => $bulan,
+            'vehicle' => $vehicle,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'vendors' => $vendors,
+            'offset' => $offset,
+            'dataTahun' => $dataTahun,
+            'grand_total_tonase' => $grand_total_tonase,
+        ];
+
+        return $all;
+    }
+
+    public function performUnitTahunan($tahun)
+    {
+        $vehicle = Vehicle::orderBy('nomor_lambung')->get();
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+        $statistics = [];
+
+        foreach ($vehicle as $v) {
+            $statistics[$v->nomor_lambung] = [
+                'vehicle' => $v,
+                'monthly' => array_fill(1, 12, ['long_route_count' => 0, 'short_route_count' => 0]),
+            ];
+        }
+
+        for ($bulan = 1; $bulan <= 12; $bulan++) {
+            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                                ->whereMonth('tanggal', $bulan)
+                                ->whereYear('tanggal', $tahun)
+                                ->where('transaksis.void', 0)
+                                ->get();
+
+            foreach ($data as $transaction) {
+                $v = $transaction->kas_uang_jalan->vehicle;
+
+                $jarak = $transaction->jarak ?? 0;
+
+                if (!isset($statistics[$v->nomor_lambung])) {
+                    continue;
+                }
+
+                if ($jarak > 50) {
+                    $statistics[$v->nomor_lambung]['monthly'][$bulan]['long_route_count']++;
+                } else if ($jarak > 0 && $jarak <= 50) {
+                    $statistics[$v->nomor_lambung]['monthly'][$bulan]['short_route_count']++;
+                }
+            }
+        }
+
+        $all = [
+            'statistics' => $statistics,
+            'tahun' => $tahun,
+            'vehicle' => $vehicle,
+            'dataTahun' => $dataTahun,
+        ];
+
+        return $all;
+    }
+
+    public function upahGendong($vehicle,$bulan,$tahun, $tanggal_filter = null)
+    {
+        $ug = UpahGendong::with(['vehicle'])
+                            ->where('vehicle_id', $vehicle)
+                            ->first();
+
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get array list date vrom $bulan
+        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+
+
+        if ($tanggal_filter != null) {
+            if (strpos($tanggal_filter, 'to') !== false) {
+                // $tanggalFilter is a date range
+                $dates = explode('to', $tanggal_filter);
+                $startDate = Carbon::createFromFormat('d-m-Y', trim($dates[0]))->startOfDay();
+                $endDate = Carbon::createFromFormat('d-m-Y', trim($dates[1]))->endOfDay();
+
+                // dd($startDate, $endDate, $filter, $tanggalFilter);
+                $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                                ->where('transaksis.void', 0)
+                                ->where('kuj.vehicle_id', $vehicle)
+                                ->whereBetween('tanggal', [$startDate, $endDate])
+                                ->orderBy('kuj.tanggal', 'asc')
+                                ->get();
+
+            } else {
+                // $tanggalFilter is a single date
+                $date = Carbon::createFromFormat('d-m-Y', trim($tanggal_filter));
+                $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
+                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                                ->where('transaksis.void', 0)
+                                ->where('kuj.vehicle_id', $vehicle)
+                                ->where('tanggal', '>=', $date)
+                                ->orderBy('kuj.tanggal', 'asc')
+                                ->get();
+
+            }
+        } else{
+            $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer'])
+                        ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                        ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                        ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                        ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                        ->whereMonth('tanggal', $bulan)
+                        ->whereYear('tanggal', $tahun)
+                        ->where('transaksis.void', 0)
+                        ->where('kuj.vehicle_id', $vehicle)
+                        ->orderBy('kuj.tanggal', 'asc')
+                        ->get();
+        }
+
+
+        // dd($data);
+        $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
+                            $tonase = $transaction->timbangan_bongkar ?? 0;
+                            return $carry + $tonase;
+                        }, 0);
+
+        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                            ->selectRaw('YEAR(tanggal) tahun')
+                            ->groupBy('tahun')
+                            ->get();
+
+        $all = [
+            'data' => $data,
+            'ug'    => $ug,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'bulan_angka' => $bulan,
+            'vehicle' => $vehicle,
+            'nama_bulan' => $nama_bulan,
+            'date' => $date,
+            'tanggal_filter' => $tanggal_filter,
+            'dataTahun' => $dataTahun,
+            'grand_total_tonase' => $grand_total_tonase,
+        ];
+
+        return $all;
+    }
+
 }

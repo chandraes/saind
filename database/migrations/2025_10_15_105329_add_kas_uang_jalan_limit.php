@@ -20,7 +20,10 @@ return new class extends Migration
         ];
 
         foreach ($data as $d) {
-            Pengaturan::create($d);
+            $check = Pengaturan::where('untuk', $d['untuk'])->first();
+            if (!$check) {
+                Pengaturan::create($d);
+            }
         }
     }
 

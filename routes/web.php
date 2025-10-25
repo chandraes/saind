@@ -335,6 +335,36 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::get('billing', [App\Http\Controllers\BillingController::class, 'index'])->name('billing.index')->middleware('role:admin,user,su');
 
+    //Routing bersama asisten user
+    Route::group(['middleware' => 'role:admin,user,su,asisten-user'], function() {
+        Route::prefix('kas-uang-jalan')->group(function(){
+            Route::get('/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk'])->name('kas-uang-jalan.masuk');
+            Route::post('/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk_store'])->name('kas-uang-jalan.masuk.store');
+            Route::get('/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar'])->name('kas-uang-jalan.keluar');
+            Route::post('/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar_store'])->name('kas-uang-jalan.keluar.store');
+            Route::get('/get-vendor', [App\Http\Controllers\FormKasUangJalanController::class, 'get_vendor'])->name('kas-uang-jalan.get-vendor');
+            Route::get('/get-rute', [App\Http\Controllers\FormKasUangJalanController::class, 'get_rute'])->name('kas-uang-jalan.get-rute');
+            Route::get('/get-uang-jalan', [App\Http\Controllers\FormKasUangJalanController::class, 'get_uang_jalan'])->name('kas-uang-jalan.get-uang-jalan');
+
+            Route::prefix('pengembalian')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian'])->name('kas-uang-jalan.pengembalian');
+                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian_store'])->name('kas-uang-jalan.pengembalian.store');
+            });
+
+            Route::prefix('penyesuaian')->group(function(){
+                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian'])->name('kas-uang-jalan.penyesuaian');
+                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian_store'])->name('kas-uang-jalan.penyesuaian.store');
+            });
+        });
+
+        Route::prefix('transaksi')->group(function(){
+                Route::get('/nota-muat', [App\Http\Controllers\TransaksiController::class, 'nota_muat'])->name('transaksi.nota-muat');
+                Route::patch('/nota-muat/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_muat_update'])->name('transaksi.nota-muat.update');
+                Route::get('/nota-bongkar', [App\Http\Controllers\TransaksiController::class, 'nota_bongkar'])->name('transaksi.nota-bongkar');
+                Route::patch('/nota-bongkar/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_bongkar_update'])->name('transaksi.nota-bongkar.update');
+        });
+    });
+
     Route::group(['middleware' => 'role:admin,user,su'], function() {
 
         Route::prefix('pajak')->group(function(){
@@ -406,25 +436,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/get-void', [App\Http\Controllers\FormKasKecilController::class, 'get_void'])->name('kas-kecil.get-void');
         });
 
-        Route::prefix('kas-uang-jalan')->group(function(){
-            Route::get('/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk'])->name('kas-uang-jalan.masuk');
-            Route::post('/masuk', [App\Http\Controllers\FormKasUangJalanController::class, 'masuk_store'])->name('kas-uang-jalan.masuk.store');
-            Route::get('/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar'])->name('kas-uang-jalan.keluar');
-            Route::post('/keluar', [App\Http\Controllers\FormKasUangJalanController::class, 'keluar_store'])->name('kas-uang-jalan.keluar.store');
-            Route::get('/get-vendor', [App\Http\Controllers\FormKasUangJalanController::class, 'get_vendor'])->name('kas-uang-jalan.get-vendor');
-            Route::get('/get-rute', [App\Http\Controllers\FormKasUangJalanController::class, 'get_rute'])->name('kas-uang-jalan.get-rute');
-            Route::get('/get-uang-jalan', [App\Http\Controllers\FormKasUangJalanController::class, 'get_uang_jalan'])->name('kas-uang-jalan.get-uang-jalan');
 
-            Route::prefix('pengembalian')->group(function(){
-                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian'])->name('kas-uang-jalan.pengembalian');
-                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'pengembalian_store'])->name('kas-uang-jalan.pengembalian.store');
-            });
-
-            Route::prefix('penyesuaian')->group(function(){
-                Route::get('/', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian'])->name('kas-uang-jalan.penyesuaian');
-                Route::post('/store', [App\Http\Controllers\FormKasUangJalanController::class, 'penyesuaian_store'])->name('kas-uang-jalan.penyesuaian.store');
-            });
-        });
 
         //Form maintenance
         Route::prefix('billing')->group(function(){
@@ -568,11 +580,6 @@ Route::group(['middleware' => ['auth']], function() {
         });
 
         Route::prefix('transaksi')->group(function(){
-            Route::get('/nota-muat', [App\Http\Controllers\TransaksiController::class, 'nota_muat'])->name('transaksi.nota-muat');
-            Route::patch('/nota-muat/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_muat_update'])->name('transaksi.nota-muat.update');
-            Route::get('/nota-bongkar', [App\Http\Controllers\TransaksiController::class, 'nota_bongkar'])->name('transaksi.nota-bongkar');
-            Route::patch('/nota-bongkar/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_bongkar_update'])->name('transaksi.nota-bongkar.update');
-
 
             //sales order
             Route::get('/sales-order', [App\Http\Controllers\TransaksiController::class, 'sales_order'])->name('transaksi.sales-order');
@@ -837,6 +844,11 @@ Route::group(['middleware' => ['auth']], function() {
         });
     });
 
+    Route::group(['prefix' => 'asisten-user','middleware' => 'role:asisten-user'], function() {
+        Route::get('perform-unit', [App\Http\Controllers\AsistenUserController::class, 'perform_unit'])->name('asisten-user.perform-unit');
+        Route::get('perform-unit-tahunan', [App\Http\Controllers\AsistenUserController::class, 'perform_unit_tahunan'])->name('asisten-user.perform-unit-tahunan');
+        Route::get('upah-gendong', [App\Http\Controllers\AsistenUserController::class, 'upah_gendong'])->name('asisten-user.upah-gendong');
+    });
 });
 
 

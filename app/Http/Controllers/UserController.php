@@ -43,7 +43,7 @@ class UserController extends Controller
             "username" => "required|unique:users",
             "email" => "nullable",
             "password" => "required|min:6",
-            "role" => "required|in:admin,user,vendor,vendor-operational,customer,customer-admin,operasional,investor",
+            "role" => "required|in:admin,user,vendor,vendor-operational,customer,customer-admin,operasional,investor,asisten-user",
             'vendor_id' => 'nullable',
             'customer_id' => 'nullable',
         ]);
@@ -82,7 +82,7 @@ class UserController extends Controller
             "username" => "required|unique:users,username,$id",
             "email" => "nullable",
             "password" => "nullable",
-            "role" => "required|in:admin,user,vendor,vendor-operational,customer,customer-admin,operasional,investor",
+            "role" => "required|in:admin,user,vendor,vendor-operational,customer,customer-admin,operasional,investor,asisten-user",
             'vendor_id' => 'nullable',
         ]);
 

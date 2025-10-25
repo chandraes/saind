@@ -302,6 +302,9 @@
      @if (auth()->user()->role === 'investor')
     @include('per-investor.index')
     @endif
+     @if (auth()->user()->role === 'asisten-user')
+    @include('asisten-user.index')
+    @endif
 </div>
 @endsection
 @if (auth()->user()->role === 'operasional')
