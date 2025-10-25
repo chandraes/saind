@@ -57,7 +57,7 @@ class FormLainController extends Controller
 
         $dbWa = new GroupWa();
 
-        $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
+        // $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
 
         $group = $dbWa->where('untuk', 'kas-besar')->first();
         $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
@@ -74,8 +74,8 @@ class FormLainController extends Controller
                 "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                 "Profit Bersih: \n".
-                    "Rp. ".$profit."\n\n".
+                //  "Profit Bersih: \n".
+                //     "Rp. ".$profit."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
 
         $send = $dbWa->sendWa($group->nama_group, $pesan);
@@ -133,7 +133,7 @@ class FormLainController extends Controller
 
         $dbWa = new GroupWa();
 
-        $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
+        // $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
 
         $group = $dbWa->where('untuk', 'kas-besar')->first();
         $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -150,8 +150,8 @@ class FormLainController extends Controller
                 "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                 "Total Modal Investor : \n".
                 "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                 "Profit Bersih: \n".
-                    "Rp. ".$profit."\n\n".
+                //  "Profit Bersih: \n".
+                //     "Rp. ".$profit."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
 
         $send = $dbWa->sendWa($group->nama_group, $pesan);

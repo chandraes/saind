@@ -94,7 +94,7 @@ class FormKasUangJalanController extends Controller
         }
 
 
-        $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
+        // $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -111,8 +111,8 @@ class FormKasUangJalanController extends Controller
                     "Rp. ".number_format($store2->saldo, 0, ',', '.')."\n\n".
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Profit Bersih: \n".
-                    "Rp. ".$profit."\n\n".
+                    // "Profit Bersih: \n".
+                    // "Rp. ".$profit."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
