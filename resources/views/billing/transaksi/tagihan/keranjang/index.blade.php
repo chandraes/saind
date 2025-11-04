@@ -45,8 +45,10 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    @if (auth()->user()->role != 'asisten-user')
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
                                 width="30"> Billing</a></td>
+                    @endif
                     <td><a href="{{route('transaksi.nota-tagihan', ['customer'=>$customer->id])}}"><img
                                 src="{{asset('images/back.svg')}}" alt="dokumen" width="30"> Kembali</a></td>
                     <td>
@@ -280,8 +282,8 @@
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="penalty" class="form-label">Penalti</label>
-                            <input type="text" class="form-control" name="penalty" id="penalty" required
-                                value="0" onkeyup="calculateTotal()" />
+                            <input type="text" class="form-control" name="penalty" id="penalty" required value="0"
+                                onkeyup="calculateTotal()" />
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -315,7 +317,8 @@
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="ppn" class="form-label">Ppn Disetor Oleh</label>
-                            <select name="ppn_dipungut" id="ppn_dipungut" class="form-select" required onchange="calculateTotal()">
+                            <select name="ppn_dipungut" id="ppn_dipungut" class="form-select" required
+                                onchange="calculateTotal()">
                                 <option value="">-- Pilih Salah Satu --</option>
                                 <option value="1">Sendiri</option>
                                 <option value="0">Customer</option>
@@ -329,7 +332,7 @@
                                 value="0" onkeyup="calculateTotal()" />
                         </div>
                     </div>
-                     <div class="col-md-3">
+                    <div class="col-md-3">
                         <div class="mb-3">
                             <label for="tagi" class="form-label"><strong>Grand Total Tagihan</strong></label>
                             <input type="text" class="form-control" name="tagi_akhir" id="tagi_akhir"
@@ -342,25 +345,29 @@
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="tanggal_hardcopy" class="form-label">Tanggal Submit Hardcopy</label>
-                            <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy" value="{{old('tanggal_hardcopy')}}" required>
+                            <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy"
+                                value="{{old('tanggal_hardcopy')}}" required>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="estimasi_pembayaran" class="form-label">Estimasi Pembayaran</label>
-                            <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran" value="{{old('estimasi_pembayaran')}}" required>
+                            <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran"
+                                value="{{old('estimasi_pembayaran')}}" required>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="no_resi" class="form-label">Nomor Resi</label>
-                            <input type="text" class="form-control" name="no_resi" id="no_resi" value="{{old('no_resi')}}" required/>
+                            <input type="text" class="form-control" name="no_resi" id="no_resi"
+                                value="{{old('no_resi')}}" required />
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-3">
                             <label for="no_validasi" class="form-label">Nomor Validasi</label>
-                            <input type="text" class="form-control" name="no_validasi" id="no_validasi" value="{{old('no_validasi')}}" required/>
+                            <input type="text" class="form-control" name="no_validasi" id="no_validasi"
+                                value="{{old('no_validasi')}}" required />
                         </div>
                     </div>
                 </div>
