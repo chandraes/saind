@@ -36,9 +36,11 @@ class HomeController extends Controller
 
              $data = UpahGendong::with(['vehicle'])->get();
             $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
+            $customer = Customer::all();
             return view('home', [
                 'data' => $data,
-                'vehicle' => $vehicle
+                'vehicle' => $vehicle,
+                'customer' => $customer
             ]);
         }
 
@@ -59,6 +61,7 @@ class HomeController extends Controller
             $db = new Transaksi();
             $tagihan = $db->countNotaTagihan(auth()->user()->customer_id);
             $invoice = InvoiceTagihan::where('customer_id', auth()->user()->customer_id)->where('lunas', 0)->count();
+
             return view('home', [
                 'tagihan' => $tagihan,
                 'invoice' => $invoice

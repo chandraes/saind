@@ -362,6 +362,23 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::patch('/nota-muat/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_muat_update'])->name('transaksi.nota-muat.update');
                 Route::get('/nota-bongkar', [App\Http\Controllers\TransaksiController::class, 'nota_bongkar'])->name('transaksi.nota-bongkar');
                 Route::patch('/nota-bongkar/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_bongkar_update'])->name('transaksi.nota-bongkar.update');
+
+                Route::prefix('nota-tagihan')->group(function(){
+                    Route::get('/{customer}', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan'])->name('transaksi.nota-tagihan');
+                    Route::get('/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'tagihan_export'])->name('transaksi.nota-tagihan.export');
+                    Route::get('/{transaksi}/check', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_checked'])->name('transaksi.nota-tagihan.check');
+                    Route::post('/{transaksi}/uncheck', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_unchecked'])->name('transaksi.nota-tagihan.uncheck');
+                    Route::post('/edit/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_edit'])->name('transaksi.nota-tagihan.edit');
+                    Route::post('/{transaksi}/update', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_update'])->name('transaksi.nota-tagihan.update');
+
+                    Route::prefix('keranjang')->group(function(){
+                        Route::get('/{customer}', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan'])->name('transaksi.nota-tagihan.keranjang');
+                        Route::post('/{customer}/lanjut', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_lanjut'])->name('transaksi.nota-tagihan.keranjang.lanjut');
+                        Route::get('/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_export'])->name('transaksi.nota-tagihan.keranjang.export');
+                        Route::post('/{customer}/{transaksi}/delete', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_delete'])->name('transaksi.nota-tagihan.keranjang.delete');
+                    });
+
+                });
         });
     });
 
@@ -584,22 +601,7 @@ Route::group(['middleware' => ['auth']], function() {
             //sales order
             Route::get('/sales-order', [App\Http\Controllers\TransaksiController::class, 'sales_order'])->name('transaksi.sales-order');
 
-            Route::prefix('nota-tagihan')->group(function(){
-                Route::get('/{customer}', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan'])->name('transaksi.nota-tagihan');
-                Route::get('/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'tagihan_export'])->name('transaksi.nota-tagihan.export');
-                Route::get('/{transaksi}/check', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_checked'])->name('transaksi.nota-tagihan.check');
-                Route::post('/{transaksi}/uncheck', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_unchecked'])->name('transaksi.nota-tagihan.uncheck');
-                Route::post('/edit/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_edit'])->name('transaksi.nota-tagihan.edit');
-                Route::post('/{transaksi}/update', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_update'])->name('transaksi.nota-tagihan.update');
 
-                Route::prefix('keranjang')->group(function(){
-                    Route::get('/{customer}', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan'])->name('transaksi.nota-tagihan.keranjang');
-                    Route::post('/{customer}/lanjut', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_lanjut'])->name('transaksi.nota-tagihan.keranjang.lanjut');
-                    Route::get('/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_export'])->name('transaksi.nota-tagihan.keranjang.export');
-                    Route::post('/{customer}/{transaksi}/delete', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_delete'])->name('transaksi.nota-tagihan.keranjang.delete');
-                });
-
-            });
 
             Route::get('/nota-bayar', [App\Http\Controllers\TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
             Route::post('/nota-bayar/{vendor}/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_lanjut'])->name('transaksi.nota-bayar.lanjut');

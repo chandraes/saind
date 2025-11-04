@@ -57,6 +57,54 @@
 </div>
 <hr>
 <br>
+<div class="row justify-content-left">
+    <h4 class="mt-3">NOTA</h4>
+    <div class="col-md-2 text-center mt-5">
+        <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
+            <img src="{{asset('images/tagihan.svg')}}" alt="" width="70">
+            <h4 class="mt-3">NOTA TAGIHAN CUSTOMER
+                {{-- <span class="text-danger">{{$data->where('status',
+                    3)->where('tagihan', 0)->count() > 0
+                    ? "(".$data->where('status', 3)->where('tagihan', 0)->count().")" : '' }}</span> --}}
+            </h4>
+        </a>
+        <div class="modal fade" id="customerId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+            role="dialog" aria-labelledby="customerTitleId" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable  modal-dialog-centered modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="customerTitleId">Nota Tagihan Customer</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            @foreach ($customer as $c)
+                            <div class="col-md-2 text-center mt-5">
+                                <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
+                                    <img src="{{asset('images/tambang.svg')}}" alt="" width="70">
+                                    <h4 class="mt-3">{{$c->singkatan}}
+                                        {{-- @if ($data->where('status', 3)->where('tagihan', 0)->where('customer_id',
+                                        $c->id)->count() > 0)
+                                        <span class="text-danger">({{$data->where('status', 3)->where('tagihan',
+                                            0)->where('customer_id', $c->id)->count()}})</span>
+                                        @endif --}}
+                                    </h4>
+                                </a>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="button" class="btn btn-primary">Lanjutkan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<hr>
+<br>
 <div class="row justify-content-left mt-5">
     <h2>STATISTIK PERFORM UNIT</h2>
     <div class="col-md-2 text-center mt-5">
@@ -157,7 +205,6 @@
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script>
-
     $('#vendorSelect').select2({
                 placeholder: 'Pilih Vendor',
                 width: '100%',
@@ -274,4 +321,3 @@
         }
 </script>
 @endpush
-
