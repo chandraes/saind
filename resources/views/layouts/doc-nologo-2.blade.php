@@ -45,6 +45,8 @@
             width: 25%;
         }
     </style>
+
+    @stack('css')
 </head>
 <body>
     <br>

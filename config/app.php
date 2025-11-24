@@ -17,6 +17,9 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    
+    'default_logo' => '/images/default-logo.png',
+    'default_favicon' => '/favicon.ico',
 
     /*
     |--------------------------------------------------------------------------

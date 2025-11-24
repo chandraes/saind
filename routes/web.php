@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\StatistikController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -39,6 +40,11 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::get('/kas-besar', [App\Http\Controllers\ByPassVendorController::class, 'by_pass_kas_besar'])->name('bypass-kas-besar.index');
             Route::post('/kas-besar', [App\Http\Controllers\ByPassVendorController::class, 'by_pass_kas_besar_store'])->name('bypass-kas-besar.store');
+        });
+
+        Route::prefix('admin')->group(function () {
+            Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings.index');
+            Route::post('/settings', [SettingController::class, 'update'])->name('admin.settings.update');
         });
     });
 
@@ -711,6 +717,15 @@ Route::group(['middleware' => ['auth']], function() {
 
 
     });
+
+    Route::group(['middleware' => 'role:admin,user,su,operasional'], function() {
+        Route::prefix('statistik/perform-unit')->group(function() {
+            Route::get('/all-vendor', [StatistikController::class, 'perform_unit_all_vendor'])->name('statistik.perform-unit.all-vendor');
+            Route::get('/all-vendor/pdf', [StatistikController::class, 'perform_unit_all_vendor_pdf'])->name('statistik.perform-unit.all-vendor.pdf');
+        });
+    });
+
+
 
     Route::group(['middleware' => 'role:vendor'], function() {
         Route::get('kas-per-vendor/{vendor}', [App\Http\Controllers\RekapController::class, 'kas_per_vendor'])->name('kas-per-vendor.index');

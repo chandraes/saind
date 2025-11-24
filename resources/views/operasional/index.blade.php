@@ -41,6 +41,12 @@
             <h4 class="mt-3">Perform Unit</h4>
         </a>
     </div>
+      <div class="col-md-3 text-center mb-5">
+            <a href="{{route('statistik.perform-unit.all-vendor')}}" class="text-decoration-none">
+                <img src="{{asset('images/all-vendor.svg')}}" alt="" width="80">
+                <h4 class="mt-3">PERFORM UNIT ALL VENDOR</h4>
+            </a>
+        </div>
     <div class="col-md-3 text-center mb-5">
         <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
             <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="80">

@@ -8,9 +8,9 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- change favicon to saind.ico --}}
-    <link rel="shortcut icon" href="{{asset('saind.ico')}}" type="image/x-icon">
-
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    {{-- <link rel="shortcut icon" href="{{asset('saind.ico')}}" type="image/x-icon"> --}}
+    <link rel="icon" type="image/x-icon" href="{{ $global_app_favicon }}">
+    <title>{{ $global_app_name }}</title>
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -46,7 +46,12 @@
         <nav class="navbar navbar-expand-md navbar-dark bg-dark shadow-sm">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    <img src="{{asset('images/saind.png')}}" alt="saind" class="img-responsive" width="80">
+                    @if ($global_app_logo)
+                    <img src="{{ $global_app_logo }}" alt="{{ $global_app_name }}" class="img-responsive" width="80">
+                    @else
+                    <h3>{{ $global_app_name }}</h3>
+                    @endif
+
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
@@ -101,12 +106,6 @@
         </nav>
 
         <main class="py-4 mt-4">
-            @if (date('Y-m-d') > '2026-06-02')
-            <div class="alert alert-warning" role="alert">
-                <strong>Domain anda akan habis pada tanggal 20 Juli 2026. Harap segera melakukan pembayaran sebelum
-                    tanggal tersebut. 🙏🙏🙏 </strong>
-            </div>
-            @endif
             @yield('content')
         </main>
     </div>

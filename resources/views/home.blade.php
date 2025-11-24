@@ -305,6 +305,9 @@
      @if (auth()->user()->role === 'asisten-user')
     @include('asisten-user.index')
     @endif
+     @if (auth()->user()->role === 'su')
+    @include('admin.index')
+    @endif
 </div>
 @endsection
 @if (auth()->user()->role === 'operasional')
