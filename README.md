@@ -101,6 +101,7 @@ Pastikan file `.env` Anda telah dikonfigurasi dengan benar, terutama untuk:
 DB_DATABASE=nama_database
 DB_USERNAME=username
 DB_PASSWORD=password
+```
 
 ## 📁 Struktur Folder
 saind/
