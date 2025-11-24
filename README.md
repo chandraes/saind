@@ -104,6 +104,7 @@ DB_PASSWORD=password
 ```
 
 ## 📁 Struktur Folder
+```
 saind/
 ├── app/                 # Logika aplikasi (Controllers, Models, dll.)
 ├── bootstrap/           # File bootstrap Laravel
@@ -115,7 +116,7 @@ saind/
 ├── routes/              # Definisi route web dan API
 ├── storage/             # File yang diunggah dan cache
 └── tests/               # Unit dan Feature Tests
-
+```
 
 ## 📄 Lisensi
 Proyek ini dilisensikan di bawah MIT License. Lihat file LICENSE  untuk detailnya.
