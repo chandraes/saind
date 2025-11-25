@@ -102,6 +102,51 @@
             </div>
         </div>
     </div>
+    <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
+                <img src="{{asset('images/bayar.svg')}}" alt="" width="70">
+                <h4 class="mt-3">NOTA BAYAR VENDOR
+                    {{-- <span class="text-danger">{{$data->where('status', 3)->where('bayar',
+                        0)->count() > 0 ?
+                        "(".$data->where('status', 3)->where('bayar', 0)->count().")" : '' }}</span> --}}
+                        </h4>
+            </a>
+            <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitleId">Pilih Vendor</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ route('transaksi.nota-bayar') }}" method="get">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <select class="form-select" name="vendor_id" id="vendorSelect">
+                                        <option value="">Select one</option>
+                                        @foreach ($vendor as $v)
+                                        <option value="{{$v->id}}">
+                                            {{$v->nama}}
+                                            {{-- @if ($data->where('status', 3)->where('bayar', 0)->where('vendor_id',
+                                            $v->kas_uang_jalan->vendor->id)->count() > 0)
+                                            <span class="text-danger">({{$data->where('status', 3)->where('bayar',
+                                                0)->where('vendor_id',
+                                                $v->kas_uang_jalan->vendor->id)->count()}})</span>
+                                            @endif --}}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 </div>
 <hr>
 <br>
@@ -155,6 +200,42 @@
             </div>
         </div>
     </div>
+    <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ban_luar">
+                <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
+                <h5 class="mt-3">BAN LUAR</h5>
+            </a>
+            <div class="modal fade" id="ban_luar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="ban-luarTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="ban-luarTitle">
+                                Pilih NOLAM
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{route('statistik.ban-luar')}}" method="get">
+                            <div class="modal-body">
+                                <div class="col-md-12 mb-3">
+                                    <select class="form-select" name="vehicle_id" id="vehicle_ban">
+                                        @foreach ($vehicle as $d)
+                                        <option value="{{$d->id}}">{{$d->nomor_lambung}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Tutup
+                                </button>
+                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     {{-- <div class="col-md-2 text-center mt-5">
         <a href="{{route('statistik.perform-unit-tahunan')}}" class="text-decoration-none">
             <img src="{{asset('images/aktivasi-maintenance.svg')}}" alt="" width="80">

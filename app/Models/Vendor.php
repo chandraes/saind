@@ -93,5 +93,4 @@ class Vendor extends Model
     }
 
 
-
 }

@@ -60,14 +60,15 @@
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label for="created_at" class="form-label">Tanggal Ganti Ban</label>
-                                    <input type="text" class="form-control" name="created_at" id="created_at" required readonly/>
+                                    <input type="text" class="form-control" name="created_at" id="created_at" required
+                                        readonly />
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label for="created_at" class="form-label">Password</label>
-                                    <input class="form-control" type="password" id="password" name="password" placeholder="Password"
-                                    required>
+                                    <input class="form-control" type="password" id="password" name="password"
+                                        placeholder="Password" required>
                                 </div>
                             </div>
                         </div>
@@ -90,10 +91,14 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    @if (auth()->user()->role != 'asisten-user')
+
+
                     <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
                     <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
                                 width="30"> STATISTIK</a></td>
+                    @endif
                     <td>
                         <form action="{{route('statistik.ban-luar')}}" method="get">
                             <input type="hidden" name="vehicle_id" value="{{$vehicle->id}}">

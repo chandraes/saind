@@ -1450,4 +1450,44 @@ class StatistikController extends Controller
 
     }
 
+    public function perform_unit_all_vendor(Request $request)
+    {
+        // 1. Ambil filter dari Request, berikan default value (Bulan/Tahun sekarang)
+        $filters = [
+            'month'  => $request->input('bulan', date('n')), // Format 1-12
+            'year'   => $request->input('tahun', date('Y')),
+            'vendor' => $request->input('vendor'),           // Bisa null
+            'offset' => $request->input('offset', 0)
+        ];
+
+        $transaksiModel = new Transaksi();
+
+        // 2. Panggil function di Model yang akan mengembalikan array data lengkap
+        $viewData = $transaksiModel->performUnitAllVendor($filters);
+
+        // 3. Return view dengan data dari Model
+        // Pastikan nama view sesuai lokasi file blade Anda
+        return view('statistik.all-vendor.index', $viewData);
+    }
+
+    public function perform_unit_all_vendor_pdf(Request $request)
+    {
+         $filters = [
+            'month'  => $request->input('bulan', date('n')), // Format 1-12
+            'year'   => $request->input('tahun', date('Y')),
+            'vendor' => $request->input('vendor'),           // Bisa null
+            'offset' => $request->input('offset', 0)
+        ];
+
+        $transaksiModel = new Transaksi();
+
+        // 2. Panggil function di Model yang akan mengembalikan array data lengkap
+        $viewData = $transaksiModel->performUnitAllVendor($filters);
+
+         $pdf = PDF::loadview('statistik.all-vendor.pdf', $viewData)->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Perform Unit All Vendor.pdf');
+
+    }
+
 }

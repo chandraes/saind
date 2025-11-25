@@ -37,10 +37,12 @@ class HomeController extends Controller
              $data = UpahGendong::with(['vehicle'])->get();
             $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
             $customer = Customer::all();
+            $vendor = Vendor::select('id','nama')->where('status', 'aktif')->get();
             return view('home', [
                 'data' => $data,
                 'vehicle' => $vehicle,
-                'customer' => $customer
+                'customer' => $customer,
+                'vendor' => $vendor
             ]);
         }
 

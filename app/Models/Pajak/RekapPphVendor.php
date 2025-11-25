@@ -99,9 +99,9 @@ class RekapPphVendor extends Model
                 'jenis_transaksi_id' => 2,
                 'nominal_transaksi' => $total,
                 'saldo' => $dbKasBesar->saldoTerakhir() - $total,
-                'no_rekening' => '0218222270',
-                'transfer_ke' => 'SUMATERA ALAM',
-                'bank' => 'BCA',
+                'no_rekening' => 'Pajak',
+                'transfer_ke' => 'Pajak',
+                'bank' => 'Pajak',
                 'modal_investor_terakhir' => $dbKasBesar->modalInvestorTerakhir(),
             ]);
 

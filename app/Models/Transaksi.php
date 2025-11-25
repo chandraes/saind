@@ -651,6 +651,88 @@ class Transaksi extends Model
         return $all;
     }
 
+   // Di dalam Model Transaksi.php
+
+   public function performUnitAllVendor($filters)
+    {
+        $month = $filters['month'];
+        $year = $filters['year'];
+        $vendorId = $filters['vendor'];
+
+        // --- LOGIKA UTAMA (LEFT JOIN STRATEGY) ---
+
+        // 1. Kita mulai query dari 'Vehicle', bukan 'Transaksi'
+        // Karena kita ingin semua vehicle tampil, entah ada transaksi atau tidak.
+        $query = Vehicle::query()
+            ->join('vendors as ven', 'ven.id', '=', 'vehicles.vendor_id') // Tetap Inner Join ke Vendor (karena vehicle pasti punya vendor)
+
+            // 2. LEFT JOIN ke Kas Uang Jalan (KUJ)
+            // PENTING: Filter Bulan & Tahun ditaruh DI DALAM fungsi join (closure).
+            // Jika ditaruh di global ->where(), data kosong akan terbuang.
+            ->leftJoin('kas_uang_jalans as kuj', function($join) use ($month, $year) {
+                $join->on('vehicles.id', '=', 'kuj.vehicle_id')
+                    ->whereMonth('kuj.tanggal', $month)
+                    ->whereYear('kuj.tanggal', $year);
+            })
+
+            // 3. LEFT JOIN ke Transaksi
+            // Filter void juga harus di dalam sini
+            ->leftJoin('transaksis as t', function($join) {
+                $join->on('kuj.id', '=', 't.kas_uang_jalan_id')
+                    ->where('t.void', 0);
+            })
+
+            // 4. LEFT JOIN ke Rute
+            ->leftJoin('rutes as r', 'r.id', '=', 'kuj.rute_id')
+
+            // 5. Filter Global (Hanya untuk Master Data)
+            ->where('vehicles.status', '!=', 'nonaktif')
+            ->where('ven.status', 'aktif');
+
+        // Filter Vendor Spesifik (Jika dipilih)
+        if ($vendorId) {
+            $query->where('vehicles.vendor_id', $vendorId);
+        }
+
+        // --- SELECT RAW & GROUP BY ---
+        // Logika SUM tetap sama.
+        // Karena pakai LEFT JOIN, jika tidak ada rute, r.jarak bernilai NULL.
+        // NULL < 50 adalah False (0), jadi aman.
+        $data = $query->selectRaw("
+                ven.nama as vendor_name,
+                vehicles.nomor_lambung,
+                SUM(CASE WHEN r.jarak < 50 THEN 1 ELSE 0 END) as total_rute_pendek,
+                SUM(CASE WHEN r.jarak >= 50 THEN 1 ELSE 0 END) as total_rute_panjang
+            ")
+            ->groupBy('ven.nama', 'vehicles.id', 'vehicles.nomor_lambung') // Group by ID vehicle untuk akurasi
+            ->orderBy('ven.nama')
+            ->orderBy('vehicles.nomor_lambung')
+            ->get();
+
+        // --- DATA PENDUKUNG LAINNYA (TIDAK BERUBAH) ---
+        $vendors = Vendor::where('status', 'aktif')->get();
+
+        // Ambil tahun dari tabel transaksi (tetap inner join tidak masalah untuk list tahun)
+        $dataTahun = self::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                        ->selectRaw('YEAR(tanggal) tahun')
+                        ->groupBy('tahun')
+                        ->get();
+
+        $nama_bulan = \Carbon\Carbon::createFromDate($year, $month)->locale('id')->monthName;
+
+        return [
+            'data'        => $data,
+            'vendors'     => $vendors,
+            'dataTahun'   => $dataTahun,
+            'nama_bulan'  => $nama_bulan,
+            'bulan'       => str_pad($month, 2, '0', STR_PAD_LEFT),
+            'bulan_angka' => $month,
+            'tahun'       => $year,
+            'vendor'      => $vendorId,
+            'offset'      => $filters['offset'] ?? 0
+        ];
+    }
+
     public function performUnitTahunan($tahun)
     {
         $vehicle = Vehicle::orderBy('nomor_lambung')->get();

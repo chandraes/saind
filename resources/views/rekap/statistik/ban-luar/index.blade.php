@@ -10,15 +10,15 @@
     @include('swal')
     @include('rekap.statistik.ban-luar.tambah')
     @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>Whoops!</strong> Terjadi kesalahan.<br><br>
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </ul>
-        </div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Whoops!</strong> Terjadi kesalahan.<br><br>
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </ul>
+    </div>
     @endif
     <div class="row justify-content-between mt-3">
         <div class="col-md-6">
@@ -26,13 +26,14 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    @if (auth()->user()->role != 'asisten-user')
+
+
                     <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
                                 width="30"> REKAP</a></td>
                     <td><a href="{{route('statisik.index')}}"><img src="{{asset('images/statistik.svg')}}" alt="dokumen"
                                 width="30"> STATISTIK</a></td>
-                    <td>
-
-                    </td>
+                    @endif
                 </tr>
             </table>
         </div>
@@ -132,11 +133,11 @@
                     <td class="text-center align-middle">{{$loop->iteration}}</td>
                     <td class="text-start align-middle">
                         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#tambahModal" onclick="tambah({{$d}})">
-                                {{$d->nama}}
-                            </a>
-                        @else
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#tambahModal" onclick="tambah({{$d}})">
                             {{$d->nama}}
+                        </a>
+                        @else
+                        {{$d->nama}}
                         @endif
 
                     </td>
@@ -146,9 +147,10 @@
                     <td class="text-center align-middle">{{$d->banLog ? $d->banLog['kondisi']."%" : ''}}</td>
                     <td class="text-center align-middle">
                         @if ($d->banLog)
-                           <a href="{{route('statistik.ban-luar.histori', ['vehicle' => $vehicle->id, 'posisi' => $d->id])}}">
+                        <a
+                            href="{{route('statistik.ban-luar.histori', ['vehicle' => $vehicle->id, 'posisi' => $d->id])}}">
                             {{$d->banLog['tanggal_ganti']}}
-                           </a>
+                        </a>
                         @endif
 
                     </td>
