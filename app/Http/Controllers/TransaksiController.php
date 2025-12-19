@@ -127,6 +127,8 @@ class TransaksiController extends Controller
             $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->opname;
         } elseif ($vendor == 'titipan') {
             $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan;
+        } elseif ($vendor == 'titipan_khusus') {
+            $data['harga_vendor'] = $transaksi->kas_uang_jalan->customer->customer_tagihan->where('rute_id', $transaksi->kas_uang_jalan->rute_id)->first()->titipan_khusus;
         }
 
         if ($transaksi->kas_uang_jalan->customer->csr == 1) {
@@ -199,6 +201,9 @@ class TransaksiController extends Controller
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
+
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
+        } else {
 
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
         }
@@ -622,6 +627,10 @@ class TransaksiController extends Controller
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
 
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
+
+            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
+            
+        } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan_khusus') {
 
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
         }

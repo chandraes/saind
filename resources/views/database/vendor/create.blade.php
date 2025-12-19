@@ -210,6 +210,7 @@
                     <select class="form-select" name="pembayaran" id="pembayaran">
                         <option value="opname">Opname</option>
                         <option value="titipan">Khusus</option>
+                        <option value="titipan_khusus">Titipan Khusus</option>
                     </select>
                 </div>
             </div>

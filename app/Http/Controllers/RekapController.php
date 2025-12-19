@@ -74,6 +74,10 @@ class RekapController extends Controller
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
+        if (!$dataSebelumnya) {
+            # code...
+            $dataSebelumnya = KasBesar::latest()->orderBy('id', 'desc')->first();
+        }
         // dd($bulan);
         return view('rekap.kas-besar', [
             'data' => $data,
@@ -97,6 +101,10 @@ class RekapController extends Controller
         $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
+        if (!$dataSebelumnya) {
+            # code...
+            $dataSebelumnya = KasBesar::latest()->orderBy('id', 'desc')->first();
+        }
         // dd($bulan);
         $pdf = PDF::loadview('rekap.preview-kas-besar', [
             'data' => $data,

@@ -17,7 +17,7 @@ return new class extends Migration
         });
 
         Schema::table('vendors', function (Blueprint $table) {
-            $table->enum('pembayaran', ['opname', 'titipan'])->nullable();
+            $table->enum('pembayaran', ['opname', 'titipan', 'titipan_khusus'])->nullable();
         });
 
         Schema::table('vendor_bayars', function (Blueprint $table) {

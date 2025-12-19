@@ -14,12 +14,14 @@ class CustomerTagihan extends Model
         'harga_tagihan',
         'opname',
         'titipan',
+        'titipan_khusus',
     ];
 
     protected $appends = [
         'nf_harga_tagihan',
         'nf_opname',
         'nf_titipan',
+        'nf_titipan_khusus',
     ];
 
     public function customer()
@@ -45,5 +47,10 @@ class CustomerTagihan extends Model
     public function getNfTitipanAttribute()
     {
         return number_format($this->titipan, 0, ',', '.');
+    }
+
+    public function getNfTitipanKhususAttribute()
+    {
+        return number_format($this->titipan_khusus, 0, ',', '.');
     }
 }

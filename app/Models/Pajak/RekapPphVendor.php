@@ -4,6 +4,7 @@ namespace App\Models\Pajak;
 
 use App\Models\GroupWa;
 use App\Models\KasBesar;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -93,15 +94,23 @@ class RekapPphVendor extends Model
                 'uraian' => $data['uraian'],
             ]);
 
+            $rekeningPajak = Setting::where('key', 'rekening-pajak')->first();
+
+            if (!$rekeningPajak) {
+                return redirect()->route('pengaturan.rekening-pajak')->with('error', 'Informasi Rekening Pajak Belum Diisi. Silahkan Isi terlebih dahulu');
+            }
+
+            $rekPajakArray = json_decode($rekeningPajak->value, true);
+
             $store = $dbKasBesar->create([
                 'tanggal' => date('Y-m-d'),
                 'uraian' => $data['uraian'],
                 'jenis_transaksi_id' => 2,
                 'nominal_transaksi' => $total,
                 'saldo' => $dbKasBesar->saldoTerakhir() - $total,
-                'no_rekening' => '0218222270',
-                'transfer_ke' => 'SUMATERA ALAM',
-                'bank' => 'BCA',
+                'no_rekening' => $rekPajakArray['no_rek'],
+                'transfer_ke' => $rekPajakArray['nama_rek'],
+                'bank' => $rekPajakArray['bank'],
                 'modal_investor_terakhir' => $dbKasBesar->modalInvestorTerakhir(),
             ]);
 

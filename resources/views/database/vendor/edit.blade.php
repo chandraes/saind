@@ -179,6 +179,7 @@
                 <select class="form-select" name="pembayaran" id="pembayaran">
                     <option value="opname" {{$vendor->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
                     <option value="titipan" {{$vendor->pembayaran == 'titipan' ? 'selected' : ''}}>Khusus</option>
+                    <option value="titipan_khusus" {{$vendor->pembayaran == 'titipan_khusus' ? 'selected' : ''}}>Titipan Khusus</option>
                 </select>
             </div>
             <hr>

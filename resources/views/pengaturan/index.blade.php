@@ -52,8 +52,8 @@ $password = \App\Models\PasswordKonfirmasi::first();
                                 <div class="mb-3">
                                     <div class="input-group">
                                         <input type="password" class="form-control" id="password" name="password"
-                                            placeholder="Password" aria-label="Password" aria-describedby="password" value="{{$password ? $password->password : ''}}"
-                                            required>
+                                            placeholder="Password" aria-label="Password" aria-describedby="password"
+                                            value="{{$password ? $password->password : ''}}" required>
                                         <button class="btn btn-outline-secondary" type="button" id="button-addon2"
                                             onclick="togglePassword()">
                                             <i class="fa fa-eye" id="icon"></i>
@@ -64,10 +64,18 @@ $password = \App\Models\PasswordKonfirmasi::first();
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                                 <button type="submit" class="btn btn-primary">Simpan</button>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
+
+        </div>
+         <div class="col-md-3 text-center mt-5">
+            <a href="{{route('pengaturan.rekening-pajak')}}" class="text-decoration-none">
+                <img src="{{asset('images/rekening-pajak.svg')}}" alt="" width="70">
+                <h5 class="mt-3">REKENING PAJAK</h5>
+            </a>
         </div>
     </div>
     <br>

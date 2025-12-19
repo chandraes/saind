@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class SettingController extends Controller
 {
@@ -75,5 +76,34 @@ class SettingController extends Controller
             // 3. Simpan path baru ke DB
             Setting::updateOrCreate(['key' => $key], ['value' => $path]);
         }
+    }
+
+    public function rekening_pajak()
+    {
+        $setting = Setting::where('key', 'rekening-pajak')->first();
+
+        // Decode JSON menjadi array agar bisa dibaca oleh Blade
+        $data = $setting ? json_decode($setting->value, true) : null;
+
+        return view('pengaturan.rekening-pajak', compact('data'));
+    }
+
+    public function rekening_pajak_store(Request $request): RedirectResponse
+    {
+        // 1. Validasi yang lebih ketat
+        $validated = $request->validate([
+            'nama_rek' => 'required|string|max:255',
+            'no_rek'   => 'required|string|max:50',
+            'bank'     => 'required|string|max:100'
+        ]);
+
+        // 2. Simpan dengan struktur yang benar
+        // Asumsi nama kolom di tabel settings adalah 'key' dan 'value'
+        Setting::updateOrCreate(
+            ['key' => 'rekening-pajak'], // Pencarian berdasarkan key
+            ['value' => json_encode($validated)] // Data yang disimpan/diperbarui
+        );
+
+        return redirect()->back()->with('success', 'Data rekening pajak berhasil diperbarui!');
     }
 }

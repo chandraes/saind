@@ -199,6 +199,9 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/histori-pesan', [App\Http\Controllers\HistoriController::class, 'index'])->name('pengaturan.histori-pesan');
             Route::post('/histori-pesan/resend/{pesanWa}', [App\Http\Controllers\HistoriController::class, 'resend'])->name('pengaturan.histori.resend');
             Route::delete('/histori-pesan/delete-sended', [App\Http\Controllers\HistoriController::class, 'delete_sended'])->name('pengaturan.histori.delete-sended');
+
+            Route::get('/rekening-pajak', [SettingController::class, 'rekening_pajak'])->name('pengaturan.rekening-pajak');
+            Route::post('/rekening-pajak', [SettingController::class, 'rekening_pajak_store'])->name('pengaturan.rekening-pajak.store');
         });
 
         Route::resource('direksi', App\Http\Controllers\DireksiController::class);
