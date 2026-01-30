@@ -35,7 +35,7 @@ class FormGajiController extends Controller
 
         $check = RekapGaji::where('bulan', $request->bulan)->where('tahun', $request->tahun)->first();
 
-        dd($check, $request->bulan, $request->tahun);
+        // dd($check, $request->bulan, $request->tahun);
         if ($check) {
             return redirect()->route('billing.index')->with('error', 'Form Gaji Bulan Ini Sudah Dibuat');
         }
