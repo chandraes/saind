@@ -143,6 +143,7 @@ class CustomerController extends Controller
             'harga_tagihan' => 'required',
             'opname' => 'required',
             'titipan' => 'required',
+            'titipan_khusus' => 'required',
         ]);
 
 
@@ -153,6 +154,7 @@ class CustomerController extends Controller
                 'harga_tagihan' => str_replace('.', '', $data['harga_tagihan'][$i]),
                 'opname' => str_replace('.', '', $data['opname'][$i]),
                 'titipan' => str_replace('.', '', $data['titipan'][$i]),
+                'titipan_khusus' => str_replace('.', '', $data['titipan_khusus'][$i]),
             ]);
         }
 
@@ -173,6 +175,7 @@ class CustomerController extends Controller
             'harga_tagihan' => 'required',
             'opname' => 'required',
             'titipan' => 'required',
+            'titipan_khusus' => 'required',
         ]);
 
         $customer->customer_tagihan()->delete();
@@ -183,6 +186,7 @@ class CustomerController extends Controller
                 'harga_tagihan' => $this->convertToDecimal($data['harga_tagihan'][$i]),
                 'opname' => $this->convertToDecimal($data['opname'][$i]),
                 'titipan' => $this->convertToDecimal($data['titipan'][$i]),
+                'titipan_khusus' => $this->convertToDecimal($data['titipan_khusus'][$i]),
             ]);
         }
 

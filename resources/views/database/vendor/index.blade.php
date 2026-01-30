@@ -66,10 +66,10 @@
                 <td class="align-middle"><a href="{{route('vendor.show', $d->id)}}"><strong>{{$d->nama}}</strong></a></td>
                 <td class="align-middle">{{$d->perusahaan}}</td>
                 <td class="align-middle">{{$d->nickname}}</td>
-                <td class="text-center align-middle @if ($d->pembayaran == 'titipan')
+                <td class="text-center align-middle @if ($d->pembayaran == 'titipan' || $d->pembayaran == 'titipan_khusus')
                     text-danger
                 @endif">
-                    {{strtoupper($d->pembayaran)}}
+                    {{strtoupper(str_replace('_', ' ', $d->pembayaran))}}
                 </td>
                 <td class="text-center align-middle">
                     {{-- icon checklist if support_operational == 1 --}}

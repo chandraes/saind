@@ -95,8 +95,10 @@ class FormKasUangJalanController extends Controller
 
 
         // $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
+        $dbWa = new GroupWa();
 
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
+        
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Uang Jalan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -114,8 +116,9 @@ class FormKasUangJalanController extends Controller
                     // "Profit Bersih: \n".
                     // "Rp. ".$profit."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
+
+        $send = $dbWa->sendWa($group->nama_group, $pesan);
+
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
 

@@ -17,14 +17,14 @@
             height: 50px;
             text-align: right;
         }
-        .table-pdf {
+        /* .table-pdf {
             border: 1px solid;
             padding-left: 5px;
             padding-right: 5px;
-        }
-        .text-pdf {
+        } */
+        /* .text-pdf {
             font-size: 8pt;
-        }
+        } */
         .text-10 {
             font-size: 10pt;
         }
@@ -44,6 +44,29 @@
             float: left;
             width: 25%;
         }
+
+        @page {
+        margin: 1cm; /* Mengurangi margin kertas agar area cetak lebih luas */
+        }
+        .table-pdf {
+            border-collapse: collapse; /* Sangat penting agar border tidak double dan memakan tempat */
+            width: 100%;
+            table-layout: fixed; /* Memaksa tabel mengikuti lebar kontainer */
+        }
+        .table-pdf th, .table-pdf td {
+            border: 1px solid #000;
+            padding: 2px 4px; /* Padding sangat kecil agar teks tidak overflow */
+            word-wrap: break-word; /* Memaksa teks panjang turun ke bawah */
+            font-size: 7pt; /* Ukuran font lebih kecil khusus untuk tabel padat */
+        }
+        .text-pdf {
+            font-size: 7pt;
+        }
+        /* Mengatur lebar spesifik untuk kolom yang isinya sedikit */
+        .col-nik { width: 40px; }
+        .col-nama { width: 100px; }
+        .col-jabatan { width: 80px; }
+        .col-angka { width: 55px; }
     </style>
 
     @stack('css')
