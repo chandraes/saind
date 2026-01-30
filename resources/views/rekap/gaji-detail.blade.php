@@ -22,7 +22,9 @@
                     <th rowspan="2" class="text-center align-middle">Nama</th>
                     <th rowspan="2" class="text-center align-middle">Jabatan</th>
                     <th rowspan="2" class="text-center align-middle">Gaji Pokok</th>
-                    <th colspan="4" class="text-center align-middle">Tunjangan</th>
+                    <th colspan="2" class="text-center align-middle">Tunjangan</th>
+                    <th rowspan="2" class="text-center align-middle">BPJS-TK (4,89%)</th>
+                    <th rowspan="2" class="text-center align-middle">BPJS-Kesehatan (4%)</th>
                     <th rowspan="2" class="text-center align-middle">Potongan BPJS-TK (2%)</th>
                     <th rowspan="2" class="text-center align-middle">Potongan BPJS-Kesehatan (1%)</th>
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Kotor</th>
@@ -36,8 +38,7 @@
                 <tr>
                     <th class="text-center align-middle">Jabatan</th>
                     <th class="text-center align-middle">Keluarga</th>
-                    <th class="text-center align-middle">BPJS-TK (4,89%)</th>
-                    <th class="text-center align-middle">BPJS-Kesehatan (4%)</th>
+
                 </tr>
             </thead>
             <tbody>

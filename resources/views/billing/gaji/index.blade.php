@@ -1,39 +1,26 @@
 @extends('layouts.app')
 @section('content')
 <div class="container-fluid">
-    <div class="row justify-content-center mb-5">
-        <div class="col-md-12 text-center">
-            <h1><u>Form Gaji Direksi & Staff</u></h1>
-            <h1>{{$month}} {{date('Y')}}</h1>
-        </div>
+    <div class="text-center mb-5">
+        <h1><u>Form Gaji Direksi & Staff</u></h1>
+        <h1>{{ $monthName }} {{ $tahun }}</h1>
     </div>
+
     @php
-        $total = 0;
-        $grandTotalPotonganBpjsTk = 0;
-        $grandTotalPotonganBpjsKesehatan = 0;
-        $grandTotalPendapatanKotor = 0;
-        $grandTotalPendapatanBersih = 0;
-        $grandTotalKasbon = 0;
-        $gtPotonganBpjsTk = 0;
-        $gtPotonganBpjsKesehatan = 0;
-        $gtTunjanganKeluarga = 0;
-        $gtTunjanganJabatan = 0;
-        $gtGajiPokok = 0;
-        $gtBpjsTk = 0;
-        $gtBpjsKesehatan = 0;
-        $no = 1;
+        $gt = ['gp' => 0, 'tj' => 0, 'tk' => 0, 'btk' => 0, 'bk' => 0, 'ptk' => 0, 'pk' => 0, 'pkotor' => 0, 'pbersih' => 0, 'kasbon' => 0, 'total' => 0];
     @endphp
-    @include('swal')
-    <div style="font-size:12px">
-        <table class="table table-bordered table-hover" id="rekapTable">
-            <thead class="table-success">
+
+    <div class="table-responsive" style="font-size:12px">
+        <table class="table table-bordered" id="rekapTable">
+            <thead class="table-success text-center align-middle">
                 <tr>
-                    <th rowspan="2" class="text-center align-middle">No</th>
-                    <th rowspan="2" class="text-center align-middle">NIK</th>
-                    <th rowspan="2" class="text-center align-middle">Nama</th>
-                    <th rowspan="2" class="text-center align-middle">Jabatan</th>
-                    <th rowspan="2" class="text-center align-middle">Gaji Pokok</th>
-                    <th colspan="4" class="text-center align-middle">Tunjangan</th>
+                    <th class="text-center" rowspan="2">No</th>
+                    <th class="text-center" rowspan="2">Nama</th>
+                    <th class="text-center" rowspan="2">Jabatan</th>
+                    <th class="text-center" rowspan="2">Gaji Pokok</th>
+                    <th class="text-center" colspan="2">Tunjangan</th>
+                    <th rowspan="2"  class="text-center align-middle">BPJS-TK (4,89%)</th>
+                    <th rowspan="2" class="text-center align-middle">BPJS-Kesehatan (4%)</th>
                     <th rowspan="2" class="text-center align-middle">Potongan BPJS-TK (2%)</th>
                     <th rowspan="2" class="text-center align-middle">Potongan BPJS-Kesehatan (1%)</th>
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Kotor</th>
@@ -42,154 +29,70 @@
                     <th rowspan="2" class="text-center align-middle">Sisa Gaji Dibayar</th>
                 </tr>
                 <tr>
-                    <th class="text-center align-middle">Jabatan</th>
-                    <th class="text-center align-middle">Keluarga</th>
-                    <th class="text-center align-middle">BPJS-TK (4,89%)</th>
-                    <th class="text-center align-middle">BPJS-Kesehatan (4%)</th>
+                    <th class="text-center">Jabatan</th>
+                    <th class="text-center">Keluarga</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($direksi as $dir)
-                @php
-                    $bpjs_tk_direksi = $dir->apa_bpjs_tk == 1 ? $dir->gaji_pokok * 0.049 : 0;
-                    $bpjs_k_direksi = $dir->apa_bpjs_kesehatan == 1 ? $dir->gaji_pokok * 0.04 : 0;
-                    $potongan_bpjs_tk_direksi = $dir->apa_bpjs_tk == 1 ? $dir->gaji_pokok * 0.02 : 0;
-                    $potongan_bpjs_kesehatan_direksi = $dir->apa_bpjs_kesehatan == 1 ? $dir->gaji_pokok * 0.01 : 0;
+                @foreach(array_merge($direksi->all(), $data->all()) as $index => $item)
+                    @php
+                        $res = $payroll->calculateComponent($item);
+                        $kasbon = isset($item->kode) ? $payroll->calculateKasbon($item, $bulan, $tahun) : 0;
+                        $sisa = $res['pendapatan_bersih'] - $kasbon;
 
-                    $grandTotalPotonganBpjsTk = $grandTotalPotonganBpjsTk + $potongan_bpjs_tk_direksi;
-                    $gtPotonganBpjsKesehatan += $potongan_bpjs_kesehatan_direksi;
-                    $gtPotonganBpjsTk += $potongan_bpjs_tk_direksi;
-                    $gtTunjanganKeluarga += $dir->tunjangan_keluarga;
-                    $gtTunjanganJabatan += $dir->tunjangan_jabatan;
-                    $gtBpjsTk += $bpjs_tk_direksi;
-                    $gtBpjsKesehatan += $bpjs_k_direksi;
-                    $gtGajiPokok += $dir->gaji_pokok;
-                    $grandTotalPotonganBpjsKesehatan = $grandTotalPotonganBpjsKesehatan + $potongan_bpjs_kesehatan_direksi;
-                    $pendapatan_kotor_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
-                    $grandTotalPendapatanKotor = $grandTotalPendapatanKotor + $pendapatan_kotor_direksi;
-                    $pendapatan_bersih_direksi = $dir->gaji_pokok + $dir->tunjangan_jabatan + $dir->tunjangan_keluarga - $potongan_bpjs_tk_direksi - $potongan_bpjs_kesehatan_direksi;
-                    $grandTotalPendapatanBersih = $grandTotalPendapatanBersih + $pendapatan_bersih_direksi;
-                    $total = $pendapatan_bersih_direksi + $total;
-                @endphp
-                <tr>
-                    <td class="text-center align-middle">{{$no++}}</td>
-                    <td class="text-center align-middle">Direksi</td>
-                    <td class="text-center align-middle">{{$dir->nama}}</td>
-                    <td class="text-center align-middle">{{$dir->jabatan}}</td>
-                    <td class="text-end align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($dir->tunjangan_jabatan, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($dir->tunjangan_keluarga, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($bpjs_tk_direksi, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($bpjs_k_direksi, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($potongan_bpjs_tk_direksi, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($potongan_bpjs_kesehatan_direksi, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($pendapatan_kotor_direksi, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($pendapatan_bersih_direksi, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">-</td>
-                    <td class="text-end align-middle">{{number_format($pendapatan_bersih_direksi, 0, ',','.')}}</td>
-                </tr>
-                @endforeach
-                @foreach ($data as $i)
-                @php
-                    $bpjs_tk = $i->apa_bpjs_tk == 1 ? $i->gaji_pokok * 0.049 : 0;
-                    $potongan_bpjs_tk = $i->apa_bpjs_tk == 1 ? $i->gaji_pokok * 0.02 : 0;
-                    $bpjs_k = $i->apa_bpjs_kesehatan == 1 ? $i->gaji_pokok * 0.04 : 0;
-                    $potongan_bpjs_kesehatan = $i->apa_bpjs_kesehatan == 1 ? $i->gaji_pokok * 0.01 : 0;
-
-                    $grandTotalPotonganBpjsTk = $grandTotalPotonganBpjsTk + $potongan_bpjs_tk;
-                    $gtPotonganBpjsKesehatan += $potongan_bpjs_kesehatan;
-                    $gtPotonganBpjsTk += $potongan_bpjs_tk;
-                    $gtTunjanganKeluarga += $i->tunjangan_keluarga;
-                    $gtTunjanganJabatan += $i->tunjangan_jabatan;
-                    $gtGajiPokok += $i->gaji_pokok;
-                    $gtBpjsTk += $bpjs_tk;
-                    $gtBpjsKesehatan += $bpjs_k;
-                    $grandTotalPotonganBpjsKesehatan = $grandTotalPotonganBpjsKesehatan + $potongan_bpjs_kesehatan;
-                    $pendapatan_kotor = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
-                    $grandTotalPendapatanKotor = $grandTotalPendapatanKotor + $pendapatan_kotor;
-                    $pendapatan_bersih = $i->gaji_pokok + $i->tunjangan_jabatan + $i->tunjangan_keluarga - $potongan_bpjs_tk - $potongan_bpjs_kesehatan;
-                    $grandTotalPendapatanBersih = $grandTotalPendapatanBersih + $pendapatan_bersih;
-                @endphp
-                <tr>
-                    <td class="text-center align-middle">{{$no++}}</td>
-                    <td class="text-center align-middle">{{$i->kode}}{{sprintf("%03d",$i->nomor)}}</td>
-                    <td class="text-center align-middle">{{$i->nama}}</td>
-                    <td class="text-center align-middle">{{$i->jabatan->nama}}</td>
-                    <td class="text-end align-middle">{{number_format($i->gaji_pokok, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($i->tunjangan_jabatan, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($i->tunjangan_keluarga, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($bpjs_tk, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($bpjs_k, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($potongan_bpjs_tk, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($potongan_bpjs_kesehatan, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($pendapatan_kotor, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($pendapatan_bersih, 0, ',','.')}}</td>
-                    <td class="text-end align-middle">
-                        @php
-                        $cicilan = $i->kas_bon_cicilan->where('lunas', 0)->first();
-                        $kasbon_cicil = 0;
-
-                        if ($cicilan) {
-                            // Create tanggal from $cicilan->mulai_bulan and $cicilan->mulai_tahun
-                            $mulai = Carbon\Carbon::createFromDate($cicilan->mulai_tahun, $cicilan->mulai_bulan, 1)->timestamp;
-                            // Create current date from $tahun and $bulan
-                            $now = Carbon\Carbon::createFromDate($tahun, $bulan, 1)->timestamp;
-
-                            // Check if the current month and year is the same as the installment start month and year
-                            if ($now >= $mulai) {
-                                $kasbon_cicil = $cicilan->cicilan_nominal;
-                            }
-
-
-                        }
-
-                        $kasbon = $i->kas_bon->where('lunas', 0)->sum('nominal');
-                        $total_kasbon = $kasbon_cicil + $kasbon;
+                        // Akumulasi Grand Total
+                        $gt['gp'] += $item->gaji_pokok; $gt['tj'] += $item->tunjangan_jabatan;
+                        $gt['tk'] += $item->tunjangan_keluarga; $gt['btk'] += $res['bpjs_tk'];
+                        $gt['bk'] += $res['bpjs_k']; $gt['ptk'] += $res['pot_tk'];
+                        $gt['pk'] += $res['pot_k']; $gt['pkotor'] += $res['pendapatan_kotor'];
+                        $gt['pbersih'] += $res['pendapatan_bersih']; $gt['kasbon'] += $kasbon;
+                        $gt['total'] += $sisa;
                     @endphp
-
-                    {{ number_format($total_kasbon, 0, ',', '.') }}
-                    </td>
-                    <td class="text-end align-middle">
-                        @php
-                            $sisa_gaji_dibayar = $pendapatan_bersih - $total_kasbon;
-                            $total = $total + $sisa_gaji_dibayar;
-                            $grandTotalKasbon = $grandTotalKasbon + $total_kasbon;
-                        @endphp
-                        {{number_format($sisa_gaji_dibayar, 0, ',','.')}}
-                    </td>
-                </tr>
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $item->nama }}</td>
+                        <td>{{ $item->jabatan->nama ?? $item->jabatan }}</td>
+                        <td class="text-end">{{ number_format($item->gaji_pokok, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($item->tunjangan_jabatan, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($item->tunjangan_keluarga, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($res['bpjs_tk'], 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($res['bpjs_k'], 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($res['pot_tk'], 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($res['pot_k'], 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($res['pendapatan_kotor'], 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($res['pendapatan_bersih'], 0, ',', '.') }}</td>
+                        <td class="text-end text-danger">{{ number_format($kasbon, 0, ',', '.') }}</td>
+                        <td class="text-end fw-bold">{{ number_format($sisa, 0, ',', '.') }}</td>
+                    </tr>
                 @endforeach
             </tbody>
-            <tfoot>
+            <tfoot class="table-secondary fw-bold text-end">
                 <tr>
-                    <th colspan="4" class="text-end align-middle">Grand Total : </th>
-                    <th class="text-end align-middle">{{number_format($gtGajiPokok, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($gtTunjanganJabatan, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($gtTunjanganKeluarga, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($gtBpjsTk, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($gtBpjsKesehatan, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($grandTotalPotonganBpjsTk, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($grandTotalPotonganBpjsKesehatan, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($grandTotalPendapatanKotor, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($grandTotalPendapatanBersih, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($grandTotalKasbon, 0, ',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($total, 0, ',','.')}}</th>
+                    <td colspan="3">GRAND TOTAL</td>
+                    <td class="text-end">{{ number_format($gt['gp'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['tj'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['tk'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['btk'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['bk'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['ptk'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['pk'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['pkotor'], 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($gt['pbersih'], 0, ',', '.') }}</td>
+                    <td class="text-danger text-end">{{ number_format($gt['kasbon'], 0, ',', '.') }}</td>
+                    <td class="bg-primary text-white text-end">{{ number_format($gt['total'], 0, ',', '.') }}</td>
                 </tr>
             </tfoot>
         </table>
     </div>
-    <div class="container-fluid mt-3 mb-3">
-        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-            <form action="{{route('billing.gaji.store')}}" method="post" id="lanjutForm">
-                @csrf
-                <input type="hidden" name="bulan" value="{{$bulan}}">
-                <input type="hidden" name="total" value="{{$total}}">
-                <input type="hidden" name="tahun" value="{{$tahun}}">
-                <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan</button>
-            </form>
-            <a href="{{route('billing.index')}}" class="btn btn-secondary btn-lg">Batalkan</a>
-            {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
-          </div>
+
+    <div class="mt-4 d-flex justify-content-center gap-2">
+        <form action="{{ route('billing.gaji.store') }}" method="post" id="lanjutForm">
+            @csrf
+            <input type="hidden" name="bulan" value="{{$bulan}}">
+            <input type="hidden" name="tahun" value="{{$tahun}}">
+            <button class="btn btn-primary btn-lg" type="submit">Konfirmasi & Simpan Gaji</button>
+        </form>
+        <a href="{{ route('billing.index') }}" class="btn btn-secondary btn-lg">Batal</a>
     </div>
 </div>
 @endsection
