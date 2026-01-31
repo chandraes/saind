@@ -25,13 +25,29 @@ class PayrollService
         }
 
         $pendapatan_kotor = $gapokPlus + $bpjs_tk + $bpjs_k;
-        $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k;
 
+        // $ptkp = 4500000 * 12; // PTKP (penghasilan tidak kena pajak) untuk individu
+        // // jika punya keluarga tambah 4.5 juta
+        // $ptkp += $person->status_menikah == 1 ? 4500000 * 12 : 0;
+        // // jika punya anak max 3 anak, tiap anak tambah 4.5 juta
+
+        // // pendapatan kotor > 10 juta, maka pph 21 aktif = $pendapatan kotor * 5%
+        // $anak_count = min($person->jumlah_anak, 3);
+        // $ptkp += $anak_count * 4500000;
+
+        // $ptkp_final = $ptkp/12;
+
+        // $pph = $pendapatan_kotor > 10000000 ? ($pendapatan_kotor - ($pendapatan_kotor * 0.05)) - $ptkp_final : 0;
+
+        // $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k - $pph;
+        $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k;
+        
         return [
             'bpjs_tk' => $bpjs_tk,
             'bpjs_k' => $bpjs_k,
             'pot_tk' => $pot_tk,
             'pot_k' => $pot_k,
+            // 'pph' => $pph,
             'pendapatan_kotor' => $pendapatan_kotor,
             'pendapatan_bersih' => $pendapatan_bersih,
         ];
