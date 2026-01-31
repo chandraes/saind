@@ -5,16 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Karyawan;
 use App\Models\KasBesar;
 use App\Models\Direksi;
-use App\Models\KasBon;
-use App\Models\KasBonCicilan;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\GroupWa;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Services\PayrollService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FormGajiController extends Controller
 {
@@ -234,6 +234,41 @@ class FormGajiController extends Controller
         } catch (\Exception $e) {
             Log::warning("WA Notifikasi Gagal: " . $e->getMessage());
         }
+    }
+
+    public function previewPdf(Request $request)
+    {
+        // Ambil data yang sama dengan index
+        $bulan = $request->bulan;
+        $tahun = $request->tahun;
+        $monthName = Carbon::create()->month($bulan)->locale('id')->monthName;
+
+        $data = Karyawan::where('status', 'aktif')->with(['jabatan', 'kas_bon', 'kas_bon_cicilan'])->get();
+        $direksi = Direksi::where('status', 'aktif')->get();
+
+        $pdf = Pdf::loadview('billing.gaji.pdf', [
+            'data' => $data,
+            'direksi' => $direksi,
+            'bulan' => $bulan,
+            'monthName' => $monthName,
+            'tahun' => $tahun,
+            'payroll' => $this->payroll,
+            'is_preview' => true
+        ])->setPaper('a4', 'landscape'); // Format Landscape wajib karena tabel lebar
+
+        return $pdf->stream('Preview_Gaji_'.$monthName.'_'.$tahun.'.pdf');
+    }
+
+    public function previewExcel(Request $request)
+    {
+        // Ambil angka bulan dari request, jangan dikonversi ke nama bulan dulu
+        $bulanAngka = $request->bulan;
+        $tahun = $request->tahun;
+
+        return Excel::download(
+            new \App\Exports\GajiPreviewExport($bulanAngka, $tahun, $this->payroll),
+            'Preview_Gaji_'.$bulanAngka.'_'.$tahun.'.xlsx'
+        );
     }
     // public function index(Request $request)
     // {

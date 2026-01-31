@@ -9,7 +9,16 @@
     @php
         $gt = ['gp' => 0, 'tj' => 0, 'tk' => 0, 'btk' => 0, 'bk' => 0, 'ptk' => 0, 'pk' => 0, 'pkotor' => 0, 'pbersih' => 0, 'kasbon' => 0, 'total' => 0];
     @endphp
-
+    <div class="mb-3 d-flex justify-content-end gap-2">
+        <a href="{{ route('billing.gaji.preview-pdf', ['bulan' => $bulan, 'tahun' => $tahun]) }}"
+        class="btn btn-danger" target="_blank">
+            <i class="fas fa-file-pdf"></i> Download PDF
+        </a>
+        <a href="{{ route('billing.gaji.preview-excel', ['bulan' => $bulan, 'tahun' => $tahun]) }}"
+        class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Download Excel
+        </a>
+    </div>
     <div class="table-responsive" style="font-size:12px">
         <table class="table table-bordered" id="rekapTable">
             <thead class="table-success text-center align-middle">
