@@ -11,9 +11,18 @@ class PayrollService
         $gapokPlus = $person->gaji_pokok + $person->tunjangan_jabatan + $person->tunjangan_keluarga;
 
         $bpjs_tk = $person->apa_bpjs_tk == 1 ? $gapokPlus * 0.0489 : 0;
-        $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.04 : 0;
+
         $pot_tk = $person->apa_bpjs_tk == 1 ? $gapokPlus * 0.02 : 0;
-        $pot_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.01 : 0;
+
+        // tambahkan kondisi gapokPlus maksimal 12 juta, jika lebih dari 12 juta, maka potongan hanya dihitung dari 12 juta
+        // sesuai aturan BPJS Tahun 2026
+        if ($gapokPlus > 12000000) {
+            $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? 12000000 * 0.04 : 0;
+            $pot_k = $person->apa_bpjs_kesehatan == 1 ? 12000000  * 0.01 : 0;
+        } else {
+            $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.04 : 0;
+            $pot_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.01 : 0;
+        }
 
         $pendapatan_kotor = $gapokPlus + $bpjs_tk + $bpjs_k;
         $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k;
