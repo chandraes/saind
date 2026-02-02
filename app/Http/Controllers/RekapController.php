@@ -30,6 +30,7 @@ use App\Services\StarSender;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapBarang;
+use App\Models\RekapGajiDetail;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -753,7 +754,7 @@ class RekapController extends Controller
                 'tahun' => 'required',
             ]);
 
-        $data = RekapGaji::where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->first();
+        $data = RekapGaji::where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->with('rekap_gaji_detail')->first();
 
         if (!$data) {
             return redirect()->back()->with('error', 'Data tidak ditemukan!!');
@@ -768,6 +769,30 @@ class RekapController extends Controller
             'tahun' => $tahun,
             'bulan_angka' => $v['bulan'],
         ]);
+    }
+
+    public function print_slip_gaji($id)
+    {
+        $detail = RekapGajiDetail::findOrFail($id);
+        $rekap = $detail->rekap_gaji;
+        $bulan = Carbon::createFromDate($rekap->tahun, $rekap->bulan)->locale('id')->monthName;
+
+        $pdf = Pdf::loadview('rekap.slip-gaji', [
+            'd' => $detail,
+            'bulan' => $bulan,
+            'tahun' => $rekap->tahun,
+        ]);
+
+        // PAKSA SETTING KERTAS & DPI
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled'      => true,
+            'defaultPaperSize'     => 'a4',
+            'dpi'                  => 72, // Menggunakan DPI standar web agar ukuran cm lebih akurat
+        ]);
+
+        return $pdf->stream('Slip_'.$detail->nama.'.pdf');
     }
 
     public function print_rekap_gaji(Request $request)

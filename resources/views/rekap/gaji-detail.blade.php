@@ -46,7 +46,12 @@
                 <tr>
                     <td class="text-center align-middle">{{$loop->iteration}}</td>
                     <td class="text-center align-middle">{{$dir->nik}}</td>
-                    <td class="text-center align-middle">{{$dir->nama}}</td>
+                    <td class="text-start align-middle">
+                        <a href="{{ route('print-slip-gaji', $dir->id) }}" class="btn btn-sm btn-outline-primary text-start" target="_blank">
+                        <i class="fas fa-file-pdf"></i> {{$dir->nama}}
+                    </a>
+
+                    </td>
                     <td class="text-center align-middle">{{$dir->jabatan}}</td>
                     <td class="text-end align-middle">{{number_format($dir->gaji_pokok, 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($dir->tunjangan_jabatan, 0, ',','.')}}</td>
