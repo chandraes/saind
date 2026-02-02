@@ -1,337 +1,260 @@
 @extends('layouts.app')
+
 @section('content')
-<div class="container">
-    <div class="row justify-content-center mb-5">
-        <div class="col-md-12 text-center">
-            <h1><u>Tambah Staff</u></h1>
+<div class="container py-3 py-md-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold text-primary m-0"><i class="fa fa-user-plus me-2"></i>Tambah Staff Baru</h4>
+                <a href="{{route('karyawan.index')}}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa fa-arrow-left me-1"></i> Kembali
+                </a>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-3 p-md-5">
+                    <form action="{{route('karyawan.store')}}" method="post" enctype="multipart/form-data" id="masukForm">
+                        @csrf
+
+                        {{-- SECTION 1: DATA PRIBADI --}}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;"><i class="fa fa-user fa-sm"></i></span>
+                            <h5 class="mb-0 fw-bold">Data Pribadi</h5>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-6">
+                                <label for="nama" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('nama') is-invalid @enderror" name="nama" id="nama" required value="{{ old('nama') }}">
+                                @error('nama') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="nickname" class="form-label">Nama Panggilan <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('nickname') is-invalid @enderror" name="nickname" id="nickname" required value="{{ old('nickname') }}">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="nik" class="form-label">NIK <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('nik') is-invalid @enderror" name="nik" id="nik" required value="{{ old('nik') }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="npwp" class="form-label">NPWP <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('npwp') is-invalid @enderror" name="npwp" id="npwp" required value="{{ old('npwp') }}">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="tempat_lahir" class="form-label">Tempat Lahir <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('tempat_lahir') is-invalid @enderror" name="tempat_lahir" id="tempat_lahir" required value="{{ old('tempat_lahir') }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="tanggal_lahir" class="form-label">Tanggal Lahir <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control @error('tanggal_lahir') is-invalid @enderror" name="tanggal_lahir" id="tanggal_lahir" required value="{{ old('tanggal_lahir') }}">
+                            </div>
+
+                            {{-- STATUS MENIKAH & ANAK --}}
+                            <div class="col-12 col-md-6">
+                                <label for="status_menikah" class="form-label">Status Pernikahan <span class="text-danger">*</span></label>
+                                <select class="form-select @error('status_menikah') is-invalid @enderror" name="status_menikah" id="status_menikah" required>
+                                    <option value="">-- Pilih --</option>
+                                    <option value="0" {{ old('status_menikah') == '0' ? 'selected' : '' }}>Belum Menikah</option>
+                                    <option value="1" {{ old('status_menikah') == '1' ? 'selected' : '' }}>Menikah</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="jumlah_anak" class="form-label">Jumlah Anak</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fa fa-child"></i></span>
+                                    <input type="number" min="0" class="form-control @error('jumlah_anak') is-invalid @enderror" name="jumlah_anak" id="jumlah_anak" value="{{ old('jumlah_anak', 0) }}">
+                                </div>
+                                <div class="form-text text-muted small">Isi 0 jika tidak memiliki anak.</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4 text-muted">
+
+                        {{-- SECTION 2: KONTAK & ALAMAT --}}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;"><i class="fa fa-map-marker fa-sm"></i></span>
+                            <h5 class="mb-0 fw-bold">Kontak & Alamat</h5>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-6">
+                                <label for="no_hp" class="form-label">Nomor HP <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('no_hp') is-invalid @enderror" name="no_hp" id="no_hp" required value="{{ old('no_hp') }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="no_wa" class="form-label">Nomor WhatsApp <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('no_wa') is-invalid @enderror" name="no_wa" id="no_wa" required value="{{ old('no_wa') }}">
+                            </div>
+                            <div class="col-12">
+                                <label for="alamat" class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
+                                <textarea class="form-control @error('alamat') is-invalid @enderror" name="alamat" id="alamat" rows="2" required>{{ old('alamat') }}</textarea>
+                            </div>
+                        </div>
+
+                        <hr class="my-4 text-muted">
+
+                        {{-- SECTION 3: PEKERJAAN & FINANSIAL --}}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;"><i class="fa fa-briefcase fa-sm"></i></span>
+                            <h5 class="mb-0 fw-bold">Pekerjaan & Finansial</h5>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-4">
+                                <label for="jabatan_id" class="form-label">Jabatan <span class="text-danger">*</span></label>
+                                <select class="form-select @error('jabatan_id') is-invalid @enderror" name="jabatan_id" id="jabatan_id" required>
+                                    <option value="">-- Pilih --</option>
+                                    @foreach ($jabatan as $j)
+                                    <option value="{{$j->id}}" {{ old('jabatan_id') == $j->id ? 'selected' : '' }}>{{$j->nama}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="mulai_bekerja" class="form-label">Mulai Bekerja <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control @error('mulai_bekerja') is-invalid @enderror" name="mulai_bekerja" id="mulai_bekerja" required value="{{ old('mulai_bekerja') }}">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="status" class="form-label">Status Kepegawaian</label>
+                                <select class="form-select" name="status" id="status" required>
+                                    <option value="aktif" {{ old('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                    <option value="nonaktif" {{ old('status') == 'nonaktif' ? 'selected' : '' }}>Non-aktif</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label for="gaji_pokok" class="form-label">Gaji Pokok</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="text" class="form-control text-end" name="gaji_pokok" id="gaji_pokok" required data-thousands="." value="{{ old('gaji_pokok') }}">
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="tunjangan_jabatan" class="form-label">Tunjangan Jabatan</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="text" class="form-control text-end" name="tunjangan_jabatan" id="tunjangan_jabatan" required data-thousands="." value="{{ old('tunjangan_jabatan') }}">
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="tunjangan_keluarga" class="form-label">Tunjangan Keluarga</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="text" class="form-control text-end" name="tunjangan_keluarga" id="tunjangan_keluarga" required data-thousands="." value="{{ old('tunjangan_keluarga') }}">
+                                </div>
+                            </div>
+
+                            {{-- BANK --}}
+                            <div class="col-12 col-md-4">
+                                <label for="bank" class="form-label">Nama Bank <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="bank" id="bank" value="{{ old('bank', 'BCA') }}" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="no_rekening" class="form-label">Nomor Rekening <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="no_rekening" id="no_rekening" required value="{{ old('no_rekening') }}">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="nama_rekening" class="form-label">Atas Nama <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="nama_rekening" id="nama_rekening" required value="{{ old('nama_rekening') }}">
+                            </div>
+                        </div>
+
+                        <hr class="my-4 text-muted">
+
+                        {{-- SECTION 4: BPJS --}}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;"><i class="fa fa-heartbeat fa-sm"></i></span>
+                            <h5 class="mb-0 fw-bold">BPJS & Asuransi</h5>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        <div class="form-check form-check-inline me-4">
+                                            <input class="form-check-input" type="checkbox" name="apa_bpjs_tk" id="apa_bpjs_tk" {{ old('apa_bpjs_tk') ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="apa_bpjs_tk">Ikut BPJS Tenaga Kerja</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="apa_bpjs_kesehatan" id="apa_bpjs_kesehatan" {{ old('apa_bpjs_kesehatan') ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="apa_bpjs_kesehatan">Ikut BPJS Kesehatan</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="bpjs_tk" class="form-label">No. BPJS Tenaga Kerja <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="bpjs_tk" id="bpjs_tk" required value="{{ old('bpjs_tk') }}">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="bpjs_kesehatan" class="form-label">No. BPJS Kesehatan <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="bpjs_kesehatan" id="bpjs_kesehatan" required value="{{ old('bpjs_kesehatan') }}">
+                            </div>
+                        </div>
+
+                         {{-- SECTION 5: FOTO --}}
+                         <hr class="my-4 text-muted">
+                         <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="foto_ktp" class="form-label fw-bold">Foto KTP <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control @error('foto_ktp') is-invalid @enderror" name="foto_ktp" id="foto_ktp" required>
+                                @error('foto_ktp') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="foto_diri" class="form-label fw-bold">Foto Diri <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control @error('foto_diri') is-invalid @enderror" name="foto_diri" id="foto_diri" required>
+                                @error('foto_diri') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                            <a href="{{route('karyawan.index')}}" class="btn btn-secondary px-4 me-md-2">Batal</a>
+                            <button class="btn btn-success px-5" type="submit">Simpan Data</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-    <form action="{{route('karyawan.store')}}" method="post" enctype="multipart/form-data" id="masukForm">
-        @csrf
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="nama" class="form-label">Nama</label>
-                <input type="text" class="form-control @if ($errors->has('nama'))
-                    is-invalid
-                @endif" name="nama" id="nama" required>
-                @if ($errors->has('nama'))
-                <div class="invalid-feedback">
-                    {{$errors->first('nama')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="nickname" class="form-label">Nickname</label>
-                <input type="text" class="form-control @if ($errors->has('nickname'))
-                    is-invalid
-                @endif" name="nickname" id="nickname" required>
-                @if ($errors->has('nickname'))
-                <div class="invalid-feedback">
-                    {{$errors->first('nickname')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="jabatan_id" class="form-label">Jabatan</label>
-                <select class="form-select @if ($errors->has('jabatan_id'))
-                    is-invalid
-                @endif" name="jabatan_id" id="jabatan_id" required>
-                    <option value="">-- Pilih --</option>
-                    @foreach ($jabatan as $j)
-                    <option value="{{$j->id}}">{{$j->nama}}</option>
-                    @endforeach
-                </select>
-                @if ($errors->has('jabatan_id'))
-                <div class="invalid-feedback">
-                    {{$errors->first('jabatan_id')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <h3>Gaji & Tunjangan</h3>
-        <div class="row mt-3">
-            <div class="col-md-4 mb-3">
-                <label for="gaji_pokok" class="form-label">Gaji Pokok</label>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1">Rp</span>
-                    <input type="text" class="form-control @if ($errors->has('gaji_pokok'))
-                    is-invalid
-                @endif" name="gaji_pokok" id="gaji_pokok" required data-thousands=".">
-                </div>
-                @if ($errors->has('gaji_pokok'))
-                <div class="invalid-feedback">
-                    {{$errors->first('gaji_pokok')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="tunjangan_jabatan" class="form-label">Tunjangan Jabatan</label>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1">Rp</span>
-                    <input type="text" class="form-control @if ($errors->has('tunjangan_jabatan'))
-                    is-invalid
-                @endif" name="tunjangan_jabatan" id="tunjangan_jabatan" data-thousands="." required>
-                </div>
-                @if ($errors->has('tunjangan_jabatan'))
-                <div class="invalid-feedback">
-                    {{$errors->first('tunjangan_jabatan')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="tunjangan_keluarga" class="form-label">Tunjangan Keluarga</label>
-                <div class="input-group mb-3">
-                    <span class="input-group-text" id="basic-addon1">Rp</span>
-                    <input type="text" class="form-control @if ($errors->has('tunjangan_keluarga'))
-                    is-invalid
-                @endif" name="tunjangan_keluarga" id="tunjangan_keluarga" data-thousands="." required>
-                </div>
-                @if ($errors->has('tunjangan_keluarga'))
-                <div class="invalid-feedback">
-                    {{$errors->first('tunjangan_keluarga')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="nik" class="form-label">NIK</label>
-                <input type="text" class="form-control @if ($errors->has('nik'))
-                    is-invalid
-                @endif" name="nik" id="nik" required>
-                @if ($errors->has('nik'))
-                <div class="invalid-feedback">
-                    {{$errors->first('nik')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="npwp" class="form-label">NPWP</label>
-                <input type="text" class="form-control @if ($errors->has('npwp'))
-                    is-invalid
-                @endif" name="npwp" id="npwp" required>
-                @if ($errors->has('npwp'))
-                <div class="invalid-feedback">
-                    {{$errors->first('npwp')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <div class="row">
-                    <label for="bpjs_tk" class="form-label" >----------------------------</label>
-                    <div class="btn-group" role="group" data-bs-toggle="buttons">
-                        <label class="btn btn-primary active">
-                            <input type="checkbox" class="me-2" name="apa_bpjs_tk" id="apa_bpjs_tk" autocomplete="off" />
-                            Ikut BPJS Tenaga Kerja
-                        </label>
-                        <label class="btn btn-primary">
-                            <input type="checkbox" class="me-2" name="apa_bpjs_kesehatan" id="apa_bpjs_kesehatan" autocomplete="off"  />
-                            Ikut BPJS Kesehatan
-                        </label>
-                    </div>
-                </div>
-
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="bpjs_tk" class="form-label">Nomor BPJS Tenaga Kerja</label>
-                <input type="text" class="form-control @if ($errors->has('bpjs_tk'))
-                    is-invalid
-                @endif" name="bpjs_tk" id="bpjs_tk" required>
-                @if ($errors->has('bpjs_tk'))
-                <div class="invalid-feedback">
-                    {{$errors->first('bpjs_tk')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="bpjs_kesehatan" class="form-label">Nomor BPJS Kesehatan</label>
-                <input type="text" class="form-control @if ($errors->has('bpjs_kesehatan'))
-                    is-invalid
-                @endif" name="bpjs_kesehatan" id="bpjs_kesehatan" required>
-                @if ($errors->has('bpjs_kesehatan'))
-                <div class="invalid-feedback">
-                    {{$errors->first('bpjs_kesehatan')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="tempat_lahir" class="form-label">Tempat Lahir</label>
-                <input type="text" class="form-control @if ($errors->has('tempat_lahir')) is-invalid @endif" name="tempat_lahir" id="tempat_lahir" required>
-                @if ($errors->has('tempat_lahir'))
-                <div class="invalid-feedback">
-                    {{$errors->first('tempat_lahir')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="tanggal_lahir" class="form-label">Tanggal Lahir</label>
-                <input type="date" class="form-control @if ($errors->has('tanggal_lahir')) is-invalid @endif" name="tanggal_lahir" id="tanggal_lahir" required>
-                @if ($errors->has('tanggal_lahir'))
-                <div class="invalid-feedback">
-                    {{$errors->first('tanggal_lahir')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-12 mb-3">
-                <label for="alamat" class="form-label">Alamat</label>
-                <textarea class="form-control @if ($errors->has('alamat')) is-invalid @endif" name="alamat" id="alamat" rows="3" required></textarea>
-                @if ($errors->has('alamat'))
-                <div class="invalid-feedback">
-                    {{$errors->first('alamat')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="no_hp" class="form-label">Nomor HP</label>
-                <input type="text" class="form-control @if ($errors->has('no_hp')) is-invalid @endif" name="no_hp" id="no_hp" required>
-                @if ($errors->has('no_hp'))
-                <div class="invalid-feedback">
-                    {{$errors->first('no_hp')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="no_wa" class="form-label">Nomor WA</label>
-                <input type="text" class="form-control @if ($errors->has('no_wa')) is-invalid @endif" name="no_wa" id="no_wa" required>
-                @if ($errors->has('no_wa'))
-                <div class="invalid-feedback">
-                    {{$errors->first('no_wa')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="bank" class="form-label">Nama Bank</label>
-                <input type="text" class="form-control @if ($errors->has('bank')) is-invalid @endif" name="bank" id="bank" value="BCA" required>
-                @if ($errors->has('bank'))
-                <div class="invalid-feedback">
-                    {{$errors->first('bank')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="no_rekening" class="form-label">Nomor Rekening</label>
-                <input type="text" class="form-control @if ($errors->has('no_rekening')) is-invalid @endif" name="no_rekening" id="no_rekening" required>
-                @if ($errors->has('no_rekening'))
-                <div class="invalid-feedback">
-                    {{$errors->first('no_rekening')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="nama_rekening" class="form-label">Nama Rekening</label>
-                <input type="text" class="form-control @if ($errors->has('nama_rekening')) is-invalid @endif" name="nama_rekening" id="nama_rekening" required>
-                @if ($errors->has('nama_rekening'))
-                <div class="invalid-feedback">
-                    {{$errors->first('nama_rekening')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="mulai_bekerja" class="form-label">Mulai Bekerja</label>
-                <input type="date" class="form-control @if ($errors->has('mulai_bekerja')) is-invalid @endif" name="mulai_bekerja" id="mulai_bekerja" required>
-                @if ($errors->has('mulai_bekerja'))
-                <div class="invalid-feedback">
-                    {{$errors->first('mulai_bekerja')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="status" class="form-label">Status</label>
-                <select class="form-select @if ($errors->has('status')) is-invalid @endif" name="status" id="status" required>
-                    <option value="aktif">Aktif</option>
-                    <option value="nonaktif">Non-aktif</option>
-                </select>
-                @if ($errors->has('status'))
-                <div class="invalid-feedback">
-                    {{$errors->first('status')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="foto_ktp" class="form-label ">Foto KTP</label>
-                <input type="file" class="form-control @if ($errors->has('foto_ktp')) is-invalid @endif" name="foto_ktp" id="foto_ktp" required>
-                @if ($errors->has('foto_ktp'))
-                <div class="invalid-feedback">
-                    {{$errors->first('foto_ktp')}}
-                </div>
-                @endif
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="foto_diri" class="form-label">Foto Diri</label>
-                <input type="file" class="form-control @if ($errors->has('foto_diri')) is-invalid @endif" name="foto_diri" id="foto_diri" required>
-                @if ($errors->has('foto_diri'))
-                <div class="invalid-feedback">
-                    {{$errors->first('foto_diri')}}
-                </div>
-                @endif
-            </div>
-        </div>
-        <div class="d-grid gap-3 mt-3">
-            <button class="btn btn-success" type="submit">Simpan</button>
-            <a href="{{route('karyawan.index')}}" class="btn btn-secondary" type="button">Batal</a>
-          </div>
-    </form>
 </div>
 @endsection
+
 @push('js')
-<script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
-    <script>
-           $(document).ready(function(){
-            $('#gaji_pokok').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0,
-                allowZero: true,
-            });
-            $('#tunjangan_jabatan').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0,
-                allowZero: true,
-            });
-            $('#tunjangan_keluarga').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0,
-                allowZero: true,
-            });
+<script>
+      $(document).ready(function(){
+            // Config Mask Money (Konsisten dengan Edit)
+            var cleaveConfig = {
+               numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            };
+
+                var gaji_pokok = new Cleave('#gaji_pokok', cleaveConfig);
+                var tunjangan_jabatan = new Cleave('#tunjangan_jabatan', cleaveConfig);
+                var tunjangan_keluarga = new Cleave('#tunjangan_keluarga', cleaveConfig);
         });
 
+        // SweetAlert Confirmation
         $('#masukForm').submit(function(e){
             e.preventDefault();
             Swal.fire({
-                title: 'Apakah anda yakin?',
-                icon: 'warning',
+                title: 'Simpan Data?',
+                text: "Pastikan semua data sudah terisi dengan benar.",
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
+                confirmButtonColor: '#198754',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
+                confirmButtonText: 'Ya, Simpan!',
+                cancelButtonText: 'Batal'
                 }).then((result) => {
                 if (result.isConfirmed) {
-                    $('#spinner').show();
+                    // $('#spinner').show();
                     this.submit();
                 }
             })
         });
-    </script>
+</script>
 @endpush

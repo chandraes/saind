@@ -57,6 +57,8 @@ class DireksiController extends Controller
             'status' => 'required',
             'apa_bpjs_tk' => 'nullable',
             'apa_bpjs_kesehatan' => 'nullable',
+            'status_menikah' => 'required|boolean', // Pastikan menerima 0 atau 1
+            'jumlah_anak' => 'nullable|integer',
             'foto_ktp' => 'required|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'required|mimes:jpg,jpeg,png|max:10000',
         ]);
@@ -64,7 +66,8 @@ class DireksiController extends Controller
         $data['bank'] = "BCA";
         $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
         $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
-
+        $data['status_menikah'] = (int) $request->status_menikah;
+        
         $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
         $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
@@ -143,12 +146,14 @@ class DireksiController extends Controller
             'status' => 'required',
             'apa_bpjs_tk' => 'nullable',
             'apa_bpjs_kesehatan' => 'nullable',
+            'status_menikah' => 'required|boolean', // Pastikan menerima 0 atau 1
+            'jumlah_anak' => 'nullable|integer',
             'foto_ktp' => 'nullable|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'nullable|mimes:jpg,jpeg,png|max:10000',
         ]);
 
         $data['bank'] = "BCA";
-
+         $data['status_menikah'] = (int) $request->status_menikah;
         $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
         $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
 

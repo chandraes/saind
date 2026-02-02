@@ -70,6 +70,8 @@ class KaryawanController extends Controller
             'status' => 'required',
             'apa_bpjs_tk' => 'nullable',
             'apa_bpjs_kesehatan' => 'nullable',
+            'status_menikah' => 'required|boolean', // Pastikan menerima 0 atau 1
+            'jumlah_anak' => 'nullable|integer',
             'foto_ktp' => 'required|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'required|mimes:jpg,jpeg,png|max:10000',
         ]);
@@ -77,7 +79,7 @@ class KaryawanController extends Controller
         $last = Karyawan::latest()->orderBy('id', 'desc')->first();
 
         $data['nomor'] = $last ? $last->nomor + 1 : 1;
-
+        $data['status_menikah'] = (int) $request->status_menikah;
         // $data['bank'] = "BCA";
         $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
         $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
@@ -163,11 +165,15 @@ class KaryawanController extends Controller
             'status' => 'required',
             'apa_bpjs_tk' => 'nullable',
             'apa_bpjs_kesehatan' => 'nullable',
+            'status_menikah' => 'required|boolean', // Pastikan menerima 0 atau 1
+            'jumlah_anak' => 'nullable|integer',
             'foto_ktp' => 'nullable|mimes:jpg,jpeg,png|max:10000',
             'foto_diri' => 'nullable|mimes:jpg,jpeg,png|max:10000',
         ]);
 
         $data['bank'] = "BCA";
+
+        $data['status_menikah'] = (int) $request->status_menikah;
 
         $data['updated_by'] = auth()->user()->id;
         $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
