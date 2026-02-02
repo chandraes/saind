@@ -207,7 +207,6 @@
         $('#rekapTable').DataTable({
             "paging": false,
             "ordering": true,
-            "searching": false,
             "scrollCollapse": true,
             "scrollY": "400px",
             // default order column 1

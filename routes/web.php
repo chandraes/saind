@@ -646,6 +646,7 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::view('rekap-gaji', 'rekap.gaji')->name('rekap-gaji');
         Route::get('rekap-gaji-detail', [App\Http\Controllers\RekapController::class, 'rekap_gaji_detail'])->name('rekap-gaji-detail');
+        Route::get('print-slip-gaji/{id}', [App\Http\Controllers\RekapController::class, 'print_slip_gaji'])->name('print-slip-gaji');
         Route::get('print-rekap-gaji', [App\Http\Controllers\RekapController::class, 'print_rekap_gaji'])->name('print-rekap-gaji');
 
         Route::prefix('rekap')->group(function(){

@@ -17,7 +17,7 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
-    
+
     'default_logo' => '/images/default-logo.png',
     'default_favicon' => '/favicon.ico',
 
@@ -190,6 +190,7 @@ return [
         // 'Example' => App\Facades\Example::class,
         'PDFMerger' => Webklex\PDFMerger\Facades\PDFMergerFacade::class,
         'WordTemplate' => Novay\WordTemplate\Facade::class,
+        'PayrollHelper' => App\Helpers\PayrollHelper::class,
     ])->toArray(),
 
 ];
