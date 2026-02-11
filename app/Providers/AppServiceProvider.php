@@ -33,6 +33,10 @@ class AppServiceProvider extends ServiceProvider
             // 2. Logika Default (Fallback)
             // Jika key di DB tidak ada atau nilainya null, ambil dari config
             $appName = $settings['app_name'] ?? config('app.name');
+            // TAMBAHKAN: Fallback untuk Perusahaan dan Alamat
+            $appPerusahaan = $settings['app_perusahaan'] ?? 'Nama Perusahaan Default';
+            $appAlamat = $settings['app_alamat'] ?? 'Alamat Default';
+            $appKeuangan = $settings['app_keuangan'] ?? 'Nama Manajer Keuangan Default';
 
             $appLogo = !empty($settings['app_logo'])
                 ? asset('storage/' . $settings['app_logo'])
@@ -45,8 +49,11 @@ class AppServiceProvider extends ServiceProvider
             // 3. Bagikan variabel ke SEMUA view
             View::share([
                 'global_app_name' => $appName,
+                'global_app_perusahaan' => $appPerusahaan, // Bagikan ke view
+                'global_app_alamat' => $appAlamat,         //
                 'global_app_logo' => $appLogo,
                 'global_app_favicon' => $appFavicon,
+                'global_app_keuangan' => $appKeuangan,
             ]);
         }
     }

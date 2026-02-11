@@ -42,10 +42,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::post('/kas-besar', [App\Http\Controllers\ByPassVendorController::class, 'by_pass_kas_besar_store'])->name('bypass-kas-besar.store');
         });
 
-        Route::prefix('admin')->group(function () {
-            Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings.index');
-            Route::post('/settings', [SettingController::class, 'update'])->name('admin.settings.update');
-        });
+
     });
 
 
@@ -71,7 +68,11 @@ Route::group(['middleware' => ['auth']], function() {
     });
 
     Route::group(['middleware' => 'role:admin,su'], function() {
-
+        Route::prefix('admin')->group(function () {
+            Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings.index');
+            Route::post('/settings', [SettingController::class, 'update'])->name('admin.settings.update');
+        });
+        
         Route::prefix('form-setor-pph')->group(function() {
             Route::get('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk'])->name('form-setor-pph.masuk');
             Route::post('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk_store'])->name('form-setor-pph.masuk.store');
