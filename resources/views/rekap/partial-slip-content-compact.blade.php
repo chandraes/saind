@@ -6,12 +6,27 @@
 ?>
 
 <div class="text-center">
-    <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">
-        {{ $global_app_perusahaan }}
-    </div>
-    <div style="font-size: 8pt; margin-top: 2px;">
-        {{ $global_app_alamat }}
-    </div>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
+    <tr>
+        <td style="vertical-align: middle; text-align: left;">
+            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">
+                {{ $global_app_perusahaan }}
+            </div>
+            <div style="font-size: 7pt; margin-top: 2px;">
+                {{ $global_app_alamat }}
+            </div>
+        </td>
+
+        <td style="width: 50px; vertical-align: middle; text-align: right; padding-right: 5px;">
+            <img src="{{ $global_app_logo_base64 }}"
+                 alt="Logo"
+                 style="max-height: 25px; width: auto;"> {{-- Ubah 35px sesuai selera --}}
+        </td>
+
+
+        {{-- <td style="width: 30px;"></td> --}}
+    </tr>
+</table>
     <div style="border-bottom: 2px solid #000; margin-top: 5px; margin-bottom: 2px; width: 100%;"></div>
     <div style="border-bottom: 1px solid #000; margin-bottom: 10px; width: 100%;"></div>
 </div>

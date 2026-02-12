@@ -38,9 +38,27 @@ class AppServiceProvider extends ServiceProvider
             $appAlamat = $settings['app_alamat'] ?? 'Alamat Default';
             $appKeuangan = $settings['app_keuangan'] ?? 'Nama Manajer Keuangan Default';
 
-            $appLogo = !empty($settings['app_logo'])
-                ? asset('storage/' . $settings['app_logo'])
-                : asset(config('app.default_logo'));
+           $logoFilename = !empty($settings['app_logo'])
+                ? 'storage/' . $settings['app_logo']
+                : config('app.default_logo'); // misal 'assets/img/logo-default.png'
+
+            // 2. Versi URL (Untuk Tampilan Web Browser) -> http://...
+            $appLogoUrl = asset($logoFilename);
+
+            // 3. Versi PATH (Untuk PDF) -> C:\xampp\htdocs\...
+            // Gunakan public_path() untuk mendapatkan lokasi file di server
+            $appLogoPath = public_path($logoFilename);
+
+            $path = public_path($logoFilename);
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = file_get_contents($path);
+            $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+            // Validasi opsional: Jika file tidak ada di path, gunakan gambar kosong/placeholder
+            if (!file_exists($appLogoPath)) {
+                // Fallback jika file fisik tidak ketemu (opsional)
+                $appLogoPath = public_path('assets/img/no-image.png');
+            }
 
             $appFavicon = !empty($settings['app_favicon'])
                 ? asset('storage/' . $settings['app_favicon'])
@@ -51,7 +69,8 @@ class AppServiceProvider extends ServiceProvider
                 'global_app_name' => $appName,
                 'global_app_perusahaan' => $appPerusahaan, // Bagikan ke view
                 'global_app_alamat' => $appAlamat,         //
-                'global_app_logo' => $appLogo,
+                'global_app_logo' => $appLogoUrl,  // <-- Pakai ini di blade biasa (index, create, edit)
+               'global_app_logo_base64' => $base64,
                 'global_app_favicon' => $appFavicon,
                 'global_app_keuangan' => $appKeuangan,
             ]);
