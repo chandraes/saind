@@ -776,11 +776,13 @@ class RekapController extends Controller
         $detail = RekapGajiDetail::findOrFail($id);
         $rekap = $detail->rekap_gaji;
         $bulan = Carbon::createFromDate($rekap->tahun, $rekap->bulan)->locale('id')->monthName;
-
+        $tanggal_cutoff = Carbon::createFromDate($rekap->created_at)->locale('id')->translatedFormat('d F Y');
+        
         $pdf = Pdf::loadview('rekap.slip-gaji', [
             'd' => $detail,
             'bulan' => $bulan,
             'tahun' => $rekap->tahun,
+            'tanggal_cutoff' => $tanggal_cutoff,
         ]);
 
         // PAKSA SETTING KERTAS & DPI

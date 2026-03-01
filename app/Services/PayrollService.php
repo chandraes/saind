@@ -41,7 +41,7 @@ class PayrollService
 
         // $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k - $pph;
         $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k;
-        
+
         return [
             'bpjs_tk' => $bpjs_tk,
             'bpjs_k' => $bpjs_k,
@@ -56,13 +56,16 @@ class PayrollService
     public function calculateKasbon($karyawan, $bulan, $tahun)
     {
         $kasbon_cicil = 0;
-        $now = Carbon::createFromDate($tahun, $bulan, 1);
+        $now = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
 
         // Cicilan Aktif
         $cicilan = $karyawan->kas_bon_cicilan->where('lunas', 0)->first();
         if ($cicilan) {
-            $mulai = Carbon::createFromDate($cicilan->mulai_tahun, $cicilan->mulai_bulan, 1);
+            // dd($cicilan);
+            $mulai = Carbon::createFromDate($cicilan->mulai_tahun, $cicilan->mulai_bulan, 1)->startOfDay();
+
             if ($now->greaterThanOrEqualTo($mulai)) {
+
                 $kasbon_cicil = $cicilan->cicilan_nominal;
             }
         }

@@ -3,112 +3,77 @@
 <head>
     <title>Slip Gaji - {{ $d->nama }}</title>
     <style>
-        /* 1. RESET TOTAL */
-        @page {
-            margin: 0;
-            size: a4 portrait;
-        }
+        /* RESET & PAGE SETUP */
+        @page { margin: 0; size: a4 portrait; }
 
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            margin: 0;
-            padding: 0;
-            width: 21cm;   /* Lebar A4 Pas */
-            height: 29.7cm; /* Tinggi A4 Pas */
+            font-family: Arial, sans-serif;
+            margin: 0; padding: 0;
+            width: 21cm; height: 29.7cm;
+            font-size: 8pt;
         }
 
-        /* 2. KONTAINER UTAMA (ABSOLUTE) */
-        /* Kita "paku" posisi slip agar tidak bisa lari ke halaman lain */
+        /* CONTAINER UTAMA (Pembungkus Setengah Halaman) */
         .slip-area {
-            position: absolute;
-            left: 0;
-            width: 21cm;
+            position: absolute; left: 0; width: 100%; /* Full width kertas */
             height: 14.85cm; /* Setengah A4 Presisi */
-            overflow: hidden; /* Mencegah apapun keluar dari kotak ini */
+            overflow: hidden; /* Potong jika ada yang bandel keluar */
         }
-
         .area-top { top: 0; }
         .area-bottom { top: 14.85cm; border-top: 1px dashed #999; }
 
-        /* 3. KONTAINER ISI (Agar tidak overflow ke samping) */
+        /* KUNCI LEBAR KONTEN (SOLUSI OVERFLOW) */
+        /* Lebar A4 = 21cm. Kita pakai 19cm saja agar ada margin aman 1cm kiri-kanan */
         .content-wrapper {
-            width: 19cm; /* 21cm - 2cm margin = 19cm */
-            margin-left: 1cm; /* Margin Kiri 1cm */
-            margin-top: 0.8cm; /* Margin Atas 0.8cm */
+            width: 19cm;
+            margin: 0 auto; /* Tengah secara horizontal */
+            padding-top: 0.5cm;
         }
 
-        /* 4. TABEL & FONT */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed; /* PENTING: Mencegah tabel melar ke kanan */
-        }
-
-        td, th {
-            font-size: 7.5pt; /* Sedikit dikecilkan agar muat banyak baris */
-            vertical-align: middle; /* Middle agar teks terlihat center vertikal */
-            padding: 1px 4px; /* Padding atas-bawah ditipiskan */
-            word-wrap: break-word;
-        }
-
-        .header-company { font-weight: bold; font-size: 11pt; }
-        .header-title { font-weight: bold; font-size: 11pt; text-align: right; }
-
-        /* Garis-garis */
-        .border-bottom { border-bottom: 2px solid #000; }
-        .border-all { border: 1px solid #000; }
-        .bg-grey { background-color: #f0f0f0; }
-
+        /* TYPOGRAPHY & UTILS */
+        .text-center { text-align: center; }
         .text-end { text-align: right; }
         .fw-bold { font-weight: bold; }
 
-        /* Box Terbilang */
-        .terbilang-box {
-            margin-top: 5px;
-            border: 1px solid #aaa;
-            padding: 5px;
-            font-style: italic;
-            font-size: 7pt;
-            background: #fdfdfd;
-        }
-
-        /* Tanda Gunting */
-        .cut-here {
-            position: absolute;
-            bottom: 5px;
-            width: 100%;
-            text-align: center;
-            font-size: 7pt;
-            color: #666;
-        }
-
-        /* Tambahkan di block <style> pada file slip-gaji.blade.php */
-        .journal-table {
+        /* TABLE STYLES */
+        table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed; /* PENTING: Agar kolom tidak melebar paksa */
+        }
+
+        /* Tabel Info */
+        .info-table td {
+            padding: 1px 0;
+            vertical-align: top;
+        }
+
+        /* Tabel Jurnal */
+        .journal-table {
             border: 1px solid #000;
             margin-top: 5px;
         }
         .journal-table th {
-            background-color: #e0e0e0;
+            background: #eee;
             border: 1px solid #000;
-            padding: 4px;
-            text-align: center;
-            font-weight: bold;
+            padding: 3px;
+            font-size: 7.5pt; /* Font header diperkecil sedikit */
+            text-transform: uppercase;
         }
         .journal-table td {
-            border: 1px solid #ccc; /* Border dalam lebih tipis agar rapi */
-            border-left: 1px solid #000;
-            border-right: 1px solid #000;
+            border: 1px solid #000;
             padding: 2px 4px;
+            font-size: 8pt;
+            word-wrap: break-word; /* Agar teks panjang turun ke bawah, bukan melebar */
         }
-        .journal-table tr:last-child td {
-            border-bottom: 1px solid #000;
-        }
-        .bg-total {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            border-top: 2px solid #000 !important;
+
+        .bg-total { background-color: #f8f9fa; font-weight: bold; }
+        .bg-grand { background-color: #e2e3e5; font-weight: bold; }
+
+        /* TANDA GUNTING */
+        .cut-here {
+            position: absolute; bottom: 5px; left: 0; width: 100%;
+            text-align: center; font-size: 7pt; color: #888;
         }
     </style>
 </head>

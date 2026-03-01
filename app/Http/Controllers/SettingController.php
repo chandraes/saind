@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Ramsey\Collection\Set;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class SettingController extends Controller
@@ -23,6 +24,9 @@ class SettingController extends Controller
     {
         $request->validate([
             'app_name'    => 'nullable|string|max:255',
+            'app_perusahaan' => 'nullable|string|max:255',
+            'app_alamat' => 'nullable|string|max:255',
+            'app_keuangan' => 'nullable|string|max:255',
             'app_logo'    => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
             'app_favicon' => 'nullable|image|mimes:ico,png|max:1024',
         ]);
@@ -33,6 +37,13 @@ class SettingController extends Controller
             ['key' => 'app_name'],
             ['value' => $request->app_name ?? null]
         );
+
+        Setting::updateOrCreate(['key' => 'app_perusahaan'], ['value' => $request->app_perusahaan ?? null]);
+
+        // TAMBAHKAN: Update Alamat
+        Setting::updateOrCreate(['key' => 'app_alamat'], ['value' => $request->app_alamat ?? null]);
+
+        Setting::updateOrCreate(['key' => 'app_keuangan'], ['value' => $request->app_keuangan ?? null]);
 
         // 2. UPDATE LOGO
         $this->handleFileUpload($request, 'app_logo', 'settings/logo');
