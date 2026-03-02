@@ -21,6 +21,14 @@ class FormKasbonController extends Controller
 {
     public function index()
     {
+        if (Carbon::now()->day <= 15) {
+            // Kamu bisa arahkan ke halaman lain dengan pesan error
+            return redirect()->back()->with('error', 'Form Kasbon potong gaji hanya bisa dilakukan setelah tanggal 15.');
+
+            // Atau tampilkan halaman error 403 (Forbidden)
+            // abort(403, 'Akses belum diizinkan sebelum tanggal 16.');
+        }
+        
         $karyawan = Karyawan::where('status', 'aktif')->get();
 
         return view('billing.kasbon.index', [

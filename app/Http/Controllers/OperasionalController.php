@@ -802,10 +802,10 @@ class OperasionalController extends Controller
         $tahun = $request->tahun ?? date('Y');
 
         // nama bulan dalam indonesia berdasarkan $bulan
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         // get array list date from $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+        $date = Carbon::createFromDate($tahun, $bulan, 1)->daysInMonth;
 
         $dataMuat = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                     ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
