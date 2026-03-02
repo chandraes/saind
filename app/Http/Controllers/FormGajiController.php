@@ -44,7 +44,7 @@ class FormGajiController extends Controller
             return redirect()->route('billing.index')->with('error', 'Form Gaji bulan ini belum dapat dibuat!');
         }
 
-        $month = Carbon::create()->month($request->bulan)->locale('id')->monthName;
+        $month = Carbon::createFromDate($request->tahun, $request->bulan, 1)->locale('id')->monthName;
 
         // Optimasi: Eager Loading relasi untuk menghindari N+1 Query
         $data = Karyawan::where('status', 'aktif')->with(['jabatan', 'kas_bon', 'kas_bon_cicilan'])->get();
@@ -71,7 +71,8 @@ class FormGajiController extends Controller
         $direksi = Direksi::where('status', 'aktif')->get();
 
         $kasBesar = KasBesar::orderBy('id', 'desc')->first();
-        $monthName = Carbon::create()->month($ds['bulan'])->locale('id')->monthName;
+        $monthName = Carbon::createFromDate($ds['tahun'], $ds['bulan'], 1)->locale('id')->monthName;
+
         $totalGajiSistem = 0;
 
         try {
@@ -241,7 +242,8 @@ class FormGajiController extends Controller
         // Ambil data yang sama dengan index
         $bulan = $request->bulan;
         $tahun = $request->tahun;
-        $monthName = Carbon::create()->month($bulan)->locale('id')->monthName;
+        
+        $monthName = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         $data = Karyawan::where('status', 'aktif')->with(['jabatan', 'kas_bon', 'kas_bon_cicilan'])->get();
         $direksi = Direksi::where('status', 'aktif')->get();

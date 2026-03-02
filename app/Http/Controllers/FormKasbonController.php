@@ -14,6 +14,7 @@ use App\Models\PasswordKonfirmasi;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class FormKasbonController extends Controller
@@ -267,7 +268,7 @@ class FormKasbonController extends Controller
     public function kas_bon_cicil()
     {
 
-        if(auth()->user()->role != 'admin' && auth()->user()->role != 'su') {
+        if(Auth::user()->role != 'admin' && Auth::user()->role != 'su') {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke menu ini!!');
         }
 
@@ -291,7 +292,7 @@ class FormKasbonController extends Controller
             'mulai_tahun' => 'required|integer',
         ]);
 
-        if(auth()->user()->role != 'admin' && auth()->user()->role != 'su') {
+        if(Auth::user()->role != 'admin' && Auth::user()->role != 'su') {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke menu ini!!');
         }
 

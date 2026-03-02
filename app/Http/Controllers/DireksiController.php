@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DireksiController extends Controller
 {
@@ -69,7 +70,7 @@ class DireksiController extends Controller
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
         $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
 
-        $data['created_by'] = auth()->user()->id;
+        $data['created_by'] = Auth::user()->id;
 
         DB::transaction(function () use ($data, $request) {
 
@@ -152,7 +153,7 @@ class DireksiController extends Controller
         $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
         $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
 
-        $data['updated_by'] = auth()->user()->id;
+        $data['updated_by'] = Auth::user()->id;
 
         $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
         $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);

@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\StarSender;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class FormKasUangJalanController extends Controller
 {
@@ -98,7 +99,7 @@ class FormKasUangJalanController extends Controller
         $dbWa = new GroupWa();
 
         $group = $dbWa->where('untuk', 'kas-besar')->first();
-        
+
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Permintaan Kas Uang Jalan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -194,7 +195,7 @@ class FormKasUangJalanController extends Controller
 
         $auth = ['admin', 'su'];
 
-        if (!in_array(auth()->user()->role, $auth)) {
+        if (!in_array(Auth::user()->role, $auth)) {
             $check = VendorUangJalan::where('vendor_id', $vendor)
                                     ->where('rute_id', $data['rute_id'])
                                     ->first()->hk_uang_jalan ?? 0;
@@ -242,7 +243,7 @@ class FormKasUangJalanController extends Controller
 
         if ($dbVehicle->tanggal_pajak_stnk == null) {
             return redirect()->back()->with('error', 'Tanggal Pajak STNK belum diinput!');
-        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($nextMonth) && auth()->user()->role != 'admin') {
+        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($nextMonth) && Auth::user()->role != 'admin') {
             return redirect()->back()->withInput()->with('error', 'Pajak STNK kadaluarsa pada ' . Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y') . '! Silahkan hubungin Admin!');
         }
 

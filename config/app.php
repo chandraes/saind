@@ -172,7 +172,6 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         Webklex\PDFMerger\Providers\PDFMergerServiceProvider::class,
-        Novay\WordTemplate\WordTemplateServiceProvider::class,
     ])->toArray(),
 
     /*
@@ -189,7 +188,6 @@ return [
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
         'PDFMerger' => Webklex\PDFMerger\Facades\PDFMergerFacade::class,
-        'WordTemplate' => Novay\WordTemplate\Facade::class,
         'PayrollHelper' => App\Helpers\PayrollHelper::class,
     ])->toArray(),
 
