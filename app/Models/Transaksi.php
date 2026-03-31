@@ -240,35 +240,37 @@ class Transaksi extends Model
 
     public function changeStateNotaFisik($id)
     {
-        $transaksi = self::findOrFail($id);
-        // if $transaksi->nota_fisik is 0, then change it to 1, and vice versa
-        $transaksi->nota_fisik = !$transaksi->nota_fisik;
-
-        if ($transaksi->nota_fisik) {
-            $transaksi->do_checker_id = auth()->user()->id;
-        } else {
-            $transaksi->do_checker_id = null;
-        }
-
-        $vehicle = $transaksi->kas_uang_jalan->vehicle;
-
-        // If $transaksi->nota_fisik is true, decrement do_count, otherwise increment
-        $transaksi->nota_fisik ? $vehicle->do_count-- : $vehicle->do_count++;
-
-        // Start the transaction
         DB::beginTransaction();
 
         try {
+            $transaksi = self::lockForUpdate()->findOrFail($id);
+
+            $oldState = (bool) $transaksi->nota_fisik;
+            $newState = !$oldState;
+
+            $transaksi->nota_fisik = $newState;
+            $transaksi->do_checker_id = $newState ? auth()->id() : null;
             $transaksi->save();
-            $vehicle->save();
 
-            // If both saves were successful, commit the transaction
+            $vehicle = $transaksi->kas_uang_jalan->vehicle ?? null;
+
+            if ($vehicle) {
+                if ($newState) {
+                    // HANYA kurangi jika nilai do_count di database saat ini lebih besar dari 0.
+                    // Menggunakan newQuery() memastikan eksekusi langsung ke database dengan aman.
+                    $vehicle->newQuery()
+                            ->where('id', $vehicle->id)
+                            ->where('do_count', '>', 0)
+                            ->decrement('do_count');
+                } else {
+                    $vehicle->increment('do_count');
+                }
+            }
+
             DB::commit();
-        } catch (\Exception $e) {
-            // If there was an error, rollback the transaction
-            DB::rollback();
 
-            // Then rethrow the exception so it can be handled elsewhere
+        } catch (\Exception $e) {
+            DB::rollback();
             throw $e;
         }
     }

@@ -135,7 +135,16 @@
     }, 5000);
 
     $(document).ready(function() {
-        $('#data-table').DataTable();
+        $('#data-table').DataTable({
+                "scrollCollapse": true,
+                "scrollY": "550px",
+                "scrollX": true,
+                "stateSave": true,
+                "fixedColumns": {
+                    "leftColumns": 4, // Increase this by 1 because we're adding a column
+                    "rightColumns": 1
+                }
+        });
 
     } );
 
