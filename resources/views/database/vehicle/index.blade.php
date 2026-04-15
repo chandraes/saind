@@ -105,7 +105,7 @@
                     @csrf
                     @method('DELETE')
                     <a href="#" data-bs-toggle="modal" data-bs-target="#modalEdit{{$d->id}}" class="btn btn-warning m-2">Edit</a>
-                    <button type="submit" class="btn btn-danger m-2"
+                    <button type="submit" class="btn btn-danger m-2" 
                         onclick="return confirm('Apakah anda yakin ingin menghapus data ini?')">Hapus</button>
                 </form>
             </td>
@@ -135,7 +135,16 @@
     }, 5000);
 
     $(document).ready(function() {
-        $('#data-table').DataTable();
+        $('#data-table').DataTable({
+                "scrollCollapse": true,
+                "scrollY": "550px",
+                "scrollX": true,
+                "stateSave": true,
+                "fixedColumns": {
+                    "leftColumns": 4, // Increase this by 1 because we're adding a column
+                    "rightColumns": 1
+                }
+        });
 
     } );
 

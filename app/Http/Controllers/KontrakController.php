@@ -9,6 +9,7 @@ use App\Models\TemplateKontrak;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Ramsey\Uuid\Uuid;
 
 
@@ -45,7 +46,7 @@ class KontrakController extends Controller
             'vendor_id' => 'required',
         ]);
 
-        $data['created_by'] = auth()->user()->id;
+        $data['created_by'] = Auth::user()->id;
         $data['nomor'] = Kontrak::count() + 1;
         $data['tanggal'] = now();
 
@@ -83,7 +84,7 @@ class KontrakController extends Controller
      */
     public function destroy(Kontrak $kontrak)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (Auth::user()->role !== 'admin') {
             return redirect()->route('kontrak.index')->with('error', 'Anda tidak memiliki akses untuk menghapus kontrak');
         }
 

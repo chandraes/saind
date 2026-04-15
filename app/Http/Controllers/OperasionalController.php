@@ -42,8 +42,8 @@ class OperasionalController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya, 1)->locale('id')->monthName;
+        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = $db->getLatest($vendor->id, $bulanSebelumnya, $tahunSebelumnya);
 
@@ -96,8 +96,8 @@ class OperasionalController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya, 1)->locale('id')->monthName;
+        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = $db->getLatest($vendor->id, $bulanSebelumnya, $tahunSebelumnya);
 
@@ -127,10 +127,10 @@ class OperasionalController extends Controller
 
         $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         // get array list date vrom $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+        $date = Carbon::createFromDate($tahun, $bulan, 1)->daysInMonth;
 
         $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute'])
                             ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
@@ -277,10 +277,10 @@ class OperasionalController extends Controller
         $offset = $request->offset ?? 0;
         $vendor = $request->vendor ?? 0;
         // nama bulan dalam indonesia berdasarkan $bulan
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         // get array list date vrom $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+        $date = Carbon::createFromDate($tahun, $bulan, 1)->daysInMonth;
 
         $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                             ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
@@ -469,10 +469,10 @@ class OperasionalController extends Controller
                             ->where('vehicle_id', $vehicle)
                             ->first();
 
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         // get array list date vrom $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+        $date = Carbon::createFromDate($tahun, $bulan, 1)->daysInMonth;
 
 
         if ($tanggal_filter != null) {
@@ -802,10 +802,10 @@ class OperasionalController extends Controller
         $tahun = $request->tahun ?? date('Y');
 
         // nama bulan dalam indonesia berdasarkan $bulan
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         // get array list date from $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
+        $date = Carbon::createFromDate($tahun, $bulan, 1)->daysInMonth;
 
         $dataMuat = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                     ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')

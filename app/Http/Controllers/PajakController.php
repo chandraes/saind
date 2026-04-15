@@ -223,8 +223,8 @@ class PajakController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya, 1)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         $dataSebelumnya = $db->rekapByMonthSebelumnya($bulanSebelumnya, $tahunSebelumnya);
 

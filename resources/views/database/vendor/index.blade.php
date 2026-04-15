@@ -40,7 +40,7 @@
     </div>
 </div>
 <div class="container-fluid table-responsive">
-    <table class="table table-bordered table-hover" id="data">
+    <table class="table table-bordered table-hover w-100" id="data">
         <thead class="table-success">
             <tr>
                 <th class="text-center align-middle">No</th>
@@ -54,114 +54,14 @@
                 <th class="text-center align-middle">Plafon Cash</th>
                 <th class="text-center align-middle">Plafon Storing</th>
                 <th class="text-center align-middle">Uang Jalan</th>
+                <th class="text-center align-middle">Limit Tonase Muat</th>
                 <th class="text-center align-middle">Status</th>
                 <th class="text-center align-middle">Sponsor</th>
                 <th class="text-center align-middle">Action</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($vendors as $d)
-            <tr>
-                <td class="align-middle">{{$loop->iteration}}</td>
-                <td class="align-middle"><a href="{{route('vendor.show', $d->id)}}"><strong>{{$d->nama}}</strong></a></td>
-                <td class="align-middle">{{$d->perusahaan}}</td>
-                <td class="align-middle">{{$d->nickname}}</td>
-                <td class="text-center align-middle @if ($d->pembayaran == 'titipan' || $d->pembayaran == 'titipan_khusus')
-                    text-danger
-                @endif">
-                    {{strtoupper(str_replace('_', ' ', $d->pembayaran))}}
-                </td>
-                <td class="text-center align-middle">
-                    {{-- icon checklist if support_operational == 1 --}}
-                    @if ($d->support_operational == 1)
-                    {{-- fa checklist --}}
-                    <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
-                    @endif
-                </td>
-                <td class="text-center align-middle">
-                    {{-- icon checklist if support_operational == 1 --}}
-                    @if ($d->ppn == 1)
-                    {{-- fa checklist --}}
-                    <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
-                    @endif
-                </td>
-                <td class="text-center align-middle">
-                    {{-- icon checklist if support_operational == 1 --}}
-                    @if ($d->pph == 1)
-                    {{-- fa checklist --}}
-                    <i class="fa fa-check-circle text-success" style="font-size: 25px"></i>
-                    @endif
-                </td>
-                <td class="align-middle text-center  @if ($d->pembayaran == 'titipan') text-danger @endif">
-                    {{number_format($d->plafon_titipan,0,',','.')}}
-                </td>
-                <td class="align-middle text-center {{$d->plafon_lain > 10000000 ? 'text-danger' : ''}}">
-
-                    {{number_format($d->plafon_lain,0,',','.')}}
-                </td>
-                <td class="text-center align-middle">
-                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-uang{{$d->id}}">
-                        Lihat Uang Jalan
-                      </button>
-                      <div class="modal fade" id="modal-uang{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                          <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-l" role="document">
-                              <div class="modal-content">
-                                  <div class="modal-header">
-                                      <h5 class="modal-title" id="modalTitleId">Kesepakatan Uang Jalan</h5>
-                                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                  </div>
-                                  <div class="modal-body">
-                                        @if ($d->vendor_uang_jalan->count() > 0)
-                                        <table class="table table-bordered table-hover">
-                                            <thead class="text-center align-middle">
-                                                <th class="text-center align-middle">No</th>
-                                                <th class="text-center align-middle">Rute</th>
-                                                <th class="text-center align-middle">Kesepakan Uang Jalan</th>
-                                            </thead>
-
-                                        @foreach ($d->vendor_uang_jalan as $item)
-                                        <tr>
-                                            <td>{{$loop->iteration}}</td>
-                                            <td>{{$item->rute->nama}}</td>
-                                            <td>Rp. {{number_format($item->hk_uang_jalan, 0, ',', '.')}}</td>
-                                        </tr>
-                                        @endforeach
-                                    </table>
-                                        @endif
-                                  </div>
-                                  <div class="modal-footer">
-                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                      <a href="{{route('uj.vendor.uang-jalan.edit', $d->id)}}" class="btn btn-primary">Edit Uang Jalan</a>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                </td>
-                <td class="align-middle text-center">
-                    @if ($d->status == "aktif")
-                    <span class="badge badge-xl rounded-pill text-bg-success">Aktif</span>
-                    @elseif ($d->status === "nonaktif")
-                    <span class="badge rounded-pill text-bg-danger">Non Aktif</span>
-                    @endif
-                </td>
-                <td class="align-middle text-center">
-                  {{$d->sponsor ? $d->sponsor->nama : ''}}
-                </td>
-                <td class="text-center align-middle">
-                    <div class="d-flex justify-content-center">
-                        <a href="{{route('uj.vendor.biodata-vendor', $d->id)}}" target="_blank" class="btn btn-success me-2">PDF</a>
-                        <a href="{{route('vendor.edit', $d->id)}}" class="btn btn-warning me-2">Ubah</a>
-                        <form action="{{route('vendor.destroy', $d->id)}}" method="post">
-                            @csrf
-                            @method('delete')
-                            <button type="submit" class="btn btn-danger"
-                                onclick="return confirm('Yakin ingin menghapus data ini?')">Hapus</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
+            </tbody>
     </table>
 </div>
 @endsection
@@ -178,7 +78,81 @@
     });
 
     $(document).ready(function() {
-        $('#data').DataTable();
+        $('#data').DataTable({
+            processing: true,
+            serverSide: true,
+            saveState: true,
+            ajax: "{{ route('vendor.index') }}", // Sesuaikan dengan nama route Anda
+            columns: [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'align-middle text-center' },
+                { data: 'nama', name: 'nama', className: 'align-middle' },
+                { data: 'perusahaan', name: 'perusahaan', className: 'align-middle' },
+                { data: 'nickname', name: 'nickname', className: 'align-middle' },
+                { data: 'pembayaran', name: 'pembayaran', className: 'align-middle text-center' },
+                { data: 'support_operational', name: 'support_operational', className: 'align-middle text-center' },
+                { data: 'ppn', name: 'ppn', className: 'align-middle text-center' },
+                { data: 'pph', name: 'pph', className: 'align-middle text-center' },
+                { data: 'plafon_titipan', name: 'plafon_titipan', className: 'align-middle text-center' },
+                { data: 'plafon_lain', name: 'plafon_lain', className: 'align-middle text-center' },
+                { data: 'uang_jalan', name: 'uang_jalan', orderable: false, searchable: false, className: 'align-middle text-center' },
+                { data: 'limit_tonase', name: 'limit_tonase', orderable: false, searchable: false, className: 'align-middle text-center' },
+                { data: 'status', name: 'status', className: 'align-middle text-center' },
+                { data: 'sponsor_nama', name: 'sponsor_id', className: 'align-middle text-center' }, // relasi sponsor
+                { data: 'action', name: 'action', orderable: false, searchable: false, className: 'align-middle text-center' }
+            ]
+        });
+
+       $('#data').on('click', '.toggle-limit-tonase', function(e) {
+            e.preventDefault();
+
+            let checkbox = $(this);
+            let url = checkbox.data('url');
+
+            Swal.fire({
+                title: "Konfirmasi",
+                text: "Anda yakin ingin mengubah status Limit Tonase Muat untuk vendor ini?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#0d6efd",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Ya, Ubah!",
+                cancelButtonText: "Batal",
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            _method: 'PATCH'
+                        },
+                        success: function(response) {
+                            if(response.success) {
+                                // REFRESH DATATABLE DI SINI
+                                // Parameter 'null, false' memastikan pengguna tidak dilempar kembali ke halaman 1
+                                $('#data').DataTable().ajax.reload(null, false);
+
+                                Swal.fire({
+                                    title: "Berhasil!",
+                                    text: response.message,
+                                    icon: "success",
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire(
+                                "Oops!",
+                                "Terjadi kesalahan pada server saat memperbarui data.",
+                                "error"
+                            );
+                        }
+                    });
+                }
+            });
+        });
     } );
 </script>
 @endpush

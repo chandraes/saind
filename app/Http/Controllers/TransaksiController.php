@@ -28,6 +28,7 @@ use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
@@ -331,7 +332,7 @@ class TransaksiController extends Controller
 
         // get latest data from month before current month
         // dd($bulan);
-        if (auth()->user()->role == 'admin') {
+        if (Auth::user()->role == 'admin') {
             $pdf = PDF::loadview('billing.transaksi.tagihan.export-admin', [
                 'data' => $data,
                 'customer' => $customer,
@@ -398,9 +399,11 @@ class TransaksiController extends Controller
         $vehicle = Vehicle::find($transaksi->kas_uang_jalan->vehicle_id);
 
         if($transaksi->nota_fisik == 0) {
-            $vehicle->update([
-                'do_count' => $vehicle->do_count - 1,
-            ]);
+            if ($vehicle->do_count > 0) {
+                $vehicle->update([
+                    'do_count' => $vehicle->do_count - 1,
+                ]);
+            }
         }
 
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
@@ -629,7 +632,7 @@ class TransaksiController extends Controller
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
 
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
-            
+
         } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan_khusus') {
 
             $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
@@ -825,7 +828,7 @@ class TransaksiController extends Controller
 
         // get latest data from month before current month
         // dd($bulan);
-        if (auth()->user()->role == 'admin') {
+        if (Auth::user()->role == 'admin') {
             $pdf = PDF::loadview('billing.transaksi.tagihan.export-admin', [
                 'data' => $data,
                 'customer' => $customer,

@@ -328,15 +328,14 @@
             </div>
         </div>
         {{-- BACK BUTTON --}}
-         <div class="col-md-2 text-center mt-5">
+         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.nota-muat')}}" class="text-decoration-none">
                 <img src="{{asset('images/muat.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA MUAT
-                    {{-- <span class="text-danger">{{$data->where('status', 1)->count() > 0 ?
-                        "(".$data->where('status', 1)->count().")" : '' }}</span> --}}
+
                         </h4>
             </a>
-        </div>
+        </div> --}}
          <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
                 <img src="{{asset('images/bongkar.svg')}}" alt="" width="70">

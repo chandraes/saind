@@ -14,12 +14,21 @@ use App\Models\PasswordKonfirmasi;
 use App\Services\StarSender;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class FormKasbonController extends Controller
 {
     public function index()
     {
+        if (Carbon::now()->day <= 15) {
+            // Kamu bisa arahkan ke halaman lain dengan pesan error
+            return redirect()->back()->with('error', 'Form Kasbon potong gaji hanya bisa dilakukan setelah tanggal 15.');
+
+            // Atau tampilkan halaman error 403 (Forbidden)
+            // abort(403, 'Akses belum diizinkan sebelum tanggal 16.');
+        }
+        
         $karyawan = Karyawan::where('status', 'aktif')->get();
 
         return view('billing.kasbon.index', [
@@ -267,7 +276,7 @@ class FormKasbonController extends Controller
     public function kas_bon_cicil()
     {
 
-        if(auth()->user()->role != 'admin' && auth()->user()->role != 'su') {
+        if(Auth::user()->role != 'admin' && Auth::user()->role != 'su') {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke menu ini!!');
         }
 
@@ -291,7 +300,7 @@ class FormKasbonController extends Controller
             'mulai_tahun' => 'required|integer',
         ]);
 
-        if(auth()->user()->role != 'admin' && auth()->user()->role != 'su') {
+        if(Auth::user()->role != 'admin' && Auth::user()->role != 'su') {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke menu ini!!');
         }
 

@@ -36,4 +36,23 @@ class KonfigurasiController extends Controller
 
         return redirect()->back()->with('success', 'Konfigurasi berhasil diubah');
     }
+
+    public function update_batasan(Request $request, $id)
+    {
+        $request->validate([
+            'nilai' => 'required'
+        ]);
+
+        $pengaturan = Pengaturan::findOrFail($id);
+
+        // Hilangkan titik pada input agar murni angka sebelum masuk database
+        // (Misal: 1.500.000 menjadi 1500000)
+        $nilaiBersih = str_replace('.', '', $request->nilai);
+
+        $pengaturan->update([
+            'nilai' => $nilaiBersih
+        ]);
+
+        return redirect()->back()->with('success', 'Batasan Umum berhasil diperbarui!');
+    }
 }
