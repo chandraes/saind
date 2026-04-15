@@ -9,6 +9,8 @@ use App\Models\GroupWa;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\Customer;
+use App\Models\CustomerTagihan;
+use App\Models\Konfigurasi;
 use App\Models\Pengaturan;
 use App\Models\VendorUangJalan;
 use App\Models\Transaksi;
@@ -137,17 +139,22 @@ class FormKasUangJalanController extends Controller
             $nomor = $nomor->nomor_uang_jalan + 1;
         }
 
+        $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
+        $limitValue = Pengaturan::where('untuk', 'limit-tonase-muat')->first()->nilai ?? 0;
+
         return view('billing.kas-uang-jalan.keluar', [
             'nomor' => $nomor,
             'vehicle' => $vehicle,
             'customer' => $customer,
+            'konfigurasi' => $konfigurasi,
+            'limitValue' => $limitValue,
         ]);
     }
 
     public function get_vendor(Request $request)
     {
         $vehicle = Vehicle::join('vendors', 'vendors.id', 'vehicles.vendor_id')
-                                ->select('vehicles.*', 'vendors.nama as nama_vendor', 'vendors.id as id_vendor')
+                                ->select('vehicles.*', 'vendors.nama as nama_vendor', 'vendors.id as id_vendor', 'vendors.limit_tonase as limit_tonase')
                                 ->find($request->id);
         $data = $vehicle;
         return response()->json($data);
@@ -156,7 +163,10 @@ class FormKasUangJalanController extends Controller
     public function get_rute(Request $request)
     {
         $customer = Customer::find($request->id);
-        $data = $customer->rute;
+        $data = [
+                'rute' => $customer->rute,
+                'gt_muat' => $customer->gt_muat,
+            ];
         return response()->json($data);
     }
 
@@ -183,7 +193,74 @@ class FormKasUangJalanController extends Controller
             'transfer_ke' => 'required',
             'bank' => 'required',
             'no_rekening' => 'required',
+
+            'nota_muat' => 'required',
+            'tonase' => 'required|numeric',
+            'tanggal_muat' => 'required',
+            'gross_muat' => 'nullable|numeric',
+            'tarra_muat' => 'nullable|numeric',
         ]);
+
+        $data['tonase'] = str_replace(',', '.', $data['tonase']);
+        if (isset($data['gross_muat'])) $data['gross_muat'] = str_replace(',', '.', $data['gross_muat']);
+        if (isset($data['tarra_muat'])) $data['tarra_muat'] = str_replace(',', '.', $data['tarra_muat']);
+
+        $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
+
+        if ($konfigurasi == 1) {
+            // check if tanggal muat is older than 2 day from today, if true then return error
+            $tanggalMuat = strtotime($data['tanggal_muat']);
+            $today = strtotime(date('Y-m-d'));
+
+            $diff = $today - $tanggalMuat;
+            $diff = $diff / (60 * 60 * 24);
+
+            if ($diff > 2) {
+                return redirect()->back()->withInput()->with('error', 'Tanggal muat tidak boleh lebih dari H-2 dari hari ini!!');
+            }
+
+        }
+
+        $customerTagihan = CustomerTagihan::where('customer_id', $data['customer_id'])->where('rute_id', $data['rute_id'])->first();
+        if (!$customerTagihan) {
+            return redirect()->back()->withInput()->with('error', 'Tagihan untuk Customer dan Rute ini belum diatur di database!');
+        }
+        $dbCustomer = Customer::find($data['customer_id']);
+        $dbRute = $customerTagihan->rute;
+
+        $data['harga_customer'] = $customerTagihan->harga_tagihan;
+
+        $dbVendor = Vendor::find($data['p_vendor']);
+
+        $pembayaranVendor = $dbVendor->pembayaran;
+
+        if ($pembayaranVendor == 'opname') {
+            $data['harga_vendor'] = $customerTagihan->opname;
+        } elseif ($pembayaranVendor == 'titipan') {
+            $data['harga_vendor'] = $customerTagihan->titipan;
+        } elseif ($pembayaranVendor == 'titipan_khusus') {
+            $data['harga_vendor'] = $customerTagihan->titipan_khusus;
+        }
+
+        if ($dbCustomer->csr == 1) {
+            $jarak = $dbRute->jarak;
+            if ($jarak > 50) {
+                $data['harga_csr'] = $dbCustomer->harga_csr_atas;
+            } else {
+                $data['harga_csr'] = $dbCustomer->harga_csr_bawah;
+            }
+        }
+
+        $minTonase = Pengaturan::where('untuk', 'limit-tonase-muat')->first()->nilai ?? 0;
+
+        if (Auth::user()->role != 'admin' && $dbVendor->limit_tonase == 1 && $request->tonase < $minTonase) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal! Tonase muat minimum untuk vendor ini adalah ' . $minTonase . ' Ton.');
+        }
+
+        $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
+        $data['status'] = 2;
 
         $vendor = $data['p_vendor'];
 
@@ -251,10 +328,34 @@ class FormKasUangJalanController extends Controller
         try {
             DB::beginTransaction();
 
-            $store = KasUangJalan::create($data);
-            $transaksi['kas_uang_jalan_id'] = $store->id;
+            $store = KasUangJalan::create([
+                'tanggal' => $data['tanggal'],
+                'vendor_id' => $data['vendor_id'],
+                'vehicle_id' => $data['vehicle_id'],
+                'nomor_uang_jalan' => $data['nomor_uang_jalan'],
+                'customer_id' => $data['customer_id'],
+                'rute_id' => $data['rute_id'],
+                'jenis_transaksi_id' => $data['jenis_transaksi_id'],
+                'nominal_transaksi' => $data['nominal_transaksi'],
+                'saldo' => $data['saldo'],
+                'transfer_ke' => $data['transfer_ke'],
+                'bank' => $data['bank'],
+                'no_rekening' => $data['no_rekening'],
+            ]);
 
-            Transaksi::create($transaksi);
+
+            Transaksi::create([
+                'kas_uang_jalan_id' => $store->id,
+                'harga_customer' => $data['harga_customer'],
+                'harga_vendor' => $data['harga_vendor'],
+                'harga_csr' => $data['harga_csr'],
+                'tanggal_muat' => $data['tanggal_muat'],
+                'nota_muat' => $data['nota_muat'],
+                'tonase' => $data['tonase'],
+                'gross_muat' => isset($data['gross_muat']) ? $data['gross_muat'] : 0,
+                'tarra_muat' => isset($data['tarra_muat']) ? $data['tarra_muat'] : 0,
+                'status' => $data['status'],
+                ]);
             Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
 
             DB::commit();

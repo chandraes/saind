@@ -162,6 +162,7 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::resource('vendor', App\Http\Controllers\VendorController::class);
         Route::get('/vendor/{id}/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran'])->name('vendor.pembayaran');
+        Route::patch('/vendor/{id}/toggle-limit-tonase', [App\Http\Controllers\VendorController::class, 'toggleLimitTonase'])->name('vendor.toggle-limit-tonase');
         Route::post('/vendor/pembayaran', [App\Http\Controllers\VendorController::class, 'pembayaran_store'])->name('vendor.pembayaran.store');
         Route::get('/vendor/pembayaran/{id}/edit', [App\Http\Controllers\VendorController::class, 'pembayaran_edit'])->name('vendor.pembayaran.edit');
         Route::post('/vendor/pembayaran/{id}/update', [App\Http\Controllers\VendorController::class, 'pembayaran_update'])->name('vendor.pembayaran.update');
@@ -193,7 +194,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::patch('/wa/update/{id}', [App\Http\Controllers\WaController::class, 'update'])->name('pengaturan.wa.update');
             Route::get('/nota-transaksi', [App\Http\Controllers\KonfigurasiController::class, 'index'])->name('pengaturan.nota-transaksi');
             Route::patch('/nota-transaksi/update/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update'])->name('pengaturan.konfigurasi-transaksi.update');
-
+            Route::patch('/batasan/update/{id}', [App\Http\Controllers\KonfigurasiController::class, 'update_batasan'])->name('pengaturan.batasan.update');
             Route::patch('/nota-transaksi/update-jam/{konfigurasi}', [App\Http\Controllers\KonfigurasiController::class, 'update_jam'])->name('pengaturan.konfigurasi-transaksi.update-jam');
 
             Route::get('/histori-pesan', [App\Http\Controllers\HistoriController::class, 'index'])->name('pengaturan.histori-pesan');
@@ -477,6 +478,8 @@ Route::group(['middleware' => ['auth']], function() {
 
         //Form maintenance
         Route::prefix('billing')->group(function(){
+
+            Route::get('/notif-count', [App\Http\Controllers\BillingController::class, 'getNotifCount'])->name('billing.notif-count');
 
             Route::get('/nota-csr', [App\Http\Controllers\TransaksiController::class, 'nota_csr'])->name('billing.nota-csr');
             Route::post('/nota-csr/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_csr_lanjut'])->name('billing.nota-csr.lanjut');

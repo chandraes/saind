@@ -105,7 +105,7 @@
                     @csrf
                     @method('DELETE')
                     <a href="#" data-bs-toggle="modal" data-bs-target="#modalEdit{{$d->id}}" class="btn btn-warning m-2">Edit</a>
-                    <button type="submit" class="btn btn-danger m-2"
+                    <button type="submit" class="btn btn-danger m-2" 
                         onclick="return confirm('Apakah anda yakin ingin menghapus data ini?')">Hapus</button>
                 </form>
             </td>
