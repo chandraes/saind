@@ -35,6 +35,7 @@ use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class RekapController extends Controller
 {
@@ -62,24 +63,45 @@ class RekapController extends Controller
     public function kas_besar(Request $request)
     {
         // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
-        $bulan = $request->bulan ?? date('m');
+       $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
+
+        // Gunakan str_pad agar $bulan selalu 2 digit (contoh: '05'), berguna untuk query database
+        $bulan = str_pad($bulan, 2, '0', STR_PAD_LEFT);
+
         $dataTahun = KasBesar::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = KasBesar::with('jenis_transaksi')->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        // Data bulan ini
+        $data = KasBesar::with('jenis_transaksi')
+                        ->whereMonth('tanggal', $bulan)
+                        ->whereYear('tanggal', $tahun)
+                        ->get();
 
-        $bulanSebelumnya = $bulan - 1;
-        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
-        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-        // get latest data from month before current month
-        $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
-        if (!$dataSebelumnya) {
-            # code...
-            $dataSebelumnya = KasBesar::latest()->orderBy('id', 'desc')->first();
+        // Hitung string bulan untuk View
+        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
+
+        // Perbaikan: Ambil tanggal awal bulan yang direquest (Misal: 2024-03-01)
+        $tanggalAwalBulan = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
+
+        // Perbaikan: Ambil 1 transaksi paling akhir yang tanggalnya SEBELUM bulan yang direquest
+        $dataSebelumnya = KasBesar::where('tanggal', '<', $tanggalAwalBulan)
+                                ->orderBy('tanggal', 'desc')
+                                ->orderBy('id', 'desc')
+                                ->first();
+
+        // Set bulan & tahun sebelumnya berdasarkan dataSebelumnya jika ada, jika tidak ada mundur 1 bulan manual
+        if ($dataSebelumnya) {
+            $waktuSebelumnya = \Carbon\Carbon::parse($dataSebelumnya->tanggal);
+            $bulanSebelumnya = $waktuSebelumnya->format('m');
+            $tahunSebelumnya = $waktuSebelumnya->format('Y');
+            $stringBulan = $waktuSebelumnya->locale('id')->monthName;
+        } else {
+            $waktuMundur = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->subMonth();
+            $bulanSebelumnya = $waktuMundur->format('m');
+            $tahunSebelumnya = $waktuMundur->format('Y');
+            $stringBulan = $waktuMundur->locale('id')->monthName;
         }
-        // dd($bulan);
+
         return view('rekap.kas-besar', [
             'data' => $data,
             'dataTahun' => $dataTahun,
@@ -777,7 +799,7 @@ class RekapController extends Controller
         $rekap = $detail->rekap_gaji;
         $bulan = Carbon::createFromDate($rekap->tahun, $rekap->bulan)->locale('id')->monthName;
         $tanggal_cutoff = Carbon::createFromDate($rekap->created_at)->locale('id')->translatedFormat('d F Y');
-        
+
         $pdf = Pdf::loadview('rekap.slip-gaji', [
             'd' => $detail,
             'bulan' => $bulan,
@@ -820,7 +842,7 @@ class RekapController extends Controller
 
     public function kas_per_vendor(Request $request, Vendor $vendor)
     {
-        if($vendor->id != auth()->user()->vendor_id){
+        if($vendor->id != Auth::user()->vendor_id){
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
         }
         $bulan = $request->bulan ?? date('m');
@@ -858,7 +880,7 @@ class RekapController extends Controller
     {
         $vendor = Vendor::find($invoiceBayar->vendor_id);
 
-        if ($vendor->id != auth()->user()->vendor_id) {
+        if ($vendor->id != Auth::user()->vendor_id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
         }
 
@@ -876,7 +898,7 @@ class RekapController extends Controller
     {
         $vendor = Vendor::find($request->vendor);
 
-        if($vendor->id != auth()->user()->vendor_id){
+        if($vendor->id != Auth::user()->vendor_id){
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
         }
 

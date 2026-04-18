@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller
 {
@@ -74,6 +75,9 @@ class CustomerController extends Controller
                 'gt_muat' => 'nullable',
                 'gt_bongkar' => 'nullable',
                 'nominal_penalty' => 'required',
+                'is_kompensasi_jr' => 'nullable',
+                'is_penyesuaian_bbm' => 'nullable',
+                'is_achievement' => 'nullable',
         ]);
 
         $rute = $data['rute'];
@@ -81,10 +85,17 @@ class CustomerController extends Controller
 
         $data['harga_csr_atas'] = $data['harga_csr_atas'] ? str_replace('.', '', $data['harga_csr_atas']) : 0;
         $data['harga_csr_bawah'] = $data['harga_csr_bawah'] ? str_replace('.', '', $data['harga_csr_bawah']) : 0;
+        // $data['nominal_penalty'] = str_replace('.', '', $data['nominal_penalty']);
 
-        $data['created_by'] = auth()->id();
+        $data['created_by'] = Auth::id();
 
-        $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
+        // $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
+        $checkboxFields = [
+            'ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase',
+            'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih',
+            'is_kompensasi_jr', 'is_penyesuaian_bbm', 'is_achievement'
+        ];
+
         foreach ($checkboxFields as $field) {
             if ($field == 'ppn' && array_key_exists($field, $data)) {
                 $data['ppn'] = 1;
@@ -268,14 +279,22 @@ class CustomerController extends Controller
                     'gt_muat' => 'nullable',
                     'gt_bongkar' => 'nullable',
                     'nominal_penalty' => 'required',
+                    'is_kompensasi_jr' => 'nullable',
+                    'is_penyesuaian_bbm' => 'nullable',
+                    'is_achievement' => 'nullable',
                 ]);
 
         $data['harga_csr_atas'] = $data['harga_csr_atas'] ? str_replace('.', '', $data['harga_csr_atas']) : 0;
         $data['harga_csr_bawah'] = $data['harga_csr_bawah'] ? str_replace('.', '', $data['harga_csr_bawah']) : 0;
+        $data['nominal_penalty'] = $request->nominal_penalty ? str_replace('.', '', $request->nominal_penalty) : 0;
 
-        $data['edited_by'] = auth()->id();
+        $data['edited_by'] = Auth::id();
 
-        $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
+        // $checkboxFields = ['ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih'];
+        $checkboxFields = [
+            'ppn', 'pph', 'csr', 'tanggal_muat', 'nota_muat', 'tonase', 'gt_muat', 'gt_bongkar', 'tanggal_bongkar', 'selisih',
+            'is_kompensasi_jr', 'is_penyesuaian_bbm', 'is_achievement'
+        ];
         foreach ($checkboxFields as $field) {
             if ($field == 'ppn' && array_key_exists($field, $data)) {
                 $data['ppn'] = 1;
