@@ -378,7 +378,7 @@
                             <div class="row">
                                 @foreach ($customer as $c)
                                  <div class="col-md-2 text-center mt-5">
-                                    <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
+                                    <a href="{{route('billing.nota-tagihan', $c)}}" class="text-decoration-none">
                                         <img src="{{asset('images/tambang.svg')}}" alt="" width="70">
                                         <h4 class="mt-3">{{$c->singkatan}}
                                             {{-- @if ($data->where('status', 3)->where('tagihan', 0)->where('customer_id',

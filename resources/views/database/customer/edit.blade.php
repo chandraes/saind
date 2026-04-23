@@ -101,14 +101,14 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="card border-0 shadow-sm mb-4 border-start border-primary border-4">
+                <div class="card shadow-sm mb-4 border-start border-primary border-">
                     <div class="card-body">
                         <h6 class="fw-bold text-uppercase small text-muted mb-3">Fitur Khusus Bisnis</h6>
                         <div class="bg-light p-3 rounded shadow-sm">
                             <div class="form-check custom-checkbox mb-3">
                                 <input class="form-check-input border-primary" type="checkbox" name="is_kompensasi_jr" id="is_kompensasi_jr" {{ old('is_kompensasi_jr', $data->is_kompensasi_jr) == 1 ? 'checked' : '' }}>
                                 <label class="form-check-label fw-bold" for="is_kompensasi_jr">
-                                    <i class="fa fa-road me-2 text-primary"></i>Kompensasi JR
+                                    <i class="fa fa-road me-2 text-primary"></i>Kompensasi Jalan Rusak
                                 </label>
                             </div>
                             <div class="form-check custom-checkbox mb-3">
@@ -127,7 +127,7 @@
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm mb-4 border-start border-info border-4">
+                <div class="card shadow-sm mb-4 border-start border-info border-4">
                     <div class="card-body">
                         <h6 class="fw-bold text-uppercase small text-muted mb-3">Gross, Tarra, Netto (Tonase)</h6>
                         <p class="small text-muted mb-3 fst-italic">* Pilih tipe tonase yang digunakan pada nota.</p>
@@ -144,7 +144,7 @@
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
+                <div class="card shadow-sm mb-4 border-start border-warning border-4">
                     <div class="card-body">
                         <h6 class="fw-bold text-uppercase small text-muted mb-3">Aspek Perpajakan</h6>
                         <div class="form-check form-switch p-0 ps-5 ms-2">
@@ -156,7 +156,7 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm mb-4 border-start border-success border-4">
+        <div class="card border-0 shadow-sm mb-4 border-start border-success">
             <div class="card-body py-4">
                 <div class="row align-items-center">
                     <div class="col-md-6">

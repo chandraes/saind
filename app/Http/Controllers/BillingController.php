@@ -6,6 +6,7 @@ use App\Models\CostOperational;
 use App\Models\Customer;
 use App\Models\db\Kreditor;
 use App\Models\GroupWa;
+use App\Models\InvoiceAdditional;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
 use App\Models\InvoiceCsr;
@@ -15,6 +16,7 @@ use App\Models\RekapGaji;
 use App\Models\Rekening;
 use App\Models\Sponsor;
 use App\Models\Transaksi;
+use App\Models\TransaksiAdditional;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 
@@ -326,5 +328,160 @@ class BillingController extends Controller
         $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         return redirect()->route('billing.index')->with('success', 'Data berhasil disimpan');
+    }
+
+    public function nota_tagihan(Customer $customer)
+    {
+        return view('billing.nota-tagihan.index', [
+            'customer' => $customer,
+        ]);
+    }
+
+    public function nota_tagihan_detail_by_jenis(Request $request, Customer $customer, $jenis)
+    {
+        $req = $request->validate([
+            'rute_id' => 'nullable|exists:rutes,id',
+            'filter_date' => 'nullable|required_if:tanggal_filter,!=, null|in:tanggal_muat,tanggal_bongkar,tanggal',
+            'tanggal_filter' => 'nullable|required_if:filter_date,tanggal_muat,tanggal_bongkar,tanggal',
+        ]);
+
+        $rute_id = $req['rute_id'] ?? null;
+        $filter_date = $req['filter_date'] ?? null;
+        $tanggal_filter = $req['tanggal_filter'] ?? null;
+
+        /** @var \Illuminate\Routing\UrlGenerator */
+        $url = url();
+
+        // Store current URL in session
+        session(['previous_url' => $url->full()]);
+
+        $rute = $customer->rute;
+        $db = new TransaksiAdditional;
+        $dbTransaksi = new Transaksi;
+
+        $pendingTransaksiIds = $db->select('transaksi_id')->where('customer_id', $customer->id)->where('jenis', $jenis)->where('status', 0)->get()->toArray();
+        // $keranjangTransaksiIds = $db->select('transaksi_id')->where('jenis', $jenis)->where('status', 1)->get()->toArray();
+        $keranjang = $db->with(['transaksi'])
+            ->where('customer_id', $customer->id)
+            ->where('jenis', $jenis)
+            ->where('status', 1)
+            ->count();
+
+        $data = $dbTransaksi->getTransaksiAdditionals($customer->id, $pendingTransaksiIds, $rute_id, $filter_date, $tanggal_filter);
+
+        // $keranjang = Transaksi::getKeranjangTagihanData($customer->id)->count();
+        // $keranjang = $dbTransaksi->getTransaksiAdditionals($customer->id, $keranjangTransaksiIds, $rute_id, $filter_date, $tanggal_filter);
+        // dd($data);
+
+        $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
+
+        return view('billing.nota-tagihan.detail', [
+            'jenis' => $jenis,
+            'stringJenis' => $stringJenis,
+            'data' => $data,
+            'pendingTransaksiIds' => $pendingTransaksiIds,
+            'customer' => $customer,
+            'rute' => $rute,
+            'rute_id' => $rute_id,
+            'filter_date' => $req['filter_date'] ?? null,
+            'tanggal_filter' => $req['tanggal_filter'] ?? null,
+            'keranjang' => $keranjang,
+        ]);
+    }
+
+    public function nota_tagihan_detail_by_jenis_lanjut(Request $request, Customer $customer, $jenis)
+    {
+        $req = $request->validate([
+            'dpp' => 'required',
+        ]);
+
+        // Format nilai dpp ke angka
+        $dpp = str_replace('.', '', $req['dpp']);
+
+        // Pastikan field penentu di customer ditarik
+        $tagihan_dari = $customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
+
+        // Ambil data TransaksiAdditional beserta relasi transaksinya
+        $rekapJenis = TransaksiAdditional::with(['transaksi'])
+            ->where('jenis', $jenis)
+            ->where('customer_id', $customer->id)
+            ->where('status', 0)
+            ->get();
+
+        // 1. Kelompokkan data berdasarkan rute_id yang ada di relasi transaksi
+        $groupedByRute = $rekapJenis->groupBy('rute_id');
+
+        $totalKeseluruhan = 0;
+
+        // Opsional: array untuk menyimpan detail jika Anda ingin menampilkannya ke view nanti
+        $detailPerhitungan = [];
+
+        // 2. Lakukan looping pada masing-masing kelompok rute
+        foreach ($groupedByRute as $ruteId => $group) {
+
+            // 3. Ambil jarak dari baris pertama kelompok rute ini.
+            // Catatan: Jika field 'jarak' ada di tabel 'rute', panggil dengan $group->first()->transaksi->rute->jarak
+            // Di sini saya asumsikan field 'jarak' ada di tabel 'transaksi'
+            $jarak = $group->first()->jarak ?? 0;
+
+            // 4. Lakukan Sum (penjumlahan) dari relasi transaksi berdasarkan nilai $tagihan_dari
+            $sumMuatan = $group->sum(function ($item) use ($tagihan_dari) {
+                return $item->transaksi->{$tagihan_dari} ?? 0;
+            });
+
+            // 5. Rumus perhitungan untuk rute ini: (jarak * total_tonase * dpp)
+            $totalGroup = $jarak * $sumMuatan * $dpp;
+
+            // 6. Akumulasikan ke total keseluruhan
+            $totalKeseluruhan += $totalGroup;
+
+            // (Opsional) Simpan rincian perhitungan jika dibutuhkan
+            $detailPerhitungan[] = [
+                'rute_id' => $ruteId,
+                'jarak' => $jarak,
+                'total_muatan' => $sumMuatan,
+                'total_harga_rute' => $totalGroup
+            ];
+        }
+
+        $totalKeseluruhan = round($totalKeseluruhan);
+
+        $store = InvoiceAdditional::create([
+            'nominal' => $totalKeseluruhan,
+            'dpp' => $dpp,
+            'status' => 0,
+            'is_finished' => false,
+        ]);
+
+        $ids = $rekapJenis->pluck('id');
+        TransaksiAdditional::whereIn('id', $ids)->update(['status' => 1]);
+
+        $store->details()->createMany($rekapJenis->map(function ($item) {
+            return [
+                'transaksi_additional_id' => $item->id,
+                'transaksi_id' => $item->transaksi_id,
+                'jenis' => $item->jenis,
+            ];
+        })->toArray());
+
+        return redirect()->back()->with('success', 'Perhitungan berhasil disimpan dengan total nominal: Rp. ' . number_format($totalKeseluruhan, 0, ',', '.'));
+
+    }
+
+    public function nota_tagihan_detail_by_jenis_keranjang(Customer $customer, $jenis)
+    {
+        $db = new TransaksiAdditional;
+
+        $data = $db->with(['transaksi'])
+            ->where('customer_id', $customer->id)
+            ->where('jenis', $jenis)
+            ->where('status', 1)
+            ->get();
+
+        return view('billing.nota-tagihan.keranjang', [
+            'data' => $data,
+            'customer' => $customer,
+            'jenis' => $jenis,
+        ]);
     }
 }

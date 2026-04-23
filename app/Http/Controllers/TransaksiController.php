@@ -24,6 +24,7 @@ use App\Models\Pajak\PpnMasukan;
 use App\Services\StarSender;
 use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
+use App\Models\TransaksiAdditional;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -664,22 +665,140 @@ class TransaksiController extends Controller
     }
 
     // tagihan lanjut update jadi keranjang
+    // public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
+    // {
+    //     $data = $request->validate([
+    //         'selectedData' => 'required',
+    //     ]);
+
+    //     $data['selectedData'] = trim($data['selectedData'], ',');
+    //     $data['selectedData'] = explode(',', $data['selectedData']);
+
+    //     $keranjang = Transaksi::whereIn('id', $data['selectedData'])->update([
+    //         'keranjang' => 1,
+    //     ]);
+
+    //     $selectedData = Transaksi::whereIn('id', $data['selectedData'])->get();
+    //     $dataAdd = [];
+
+    //     foreach($selectedData as $d)
+    //     {
+    //         if ($customer->is_kompensasi_jr) {
+    //             $dataAdd = [ 'kompensasi_jr' => [
+    //                 'transaksi_id' => $d->id,
+    //                 'jenis' => 'kompensasi_jr',
+    //                 'vendor_id' => $d->kas_uang_jalan->vendor_id,
+    //                 'rute_id' => $d->kas_uang_jalan->rute_id,
+    //                 'jarak' => $d->kas_uang_jalan->rute->jarak,
+    //             ]];
+    //         }
+
+    //         if($customer->is_penyesuaian_bbm) {
+    //             $dataAdd = [ 'penyesuaian_bbm' => [
+    //                 'transaksi_id' => $d->id,
+    //                 'jenis' => 'penyesuaian_bbm',
+    //                 'vendor_id' => $d->kas_uang_jalan->vendor_id,
+    //                 'rute_id' => $d->kas_uang_jalan->rute_id,
+    //                 'jarak' => $d->kas_uang_jalan->rute->jarak,
+    //             ]];
+    //         }
+
+    //         if ($customer->is_achievement)
+    //         {
+    //             $dataAdd = [ 'achievement' => [
+    //                 'transaksi_id' => $d->id,
+    //                 'jenis' => 'achievement',
+    //                 'vendor_id' => $d->kas_uang_jalan->vendor_id,
+    //                 'rute_id' => $d->kas_uang_jalan->rute_id,
+    //                 'jarak' => $d->kas_uang_jalan->rute->jarak,
+    //             ]];
+    //         }
+    //     }
+
+    //     TransaksiAdditional::upsert($dataAdd);
+
+
+    //     return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil memindahkan data ke Keranjang. Silahkan cek keranjang untuk validasi lanjutan!!');
+
+    // }
+
     public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
     {
+        // 1. Validasi
         $data = $request->validate([
-            'selectedData' => 'required',
+            'selectedData' => 'required|string',
         ]);
 
-        $data['selectedData'] = trim($data['selectedData'], ',');
-        $data['selectedData'] = explode(',', $data['selectedData']);
+        // 2. Membersihkan string dan mengubahnya menjadi array, filter data kosong
+        $selectedIds = array_filter(explode(',', trim($data['selectedData'], ',')));
 
-        $keranjang = Transaksi::whereIn('id', $data['selectedData'])->update([
-            'keranjang' => 1,
-        ]);
+        if (empty($selectedIds)) {
+            return back()->with('error', 'Tidak ada data yang dipilih.');
+        }
 
-        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil memindahkan data ke Keranjang. Silahkan cek keranjang untuk validasi lanjutan!!');
+        // 3. Gunakan DB Transaction untuk keamanan data
+        DB::beginTransaction();
 
+        try {
+            // 4. Update status keranjang
+            Transaksi::whereIn('id', $selectedIds)->update([
+                'keranjang' => 1,
+            ]);
 
+            // 5. Eager Loading relasi untuk menghindari N+1 Query problem
+            $selectedData = Transaksi::with('kas_uang_jalan.rute')
+                ->whereIn('id', $selectedIds)
+                ->get();
+
+            $dataAdd = [];
+
+            // 6. Evaluasi kondisi customer SEKALI di luar loop (Lebih efisien)
+            $activeJenis = [];
+            if ($customer->is_kompensasi_jr) $activeJenis[] = 'kompensasi_jr';
+            if ($customer->is_penyesuaian_bbm) $activeJenis[] = 'penyesuaian_bbm';
+            if ($customer->is_achievement) $activeJenis[] = 'achievement';
+
+            // 7. Bentuk array untuk insert jika ada jenis yang aktif
+            if (!empty($activeJenis)) {
+                foreach($selectedData as $d) {
+                    $kasUangJalan = $d->kas_uang_jalan;
+
+                    // Proteksi jika relasi kosong agar tidak error "Trying to get property of non-object"
+                    if (!$kasUangJalan || !$kasUangJalan->rute) continue;
+
+                    foreach ($activeJenis as $jenis) {
+                        $dataAdd[] = [ // Perhatikan penggunaan [] untuk append data
+                            'customer_id'   => $customer->id,
+                            'transaksi_id' => $d->id,
+                            'jenis'        => $jenis,
+                            'vendor_id'    => $kasUangJalan->vendor_id,
+                            'rute_id'      => $kasUangJalan->rute_id,
+                            'jarak'        => $kasUangJalan->rute->jarak,
+                        ];
+                    }
+                }
+            }
+
+            // 8. Eksekusi Upsert jika ada data
+            if (!empty($dataAdd)) {
+                TransaksiAdditional::upsert(
+                    $dataAdd,
+                    ['transaksi_id', 'jenis'], // Array kolom kombinasi yg bersifat Unique di DB
+                    ['vendor_id', 'rute_id', 'jarak'] // Kolom yang diupdate jika record sudah ada
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->route('transaksi.nota-tagihan', $customer)
+                ->with('success', 'Berhasil memindahkan data ke Keranjang. Silahkan cek keranjang untuk validasi lanjutan!!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Kembalikan error agar mudah di-debug jika terjadi masalah
+            return back()->with('error', 'Terjadi kesalahan saat memproses data: ' . $e->getMessage());
+        }
     }
 
     public function keranjang_tagihan(Request $request, Customer $customer)
@@ -844,14 +963,34 @@ class TransaksiController extends Controller
         return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
     }
 
-    public function keranjang_tagihan_delete(Customer $customer, Transaksi $transaksi)
+   public function keranjang_tagihan_delete(Customer $customer, Transaksi $transaksi)
     {
-        $transaksi->update([
-            'keranjang' => 0,
-        ]);
+        DB::beginTransaction();
 
-        return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)->with('success', 'Berhasil menghapus data!!');
+        try {
+            // 1. Keluarkan dari keranjang
+            $transaksi->update([
+                'keranjang' => 0,
+            ]);
 
+            // 2. Hapus data additional terkait
+            // Gunakan relasi jika sudah didefinisikan di Model Transaksi (misal nama relasinya: transaksi_additional)
+            // $transaksi->transaksi_additional()->delete();
+
+            // Atau tetap gunakan query builder jika relasi belum ada:
+            TransaksiAdditional::where('transaksi_id', $transaksi->id)->delete();
+
+            DB::commit();
+
+            return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)
+                ->with('success', 'Berhasil mengeluarkan data dari keranjang!!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Mengembalikan pesan error jika terjadi kegagalan sistem
+            return back()->with('error', 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage());
+        }
     }
 
     public function invoice_tagihan_detail_export(InvoiceTagihan $invoice, Customer $customer)

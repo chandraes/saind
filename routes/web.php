@@ -619,6 +619,13 @@ Route::group(['middleware' => ['auth']], function() {
 
             });
 
+            Route::prefix('nota-tagihan')->group(function(){
+                Route::get('/{customer}', [App\Http\Controllers\BillingController::class, 'nota_tagihan'])->name('billing.nota-tagihan');
+                Route::get('/{customer}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis'])->name('billing.nota-tagihan.detail-jenis');
+                Route::post('{customer}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_lanjut'])->name('billing.nota-tagihan.detail-jenis.lanjut');
+                Route::get('/{customer}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang'])->name('billing.nota-tagihan.detail-jenis.keranjang');
+            });
+
         });
 
         Route::prefix('transaksi')->group(function(){
