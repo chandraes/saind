@@ -13,4 +13,9 @@ class InvoiceAdditional extends Model
     {
         return $this->hasMany(InvoiceAdditionalDetail::class);
     }
+
+    public function getNfNominalAttribute()
+    {
+        return number_format($this->nominal, 0 ,',','.');
+    }
 }

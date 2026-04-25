@@ -19,6 +19,7 @@ use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BillingController extends Controller
 {
@@ -395,77 +396,81 @@ class BillingController extends Controller
             'dpp' => 'required',
         ]);
 
-        // Format nilai dpp ke angka
-        $dpp = str_replace('.', '', $req['dpp']);
-
-        // Pastikan field penentu di customer ditarik
+        // 1. Sanitasi input DPP & Penentuan kolom muatan
+        $dpp = (float) str_replace('.', '', $req['dpp']);
         $tagihan_dari = $customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
 
-        // Ambil data TransaksiAdditional beserta relasi transaksinya
-        $rekapJenis = TransaksiAdditional::with(['transaksi'])
+        // 2. Eager Loading untuk efisiensi
+        $rekapJenis = TransaksiAdditional::with('transaksi')
             ->where('jenis', $jenis)
             ->where('customer_id', $customer->id)
             ->where('status', 0)
             ->get();
 
-        // 1. Kelompokkan data berdasarkan rute_id yang ada di relasi transaksi
-        $groupedByRute = $rekapJenis->groupBy('rute_id');
-
-        $totalKeseluruhan = 0;
-
-        // Opsional: array untuk menyimpan detail jika Anda ingin menampilkannya ke view nanti
-        $detailPerhitungan = [];
-
-        // 2. Lakukan looping pada masing-masing kelompok rute
-        foreach ($groupedByRute as $ruteId => $group) {
-
-            // 3. Ambil jarak dari baris pertama kelompok rute ini.
-            // Catatan: Jika field 'jarak' ada di tabel 'rute', panggil dengan $group->first()->transaksi->rute->jarak
-            // Di sini saya asumsikan field 'jarak' ada di tabel 'transaksi'
-            $jarak = $group->first()->jarak ?? 0;
-
-            // 4. Lakukan Sum (penjumlahan) dari relasi transaksi berdasarkan nilai $tagihan_dari
-            $sumMuatan = $group->sum(function ($item) use ($tagihan_dari) {
-                return $item->transaksi->{$tagihan_dari} ?? 0;
-            });
-
-            // 5. Rumus perhitungan untuk rute ini: (jarak * total_tonase * dpp)
-            $totalGroup = $jarak * $sumMuatan * $dpp;
-
-            // 6. Akumulasikan ke total keseluruhan
-            $totalKeseluruhan += $totalGroup;
-
-            // (Opsional) Simpan rincian perhitungan jika dibutuhkan
-            $detailPerhitungan[] = [
-                'rute_id' => $ruteId,
-                'jarak' => $jarak,
-                'total_muatan' => $sumMuatan,
-                'total_harga_rute' => $totalGroup
-            ];
+        if ($rekapJenis->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada data transaksi yang tersedia.');
         }
+
+        // 3. Kalkulasi Total (dilakukan sebelum transaksi agar DB tidak terkunci terlalu lama)
+        $totalKeseluruhan = $rekapJenis->groupBy('rute_id')->reduce(function ($carry, $group) use ($tagihan_dari, $dpp) {
+            $jarak = $group->first()->jarak ?? 0;
+            $sumMuatan = $group->sum(fn($item) => $item->transaksi->{$tagihan_dari} ?? 0);
+            return $carry + ($jarak * $sumMuatan * $dpp);
+        }, 0);
 
         $totalKeseluruhan = round($totalKeseluruhan);
 
-        $store = InvoiceAdditional::create([
-            'nominal' => $totalKeseluruhan,
-            'dpp' => $dpp,
-            'status' => 0,
-            'is_finished' => false,
-        ]);
+        // 4. Mulai Transaksi Database
+        DB::beginTransaction();
 
-        $ids = $rekapJenis->pluck('id');
-        TransaksiAdditional::whereIn('id', $ids)->update(['status' => 1]);
+        try {
+            $invoice = InvoiceAdditional::where('customer_id', $customer->id)
+                ->where('jenis', $jenis)
+                ->where('status', 0)
+                ->lockForUpdate() // Mencegah race condition
+                ->first();
 
-        $store->details()->createMany($rekapJenis->map(function ($item) {
-            return [
+            if ($invoice) {
+                // Validasi kecocokan DPP
+                if ((float)$invoice->dpp !== $dpp) {
+                    // Lempar exception agar masuk ke blok catch (otomatis rollback)
+                    throw new \Exception('DPP berbeda dengan yang sudah ada di keranjang. Silahkan gunakan DPP yang sama / Selesaikan Transaksi Sebelumnya.');
+                }
+                $invoice->increment('nominal', $totalKeseluruhan);
+            } else {
+                // Buat Invoice baru
+                $invoice = InvoiceAdditional::create([
+                    'customer_id' => $customer->id,
+                    'jenis'       => $jenis,
+                    'nominal'     => $totalKeseluruhan,
+                    'dpp'         => $dpp,
+                    'status'      => 0,
+                    'is_finished' => false,
+                ]);
+            }
+
+            // 5. Simpan Detail Invoice (DRY: Cukup satu kali panggil)
+            $invoice->details()->createMany($rekapJenis->map(fn($item) => [
                 'transaksi_additional_id' => $item->id,
-                'transaksi_id' => $item->transaksi_id,
-                'jenis' => $item->jenis,
-            ];
-        })->toArray());
+                'transaksi_id'            => $item->transaksi_id,
+                'jenis'                   => $item->jenis,
+            ])->toArray());
 
-        return redirect()->back()->with('success', 'Perhitungan berhasil disimpan dengan total nominal: Rp. ' . number_format($totalKeseluruhan, 0, ',', '.'));
+            // 6. Update Status Transaksi Additional
+            TransaksiAdditional::whereIn('id', $rekapJenis->pluck('id'))->update(['status' => 1]);
 
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Perhitungan berhasil disimpan. Total: Rp ' . number_format($totalKeseluruhan, 0, ',', '.'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log error jika diperlukan untuk debugging dev
+            // Log::error("Gagal menyimpan nota tagihan detail: " . $e->getMessage());
+
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     public function nota_tagihan_detail_by_jenis_keranjang(Customer $customer, $jenis)
@@ -478,10 +483,53 @@ class BillingController extends Controller
             ->where('status', 1)
             ->get();
 
+
+
+        $invoice = InvoiceAdditional::where('customer_id', $customer->id)
+            ->where('jenis', $jenis)
+            ->where('status', 0)
+            ->first();
+
+        if (!$invoice) {
+            return redirect()->back()->with('error', 'Tidak ada data di keranjang untuk jenis ini. Silahkan tambahkan transaksi terlebih dahulu.');
+        }
+
+        $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
+
         return view('billing.nota-tagihan.keranjang', [
             'data' => $data,
             'customer' => $customer,
             'jenis' => $jenis,
+            'stringJenis' => $stringJenis,
+            'invoice' => $invoice,
         ]);
+    }
+
+    public function nota_tagihan_detail_by_jenis_keranjang_lanjut(Customer $customer, $jenis, InvoiceAdditional $invoice)
+    {
+        // Validasi bahwa invoice yang dimaksud benar-benar milik customer dan jenis yang sesuai
+        if ($invoice->customer_id !== $customer->id || $invoice->jenis !== $jenis || $invoice->status !== 0) {
+            return redirect()->back()->with('error', 'Invoice tidak valid untuk keranjang ini.');
+        }
+
+        $check = InvoiceAdditional::where('customer_id', $customer->id)
+            ->where('jenis', $jenis)
+            ->where('status', 1) // Pastikan ada transaksi di keranjang
+            ->where('is_finished', false) // Pastikan belum selesai
+            ->exists();
+
+        if ($check) {
+            return redirect()->back()->with('error', 'Terdapat komponen yang sudah di cut off dan belum di selesaikan. Silahkan selesaikan transaksi di keranjang HPP terlebih dahulu.');
+        }
+
+        $detailsId = $invoice->details()->pluck('transaksi_additional_id')->toArray();
+        // Update status invoice menjadi selesai
+        $invoice->update([
+            'status' => 1,
+        ]);
+
+        TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 2]);
+
+        return redirect()->route('billing.nota-tagihan.detail-jenis', ['customer' => $customer->id, 'jenis' => $jenis])->with('success', 'Transaksi berhasil diselesaikan dan dipindahkan dari keranjang.');
     }
 }

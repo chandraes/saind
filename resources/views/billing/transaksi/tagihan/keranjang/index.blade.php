@@ -8,10 +8,12 @@
     </div>
     @php
     // $selectedData = [];
-
-    $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
-    $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
-    $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
+    $kjr = $additionals['kompensasi_jr'] ? $additionals['kompensasi_jr']->nominal : 0;
+    $pbbm = $additionals['penyesuaian_bbm'] ? $additionals['penyesuaian_bbm']->nominal : 0;
+    $ach = $additionals['achievement'] ? $additionals['achievement']->nominal : 0;
+    $total_tagihan = $data ? ($data->sum('nominal_tagihan') + $kjr + $pbbm + $ach) : 0;
+    $ppn = $customer->ppn == 1 && $data ? $total_tagihan * 0.11 : 0;
+    $pph = $customer->pph == 1 && $data ? $total_tagihan * 0.02 : 0;
 
     $profit = $data->sum('profit');
     $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
@@ -259,125 +261,213 @@
 <hr>
 <div class="container mt-3 mb-3">
     @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-    <div class="card border-primary">
-        <div class="card-body">
-            <form action="{{route('transaksi.nota-tagihan.keranjang.lanjut', $customer)}}" method="post"
-                id="lanjutForm">
-                @csrf
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="total" class="form-label">Total Dpp</label>
-                            <input type="text" class="form-control" name="total" id="total"
-                                value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="penyesuaian" class="form-label">Penyesuaian BBM</label>
-                            <input type="text" class="form-control" name="penyesuaian" id="penyesuaian" required
-                                value="0" onkeyup="calculateTotal()" />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="penalty" class="form-label">Penalti</label>
-                            <input type="text" class="form-control" name="penalty" id="penalty" required value="0"
-                                onkeyup="calculateTotal()" />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="gt_dpp" class="form-label">Grand Total DPP</label>
-                            <input type="text" class="form-control" name="gt_dpp" id="gt_dpp"
-                                value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="ppn" class="form-label">Ppn</label>
-                            <input type="text" class="form-control" name="ppn" id="ppn"
-                                value="{{number_format($ppn, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="Pph" class="form-label">Pph</label>
-                            <input type="text" class="form-control" name="pph" id="pph"
-                                value="{{number_format($pph, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="tagi" class="form-label"><strong>Total Tagihan</strong></label>
-                            <input type="text" class="form-control" name="tagi" id="tagi"
-                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="ppn" class="form-label">Ppn Disetor Oleh</label>
-                            <select name="ppn_dipungut" id="ppn_dipungut" class="form-select" required
-                                onchange="calculateTotal()">
-                                <option value="">-- Pilih Salah Satu --</option>
-                                <option value="1">Sendiri</option>
-                                <option value="0">Customer</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="penalty" class="form-label">Charges</label>
-                            <input type="text" class="form-control" name="penalty_akhir" id="penalty_akhir" required
-                                value="0" onkeyup="calculateTotal()" />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="tagi" class="form-label"><strong>Grand Total Tagihan</strong></label>
-                            <input type="text" class="form-control" name="tagi_akhir" id="tagi_akhir"
-                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
-                        </div>
+    <div class="card shadow-sm border-primary">
+    <div class="card-header bg-primary text-white d-flex align-items-center py-3">
+        <h5 class="card-title mb-0"><i class="fa fa-file-archive-o me-2"></i> Rincian Nota Tagihan</h5>
+    </div>
+
+    <div class="card-body p-4">
+        <form action="{{route('transaksi.nota-tagihan.keranjang.lanjut', $customer)}}" method="post" id="lanjutForm">
+            @csrf
+
+            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+                <i class="fa fa-list me-1"></i> Komponen Dasar (DPP)
+            </h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="total" class="form-label small text-muted mb-1">Total DPP</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted">Rp</span>
+                        <input type="text" class="form-control bg-light fw-bold" name="total" id="total"
+                            value="{{number_format($data->sum('nominal_tagihan'), 0, ',', '.')}}" disabled />
                     </div>
                 </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="tanggal_hardcopy" class="form-label">Tanggal Submit Hardcopy</label>
-                            <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy"
-                                value="{{old('tanggal_hardcopy')}}" required>
-                        </div>
+               <div class="col-md-3">
+                    <label for="komp_jr" class="form-label small text-muted mb-1">Kompensasi Jalan Rusak</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted border-end-0">Rp</span>
+                        <input type="text" class="form-control bg-light border-start-0" name="komp_jr" id="komp_jr"
+                            value="{{ $additionals['kompensasi_jr'] ? $additionals['kompensasi_jr']->nf_nominal : 0 }}" disabled />
+
+                        @if($additionals['kompensasi_jr'])
+                            <a href="{{ route('transaksi.nota-tagihan.keranjang.detail-jenis', ['customer' => $customer->id, 'invoiceAdditional' => $additionals['kompensasi_jr']->id]) }}"
+                            class="btn btn-outline-primary"
+                            title="Lihat Detail">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                        @endif
                     </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="estimasi_pembayaran" class="form-label">Estimasi Pembayaran</label>
-                            <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran"
-                                value="{{old('estimasi_pembayaran')}}" required>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="no_resi" class="form-label">Nomor Resi</label>
-                            <input type="text" class="form-control" name="no_resi" id="no_resi"
-                                value="{{old('no_resi')}}" required />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="no_validasi" class="form-label">Nomor Validasi</label>
-                            <input type="text" class="form-control" name="no_validasi" id="no_validasi"
-                                value="{{old('no_validasi')}}" required />
-                        </div>
-                    </div>
-                </div>
-                <div class="row px-5 mt-3">
-                    <button class="btn btn-primary me-md-3" type="submit">Lanjutkan Pilihan</button>
                 </div>
 
-            </form>
-        </div>
+                <div class="col-md-3">
+                    <label for="penye_bbm" class="form-label small text-muted mb-1">Penyesuaian BBM</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted border-end-0">Rp</span>
+                        <input type="text" class="form-control bg-light border-start-0" name="penye_bbm" id="penye_bbm"
+                            value="{{ $additionals['penyesuaian_bbm'] ? $additionals['penyesuaian_bbm']->nf_nominal : 0 }}" disabled />
+
+                        @if($additionals['penyesuaian_bbm'])
+                            <a href="{{ route('transaksi.nota-tagihan.keranjang.detail-jenis', ['customer' => $customer->id, 'invoiceAdditional' => $additionals['penyesuaian_bbm']->id]) }}"
+                            class="btn btn-outline-primary"
+                            title="Lihat Detail">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="achieve" class="form-label small text-muted mb-1">Achievement</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted border-end-0">Rp</span>
+                        <input type="text" class="form-control bg-light border-start-0" name="achieve" id="achieve"
+                            value="{{ $additionals['achievement'] ? $additionals['achievement']->nf_nominal : 0 }}" disabled />
+
+                        @if($additionals['achievement'])
+                            <a href="{{ route('transaksi.nota-tagihan.keranjang.detail-jenis', ['customer' => $customer->id, 'invoiceAdditional' => $additionals['achievement']->id]) }}"
+                            class="btn btn-outline-primary"
+                            title="Lihat Detail">
+                                <i class="fa fa-eye"></i>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2 mt-4">
+                <i class="fa fa-sliders-h me-1"></i> Input Penyesuaian & Info Pajak
+            </h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label for="penyesuaian" class="form-label fw-semibold text-primary mb-1">Penyesuaian (+/-)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">Rp</span>
+                        <input type="text" class="form-control border-primary" name="penyesuaian" id="penyesuaian"
+                            required value="0" onkeyup="calculateTotal()" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="penalty" class="form-label fw-semibold text-danger mb-1">Penalti (-)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-danger text-white border-danger">Rp</span>
+                        <input type="text" class="form-control border-danger" name="penalty" id="penalty"
+                            required value="0" onkeyup="calculateTotal()" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="gt_dpp" class="form-label small text-muted mb-1">Grand Total DPP</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted">Rp</span>
+                        <input type="text" class="form-control bg-light fw-bold" name="gt_dpp" id="gt_dpp"
+                            value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="ppn" class="form-label small text-muted mb-1">PPN</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted">Rp</span>
+                        <input type="text" class="form-control bg-light" name="ppn" id="ppn"
+                            value="{{number_format($ppn, 0, ',', '.')}}" disabled />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label for="pph" class="form-label small text-muted mb-1">PPH</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted">Rp</span>
+                        <input type="text" class="form-control bg-light" name="pph" id="pph"
+                            value="{{number_format($pph, 0, ',', '.')}}" disabled />
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-light rounded border border-secondary-subtle mb-4 mt-4">
+                <h6 class="text-dark fw-bold mb-3"><i class="fa fa-calculator me-1"></i> Kalkulasi Akhir Tagihan</h6>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="tagi" class="form-label small text-muted mb-1">Total Tagihan Awal</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-secondary-subtle">Rp</span>
+                            <input type="text" class="form-control bg-white border-secondary-subtle" name="tagi" id="tagi"
+                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="ppn_dipungut" class="form-label fw-semibold mb-1">PPN Disetor Oleh <span class="text-danger">*</span></label>
+                        <select name="ppn_dipungut" id="ppn_dipungut" class="form-select border-primary" required
+                            onchange="calculateTotal()">
+                            <option value="">-- Pilih Salah Satu --</option>
+                            <option value="1">Sendiri</option>
+                            <option value="0">Customer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="penalty_akhir" class="form-label fw-semibold text-warning mb-1">Charges Tambahan</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-warning text-dark border-warning">Rp</span>
+                            <input type="text" class="form-control border-warning" name="penalty_akhir" id="penalty_akhir"
+                                required value="0" onkeyup="calculateTotal()" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tagi_akhir" class="form-label fw-bold text-success mb-1">GRAND TOTAL TAGIHAN</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-success text-white border-success">Rp</span>
+                            <input type="text" class="form-control bg-success-subtle text-success fw-bold border-success" name="tagi_akhir" id="tagi_akhir"
+                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2 mt-4">
+                <i class="fa fa-file-signature me-1"></i> Informasi Pengiriman & Dokumen
+            </h6>
+            <div class="row g-3 mb-2">
+                <div class="col-md-3">
+                    <label for="tanggal_hardcopy" class="form-label fw-semibold mb-1">Tgl Submit <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-calendar"></i></span>
+                        <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy"
+                            value="{{old('tanggal_hardcopy')}}" required placeholder="Pilih Tanggal">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="estimasi_pembayaran" class="form-label fw-semibold mb-1">Est. Pembayaran <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-clock-o"></i></span>
+                        <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran"
+                            value="{{old('estimasi_pembayaran')}}" required placeholder="Estimasi">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="no_resi" class="form-label fw-semibold mb-1">Nomor Resi <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-file-o"></i></span>
+                        <input type="text" class="form-control" name="no_resi" id="no_resi"
+                            value="{{old('no_resi')}}" required placeholder="Masukkan Resi" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="no_validasi" class="form-label fw-semibold mb-1">Nomor Validasi <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-check-circle"></i></span>
+                        <input type="text" class="form-control" name="no_validasi" id="no_validasi"
+                            value="{{old('no_validasi')}}" required placeholder="Masukkan Validasi" />
+                    </div>
+                </div>
+            </div>
+
+            <hr class="text-muted mt-5">
+
+            <div class="d-flex justify-content-end mt-4">
+                <button class="btn btn-primary px-5" type="submit">
+                    <i class="fa fa-save me-2"></i> Lanjutkan Pilihan
+                </button>
+            </div>
+
+        </form>
     </div>
+</div>
     @endif
 </div>
 
@@ -386,6 +476,15 @@
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 <link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
 <link rel="stylesheet" href="{{asset('assets/js/dt/dt-button.css')}}">
+<style>
+    .input-group .btn-outline-primary {
+        border-color: #dee2e6; /* Menyamakan warna border dengan input */
+    }
+    .input-group .btn-outline-primary:hover {
+        background-color: #0d6efd;
+        color: white;
+    }
+</style>
 @endpush
 @push('js')
 <script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
@@ -402,13 +501,16 @@
         var settingCustomerPph = {{$customer->pph}};
 
         var total = parseFloat($('#total').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var komp_jr = parseFloat($('#komp_jr').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var penye_bbm = parseFloat($('#penye_bbm').val().replace(/\./g, '').replace(',', '.')) || 0;
+        var achieve = parseFloat($('#achieve').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penyesuaian = parseFloat($('#penyesuaian').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penalty = parseFloat($('#penalty').val().replace(/\./g, '').replace(',', '.')) || 0;
         var penalty_akhir = parseFloat($('#penalty_akhir').val().replace(/\./g, '').replace(',', '.')) || 0;
 
         var dipungut = $('#ppn_dipungut').val() || 1;
 
-        var grandTotal = total + penyesuaian - penalty;
+        var grandTotal = total + komp_jr + penye_bbm + achieve + penyesuaian - penalty;
 
         $('#gt_dpp').val(grandTotal.toLocaleString('id-ID'));
 
@@ -444,6 +546,14 @@
                 numeralDecimalMark: ',',
                 delimiter: '.'
             });
+
+              var penalty_akhir = new Cleave('#penalty_akhir', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
+
 
             var penalty = new Cleave('#penalty', {
                 numeral: true,

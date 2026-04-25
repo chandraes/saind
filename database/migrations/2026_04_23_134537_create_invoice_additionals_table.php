@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('invoice_additionals', function (Blueprint $table) {
             $table->id();
-            $table->integer('status')->default(0)->comment("0: active, 1: selesai");
+            $table->integer('status')->default(0)->comment("0: keranjang, 1: active");
             $table->integer('dpp');
             $table->bigInteger('nominal');
             $table->boolean('is_finished')->default(false);
