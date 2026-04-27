@@ -367,6 +367,7 @@ Route::group(['middleware' => ['auth']], function() {
             });
         });
 
+
         Route::prefix('transaksi')->group(function(){
             Route::get('/nota-muat', [App\Http\Controllers\TransaksiController::class, 'nota_muat'])->name('transaksi.nota-muat');
             Route::patch('/nota-muat/update/{transaksi}', [App\Http\Controllers\TransaksiController::class, 'nota_muat_update'])->name('transaksi.nota-muat.update');
@@ -387,6 +388,7 @@ Route::group(['middleware' => ['auth']], function() {
                     Route::get('/{customer}/export', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_export'])->name('transaksi.nota-tagihan.keranjang.export');
                     Route::post('/{customer}/{transaksi}/delete', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_delete'])->name('transaksi.nota-tagihan.keranjang.delete');
                     Route::get('/{customer}/{invoiceAdditional}/detail', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_detail'])->name('transaksi.nota-tagihan.keranjang.detail-jenis');
+                    Route::post('/{customer}/{invoiceAdditional}/back', [App\Http\Controllers\TransaksiController::class, 'keranjang_tagihan_detail_back'])->name('transaksi.nota-tagihan.keranjang.detail-jenis.back');
                 });
 
             });
@@ -626,6 +628,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('{customer}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_lanjut'])->name('billing.nota-tagihan.detail-jenis.lanjut');
                 Route::get('/{customer}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang'])->name('billing.nota-tagihan.detail-jenis.keranjang');
                 Route::post('{customer}/{jenis}/keranjang/{invoice}/lanjut', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-tagihan.detail-jenis.keranjang.lanjut');
+                Route::post('{customer}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_back'])->name('billing.nota-tagihan.detail-jenis.keranjang.back');
             });
 
         });

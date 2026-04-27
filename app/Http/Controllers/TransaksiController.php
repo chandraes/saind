@@ -1090,6 +1090,49 @@ class TransaksiController extends Controller
         ]);
     }
 
+    public function keranjang_tagihan_detail_back(Customer $customer, InvoiceAdditional $invoiceAdditional)
+    {
+        $stringJenis = TransaksiAdditional::JENIS[$invoiceAdditional->jenis] ?? $invoiceAdditional->jenis;
+
+        // OPTIMASI 1: Gunakan exists() karena kita hanya butuh nilai boolean (true/false)
+        $hasPendingCart = InvoiceAdditional::where('jenis', $invoiceAdditional->jenis)
+            ->where('customer_id', $customer->id)
+            ->where('status', 0)
+            ->where('is_finished', 0)
+            ->exists();
+
+        if ($hasPendingCart) {
+            return redirect()->back()->with('error', 'Terdapat data keranjang pada '. $stringJenis.'. Silahkan hapus keranjang tersebut terlebih dahulu!!');
+        }
+
+        // Load relasi detail
+        $invoiceAdditional->load('details');
+        $dataIds = $invoiceAdditional->details->pluck('transaksi_additional_id')->toArray();
+
+        // OPTIMASI 2: Gunakan Transaction agar jika salah satu gagal, semua di-rollback (dibatalkan)
+        try {
+            DB::beginTransaction();
+
+            $invoiceAdditional->update([
+                'status' => 0
+            ]);
+
+            // OPTIMASI 3: Hanya jalankan query update jika array $dataIds tidak kosong
+            if (!empty($dataIds)) {
+                TransaksiAdditional::whereIn('id', $dataIds)->update([
+                    'status' => 1,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $th->getMessage());
+        }
+
+        return redirect()->route('transaksi.nota-tagihan.keranjang', ['customer' => $customer])->with('success', 'Berhasil mengembalikan data '. $stringJenis .' ke keranjang!!');
+    }
+
     public function invoice_tagihan_detail_export(InvoiceTagihan $invoice, Customer $customer)
     {
         $data = $invoice->invoice_tagihan_detail;

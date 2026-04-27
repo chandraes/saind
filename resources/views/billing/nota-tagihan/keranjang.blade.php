@@ -222,148 +222,40 @@
 
 
 </div>
-<div class="container mt-3 mb-3">
-    <form id="lanjutForm" action="{{route('billing.nota-tagihan.detail-jenis.keranjang.lanjut', ['customer' => $customer->id, 'jenis' => $jenis, 'invoice' => $invoice->id])}}" method="post">
-    @csrf
+<div class="container mt-4 mb-5">
+    <div class="p-4 bg-light rounded border border-secondary-subtle shadow-sm">
         <div class="row g-3 align-items-end">
-        <div class="col-md-8">
-            <label for="nominal" class="form-label fw-bold text-secondary">
-                Total {{ $stringJenis }}
-            </label>
-            <div class="input-group">
-                <span class="input-group-text bg-light">Rp</span>
-                <input type="text" id="nominal" class="form-control bg-white" value="{{ $invoice->nf_nominal }}"
-                    readonly>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <button type="submit" class="btn btn-primary w-100 shadow-sm">
-                <i class="bi bi-arrow-right-circle me-1"></i> Lanjutkan
-            </button>
-        </div>
-        </form>
-    </div>
-    @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-    {{-- <div class="card border-primary">
-        <div class="card-body">
-            <form action="{{route('transaksi.nota-tagihan.keranjang.lanjut', $customer)}}" method="post"
-                id="lanjutForm">
-                @csrf
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="total" class="form-label">Total Dpp</label>
-                            <input type="text" class="form-control" name="total" id="total"
-                                value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="penyesuaian" class="form-label">Penyesuaian BBM</label>
-                            <input type="text" class="form-control" name="penyesuaian" id="penyesuaian" required
-                                value="0" onkeyup="calculateTotal()" />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="penalty" class="form-label">Penalti</label>
-                            <input type="text" class="form-control" name="penalty" id="penalty" required value="0"
-                                onkeyup="calculateTotal()" />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="gt_dpp" class="form-label">Grand Total DPP</label>
-                            <input type="text" class="form-control" name="gt_dpp" id="gt_dpp"
-                                value="{{number_format($total_tagihan, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="ppn" class="form-label">Ppn</label>
-                            <input type="text" class="form-control" name="ppn" id="ppn"
-                                value="{{number_format($ppn, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="Pph" class="form-label">Pph</label>
-                            <input type="text" class="form-control" name="pph" id="pph"
-                                value="{{number_format($pph, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="tagi" class="form-label"><strong>Total Tagihan</strong></label>
-                            <input type="text" class="form-control" name="tagi" id="tagi"
-                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="ppn" class="form-label">Ppn Disetor Oleh</label>
-                            <select name="ppn_dipungut" id="ppn_dipungut" class="form-select" required
-                                onchange="calculateTotal()">
-                                <option value="">-- Pilih Salah Satu --</option>
-                                <option value="1">Sendiri</option>
-                                <option value="0">Customer</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="penalty" class="form-label">Charges</label>
-                            <input type="text" class="form-control" name="penalty_akhir" id="penalty_akhir" required
-                                value="0" onkeyup="calculateTotal()" />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="tagi" class="form-label"><strong>Grand Total Tagihan</strong></label>
-                            <input type="text" class="form-control" name="tagi_akhir" id="tagi_akhir"
-                                value="{{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}" disabled />
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="tanggal_hardcopy" class="form-label">Tanggal Submit Hardcopy</label>
-                            <input type="text" class="form-control" name="tanggal_hardcopy" id="tanggal_hardcopy"
-                                value="{{old('tanggal_hardcopy')}}" required>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="estimasi_pembayaran" class="form-label">Estimasi Pembayaran</label>
-                            <input type="text" class="form-control" name="estimasi_pembayaran" id="estimasi_pembayaran"
-                                value="{{old('estimasi_pembayaran')}}" required>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="no_resi" class="form-label">Nomor Resi</label>
-                            <input type="text" class="form-control" name="no_resi" id="no_resi"
-                                value="{{old('no_resi')}}" required />
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="mb-3">
-                            <label for="no_validasi" class="form-label">Nomor Validasi</label>
-                            <input type="text" class="form-control" name="no_validasi" id="no_validasi"
-                                value="{{old('no_validasi')}}" required />
-                        </div>
-                    </div>
-                </div>
-                <div class="row px-5 mt-3">
-                    <button class="btn btn-primary me-md-3" type="submit">Lanjutkan Pilihan</button>
-                </div>
 
-            </form>
+            <div class="col-md-6">
+                <label for="nominal" class="form-label fw-bold text-secondary mb-1">
+                    Total {{ $stringJenis }}
+                </label>
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white border-secondary-subtle text-muted">Rp</span>
+                    <input type="text" id="nominal" class="form-control bg-white border-secondary-subtle fw-bold text-dark" value="{{ $invoice->nf_nominal }}" readonly>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <form action="{{route('billing.nota-tagihan.detail-jenis.keranjang.back', ['customer' => $customer->id, 'jenis' => $jenis, 'invoice' => $invoice->id])}}" method="post" id="backForm">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger btn-lg w-100 shadow-sm fw-semibold">
+                        <i class="fa fa-undo me-2"></i> Kembalikan
+                    </button>
+                </form>
+            </div>
+
+            <div class="col-md-3">
+                <form id="lanjutForm" action="{{route('billing.nota-tagihan.detail-jenis.keranjang.lanjut', ['customer' => $customer->id, 'jenis' => $jenis, 'invoice' => $invoice->id])}}" method="post">
+                    @csrf
+                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm fw-semibold">
+                        Lanjutkan <i class="fa fa-arrow-right ms-2"></i>
+                    </button>
+                </form>
+            </div>
+
         </div>
-    </div> --}}
-    @endif
+    </div>
 </div>
 
 @endsection
@@ -524,6 +416,23 @@
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#spinner').show();
+                    this.submit();
+                }
+            })
+        });
+
+        $('#backForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin untuk mengembalikan semua transaksi ini ke tahap sebelumnya?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, lanjutkan!'
                 }).then((result) => {
                 if (result.isConfirmed) {
                     $('#spinner').show();

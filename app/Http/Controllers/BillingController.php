@@ -532,4 +532,16 @@ class BillingController extends Controller
 
         return redirect()->route('billing.nota-tagihan.detail-jenis', ['customer' => $customer->id, 'jenis' => $jenis])->with('success', 'Transaksi berhasil diselesaikan dan dipindahkan dari keranjang.');
     }
+
+    public function nota_tagihan_detail_by_jenis_keranjang_back(Customer $customer, $jenis, InvoiceAdditional $invoice)
+    {
+
+        $detailsId = $invoice->details()->pluck('transaksi_additional_id')->toArray();
+
+        TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 0]);
+
+        $invoice->delete();
+
+        return redirect()->route('billing.nota-tagihan.detail-jenis', ['customer' => $customer->id, 'jenis' => $jenis])->with('success', 'Transaksi berhasil dikembalikan ke tahap sebelumnya.');
+    }
 }

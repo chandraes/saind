@@ -38,7 +38,7 @@
             <img src="{{asset('images/billing.svg')}}" alt="dokumen" width="28" class="me-1"> Billing
         </a>
         @endif
-        <a href="{{url()->previous()}}" class="text-decoration-none text-dark fw-semibold hover-primary">
+        <a href="{{route('transaksi.nota-tagihan.keranjang', ['customer' => $customer->id])}}" class="text-decoration-none text-dark fw-semibold hover-primary">
             <img src="{{asset('images/back.svg')}}" alt="kembali" width="28" class="me-1"> Kembali
         </a>
     </div>
@@ -171,7 +171,7 @@
 
 <div class="container mt-4 mb-5">
     {{-- Sesuaikan Route di bawah ini dengan Route aslinya untuk fungsi kembalikan --}}
-    <form action="{{ route('home') }}" method="POST" id="lanjutForm">
+    <form action="{{ route('transaksi.nota-tagihan.keranjang.detail-jenis.back', ['customer' => $customer->id, 'invoiceAdditional' => $data->id]) }}" method="POST" id="lanjutForm">
         @csrf
         <div class="row g-3 align-items-end p-4 bg-light rounded border border-secondary-subtle shadow-sm">
             <div class="col-md-8">
