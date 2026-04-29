@@ -715,6 +715,30 @@ class BillingController extends Controller
         // 1. Sanitasi input DPP
         $dpp = (float) str_replace(['.', ','], ['', '.'], $req['dpp']);
 
+        $rekapJenis = TransaksiAdditional::with(['transaksi', 'customer'])
+            ->where('jenis', $jenis)
+            ->where('vendor_id', $vendor->id)
+            ->where('status', 3)
+            ->get();
+
+        $rekapIds = $rekapJenis->pluck('id');
+
+        $maxDpp = null;
+        if ($rekapIds->isNotEmpty()) {
+            $maxDpp = InvoiceAdditional::whereHas('details', function($query) use ($rekapIds) {
+                        $query->whereIn('transaksi_additional_id', $rekapIds);
+                    })->max('dpp');
+        }
+
+        // 4. Validasi DPP Input terhadap Max DPP dari Database
+        if (!is_null($maxDpp)) {
+            // Gunakan (float) untuk memastikan perbandingan angka presisi
+            if ($dpp > (float) $maxDpp) {
+                return redirect()->back()
+                    ->withInput() // Agar user tidak perlu mengetik ulang nominal jika gagal
+                    ->with('error', 'DPP vendor (Rp '.number_format($dpp, 0, ',', '.').') tidak boleh lebih besar dari DPP tagihan (Rp '.number_format($maxDpp, 0, ',', '.').')!');
+            }
+        }
         // 2. Mulai Transaksi Database LEbih AWAL (untuk lock yang efektif)
         DB::beginTransaction();
 
@@ -727,11 +751,6 @@ class BillingController extends Controller
                 ->first();
 
             // 4. Ambil data transaksi
-            $rekapJenis = TransaksiAdditional::with(['transaksi', 'customer'])
-                ->where('jenis', $jenis)
-                ->where('vendor_id', $vendor->id)
-                ->where('status', 3)
-                ->get();
 
             if ($rekapJenis->isEmpty()) {
                 DB::rollBack();
