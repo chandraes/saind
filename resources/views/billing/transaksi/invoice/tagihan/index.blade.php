@@ -38,7 +38,7 @@
                 <th class="text-center align-middle">Tanggal</th>
                 <th class="text-center align-middle">Tambang</th>
                 <th class="text-center align-middle">Invoice</th>
-                <th class="text-center align-middle">DPP</th>
+                <th class="text-center align-middle">HPP</th>
                 <th class="text-center align-middle">Kompensasi<br>Jalan Rusak</th>
                 <th class="text-center align-middle">Penyesuaian BBM</th>
                 <th class="text-center align-middle">Achievement</th>

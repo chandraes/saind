@@ -13,23 +13,6 @@
         </div>
     </div>
     @include('swal')
-    {{-- if errors has any --}}
-    @if ($errors->any())
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Whoops!</strong> Ada kesalahan saat input data, yaitu:
-                <ul>
-                    @foreach ($errors->all() as $error)
-                    <li><strong>{{$error}}</strong></li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    </div>
-    @endif
-
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-12">
             <table class="table">
@@ -107,10 +90,6 @@
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
                     align-middle">Selisih (%)</th>
                 @endif
-                {{-- <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
-                    align-middle">Tagihan</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center
-                    align-middle">Action</th> --}}
             </tr>
             @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1)
             <tr>
@@ -139,15 +118,7 @@
                     ({{$d->kas_uang_jalan->created_at->format('H:i:s')}})
                 </td>
                 <td class="align-middle">
-                    <div class="text-center">
-                        {{-- <a href="#" data-bs-toggle="modal" data-bs-target="#uj{{$d->id}}">
-                            <strong>UJ{{sprintf("%02d",
-                                $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a> --}}
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#showModal" onclick="updateShow({{$d}})">
-                            <strong>UJ{{sprintf("%02d",
-                                $d->kas_uang_jalan->nomor_uang_jalan)}}</strong></a>
-                    </div>
-                    {{-- @include('billing.transaksi.tagihan.show') --}}
+                     UJ{{sprintf("%02d", $d->kas_uang_jalan->nomor_uang_jalan)}}
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
@@ -184,44 +155,59 @@
                 <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2,
                     ',','.')}}</td>
                 @endif
-                {{-- <td class="text-end align-middle">
-                    @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
-                    {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
-                    @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
-                    {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
-                    @endif
-                </td>
-                <td class="text-center align-middle">
-                    <form
-                        action="{{route('transaksi.nota-tagihan.keranjang.delete', ['customer' => $customer->id, 'transaksi' => $d->id])}}"
-                        method="post" id="masukForm{{$d->id}}">
-                        @csrf
-                        <button type="submit" class="btn btn-danger btn-sm">
-                            <i class="fa fa-trash"></i>
-                        </button>
-                    </form>
-                </td> --}}
-            </tr>
 
+            </tr>
             @endforeach
         </tbody>
-        {{-- <tfoot>
-            <tr>
-                <td class=""
-                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
-                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
 
-                </td>
-                <td class="text-center align-middle"><strong>Total Dpp</strong></td>
-                <td class="text-end align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
-                </td>
-                <td></td>
-            </tr>
-        </tfoot> --}}
     </table>
 
 
 </div>
+<div class="container mt-4">
+    <div class="card shadow-sm border-secondary-subtle">
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="fa fa-calculator me-2"></i> Ringkasan Perhitungan Per Rute
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">No</th>
+                            <th>Nama Rute</th>
+                            <th class="text-center">Jarak (Km)</th>
+                            <th class="text-center">Total Muatan</th>
+                            <th class="text-center">Harga (DPP)</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $no = 1; @endphp
+                        @foreach ($ruteGrouped as $namaRute => $item)
+                        <tr>
+                            <td class="text-center">{{ $no++ }}</td>
+                            <td class="fw-bold">{{ $namaRute }}</td>
+                            <td class="text-center">{{ $item['jarak'] }}</td>
+                            <td class="text-center">{{ number_format($item['total_muatan'], 2, ',', '.') }}</td>
+                            <td class="text-center">Rp {{ number_format($item['dpp'], 0, ',', '.') }}</td>
+                            <td class="text-end fw-bold">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="5" class="text-end">Total  :</td>
+                            <td class="text-end text-primary">Rp {{ number_format($ruteGrouped->sum('subtotal'), 0, ',', '.') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@if (in_array(auth()->user()->role, ['admin', 'su']))
+
 <div class="container mt-4 mb-5">
     <div class="p-4 bg-light rounded border border-secondary-subtle shadow-sm">
         <div class="row g-3 align-items-end">
@@ -258,6 +244,9 @@
     </div>
 </div>
 
+@endif
+
+
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
@@ -274,13 +263,6 @@
 
 <script>
     $(document).ready(function() {
-        var role = "{{auth()->user()->role}}";
-        if (role =='admin' || role =='su') {
-
-
-
-
-        }
 
         $('#spinner').show();
 
@@ -440,8 +422,5 @@
                 }
             })
         });
-
-
-
 </script>
 @endpush

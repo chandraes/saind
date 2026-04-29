@@ -22,7 +22,7 @@ return new class extends Migration
             $table->index(['jenis','vendor_id'], 'jenis_vendor_index');
             $table->unique(['transaksi_id', 'jenis'], 'transaksi_jenis_unique');
             $table->index('jenis', 'jenis_index');
-            $table->integer('status')->default(0)->comment("0: checklist, 1: keranjang, 2: selesai");
+            $table->integer('status')->default(0)->comment("0: checklist, 1: keranjang, 2: selesai, 3: cutoff");
             $table->timestamps();
         });
     }

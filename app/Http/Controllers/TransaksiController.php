@@ -879,7 +879,8 @@ class TransaksiController extends Controller
         // Ambil Data Relasi
         $tagihan = Transaksi::getKeranjangTagihanData($customer->id);
 
-        $additionalsData = InvoiceAdditional::where('customer_id', $customer->id)
+        $additionalsData = InvoiceAdditional::with('details')
+            ->where('customer_id', $customer->id)
             ->where('status', 1)
             ->where('is_finished', 0)
             ->whereIn('jenis', ['kompensasi_jr', 'penyesuaian_bbm', 'achievement'])
@@ -938,10 +939,25 @@ class TransaksiController extends Controller
             // 1. Buat Invoice
             $invoice = InvoiceTagihan::create($data);
 
-            // 2. Update Additionals (Tanpa perlu dipanggil ulang dari database)
-            if ($additionals['kompensasi_jr']) $additionals['kompensasi_jr']->update(['is_finished' => true]);
-            if ($additionals['penyesuaian_bbm']) $additionals['penyesuaian_bbm']->update(['is_finished' => true]);
-            if ($additionals['achievement']) $additionals['achievement']->update(['is_finished' => true]);
+            $allTransaksiAdditionalIds = []; // Array penampung semua ID
+
+            $jenisAdditionals = ['kompensasi_jr', 'penyesuaian_bbm', 'achievement'];
+
+            foreach ($jenisAdditionals as $jenis) {
+                if (!empty($additionals[$jenis])) {
+                    // Kumpulkan semua ID transaksi_additional dari relasi details
+                    $ids = $additionals[$jenis]->details->pluck('transaksi_additional_id')->toArray();
+                    $allTransaksiAdditionalIds = array_merge($allTransaksiAdditionalIds, $ids);
+
+                    // Update is_finished pada InvoiceAdditional
+                    $additionals[$jenis]->update(['is_finished' => true]);
+                }
+            }
+
+            // Lakukan 1x Update saja untuk semua status TransaksiAdditional
+            if (!empty($allTransaksiAdditionalIds)) {
+                TransaksiAdditional::whereIn('id', $allTransaksiAdditionalIds)->update(['status' => 3]);
+            }
 
             // 3. Catat PPN & PPh jika ada
             if ($ppn > 0) {
@@ -1149,11 +1165,10 @@ class TransaksiController extends Controller
         return $pdf->stream('Invoice Tagihan '.$invoice->customer->singkatan.'.pdf');
     }
 
-    public function nota_bayar(Request $request)
+    public function nota_bayar(Vendor $vendor)
     {
-        $vendorId = $request->vendor_id;
-        $vendor = Vendor::find($vendorId);
-        $data = Transaksi::getNotaBayar($vendorId);
+
+        $data = Transaksi::getNotaBayar($vendor->id);
 
         return view('billing.transaksi.bayar.index', [
             'data' => $data,
@@ -1270,7 +1285,7 @@ class TransaksiController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data!!');
         }
 
-        return redirect()->route('transaksi.nota-bayar', ['vendor_id' =>$vendor])->with('success', 'Berhasil menyimpan data!!');
+        return redirect()->route('transaksi.nota-bayar', ['vendor' =>$vendor->id])->with('success', 'Berhasil menyimpan data!!');
 
     }
 

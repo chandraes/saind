@@ -5,15 +5,15 @@
     <div class="row justify-content-center mb-4 mt-3">
         <div class="col-md-8 text-center">
             <div class="p-4 bg-white rounded-4 shadow-sm border-top border-primary border-4">
-                <p class="text-muted text-uppercase fw-bold small mb-1"><i class="fa fa-file-invoice me-2"></i>Nota Tagihan</p>
-                <h2 class="fw-bold text-dark mb-0">{{$customer->nama}}</h2>
+                <p class="text-muted text-uppercase fw-bold small mb-1"><i class="fa fa-file-invoice me-2"></i>Nota Bayar</p>
+                <h2 class="fw-bold text-dark mb-0">{{$vendor->nama}}</h2>
             </div>
         </div>
     </div>
 
     <div class="row g-4 justify-content-center mt-2">
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{{route('transaksi.nota-tagihan', $customer->id)}}" class="text-decoration-none">
+            <a href="{{route('transaksi.nota-bayar', ['vendor' => $vendor->id])}}" class="text-decoration-none">
                 <div class="card h-100 border-0 shadow-sm text-center menu-card py-4">
                     <div class="card-body d-flex flex-column align-items-center justify-content-center">
                         <div class="icon-wrapper mb-3">
@@ -25,12 +25,13 @@
             </a>
         </div>
 
-        @if ($customer->is_kompensasi_jr)
+        @php $isDisabledKompensasi = empty($kompensasi_jr) || $kompensasi_jr <= 0; @endphp
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{{route('billing.nota-tagihan.detail-jenis', ['customer' => $customer->id, 'jenis' => 'kompensasi_jr'])}}" class="text-decoration-none">
+            <a href="{{ $isDisabledKompensasi ? 'javascript:void(0)' : route('billing.nota-bayar.detail-jenis', ['vendor' => $vendor->id, 'jenis' => 'kompensasi_jr']) }}"
+               class="text-decoration-none {{ $isDisabledKompensasi ? 'disabled-card' : '' }}">
                 <div class="card h-100 border-0 shadow-sm text-center menu-card py-4 position-relative">
-                    {{-- Badge Notifikasi --}}
-                    @if(isset($kompensasi_jr) && $kompensasi_jr > 0)
+
+                    @if(!$isDisabledKompensasi)
                     <span class="position-absolute badge rounded-pill bg-danger shadow-sm" style="top: 15px; right: 15px; font-size: 0.8rem;">
                         {{ $kompensasi_jr }}
                     </span>
@@ -45,14 +46,14 @@
                 </div>
             </a>
         </div>
-        @endif
 
-        @if ($customer->is_penyesuaian_bbm)
+        @php $isDisabledBbm = empty($penyesuaian_bbm) || $penyesuaian_bbm <= 0; @endphp
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{{route('billing.nota-tagihan.detail-jenis', ['customer' => $customer->id, 'jenis' => 'penyesuaian_bbm'])}}" class="text-decoration-none">
+            <a href="{{ $isDisabledBbm ? 'javascript:void(0)' : route('billing.nota-bayar.detail-jenis', ['vendor' => $vendor->id, 'jenis' => 'penyesuaian_bbm']) }}"
+               class="text-decoration-none {{ $isDisabledBbm ? 'disabled-card' : '' }}">
                 <div class="card h-100 border-0 shadow-sm text-center menu-card py-4 position-relative">
-                    {{-- Badge Notifikasi --}}
-                    @if(isset($penyesuaian_bbm) && $penyesuaian_bbm > 0)
+
+                    @if(!$isDisabledBbm)
                     <span class="position-absolute badge rounded-pill bg-danger shadow-sm" style="top: 15px; right: 15px; font-size: 0.8rem;">
                         {{ $penyesuaian_bbm }}
                     </span>
@@ -67,14 +68,14 @@
                 </div>
             </a>
         </div>
-        @endif
 
-        @if ($customer->is_achievement)
+        @php $isDisabledAch = empty($achievement) || $achievement <= 0; @endphp
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{{route('billing.nota-tagihan.detail-jenis', ['customer' => $customer->id, 'jenis' => 'achievement'])}}" class="text-decoration-none">
+            <a href="{{ $isDisabledAch ? 'javascript:void(0)' : route('billing.nota-bayar.detail-jenis', ['vendor' => $vendor->id, 'jenis' => 'achievement']) }}"
+               class="text-decoration-none {{ $isDisabledAch ? 'disabled-card' : '' }}">
                 <div class="card h-100 border-0 shadow-sm text-center menu-card py-4 position-relative">
-                    {{-- Badge Notifikasi --}}
-                    @if(isset($achievement) && $achievement > 0)
+
+                    @if(!$isDisabledAch)
                     <span class="position-absolute badge rounded-pill bg-danger shadow-sm" style="top: 15px; right: 15px; font-size: 0.8rem;">
                         {{ $achievement }}
                     </span>
@@ -89,7 +90,6 @@
                 </div>
             </a>
         </div>
-        @endif
 
         <div class="col-6 col-md-4 col-lg-2">
             <a href="{{route('billing.index')}}" class="text-decoration-none">
@@ -109,7 +109,6 @@
 
 @push('css')
 <style>
-    /* Styling untuk efek interaktif pada Card */
     body { background-color: #f8fafc; }
 
     .menu-card {
@@ -118,22 +117,28 @@
         cursor: pointer;
     }
 
-    /* Efek melayang saat kursor menyentuh card */
     .menu-card:hover {
         transform: translateY(-8px);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
     }
 
-    /* Mengubah warna teks saat di-hover */
     .menu-card:hover h6 {
-        color: #0d6efd !important; /* Warna biru primary Bootstrap */
+        color: #0d6efd !important;
     }
 
     .icon-wrapper {
-        height: 70px; /* Menjaga ukuran tinggi icon tetap sama rata */
+        height: 70px;
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* ====== TAMBAHAN CLASS UNTUK MENU KOSONG ====== */
+    .disabled-card {
+        opacity: 0.45; /* Membuatnya terlihat transparan/pudar */
+        cursor: not-allowed; /* Mengubah kursor jadi tanda dilarang */
+        pointer-events: none; /* Mematikan semua interaksi klik/hover */
+        filter: grayscale(100%); /* Membuat gambar SVG dan teks jadi abu-abu total */
     }
 </style>
 @endpush

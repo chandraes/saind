@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\db\Kreditor;
 use App\Models\GroupWa;
 use App\Models\InvoiceAdditional;
+use App\Models\InvoiceAddVendor;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
 use App\Models\InvoiceCsr;
@@ -333,8 +334,19 @@ class BillingController extends Controller
 
     public function nota_tagihan(Customer $customer)
     {
+        // Optimasi: Hanya lakukan 1 query ringan ke database (agregasi)
+        // Pluck akan menghasilkan array seperti: ['kompensasi_jr' => 5, 'penyesuaian_bbm' => 0]
+        $counts = TransaksiAdditional::where('customer_id', $customer->id)
+            ->where('status', '<', 2)
+            ->selectRaw('jenis, count(*) as total')
+            ->groupBy('jenis')
+            ->pluck('total', 'jenis');
+
         return view('billing.nota-tagihan.index', [
             'customer' => $customer,
+            'kompensasi_jr' => $customer->is_kompensasi_jr ? ($counts['kompensasi_jr'] ?? 0) : null,
+            'penyesuaian_bbm' => $customer->is_penyesuaian_bbm ? ($counts['penyesuaian_bbm'] ?? 0) : null,
+            'achievement' => $customer->is_achievement ? ($counts['achievement'] ?? 0) : null,
         ]);
     }
 
@@ -483,8 +495,6 @@ class BillingController extends Controller
             ->where('status', 1)
             ->get();
 
-
-
         $invoice = InvoiceAdditional::where('customer_id', $customer->id)
             ->where('jenis', $jenis)
             ->where('status', 0)
@@ -494,6 +504,26 @@ class BillingController extends Controller
             return redirect()->back()->with('error', 'Tidak ada data di keranjang untuk jenis ini. Silahkan tambahkan transaksi terlebih dahulu.');
         }
 
+        $tagihan_dari = $customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
+        $dpp = $invoice->dpp;
+
+        $ruteGrouped = $data->groupBy(function($item) {
+            return $item->rute->nama ?? 'Rute Tidak Ditemukan';
+        })->map(function ($group) use ($tagihan_dari, $dpp) {
+            // Ambil jarak dari record pertama di group rute tersebut
+            $jarak = $group->first()->jarak ?? 0;
+            $totalMuatan = $group->sum(fn($item) => $item->transaksi->{$tagihan_dari} ?? 0);
+            $subtotal = $jarak * $totalMuatan * $dpp;
+
+            return [
+                'jarak' => $jarak,
+                'total_muatan' => $totalMuatan,
+                'dpp' => $dpp,
+                'subtotal' => $subtotal,
+            ];
+        });
+
+
         $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
 
         return view('billing.nota-tagihan.keranjang', [
@@ -502,6 +532,7 @@ class BillingController extends Controller
             'jenis' => $jenis,
             'stringJenis' => $stringJenis,
             'invoice' => $invoice,
+            'ruteGrouped' => $ruteGrouped,
         ]);
     }
 
@@ -543,5 +574,307 @@ class BillingController extends Controller
         $invoice->delete();
 
         return redirect()->route('billing.nota-tagihan.detail-jenis', ['customer' => $customer->id, 'jenis' => $jenis])->with('success', 'Transaksi berhasil dikembalikan ke tahap sebelumnya.');
+    }
+
+    public function nota_bayar(Vendor $vendor)
+    {
+
+        $counts = TransaksiAdditional::where('vendor_id', $vendor->id)
+            ->whereIn('status', [3,4])
+            ->selectRaw('jenis, count(*) as total')
+            ->groupBy('jenis')
+            ->pluck('total', 'jenis');
+
+
+        return view('billing.nota-bayar.index', [
+            'vendor' => $vendor,
+            'kompensasi_jr' => $counts['kompensasi_jr'] ?? 0,
+            'penyesuaian_bbm' => $counts['penyesuaian_bbm'] ?? 0,
+            'achievement' => $counts['achievement'] ?? 0,
+        ]);
+    }
+
+    public function nota_bayar_detail_jenis(Request $request, Vendor $vendor, $jenis)
+    {
+
+        $db = new TransaksiAdditional;
+
+        $keranjang = $db->with(['transaksi'])
+            ->where('vendor_id', $vendor->id)
+            ->where('jenis', $jenis)
+            ->where('status', 4)
+            ->count();
+
+        $data = $db->with(['transaksi'])
+                ->where('vendor_id', $vendor->id)
+                ->where('jenis', $jenis)
+                ->where('status', 3)
+                ->get();
+
+
+        $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
+
+        return view('billing.nota-bayar.detail', [
+            'jenis' => $jenis,
+            'stringJenis' => $stringJenis,
+            'data' => $data,
+            'vendor' => $vendor,
+            'keranjang' => $keranjang,
+        ]);
+    }
+
+    public function nota_bayar_detail_by_jenis_keranjang(Vendor $vendor, $jenis)
+    {
+        $db = new TransaksiAdditional;
+
+        $data = $db->with(['transaksi.kas_uang_jalan.vendor','transaksi.kas_uang_jalan.rute','transaksi.kas_uang_jalan.vehicle', 'rute', 'customer'])
+            ->where('vendor_id', $vendor->id)
+            ->where('jenis', $jenis)
+            ->where('status', 4)
+            ->get();
+
+        $invoice = InvoiceAddVendor::with('details')->where('vendor_id', $vendor->id)
+            ->where('jenis', $jenis)
+            ->where('status', 0)
+            ->first();
+
+        if (!$invoice) {
+            return redirect()->back()->with('error', 'Tidak ada data di keranjang untuk jenis ini. Silahkan tambahkan transaksi terlebih dahulu.');
+        }
+
+        $dpp = $invoice->dpp;
+
+        $groupedData = [];
+        $totalKeseluruhan = 0;
+
+        foreach ($data as $item) {
+            // ... (Kode grouping Anda tetap tidak berubah sampai bagian bawah foreach)
+            $customerName = $item->customer->nama ?? 'Tidak Diketahui';
+            $ruteName = $item->rute->nama ?? 'Rute Lain';
+            $tagihan_dari = $item->customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
+            $jarak = (float) ($item->jarak ?? 0);
+            $muatan = (float) ($item->transaksi->{$tagihan_dari} ?? 0);
+
+            if (!isset($groupedData[$customerName])) {
+                $groupedData[$customerName] = [
+                    'rutes' => [],
+                    'subtotal_customer' => 0
+                ];
+            }
+
+            if (!isset($groupedData[$customerName]['rutes'][$ruteName])) {
+                $groupedData[$customerName]['rutes'][$ruteName] = [
+                    'jarak' => $jarak,
+                    'total_muatan' => 0,
+                    'jumlah_trx' => 0
+                ];
+            }
+
+            $groupedData[$customerName]['rutes'][$ruteName]['total_muatan'] += $muatan;
+            $groupedData[$customerName]['rutes'][$ruteName]['jumlah_trx']++;
+        }
+
+        foreach ($groupedData as $customerName => &$customerData) {
+            foreach ($customerData['rutes'] as $ruteName => &$ruteData) {
+                $ruteData['subtotal'] = (int) round($ruteData['jarak'] * $ruteData['total_muatan'] * $dpp);
+                $customerData['subtotal_customer'] += $ruteData['subtotal'];
+            }
+            $totalKeseluruhan += $customerData['subtotal_customer'];
+        }
+        unset($customerData, $ruteData);
+
+        // === TAMBAHAN PERHITUNGAN PAJAK UNTUK TAMPILAN ===
+        $ppn = $vendor->ppn == 1 ? (int) round($totalKeseluruhan * 0.11) : 0;
+        $pph = $vendor->pph == 1 ? (int) round($totalKeseluruhan * ($vendor->pph_val / 100)) : 0;
+        $totalAkhir = $totalKeseluruhan + $ppn - $pph;
+        // ==================================================
+
+        $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
+
+        return view('billing.nota-bayar.keranjang', [
+            'data' => $data,
+            'vendor' => $vendor,
+            'jenis' => $jenis,
+            'stringJenis' => $stringJenis,
+            'invoice' => $invoice,
+            'totalKeseluruhan' => $totalKeseluruhan,
+            'groupedData' => $groupedData,
+            // Kirim variabel baru ke blade
+            'ppn' => $ppn,
+            'pph' => $pph,
+            'totalAkhir' => $totalAkhir,
+        ]);
+    }
+
+    public function nota_bayar_detail_by_jenis_lanjut(Request $request, Vendor $vendor, $jenis)
+    {
+        $req = $request->validate([
+            'dpp' => 'required',
+        ]);
+
+        // 1. Sanitasi input DPP
+        $dpp = (float) str_replace(['.', ','], ['', '.'], $req['dpp']);
+
+        // 2. Mulai Transaksi Database LEbih AWAL (untuk lock yang efektif)
+        DB::beginTransaction();
+
+        try {
+            // 3. Lock untuk mencegah race condition
+            $existingInvoice = InvoiceAddVendor::where('vendor_id', $vendor->id)
+                ->where('jenis', $jenis)
+                ->where('status', 0)
+                ->lockForUpdate()
+                ->first();
+
+            // 4. Ambil data transaksi
+            $rekapJenis = TransaksiAdditional::with(['transaksi', 'customer'])
+                ->where('jenis', $jenis)
+                ->where('vendor_id', $vendor->id)
+                ->where('status', 3)
+                ->get();
+
+            if ($rekapJenis->isEmpty()) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Tidak ada data transaksi yang tersedia.');
+            }
+
+            // 5. Validasi duplikasi
+            $existingDetailIds = DB::table('invoice_add_vendor_details')
+                ->whereIn('transaksi_additional_id', $rekapJenis->pluck('id'))
+                ->pluck('transaksi_additional_id')
+                ->toArray();
+
+            if (!empty($existingDetailIds)) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Beberapa transaksi sudah ada di invoice lain.');
+            }
+
+            // 6. Kalkulasi Total DPP
+            $totalKeseluruhan = $rekapJenis->sum(function ($item) use ($dpp) {
+                if (!$item->customer || !$item->transaksi) return 0;
+
+                $tagihan_dari = $item->customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
+                if (empty($tagihan_dari)) return 0;
+
+                $jarak = (float) ($item->jarak ?? 0);
+                $muatan = (float) ($item->transaksi->$tagihan_dari ?? 0);
+
+                return $jarak * $muatan * $dpp;
+            });
+            $totalKeseluruhan = (int) round($totalKeseluruhan);
+
+            // === TAMBAHAN PERHITUNGAN PAJAK ===
+            $ppn = $vendor->ppn == 1 ? (int) round($totalKeseluruhan * 0.11) : 0;
+            $pph = $vendor->pph == 1 ? (int) round($totalKeseluruhan * ($vendor->pph_val / 100)) : 0;
+            $totalAkhir = $totalKeseluruhan + $ppn - $pph;
+            // =================================
+
+            // 7. Proses Invoice
+            if ($existingInvoice) {
+                if (bccomp((string) $existingInvoice->dpp, (string) $dpp, 4) !== 0) {
+                    throw new \Exception('DPP berbeda dengan yang sudah ada di keranjang. Silahkan gunakan DPP yang sama atau selesaikan transaksi sebelumnya.');
+                }
+
+                // Increment DPP, PPN, dan PPH
+                $existingInvoice->increment('nominal', $totalKeseluruhan);
+                $existingInvoice->increment('ppn', $ppn);
+                $existingInvoice->increment('pph', $pph);
+
+                // Update Total Akhir
+                $existingInvoice->update([
+                    'total' => $existingInvoice->nominal + $existingInvoice->ppn - $existingInvoice->pph
+                ]);
+
+                $invoice = $existingInvoice;
+            } else {
+                $invoice = InvoiceAddVendor::create([
+                    'vendor_id'   => $vendor->id,
+                    'jenis'       => $jenis,
+                    'nominal'     => $totalKeseluruhan,
+                    'dpp'         => $dpp,
+                    'ppn'         => $ppn,
+                    'pph'         => $pph,
+                    'total'       => $totalAkhir,
+                    'status'      => 0,
+                    'is_finished' => false,
+                ]);
+            }
+
+            // 8. Insert Detail (Tidak berubah)
+            $detailData = $rekapJenis->map(fn($item) => [
+                'invoice_add_vendor_id'   => $invoice->id,
+                'transaksi_additional_id' => $item->id,
+                'transaksi_id'            => $item->transaksi_id,
+                'created_at'              => now(),
+                'updated_at'              => now(),
+            ])->toArray();
+
+            DB::table('invoice_add_vendor_details')->insert($detailData);
+
+            // 9. Update Status (Tidak berubah)
+            TransaksiAdditional::where('jenis', $jenis)
+                ->where('vendor_id', $vendor->id)
+                ->where('status', 3)
+                ->update(['status' => 4]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Perhitungan berhasil disimpan. Total: Rp ' . number_format($totalAkhir, 0, ',', '.'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function nota_bayar_detail_by_jenis_keranjang_back(Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
+    {
+
+        $detailsId = $invoice->details()->pluck('transaksi_additional_id')->toArray();
+
+        TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 3]);
+
+        $invoice->delete();
+
+        return redirect()->route('billing.nota-bayar.detail-jenis', ['vendor' => $vendor->id, 'jenis' => $jenis])->with('success', 'Transaksi berhasil dikembalikan ke tahap sebelumnya.');
+    }
+
+
+
+    public function nota_bayar_detail_by_jenis_keranjang_lanjut(Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
+    {
+        // Validasi bahwa invoice yang dimaksud benar-benar milik customer dan jenis yang sesuai
+        if ($invoice->vendor_id !== $vendor->id || $invoice->jenis !== $jenis || $invoice->status !== 0) {
+            return redirect()->back()->with('error', 'Invoice tidak valid untuk keranjang ini.');
+        }
+
+        try {
+            // 2. Database Transaction: Wajib digunakan jika ada lebih dari satu operasi UPDATE/DELETE
+            // Ini memastikan jika satu gagal, semua dibatalkan (mencegah data "nanggung")
+            DB::beginTransaction();
+
+            // 3. Ambil ID detail transaksi
+            $detailsId = $invoice->details()->pluck('transaksi_additional_id');
+
+            // 4. Update status Invoice (Hapus update status => 1 karena langsung ditimpa status => 5)
+            $invoice->update(['status' => 1]);
+
+            // 5. Bulk Update untuk TransaksiAdditional
+            if ($detailsId->isNotEmpty()) {
+                TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 5]);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('billing.nota-bayar.detail-jenis', ['vendor' => $vendor->id, 'jenis' => $jenis])
+                ->with('success', 'Transaksi berhasil diselesaikan menjadi invoice.');
+
+        } catch (\Exception $e) {
+            // Jika terjadi error (DB mati, kolom hilang, dll), batalkan semua perubahan
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 }

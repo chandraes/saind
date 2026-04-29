@@ -30,6 +30,11 @@
                                     href="{{route('invoice.bayar.detail', ['invoiceBayar' => $k->invoice_bayar_id])}}">
                                     {{$k->invoiceBayar->periode}}
                                 </a>
+                                @elseif($k->invoice_add_vendor_id)
+                                     <a
+                                    href="{{route('invoice.bayar.detail-jenis', ['invoice' => $k->invoice_add_vendor_id])}}">
+                                    {{$k->invoiceAddVendor->periode_invoice}}
+                                </a>
                                 @else
                                 -
                                 @endif
@@ -37,6 +42,8 @@
                             <td class="text-center align-middle">
                                 @if ($k->invoiceBayar)
                                     {{$k->invoiceBayar->vendor->nickname}}
+                                @elseif($k->invoice_add_vendor_id)
+                                    {{$k->invoiceAddVendor->vendor->nickname}}
                                 @else
                                 -
                                 @endif

@@ -19,6 +19,16 @@ class TransaksiAdditional extends Model
         return $this->belongsTo(Transaksi::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
     public function rute()
     {
         return $this->belongsTo(Rute::class);
