@@ -10,7 +10,7 @@ class InvoiceAddVendor extends Model
 {
     protected $guarded = [];
 
-    protected $appends = ['nf_dpp', 'nf_nominal', 'periode_invoice', 'tanggal', 'nf_ppn', 'nf_pph', 'nf_total'];
+    protected $appends = ['nf_dpp', 'nf_nominal', 'periode_invoice', 'tanggal', 'nf_ppn', 'nf_pph', 'nf_total', 'tanggal_lunas'];
 
     protected static function booted()
     {
@@ -30,6 +30,11 @@ class InvoiceAddVendor extends Model
     public function getTanggalAttribute()
     {
         return $this->created_at ? $this->created_at->format('Y-m-d') : null;
+    }
+
+    public function getTanggalLunasAttribute()
+    {
+        return $this->updated_at ? $this->updated_at->format('Y-m-d') : null;
     }
 
     public function getPeriodeInvoiceAttribute()

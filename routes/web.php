@@ -294,6 +294,7 @@ Route::group(['middleware' => ['auth']], function() {
             });
 
             Route::get('/profit-tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih'])->name('statistik.profit-tahunan-bersih');
+            Route::get('/profit-tahunan-bersih/{jenis}/{month}/{year}', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih_detail_jenis'])->name('statistik.profit-tahunan-bersih.detail-jenis');
 
             Route::prefix('profit')->group(function(){
                 Route::get('/tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'tahunan_bersih'])->name('statistik.profit.tahunan-bersih');

@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row justify-content-center mb-5">
         <div class="col-md-12 text-center">
-            <h1><u>Statistik Profit Bulanan (Bersih)</u></h1>
+            <h1><u>Statistik Profit Bulanan (Bersih) </u></h1>
             <h1>{{$tahun}}</h1>
         </div>
     </div>
@@ -55,6 +55,8 @@
                 <tr>
                     <th rowspan="2" class="text-center align-middle">Bulan</th>
                     <th rowspan="2" class="text-center align-middle">Profit Kotor</th>
+                    <th rowspan="2" class="text-center align-middle">Komp. Jalan Rusak</th>
+                    <th rowspan="2" class="text-center align-middle">Penyesuaian BBM</th>
                     <th colspan="6" class="text-center align-middle">Pengeluaran</th>
                     <th rowspan="2" class="text-center align-middle">Profit Bersih</th>
                 </tr>
@@ -73,6 +75,14 @@
                 <tr>
                     <td class="text-center align-middle">{{$s['nama_bulan']}}</td>
                     <td class="text-end align-middle">{{number_format($s['profit'], 0, ',','.')}}</td>
+                    <td class="text-end align-middle">
+                        <a class="text-decoration-none" href="{{route('statistik.profit-tahunan-bersih.detail-jenis', ['jenis' => 'kompensasi_jr', 'month' => $s['bulan'], 'year' => $tahun])}}">
+                            {{number_format($s['komp_jr'], 0, ',','.')}}
+                    </td>
+                    <td class="text-end align-middle">
+                        <a class="text-decoration-none" href="{{route('statistik.profit-tahunan-bersih.detail-jenis', ['jenis' => 'penyesuaian_bbm', 'month' => $s['bulan'], 'year' => $tahun])}}">
+                        {{number_format($s['peny_bbm'], 0, ',','.')}}
+                    </td>
                     <td class="text-end align-middle">{{number_format($s['total_co'], 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($s['kas_kecil'], 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($s['total_gaji'], 0, ',','.')}}</td>
@@ -90,6 +100,8 @@
                 <tr>
                     <th><strong>Grand Total</strong></th>
                     <th class="text-end align-middle">{{number_format($grand_total_profit, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($gt_komp_jr, 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($gt_peny_bbm, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grand_total_co, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grand_total_kas_kecil, 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($grand_total_gaji, 0, ',','.')}}</th>

@@ -6,6 +6,8 @@ use App\Models\Transaksi;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\Customer;
+use App\Models\InvoiceAdditional;
+use App\Models\InvoiceAddVendor;
 use App\Models\KasVendor;
 use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
@@ -13,6 +15,7 @@ use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
 use App\Models\Rute;
+use App\Models\TransaksiAdditional;
 use App\Models\UpahGendong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -551,6 +554,47 @@ class StatistikController extends Controller
         $all = $db->profitBulanan($tahun);
 
         return view('rekap.statistik.profit.bulanan-bersih', $all);
+    }
+    
+    public function profit_tahunan_bersih_detail_jenis($jenis, $month, $year)
+    {
+        // Mengambil data dengan Eager Loading
+        $invoiceTagihan = InvoiceAdditional::with(['customer'])
+            ->where('jenis', $jenis)
+            ->where('is_finished', 1)
+            ->whereMonth('updated_at', $month)
+            ->whereYear('updated_at', $year)
+            ->get();
+
+        $invoiceVendor = InvoiceAddVendor::with(['vendor'])
+            ->where('jenis', $jenis)
+            ->where('is_finished', 1)
+            ->whereMonth('updated_at', $month)
+            ->whereYear('updated_at', $year)
+            ->get();
+
+        // Hitung total dalam bentuk angka mentah (Raw Numeric)
+        // Asumsi 0.98 adalah potongan 2% (misal PPh/Fee)
+        $rawTotalTagihan = $invoiceTagihan->sum('nominal') * 0.98;
+        $rawTotalVendor = $invoiceVendor->sum('nominal');
+        $rawSelisih = $rawTotalTagihan - $rawTotalVendor;
+
+        // Formatting dilakukan setelah kalkulasi selesai
+        $nama_bulan = \Carbon\Carbon::createFromDate($year, $month, 1)->locale('id')->monthName;
+        $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
+
+        return view('rekap.statistik.profit.detail.jenis', [
+            "tagihan"      => $invoiceTagihan,
+            "vendor"       => $invoiceVendor,
+            'stringJenis'  => $stringJenis,
+            'jenis'        => $jenis,
+            'nama_bulan'   => $nama_bulan,
+            'tahun'        => $year,
+            'totalTagihan' => number_format($rawTotalTagihan, 0, ',', '.'),
+            'totalBayar'   => number_format($rawTotalVendor, 0, ',', '.'),
+            'selisih'      => number_format($rawSelisih, 0, ',', '.'),
+            'rawSelisih'   => $rawSelisih // Dikirim untuk logika warna di UI
+        ]);
     }
 
     public function profit_tahunan(Request $request)
