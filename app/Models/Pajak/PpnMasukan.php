@@ -2,6 +2,7 @@
 
 namespace App\Models\Pajak;
 
+use App\Models\InvoiceAddVendor;
 use App\Models\InvoiceBayar;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,11 @@ class PpnMasukan extends Model
     public function invoiceBayar()
     {
         return $this->belongsTo(InvoiceBayar::class, 'invoice_bayar_id');
+    }
+
+    public function invoiceAddVendor()
+    {
+        return $this->belongsTo(InvoiceAddVendor::class);
     }
 
     public function getTanggalAttribute()

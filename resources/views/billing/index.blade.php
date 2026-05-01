@@ -378,7 +378,7 @@
                             <div class="row">
                                 @foreach ($customer as $c)
                                  <div class="col-md-2 text-center mt-5">
-                                    <a href="{{route('transaksi.nota-tagihan', $c)}}" class="text-decoration-none">
+                                    <a href="{{route('billing.nota-tagihan', $c)}}" class="text-decoration-none">
                                         <img src="{{asset('images/tambang.svg')}}" alt="" width="70">
                                         <h4 class="mt-3">{{$c->singkatan}}
                                             {{-- @if ($data->where('status', 3)->where('tagihan', 0)->where('customer_id',
@@ -400,51 +400,42 @@
                 </div>
             </div>
         </div>
-         <div class="col-md-2 text-center mt-5">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
-                <img src="{{asset('images/bayar.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA BAYAR VENDOR
-                    {{-- <span class="text-danger">{{$data->where('status', 3)->where('bayar',
-                        0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('bayar', 0)->count().")" : '' }}</span> --}}
-                        </h4>
-            </a>
-            <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalTitleId">Pilih Vendor</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form action="{{ route('transaksi.nota-bayar') }}" method="get">
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <select class="form-select" name="vendor_id" id="vendorSelect">
-                                        <option value="">Select one</option>
-                                        @foreach ($vendor as $v)
-                                        <option value="{{$v->id}}">
-                                            {{$v->nama}}
-                                            {{-- @if ($data->where('status', 3)->where('bayar', 0)->where('vendor_id',
-                                            $v->kas_uang_jalan->vendor->id)->count() > 0)
-                                            <span class="text-danger">({{$data->where('status', 3)->where('bayar',
-                                                0)->where('vendor_id',
-                                                $v->kas_uang_jalan->vendor->id)->count()}})</span>
-                                            @endif --}}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                            </div>
-                        </form>
-                    </div>
+      <div class="col-md-2 text-center mt-5">
+    <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
+        <img src="{{asset('images/bayar.svg')}}" alt="Nota Bayar Vendor" width="70">
+        <h4 class="mt-3">NOTA BAYAR VENDOR</h4>
+    </a>
+
+    <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitleId"><i class="fa fa-truck me-2"></i>Pilih Vendor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+
+                <form id="formVendorBayar">
+                    <div class="modal-body text-start">
+                        <div class="mb-3">
+                            <label for="vendorSelect" class="form-label fw-semibold">Nama Vendor <span class="text-danger">*</span></label>
+                            <select class="form-select border-primary shadow-sm" id="vendorSelect" required>
+                                <option value="" selected disabled>-- Pilih Vendor --</option>
+                                @foreach ($vendor as $v)
+                                <option value="{{$v->id}}">{{$v->nama}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary px-4">Lanjutkan <i class="fa fa-arrow-right ms-1"></i></button>
+                    </div>
+                </form>
+
             </div>
         </div>
+    </div>
+</div>
          <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sponsorModal">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="70">
@@ -575,6 +566,7 @@
 @endpush
 @push('js')
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
+
 <script>
 
     $('#vendorSelect').select2({
@@ -691,5 +683,30 @@
                 window.location.href = "{{route('billing.kasbon.kas-bon-staff')}}";
             }
         }
+</script>
+<script>
+    document.getElementById('formVendorBayar').addEventListener('submit', function(e) {
+        // 1. Mencegah form melakukan submit bawaan HTML (yang menghasilkan '?vendor_id=x')
+        e.preventDefault();
+
+        // 2. Ambil ID vendor yang dipilih
+        var vendorId = document.getElementById('vendorSelect').value;
+
+        // 3. Validasi jika kosong
+        if (!vendorId) {
+            Swal.fire('Oops!', 'Silakan pilih vendor terlebih dahulu.', 'warning');
+            return;
+        }
+
+        // 4. Buat template URL menggunakan helper route() Laravel
+        // Kita menggunakan placeholder string ':id' agar tidak error saat render Blade
+        var baseUrl = "{{ route('billing.nota-bayar', ['vendor' => ':id']) }}";
+
+        // 5. Ganti placeholder ':id' dengan ID vendor aslinya
+        var finalUrl = baseUrl.replace(':id', vendorId);
+
+        // 6. Redirect halaman
+        window.location.href = finalUrl;
+    });
 </script>
 @endpush

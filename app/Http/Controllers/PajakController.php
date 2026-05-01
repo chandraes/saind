@@ -25,9 +25,9 @@ class PajakController extends Controller
     {
         $db = new PpnMasukan();
 
-        $data = $db->with(['invoiceBayar.vendor'])->where('keranjang', 0)->where('onhold', 0)->where('selesai', 0)->get();
-        $keranjang = $db->with(['invoiceBayar.vendor'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->count();
-        $keranjangData = $db->with(['invoiceBayar.vendor'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->get();
+        $data = $db->with(['invoiceBayar.vendor', 'invoiceAddVendor.vendor'])->where('keranjang', 0)->where('onhold', 0)->where('selesai', 0)->get();
+        $keranjang = $db->with(['invoiceBayar.vendor', 'invoiceAddVendor.vendor'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->count();
+        $keranjangData = $db->with(['invoiceBayar.vendor', 'invoiceAddVendor.vendor'])->where('keranjang', 1)->where('onhold', 0)->where('selesai', 0)->get();
 
         $total_faktur = 0;
         $total_blm_faktur = 0;

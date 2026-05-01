@@ -10,7 +10,9 @@ class InvoiceTagihan extends Model
     use HasFactory;
     protected $guarded = [];
 
-    protected $appends = ['id_tanggal', 'nf_total_tagihan', 'nf_total_awal', 'nf_penyesuaian', 'nf_penalty', 'nf_ppn', 'nf_pph', 'nf_sisa_tagihan', 'nf_total_bayar', 'total_dpp', 'id_tanggal_hardcopy', 'id_tanggal_softcopy'];
+    protected $appends = ['id_tanggal', 'nf_total_tagihan', 'nf_total_awal', 'nf_penyesuaian',
+                            'nf_penalty', 'nf_ppn', 'nf_pph', 'nf_sisa_tagihan', 'nf_total_bayar',
+                            'total_dpp', 'id_tanggal_hardcopy', 'id_tanggal_softcopy', 'nf_kompensasi_jr', 'nf_penyesuaian_bbm', 'nf_achievement'];
 
     public function customer()
     {
@@ -35,6 +37,21 @@ class InvoiceTagihan extends Model
     public function getIdEstimasiPembayaranAttribute()
     {
         return date('d-m-Y', strtotime($this->estimasi_pembayaran));
+    }
+
+    public function getNfKompensasiJrAttribute()
+    {
+        return number_format($this->kompensasi_jr, 0, ',', '.');
+    }
+
+    public function getNfPenyesuaianBbmAttribute()
+    {
+        return number_format($this->penyesuaian_bbm, 0, ',', '.');
+    }
+
+    public function getNfAchievementAttribute()
+    {
+        return number_format($this->achievement, 0, ',', '.');
     }
 
     public function getTotalDppAttribute()

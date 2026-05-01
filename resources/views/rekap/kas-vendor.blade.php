@@ -110,6 +110,10 @@
                     <td class="text-center align-middle">
                         @if ($d->invoice_bayar_id)
                         <a href="{{route('rekap.kas-vendor.detail', ['invoiceBayar' => $d->invoice_bayar_id])}}">{{$d->uraian}}</a>
+                        @elseif ($d->invoice_add_vendor_id)
+                            <a href="{{route('invoice.bayar.detail-jenis', ['invoice' => $d->invoice_add_vendor_id])}}">
+                            {{$d->uraian}}
+                        </a>
                         @else
                         {{$d->uraian}}
                         @endif

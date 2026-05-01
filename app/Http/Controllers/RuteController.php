@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Rute;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RuteController extends Controller
 {
@@ -12,7 +13,7 @@ class RuteController extends Controller
      */
     public function index()
     {
-        $data = Rute::all();
+        $data = Rute::with(['user'])->get();
         return view('database.rute.index', [
             'data' => $data,
         ]);
@@ -31,7 +32,7 @@ class RuteController extends Controller
 
         $data['uang_jalan'] = str_replace('.', '', $data['uang_jalan']);
 
-        $data['user_id'] = auth()->id();
+        $data['user_id'] = Auth::id();
 
         Rute::create($data);
 
@@ -52,7 +53,7 @@ class RuteController extends Controller
 
         $data['uang_jalan'] = str_replace('.', '', $data['uang_jalan']);
 
-        $data['edited_by'] = auth()->id();
+        $data['edited_by'] = Auth::id();
 
         $rute->update($data);
 

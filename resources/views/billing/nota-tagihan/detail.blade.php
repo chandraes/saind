@@ -3,17 +3,10 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
-            <h1><u>Nota Tagihan HPP</u></h1>
+            <h1><u>{{$stringJenis}}</u></h1>
         </div>
     </div>
-    @php
-    // $selectedData = [];
-    $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
-    $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
-    $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
-    $profit = $data->sum('profit');
-    $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
-    @endphp
+
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
             <h1><u>{{$customer->nama}} ({{$customer->singkatan}})</u></h1>
@@ -21,21 +14,6 @@
     </div>
     @include('swal')
     {{-- if errors has any --}}
-    @if ($errors->any())
-    <div class="row justify-content-center">
-        <div class="col-md-12">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Whoops!</strong> Ada kesalahan saat input data, yaitu:
-                <ul>
-                    @foreach ($errors->all() as $error)
-                    <li><strong>{{$error}}</strong></li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    </div>
-    @endif
 
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-8">
@@ -50,7 +28,7 @@
                                   <td><a href="{{route('billing.nota-tagihan', $customer->id)}}"><img src="{{asset('images/back.svg')}}"
                                 alt="dokumen" width="30"> Kembali</a>
                             </td>
-                    <td class="align-middle"><a href="{{route('transaksi.nota-tagihan.keranjang', ['customer' => $customer->id])}}"><i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang @if ($keranjang > 0) <span
+                    <td class="align-middle"><a href="{{route('billing.nota-tagihan.detail-jenis.keranjang', ['customer' => $customer->id, 'jenis' => $jenis])}}"><i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang @if ($keranjang > 0) <span
                             class="badge bg-danger">{{$keranjang}}</span> @endif</a></td>
 
                 </tr>
@@ -76,8 +54,6 @@
             <tr>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">
                     Select
-                    {{-- select all --}}
-                    <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
                 </th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif  class="text-center align-middle">No</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tanggal UJ</th>
@@ -105,11 +81,7 @@
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Selisih (Ton)</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Selisih (%)</th>
                 @endif
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tagihan</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit (%)</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">DO Fisik</th>
-                <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Action</th>
             </tr>
             @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1)
             <tr>
@@ -131,10 +103,10 @@
             <tr>
                 {{-- check list --}}
                 <td class="text-center align-middle">
-                    {{-- checklist on check push $d->id to $selectedData --}}
-                    <input style="height: 25px; width:25px" type="checkbox" value="{{$d->id}}"
-                        data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})"
-                        id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
+                    {{-- @if (in_array($d->id, $pendingTransaksiIds))
+                        {{-- icon checked --}}
+                        <i class="fa fa-check text-success" style="font-size: 20px"></i>
+                    {{-- @endif --}}
                 </td>
                 <td class="text-center align-middle"></td>
                 <td class="text-center align-middle">
@@ -157,7 +129,7 @@
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->nama}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->rute->jarak}}</td>
                 <td class="text-center align-middle">
-                    {{number_format($d->harga_customer, 0, ',', '.')}}
+                    0
                 </td>
                 @if ($customer->tanggal_muat == 1)
                 <td class="text-center align-middle">{{$d->id_tanggal_muat}}</td>
@@ -187,124 +159,22 @@
                 <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2,
                     ',','.')}}</td>
                 @endif
-                <td class="text-end align-middle">
-                    @if ($d->kas_uang_jalan->customer->tagihan_dari == 1)
-                    {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
-                    @elseif ($d->kas_uang_jalan->customer->tagihan_dari == 2)
-                    {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
-                    @endif
-                </td>
-                <td class="text-end align-middle">
-                    {{number_format($d->profit, 0, ',', '.')}}
 
-                </td>
                 <td class="text-center align-middle">
-                    {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
-                </td>
-                <td class="text-center align-middle">
-                    @if ($d->nota_fisik == 0)
-                    <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
-                        <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : ''
-                        }} onchange="this.form.submit()">
-                    </form>
-                    @else
-                    <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : '' }}
-                    onclick="event.preventDefault(); showUncheckModal({{$d}}).catch(() => this.checked = true)">
+                    @if ($d->nota_fisik == 1)
+                     <i class="fa fa-check text-success" style="font-size: 20px"></i>
                     @endif
                     @if ($d->nota_fisik == 1 && $d->do_checker_id != null)
                     <br>
                     Checker: <strong>{{$d->do_checker->name}}</strong>
                     @endif
                 </td>
-                <td class="text-center align-middle">
-                    @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-                    <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
-                        data-bs-target="#backModal-{{$d->id}}">
-                        Edit
-                    </button>
 
-                    <!-- Modal Body -->
-                    <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-                    <div class="modal fade" id="backModal-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
-                        data-bs-keyboard="false" role="dialog" aria-labelledby="Title-{{$d->id}}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="Title-{{$d->id}}">Masukkan Password</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <form action="{{route('transaksi.nota-tagihan.edit', $d)}}" method="post">
-                                    @csrf
-                                    <div class="modal-body">
-                                        <input type="password" class="form-control" id="password" name="password"
-                                            placeholder="Password" aria-label="Password" aria-describedby="password"
-                                            required>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Tutup</button>
-                                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="btn btn-warning btn-block m-2" type="button" data-bs-toggle="modal"
-                        data-bs-target="#modalVoid-{{$d->id}}">Void</button>
-
-                    <div class="modal fade" id="modalVoid-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
-                        data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
-                            role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalTitleId">Masukan Password </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <form action="{{route('transaksi.tagihan.void', $d->id)}}" method="post">
-                                    @csrf
-                                    <div class="modal-body">
-                                        <input type="password" class="form-control" id="password" name="password"
-                                            placeholder="Password" aria-label="Password" aria-describedby="password"
-                                            required>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-                                        <button type="submit" class="btn btn-primary">Save</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
-                </td>
             </tr>
-            <script>
-                $('#masukForm{{$d->id}}').submit(function(e){
-                  e.preventDefault();
 
-                  Swal.fire({
-                      title: 'Apakah anda yakin data sudah benar?',
-                      icon: 'warning',
-                      showCancelButton: true,
-                      confirmButtonColor: '#3085d6',
-                      cancelButtonColor: '#6c757d',
-                      confirmButtonText: 'Ya, simpan!'
-                      }).then((result) => {
-                      if (result.isConfirmed) {
-                          this.submit();
-                      }
-                  })
-              });
-            </script>
             @endforeach
         </tbody>
-        <tfoot>
+        {{-- <tfoot>
             <tr>
                 <td class=""
                     colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
@@ -375,23 +245,43 @@
                 <td></td>
                 <td></td>
             </tr>
-        </tfoot>
+        </tfoot> --}}
     </table>
 </div>
-<input type="hidden" name="total_tagihan" id="total_tagihan" value="0">
-<div class="container-fluid mt-3 mb-3">
-    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-        <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
-            @csrf
-            <input type="hidden" name="selectedData" required>
-            <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilihan</button>
-        </form>
-        <form target="_blank" action="{{route('transaksi.nota-tagihan.export', $customer)}}" method="get">
-            <input type="hidden" name="rute_id" value="{{$rute_id}}">
-            <input type="hidden" name="tanggal_filter" value="{{$tanggal_filter}}">
-            <input type="hidden" name="filter_date" value="{{$filter_date}}">
-            <button class="btn btn-success btn-lg" type="submit">Export</button>
-        </form>
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+
+
+                    <form action="{{route('billing.nota-tagihan.detail-jenis.lanjut', ['customer' => $customer->id, 'jenis' => $jenis])}}" method="post" id="lanjutForm">
+                        @csrf
+                        <div class="mb-4">
+                            <label for="dpp" class="form-label fw-bold text-secondary">Nominal DPP</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-end-0 text-muted">Rp</span>
+                                <input type="text"
+                                       name="dpp"
+                                       id="dpp"
+                                       class="form-control border-start-0 fw-bold text-primary shadow-none"
+                                       placeholder="xxx"
+                                       autocomplete="off"
+                                       required>
+                            </div>
+                            <div class="form-text mt-2 small italic text-muted">
+                                <i class="fa fa-info-circle me-1"></i> Pastikan nominal sudah benar sebelum melanjutkan.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-lg rounded-3 fw-bold shadow-sm" type="submit">
+                                Lanjutkan <i class="fa fa-arrow-right ms-2"></i>
+                            </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -418,6 +308,13 @@
         var table = $('#notaTable').DataTable({
             // ... your DataTable options ...
         });
+
+          var dpp = new Cleave('#dpp', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
 
         var tanggalMuatColumnIndex = -1;
         var tanggalBongkarColumnIndex = -1;
@@ -536,82 +433,6 @@
 
     });
 
-    function check(checkbox, id) {
-        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
-        var tagihan = parseFloat($(checkbox).data('tagihan'));
-
-        if (checkbox.checked) {
-            totalTagihan += tagihan;
-            $('input[name="selectedData"]').val(function(i, v) {
-                // if end of string, remove comma
-                return v + id + ',';
-
-            });
-        } else {
-            totalTagihan -= tagihan;
-
-            $('input[name="selectedData"]').val(function(i, v) {
-                // remove id from string
-                return v.replace(id + ',', '');
-            });
-        }
-
-        $('#total_tagihan').val(totalTagihan);
-        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
-
-        value = $('input[name="selectedData"]').val();
-
-        if(value.slice(-1) == ','){
-            // remove comma from last number
-            value = value.slice(0, -1);
-        }
-        console.log(value);
-    }
-
-    // check all checkbox and push all id to $selectedData and check all checkbox
-    function checkAll(checkbox, id) {
-        $('#total_tagihan').val(0);
-        $('#total_tagihan_display').val(0);
-        var totalTagihan = parseFloat($('#total_tagihan').val()) || 0;
-
-        if (checkbox.checked) {
-            $('input[name="selectedData"]').val(function(i, v) {
-                // if end of string, remove comma
-                @foreach ($data as $d)
-                if({{$d->nota_fisik}} == 1) {
-                var tagihan = parseFloat($('#idSelect-{{$d->id}}').data('tagihan'));
-                totalTagihan += tagihan;
-
-                    v = v + {{$d->id}} + ',';
-                    $('#idSelect-{{$d->id}}').prop('checked', true);
-                }
-                @endforeach
-                return v;
-            });
-        } else {
-            $('input[name="selectedData"]').val(function(i, v) {
-                // remove id from string
-                @foreach ($data as $d)
-                    v = v.replace({{$d->id}} + ',', '');
-                    $('#idSelect-{{$d->id}}').prop('checked', false);
-                @endforeach
-                return v;
-            });
-            totalTagihan = 0;
-        }
-
-        $('#total_tagihan').val(totalTagihan);
-        $('#total_tagihan_display').val(totalTagihan.toLocaleString('id-ID'));
-
-        value = $('input[name="selectedData"]').val();
-
-        if(value.slice(-1) == ','){
-            // remove comma from last number
-            value = value.slice(0, -1);
-        }
-        console.log(value);
-    }
-
 
     $('#lanjutForm').submit(function(e){
             e.preventDefault();
@@ -660,50 +481,5 @@
 
         }
 
-        function showUncheckModal(data) {
-            Swal.fire({
-                title: "Masukan Password",
-                input: "password",
-                inputAttributes: {
-                    autocapitalize: "off"
-                },
-                showCancelButton: true,
-                confirmButtonText: "Lanjutkan",
-                showLoaderOnConfirm: true,
-                preConfirm: async (password) => {
-                    const response = await fetch(`/transaksi/nota-tagihan/${data.id}/uncheck`, { // replace with your endpoint
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}' // for CSRF protection in Laravel
-                        },
-                        body: JSON.stringify({
-                            password: password,
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || response.statusText);
-                    }
-
-                    return response.json();
-                },
-                allowOutsideClick: () => !Swal.isLoading()
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Data Berhasil disimpan.',
-                        icon: 'success'
-                    }).then(() => {
-                        $('#spinner').show();
-                        location.reload();
-                    });
-                }
-            }).catch(error => {
-                Swal.fire('Error!', error.message, 'error');
-            });
-        }
-</script>
+      </script>
 @endpush

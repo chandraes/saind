@@ -14,11 +14,13 @@ use App\Models\Vendor;
 use App\Models\KasVendor;
 use App\Models\Rekening;
 use App\Models\GroupWa;
+use App\Models\InvoiceAddVendor;
 use App\Models\Pajak\PphPerusahaan;
 use App\Models\Pajak\PphSimpan;
 use App\Models\Pajak\PpnKeluaran;
 use App\Models\Pajak\PpnMasukan;
 use App\Models\Transaksi;
+use App\Models\TransaksiAdditional;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -292,10 +294,13 @@ class InvoiceController extends Controller
 
     public function invoice_bayar()
     {
-        $invoice = InvoiceBayar::where('lunas', 0)->get();
+        $invoice = InvoiceBayar::with('vendor')->where('lunas', 0)->get();
+        $addInvoice = InvoiceAddVendor::with(['vendor'])->where('status', 1)->where('is_finished', 0)->get();
+
 
         return view('billing.transaksi.invoice.invoice-bayar', [
-            'data' => $invoice
+            'data' => $invoice,
+            'addInvoice' => $addInvoice
         ]);
     }
 
@@ -311,6 +316,81 @@ class InvoiceController extends Controller
             'vendor' => $vendor,
             'periode' => $periode,
             'invoice_id' => $invoiceBayar->id
+        ]);
+    }
+
+    public function invoice_bayar_detail_add(InvoiceAddVendor $invoice)
+    {
+
+        $vendor = $invoice->vendor;
+
+        $jenis = $invoice->jenis;
+        $taId = $invoice->details->pluck('transaksi_additional_id');
+
+        $data = TransaksiAdditional::with(['transaksi.kas_uang_jalan.vendor','transaksi.kas_uang_jalan.rute','transaksi.kas_uang_jalan.vehicle', 'rute', 'customer'])
+                ->whereIn('id', $taId)->get();
+
+        $dpp = $invoice->dpp;
+
+        $groupedData = [];
+        $totalKeseluruhan = 0;
+
+        foreach ($data as $item) {
+            // ... (Kode grouping Anda tetap tidak berubah sampai bagian bawah foreach)
+            $customerName = $item->customer->nama ?? 'Tidak Diketahui';
+            $ruteName = $item->rute->nama ?? 'Rute Lain';
+            $tagihan_dari = $item->customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
+            $jarak = (float) ($item->jarak ?? 0);
+            $muatan = (float) ($item->transaksi->{$tagihan_dari} ?? 0);
+
+            if (!isset($groupedData[$customerName])) {
+                $groupedData[$customerName] = [
+                    'rutes' => [],
+                    'subtotal_customer' => 0
+                ];
+            }
+
+            if (!isset($groupedData[$customerName]['rutes'][$ruteName])) {
+                $groupedData[$customerName]['rutes'][$ruteName] = [
+                    'jarak' => $jarak,
+                    'total_muatan' => 0,
+                    'jumlah_trx' => 0
+                ];
+            }
+
+            $groupedData[$customerName]['rutes'][$ruteName]['total_muatan'] += $muatan;
+            $groupedData[$customerName]['rutes'][$ruteName]['jumlah_trx']++;
+        }
+
+        foreach ($groupedData as $customerName => &$customerData) {
+            foreach ($customerData['rutes'] as $ruteName => &$ruteData) {
+                $ruteData['subtotal'] = (int) round($ruteData['jarak'] * $ruteData['total_muatan'] * $dpp);
+                $customerData['subtotal_customer'] += $ruteData['subtotal'];
+            }
+            $totalKeseluruhan += $customerData['subtotal_customer'];
+        }
+        unset($customerData, $ruteData);
+
+        // === TAMBAHAN PERHITUNGAN PAJAK UNTUK TAMPILAN ===
+        $ppn = $vendor->ppn == 1 ? (int) round($totalKeseluruhan * 0.11) : 0;
+        $pph = $vendor->pph == 1 ? (int) round($totalKeseluruhan * ($vendor->pph_val / 100)) : 0;
+        $totalAkhir = $totalKeseluruhan + $ppn - $pph;
+        // ==================================================
+
+        $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
+
+         return view('billing.transaksi.invoice.invoice-bayar-detail-add', [
+            'data' => $data,
+            'vendor' => $vendor,
+            'jenis' => $jenis,
+            'stringJenis' => $stringJenis,
+            'invoice' => $invoice,
+            'totalKeseluruhan' => $totalKeseluruhan,
+            'groupedData' => $groupedData,
+            // Kirim variabel baru ke blade
+            'ppn' => $ppn,
+            'pph' => $pph,
+            'totalAkhir' => $totalAkhir,
         ]);
     }
 
@@ -358,6 +438,64 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoice.bayar.index')->with('success', 'Invoice berhasil di lunasi');
 
+    }
+
+   public function invoice_bayar_jenis_lunas(InvoiceAddVendor $invoice)
+    {
+        $invoice = $invoice->load(['vendor']);
+        try {
+            return DB::transaction(function () use ($invoice) {
+                $uraianUmum = "{$invoice->vendor->nama} {$invoice->periode_invoice}";
+
+                // 1. Catat PPN Masukan jika ada
+                if ($invoice->ppn > 0) {
+                    PpnMasukan::create([
+                        'invoice_add_vendor_id' => $invoice->id,
+                        'uraian' => $uraianUmum,
+                        'nominal' => $invoice->ppn,
+                        'onhold' => 0
+                    ]);
+                }
+
+                // 2. Catat PPH Simpan jika ada
+                if ($invoice->pph > 0) {
+                    PphSimpan::create([
+                        'invoice_add_vendor_id' => $invoice->id,
+                        'uraian' => $uraianUmum,
+                        'nominal' => $invoice->pph,
+                        'onhold' => 0
+                    ]);
+                }
+
+                // 3. Hitung Sisa Saldo di Kas Vendor
+                $lastKas = KasVendor::where('vendor_id', $invoice->vendor_id)
+                    ->orderBy('id', 'desc')
+                    ->first();
+
+                $sisaSebelumnya = $lastKas ? $lastKas->sisa : 0;
+
+                // 4. Catat ke Kas Vendor
+                KasVendor::create([
+                    'tanggal' => now(),
+                    'uraian' => "Pembayaran - {$invoice->periode_invoice}",
+                    'bayar' => $invoice->total,
+                    'vendor_id' => $invoice->vendor_id,
+                    'invoice_add_vendor_id' => $invoice->id,
+                    'sisa' => $sisaSebelumnya - $invoice->total,
+                ]);
+
+                $invoice->update(['is_finished' => true]);
+
+                return redirect()
+                    ->route('invoice.bayar.index')
+                    ->with('success', 'Invoice berhasil dilunasi');
+            });
+        } catch (\Exception $e) {
+
+            return redirect()
+                ->back()
+                ->with('error', 'Terjadi kesalahan saat memproses pembayaran');
+        }
     }
 
     public function invoice_bonus()

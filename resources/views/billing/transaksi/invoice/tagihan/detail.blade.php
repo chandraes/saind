@@ -192,10 +192,70 @@
                     colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
-                <td align="right" class="align-middle text-end">{{number_format($total_tagihan, 0, ',', '.')}}
+                <td align="right" class="align-middle text-end">{{number_format($invoice->total_awal, 0, ',', '.')}}
                 </td>
                 <td>{{number_format($profit, 0, ',', '.')}}</td>
                 <td>{{number_format($profit_persen, 2, ',', '.')}}%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Komp. Jalan Rusak</strong></td>
+                <td align="right" class="align-middle text-end">
+
+                    {{number_format($invoice->kompensasi_jr, 0, ',', '.')}}
+
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Penyesuaian BBM</strong></td>
+                <td align="right" class="align-middle text-end">
+
+                    {{number_format($invoice->penyesuaian_bbm, 0, ',', '.')}}
+
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+             <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Achievement</strong></td>
+                <td align="right" class="align-middle text-end">
+
+                    {{number_format($invoice->achievement, 0, ',', '.')}}
+
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+             <tr>
+                <td class="align-middle"
+                    colspan="{{9 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                                                                ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0)}}">
+                </td>
+                <td class="text-center align-middle"><strong>Sub Total</strong></td>
+                <td align="right" class="align-middle text-end">
+
+                    {{number_format($invoice->total_awal+$invoice->kompensasi_jr+$invoice->penyesuaian_bbm+$invoice->archievement, 0, ',', '.')}}
+
+                </td>
+                <td></td>
+                <td></td>
                 <td></td>
             </tr>
             <tr>

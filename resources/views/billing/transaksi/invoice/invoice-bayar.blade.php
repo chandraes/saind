@@ -1,165 +1,160 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            <h1><u>INVOICE BAYAR</u></h1>
+<div class="container mt-4">
+    <!-- Header & Navigasi -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-dark mb-0">
+            <i class="fa fa-file-invoice-dollar me-2 text-secondary"></i>DAFTAR INVOICE BAYAR VENDOR
+        </h4>
+        <div class="d-flex gap-4">
+            <a href="{{route('home')}}" class="text-secondary text-decoration-none fw-medium">
+                <i class="fa fa-tachometer me-1"></i> Dashboard
+            </a>
+            <a href="{{route('billing.index')}}" class="text-secondary text-decoration-none fw-medium">
+                <i class="fa fa-folder-open me-1"></i> Billing
+            </a>
         </div>
     </div>
+
     @include('swal')
-    {{-- error validation show in swal --}}
-    @if ($errors->any())
-    <script>
-        Swal.fire({
-            title: 'Error!',
-            text: '{{$errors->first()}}',
-            icon: 'error',
-            confirmButtonText: 'Ok'
-        })
-    </script>
-    @endif
-    <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
-            <table class="table">
-                <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
-                                alt="dokumen" width="30"> Billing</a></td>
-                </tr>
+
+    <!-- Tabel Data -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0 table-responsive">
+            <table class="table align-middle table-hover mb-0" id="data-table" style="font-size: 0.9rem;">
+                <thead class="table-success border-bottom">
+                    <tr>
+                        <th class="text-center" style="width: 120px;">Tanggal</th>
+                        <th class="text-center" style="width: 200px;">Vendor</th>
+                        <th class="text-center" style="width: 180px;">Invoice</th>
+                        <th class="text-end" style="width: 220px;">Total Bayar</th>
+                        <th class="text-center" style="width: 120px;">Pembayaran</th>
+                        @if (Auth::user()->role == 'su')
+                        <th class="text-center" style="width: 100px;">Aksi</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($data as $d)
+                    <tr>
+                        <td class="text-center text-muted">{{ $d->tanggal }}</td>
+                        <td class="text-center fw-semibold">{{ $d->vendor->nama }}</td>
+                        <td class="text-center">
+                            <a href="{{route('invoice.bayar.detail', $d)}}" class="text-primary fw-bold text-decoration-none">{{ $d->periode }}</a>
+                        </td>
+                        <td class="text-end fw-semibold">Rp {{ number_format($d->total_bayar, 0, ',', '.') }}</td>
+                        <td class="text-center">
+                            <form action="{{route('invoice.bayar.lunas', $d)}}" method="post" class="d-inline form-bayar" data-nominal="{{ number_format($d->sisa_bayar, 0, ',', '.') }}">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-sm px-3 shadow-sm">
+                                    <i class="fa fa-check-circle me-1"></i> Bayar
+                                </button>
+                            </form>
+                        </td>
+                        @if (Auth::user()->role == 'su')
+                        <td class="text-center">
+                            <form action="{{route('invoice.bayar-back.execute', ['invoice' => $d->id])}}" method="post" class="d-inline form-back">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger btn-sm px-3">
+                                    <i class="fa fa-undo me-1"></i> Back
+                                </button>
+                            </form>
+                        </td>
+                        @endif
+                    </tr>
+                    @endforeach
+
+                    @foreach ($addInvoice as $item)
+                    <tr>
+                        <td class="text-center text-muted">{{ $item->tanggal }}</td>
+                        <td class="text-center fw-semibold">{{ $item->vendor->nama }}</td>
+                        <td class="text-center">
+                            <a href="{{route('invoice.bayar.detail-jenis', $item->id)}}" class="text-primary fw-bold text-decoration-none">{{ $item->periode_invoice }}</a>
+                        </td>
+                        <td class="text-end fw-semibold">Rp {{ $item->nf_total }}</td>
+                        <td class="text-center">
+                            <form action="{{route('invoice.bayar.jenis-lunas', $item->id)}}" method="post" class="d-inline form-bayar" data-nominal="{{ $item->nf_total }}">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-sm px-3 shadow-sm">
+                                    <i class="fa fa-check-circle me-1"></i> Bayar
+                                </button>
+                            </form>
+                        </td>
+                        @if (Auth::user()->role == 'su')
+                        <td class="text-center">
+                            <span class="badge bg-light text-secondary border px-3 py-2">
+                                <i class="fa fa-cog me-1"></i> N/A
+                            </span>
+                        </td>
+                        @endif
+                    </tr>
+                    @endforeach
+                </tbody>
             </table>
         </div>
     </div>
 </div>
-<div class="container mt-5 table-responsive ">
-    <table class="table table-bordered table-hover" id="data-table">
-        <thead class="table-success">
-            <tr>
-                <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Vendor</th>
-                <th class="text-center align-middle">Invoice</th>
-                <th class="text-center align-middle">Total Bayar</th>
-                <th class="text-center align-middle">Balance</th>
-                <th class="text-center align-middle">Sisa Bayar</th>
-                <th class="text-center align-middle">Pembayaran ke Vendor</th>
-                @if (Auth::user()->role == 'su')
-                <th class="text-center align-middle">Aksi</th>
-                @endif
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($data as $d)
-            <tr>
-                <td class="text-center align-middle">{{$d->tanggal}}</td>
-                <td class="text-center align-middle">{{$d->vendor->nama}}</td>
-                <td class="text-center align-middle">
-                    <a href="{{route('invoice.bayar.detail', $d)}}">{{$d->periode}}</a>
-                </td>
-                <td class="text-center align-middle">
-                    {{number_format($d->total_bayar, 0, ',', '.')}}
-                </td>
-                <td class="text-center align-middle">
-                    {{number_format($d->bayar, 0, ',', '.')}}
-                </td>
-                <td class="text-center align-middle">
-                    {{number_format($d->sisa_bayar, 0, ',', '.')}}
-                </td>
-                <td class="text-center align-middle">
-                    <form action="{{route('invoice.bayar.lunas', $d)}}" method="post" id="lunasForm-{{$d->id}}">
-                    @csrf
-                        <button type="submit" class="btn btn-success">Bayar </button>
-                    </form>
-                </td>
-                 @if (Auth::user()->role == 'su')
-                <td class="text-center align-middle">
-                    <form action="{{route('invoice.bayar-back.execute', ['invoice' => $d->id])}}" method="post" id="backForm{{$d->id}}" class="back-form" data-id="{{ $d->id }}">
-                        @csrf
-                        <button type="submit" class="btn btn-danger">Back</button>
-                    </form>
-                </td>
-                @endif
-            </tr>
-            <script>
-                 $('#lunasForm-{{$d->id}}').submit(function(e){
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Apakah anda yakin?',
-                        text: "Pembayaran sebesar Rp. {{number_format($d->sisa_bayar, 0, ',', '.')}}",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Ya, simpan!'
-                        }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.submit();
-                        }
-                    })
-                });
-
-                $('#cicilForm-{{$d->id}}').submit(function(e){
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Apakah anda yakin?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Ya, simpan!'
-                        }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.submit();
-                        }
-                    })
-                });
-            </script>
-            @endforeach
-        </tbody>
-    </table>
-</div>
 @endsection
+
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<style>
+
+</style>
 @endpush
+
 @push('js')
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>
-    // hide alert after 5 seconds
-
-
     $(document).ready(function() {
-        $('#data-table').DataTable();
+        // Inisialisasi DataTable
+        $('#data-table').DataTable({
+            pageLength: 10,
+            order: [[0, 'desc']], // Urutkan dari tanggal terbaru
 
-    });
+        });
 
-    function toggleInputTambah() {
-        var value = document.getElementById('vendor_id').value;
-        if (value == '') {
-            document.getElementById('row-input').hidden = true;
-        } else {
-            document.getElementById('row-input').hidden = false;
-        }
-    }
+        // --- EVENT DELEGATION UNTUK TOMBOL BAYAR ---
+        // (Mengganti banyak script di dalam foreach yang lama)
+        $('#data-table').on('submit', '.form-bayar', function(e) {
+            e.preventDefault();
+            var nominal = $(this).data('nominal');
 
-     $('.back-form').submit(function(e){
-        e.preventDefault();
-        var formId = $(this).data('id');
-        Swal.fire({
-            title: 'Apakah Anda Yakin?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, simpan!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $(`#backForm${formId}`).unbind('submit').submit();
-                $('#spinner').show();
-            }
+            Swal.fire({
+                title: 'Konfirmasi Pembayaran',
+                text: "Anda akan memproses pembayaran sebesar Rp. " + nominal,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754', // Warna hijau sukses
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Bayar Sekarang',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            });
+        });
+
+        // --- EVENT DELEGATION UNTUK TOMBOL BACK ---
+        $('#data-table').on('submit', '.form-back', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Kembalikan Transaksi?',
+                text: "Data invoice ini akan dikembalikan ke tahap sebelumnya.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545', // Warna merah bahaya
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Kembalikan',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            });
         });
     });
-
-
 </script>
 @endpush

@@ -38,8 +38,11 @@
                 <th class="text-center align-middle">Tanggal</th>
                 <th class="text-center align-middle">Tambang</th>
                 <th class="text-center align-middle">Invoice</th>
-                <th class="text-center align-middle">DPP</th>
+                <th class="text-center align-middle">HPP</th>
+                <th class="text-center align-middle">Kompensasi<br>Jalan Rusak</th>
                 <th class="text-center align-middle">Penyesuaian BBM</th>
+                <th class="text-center align-middle">Achievement</th>
+                <th class="text-center align-middle">Penyesuaian</th>
                 <th class="text-center align-middle">Penalti</th>
                 <th class="text-center align-middle">Ppn</th>
                 <th class="text-center align-middle">Pph</th>
@@ -65,6 +68,15 @@
                 </td>
                 <td class="text-end align-middle">
                     {{$d->nf_total_awal}}
+                </td>
+                 <td class="text-end align-middle">
+                    {{$d->nf_kompensasi_jr}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->nf_penyesuaian_bbm}}
+                </td>
+                <td class="text-end align-middle">
+                    {{$d->nf_achievement}}
                 </td>
                 <td class="text-end align-middle">
                     {{$d->nf_penyesuaian}}

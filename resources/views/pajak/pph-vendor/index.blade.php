@@ -84,7 +84,12 @@
                             {{$d->is_faktur == 0 ? 'disabled' : ''}}>
                     </td>
                     <td class="text-center align-middle">
+                         @if ($d->invoice)
                         {{$d->invoice ? $d->invoice->tanggal : $d->tanggal}}
+                        @endif
+                        @if($d->invoice_add_vendor_id)
+                        {{$d->invoiceAddVendor->tanggal}}
+                        @endif
                     </td>
                     <td class="text-center align-middle">
                         @if ($d->invoice)
@@ -92,9 +97,19 @@
                             {{$d->invoice->periode}}
                         </a>
                         @endif
+                         @if ($d->invoice_add_vendor_id)
+                            <a href="{{route('invoice.bayar.detail-jenis', ['invoice' => $d->invoice_add_vendor_id])}}">
+                            {{$d->invoiceAddVendor->periode_invoice}}
+                        </a>
+                        @endif
                     </td>
                     <td class="text-center align-middle">
-                        {{$d->invoice ? $d->invoice->vendor->nama : '-'}}
+                           @if ($d->invoice)
+                              {{$d->invoice->vendor->nama}}
+                        @endif
+                        @if ($d->invoice_add_vendor_id)
+                            {{$d->invoiceAddVendor->vendor->nama}}
+                        @endif
                     </td>
                     <td class="text-start align-middle">
                         {{$d->uraian}}
@@ -147,7 +162,12 @@
 
         const d = getDataById(id);
 
-        $('#nota').val(d.invoice_bayar_id != null ? d.invoice.periode : 'Nota Belum Terisi');
+         if (d.invoice_bayar_id !== null) {
+            $('#nota').val(d.invoice_bayar_id != null ? d.invoice.periode : 'Nota Belum Terisi');
+        }
+        if (d.invoice_add_vendor_id !== null) {
+             $('#nota').val(d.invoice_add_vendor.periode_invoice);
+        }
         $('#nominal').val(d.nf_nominal);
         $('#no_faktur').val(d.is_faktur == 1 ? d.no_faktur : '');
     }

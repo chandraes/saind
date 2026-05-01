@@ -30,6 +30,8 @@
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
                                 width="30"> Billing</a></td>
                     @endif
+                    <td><a href="{{route('billing.nota-bayar', ['vendor' => $vendor->id])}}"><img src="{{asset('images/back.svg')}}" alt="dokumen"
+                                width="30"> Kembali</a></td>
 
                 </tr>
             </table>
