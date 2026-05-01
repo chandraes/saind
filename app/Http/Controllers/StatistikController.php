@@ -555,7 +555,7 @@ class StatistikController extends Controller
 
         return view('rekap.statistik.profit.bulanan-bersih', $all);
     }
-    
+
     public function profit_tahunan_bersih_detail_jenis($jenis, $month, $year)
     {
         // Mengambil data dengan Eager Loading
@@ -594,6 +594,57 @@ class StatistikController extends Controller
             'totalBayar'   => number_format($rawTotalVendor, 0, ',', '.'),
             'selisih'      => number_format($rawSelisih, 0, ',', '.'),
             'rawSelisih'   => $rawSelisih // Dikirim untuk logika warna di UI
+        ]);
+    }
+
+   public function achievement(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        // Penyesuaian ejaan bahasa Indonesia baku
+        $arrayBulan = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+
+        // Asumsi dataTahun() adalah method di dalam model InvoiceAdditional
+        $dataTahun = (new InvoiceAdditional)->dataTahun();
+
+        // Menggunakan pemanggilan statis Eloquent agar lebih bersih
+        $invoiceTagihan = InvoiceAdditional::with(['customer'])
+            ->where('jenis', 'achievement')
+            ->where('is_finished', 1)
+            ->whereMonth('updated_at', $bulan)
+            ->whereYear('updated_at', $tahun)
+            ->get();
+
+        $invoiceVendor = InvoiceAddVendor::with(['vendor'])
+            ->where('jenis', 'achievement')
+            ->where('is_finished', 1)
+            ->whereMonth('updated_at', $bulan)
+            ->whereYear('updated_at', $tahun)
+            ->get();
+
+        // Hitung total dalam bentuk angka mentah (Raw Numeric)
+        $rawTotalTagihan = $invoiceTagihan->sum('nominal') * 0.98;
+        $rawTotalVendor = $invoiceVendor->sum('nominal');
+        $rawSelisih = $rawTotalTagihan - $rawTotalVendor;
+
+        $nama_bulan = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
+
+        return view('statistik.achievement', [
+            "tagihan"      => $invoiceTagihan,
+            "vendor"       => $invoiceVendor,
+            'nama_bulan'   => $nama_bulan,
+            'bulan'        => $bulan,
+            'tahun'        => $tahun,
+            'arrayBulan'   => $arrayBulan,
+            'dataTahun'    => $dataTahun,
+            'totalTagihan' => $rawTotalTagihan, // Kirim raw agar diformat di Blade
+            'totalBayar'   => $rawTotalVendor,
+            'selisih'      => $rawSelisih,
         ]);
     }
 

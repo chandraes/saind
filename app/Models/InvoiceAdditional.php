@@ -21,6 +21,11 @@ class InvoiceAdditional extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function dataTahun()
+    {
+        return $this->selectRaw('YEAR(updated_at) tahun')->groupBy('tahun')->orderBy('tahun', 'desc')->get();
+    }
+
     public function details()
     {
         return $this->hasMany(InvoiceAdditionalDetail::class);

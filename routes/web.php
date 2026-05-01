@@ -293,6 +293,8 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/pdf', [App\Http\Controllers\StatistikController::class, 'profit_harian_download'])->name('statistik.profit-harian.pdf');
             });
 
+            Route::get('/achievement', [App\Http\Controllers\StatistikController::class, 'achievement'])->name('statistik.achievement');
+
             Route::get('/profit-tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih'])->name('statistik.profit-tahunan-bersih');
             Route::get('/profit-tahunan-bersih/{jenis}/{month}/{year}', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih_detail_jenis'])->name('statistik.profit-tahunan-bersih.detail-jenis');
 
