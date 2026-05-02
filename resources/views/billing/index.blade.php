@@ -175,7 +175,7 @@
                 href="#" data-bs-toggle="modal" data-bs-target="#modalCo"
                 @else
                 href="{{route('billing.form-cost-operational.cost-operational')}}"
-            @endif class="text-decoration-none">
+                @endif class="text-decoration-none">
                 <img src="{{asset('images/form-cost-operational.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM OPERATIONAL</h4>
             </a>
@@ -210,7 +210,8 @@
             </div>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.gaji.index', ['bulan' => $bulan, 'tahun' => $tahun])}}" class="text-decoration-none">
+            <a href="{{route('billing.gaji.index', ['bulan' => $bulan, 'tahun' => $tahun])}}"
+                class="text-decoration-none">
                 <img src="{{asset('images/gaji.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM GAJI</h3>
             </a>
@@ -259,8 +260,8 @@
                 <img src="{{asset('images/form-maintenance.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM BARANG MAINTENANCE</h4>
             </a>
-            <div class="modal fade" id="formMaintenance" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
+            <div class="modal fade" id="formMaintenance" tabindex="-1" data-bs-backdrop="static"
+                data-bs-keyboard="false" role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -276,7 +277,8 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            <button type="button" class="btn btn-primary" onclick="tipeFormMaintenance()">Lanjutkan</button>
+                            <button type="button" class="btn btn-primary"
+                                onclick="tipeFormMaintenance()">Lanjutkan</button>
                         </div>
                     </div>
                 </div>
@@ -328,24 +330,17 @@
             </div>
         </div>
         {{-- BACK BUTTON --}}
-         {{-- <div class="col-md-2 text-center mt-5">
-            <a href="{{route('transaksi.nota-muat')}}" class="text-decoration-none">
-                <img src="{{asset('images/muat.svg')}}" alt="" width="70">
-                <h4 class="mt-3">NOTA MUAT
-
-                        </h4>
-            </a>
-        </div> --}}
-         <div class="col-md-2 text-center mt-5">
+      
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
                 <img src="{{asset('images/bongkar.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA BONGKAR
                     {{-- <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
                         "(".$data->where('status', 2)->count().")" : '' }}</span> --}}
-                        </h4>
+                </h4>
             </a>
         </div>
-        {{--  <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.sales-order')}}" class="text-decoration-none">
                 <img src="{{asset('images/sales-order.svg')}}" alt="" width="70">
                 <h4 class="mt-3">Sales Order <span class="text-danger">{{$data->whereIn('status', [1,2])->count() > 0
@@ -357,14 +352,14 @@
     <br>
     <div class="row justify-content-left">
         <h4 class="mt-3">NOTA</h4>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#customerId">
                 <img src="{{asset('images/tagihan.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA TAGIHAN CUSTOMER
                     {{-- <span class="text-danger">{{$data->where('status',
                         3)->where('tagihan', 0)->count() > 0
                         ? "(".$data->where('status', 3)->where('tagihan', 0)->count().")" : '' }}</span> --}}
-                        </h4>
+                </h4>
             </a>
             <div class="modal fade" id="customerId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
                 role="dialog" aria-labelledby="customerTitleId" aria-hidden="true">
@@ -377,11 +372,12 @@
                         <div class="modal-body">
                             <div class="row">
                                 @foreach ($customer as $c)
-                                 <div class="col-md-2 text-center mt-5">
+                                <div class="col-md-2 text-center mt-5">
                                     <a href="{{route('billing.nota-tagihan', $c)}}" class="text-decoration-none">
                                         <img src="{{asset('images/tambang.svg')}}" alt="" width="70">
                                         <h4 class="mt-3">{{$c->singkatan}}
-                                            {{-- @if ($data->where('status', 3)->where('tagihan', 0)->where('customer_id',
+                                            {{-- @if ($data->where('status', 3)->where('tagihan',
+                                            0)->where('customer_id',
                                             $c->id)->count() > 0)
                                             <span class="text-danger">({{$data->where('status', 3)->where('tagihan',
                                                 0)->where('customer_id', $c->id)->count()}})</span>
@@ -400,50 +396,54 @@
                 </div>
             </div>
         </div>
-      <div class="col-md-2 text-center mt-5">
-    <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
-        <img src="{{asset('images/bayar.svg')}}" alt="Nota Bayar Vendor" width="70">
-        <h4 class="mt-3">NOTA BAYAR VENDOR</h4>
-    </a>
+        <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
+                <img src="{{asset('images/bayar.svg')}}" alt="Nota Bayar Vendor" width="70">
+                <h4 class="mt-3">NOTA BAYAR VENDOR</h4>
+            </a>
 
-    <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalTitleId"><i class="fa fa-truck me-2"></i>Pilih Vendor</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <form id="formVendorBayar">
-                    <div class="modal-body text-start">
-                        <div class="mb-3">
-                            <label for="vendorSelect" class="form-label fw-semibold">Nama Vendor <span class="text-danger">*</span></label>
-                            <select class="form-select border-primary shadow-sm" id="vendorSelect" required>
-                                <option value="" selected disabled>-- Pilih Vendor --</option>
-                                @foreach ($vendor as $v)
-                                <option value="{{$v->id}}">{{$v->nama}}</option>
-                                @endforeach
-                            </select>
+            <div class="modal fade" id="vendorBayar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
+                role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="modalTitleId"><i class="fa fa-truck me-2"></i>Pilih Vendor</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                         </div>
-                    </div>
-                    <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                        <button type="submit" class="btn btn-primary px-4">Lanjutkan <i class="fa fa-arrow-right ms-1"></i></button>
-                    </div>
-                </form>
 
+                        <form id="formVendorBayar">
+                            <div class="modal-body text-start">
+                                <div class="mb-3">
+                                    <label for="vendorSelect" class="form-label fw-semibold">Nama Vendor <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select border-primary shadow-sm" id="vendorSelect" required>
+                                        <option value="" selected disabled>-- Pilih Vendor --</option>
+                                        @foreach ($vendor as $v)
+                                        <option value="{{$v->id}}">{{$v->nama}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                <button type="submit" class="btn btn-primary px-4">Lanjutkan <i
+                                        class="fa fa-arrow-right ms-1"></i></button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sponsorModal">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA BONUS SPONSOR
                     {{-- <span class="text-danger">{{$data->where('status',
                         3)->where('bonus', 0)->count() > 0 ?
                         "(".$data->where('status', 3)->where('bonus', 0)->count().")" : '' }}</span> --}}
-                        </h4>
+                </h4>
             </a>
 
             <div class="modal fade" id="sponsorModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -475,11 +475,12 @@
                 </div>
             </div>
         </div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#csrModal">
                 <img src="{{asset('images/csr.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA CSR (TERTENTU)
-                    {{-- <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>',
+                    {{-- <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('nominal_csr',
+                        '>',
                         0)->count() > 0 ?
                         "(".$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>', 0)->count().")" : ''
                         }}</span> --}}
@@ -497,7 +498,7 @@
                         <div class="modal-body">
                             <div class="row">
                                 @foreach ($customer->where('csr', 1) as $c)
-                                 <div class="col-md-2 text-center mt-5">
+                                <div class="col-md-2 text-center mt-5">
                                     <form action="{{route('billing.nota-csr')}}" method="get">
                                         <input type="hidden" name="customer_id" value="{{$c->id}}">
                                         <button type="submit" class="text-decoration-none"
@@ -522,31 +523,32 @@
     <br>
     <div class="row justify-content-left">
         <h4 class="mt-3">INVOICE</h4>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('invoice.tagihan.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-tagihan.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE CUSTOMER <span class="text-danger">{{$invoice > 0 ? "(".$invoice.")" :
                         ''}}</span></h4>
             </a>
         </div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('invoice.bayar.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-bayar.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE BAYAR VENDOR <span class="text-danger">{{$bayar > 0 ? "(".$bayar.")" :
                         ''}}</span></h4>
             </a>
         </div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('invoice.bonus.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-bonus.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE BONUS SPONSOR <span class="text-danger">{{$bonus > 0 ? "(".$bonus.")" :
                         ''}}</span></h4>
             </a>
         </div>
-         <div class="col-md-2 text-center mt-5">
+        <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.invoice-csr')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-csr.svg')}}" alt="" width="70">
-                <h4 class="mt-3">INVOICE CSR (TERTENTU) <span class="text-danger">{{$invoice_csr > 0 ? "(".$invoice_csr.")" :
+                <h4 class="mt-3">INVOICE CSR (TERTENTU) <span class="text-danger">{{$invoice_csr > 0 ?
+                        "(".$invoice_csr.")" :
                         ''}}</span></h4>
             </a>
         </div>
@@ -568,7 +570,6 @@
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 
 <script>
-
     $('#vendorSelect').select2({
                 placeholder: 'Pilih Vendor',
                 width: '100%',

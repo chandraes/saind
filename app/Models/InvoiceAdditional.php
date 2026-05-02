@@ -9,7 +9,7 @@ class InvoiceAdditional extends Model
 {
 
     protected $guarded = ['id'];
-    protected $appends = ['tanggal', 'dpp', 'nf_dpp'];
+    protected $appends = ['tanggal', 'dpp_nominal', 'nf_dpp_nominal'];
 
     public function getTanggalAttribute()
     {
@@ -36,13 +36,13 @@ class InvoiceAdditional extends Model
         return number_format($this->nominal, 0 ,',','.');
     }
 
-    public function getDppAttribute()
+    public function getDppNominalAttribute()
     {
         return $this->nominal * 0.98;
     }
 
-    public function getNfDppAttribute()
+    public function getNfDppNominalAttribute()
     {
-        return number_format($this->dpp, 0 ,',','.');
+        return number_format($this->dpp_nominal, 0 ,',','.');
     }
 }
