@@ -293,7 +293,10 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/pdf', [App\Http\Controllers\StatistikController::class, 'profit_harian_download'])->name('statistik.profit-harian.pdf');
             });
 
+            Route::get('/achievement', [App\Http\Controllers\StatistikController::class, 'achievement'])->name('statistik.achievement');
+
             Route::get('/profit-tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih'])->name('statistik.profit-tahunan-bersih');
+            Route::get('/profit-tahunan-bersih/{jenis}/{month}/{year}', [App\Http\Controllers\StatistikController::class, 'profit_tahunan_bersih_detail_jenis'])->name('statistik.profit-tahunan-bersih.detail-jenis');
 
             Route::prefix('profit')->group(function(){
                 Route::get('/tahunan-bersih', [App\Http\Controllers\StatistikController::class, 'tahunan_bersih'])->name('statistik.profit.tahunan-bersih');
@@ -396,6 +399,24 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/nota-bayar/{vendor}', [App\Http\Controllers\TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
             Route::post('/nota-bayar/{vendor}/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_lanjut'])->name('transaksi.nota-bayar.lanjut');
         });
+
+        Route::prefix('billing/nota-bayar')->group(function() {
+            Route::get('/{vendor}', [App\Http\Controllers\BillingController::class, 'nota_bayar'])->name('billing.nota-bayar');
+            Route::get('/{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_jenis'])->name('billing.nota-bayar.detail-jenis');
+            Route::post('{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_lanjut'])->name('billing.nota-bayar.detail-jenis.lanjut');
+            Route::get('/{vendor}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang'])->name('billing.nota-bayar.detail-jenis.keranjang');
+            Route::post('{vendor}/{jenis}/keranjang/{invoice}/lanjut', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-bayar.detail-jenis.keranjang.lanjut');
+            Route::post('{vendor}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_back'])->name('billing.nota-bayar.detail-jenis.keranjang.back');
+        });
+
+         Route::prefix('billing/nota-tagihan')->group(function(){
+                Route::get('/{customer}', [App\Http\Controllers\BillingController::class, 'nota_tagihan'])->name('billing.nota-tagihan');
+                Route::get('/{customer}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis'])->name('billing.nota-tagihan.detail-jenis');
+                Route::post('{customer}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_lanjut'])->name('billing.nota-tagihan.detail-jenis.lanjut');
+                Route::get('/{customer}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang'])->name('billing.nota-tagihan.detail-jenis.keranjang');
+                Route::post('{customer}/{jenis}/keranjang/{invoice}/lanjut', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-tagihan.detail-jenis.keranjang.lanjut');
+                Route::post('{customer}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_back'])->name('billing.nota-tagihan.detail-jenis.keranjang.back');
+            });
 
         Route::prefix('statistik/ban-luar')->group(function(){
             Route::get('/', [App\Http\Controllers\BanController::class, 'index'])->name('statistik.ban-luar');
@@ -624,23 +645,7 @@ Route::group(['middleware' => ['auth']], function() {
 
             });
 
-            Route::prefix('nota-tagihan')->group(function(){
-                Route::get('/{customer}', [App\Http\Controllers\BillingController::class, 'nota_tagihan'])->name('billing.nota-tagihan');
-                Route::get('/{customer}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis'])->name('billing.nota-tagihan.detail-jenis');
-                Route::post('{customer}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_lanjut'])->name('billing.nota-tagihan.detail-jenis.lanjut');
-                Route::get('/{customer}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang'])->name('billing.nota-tagihan.detail-jenis.keranjang');
-                Route::post('{customer}/{jenis}/keranjang/{invoice}/lanjut', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-tagihan.detail-jenis.keranjang.lanjut');
-                Route::post('{customer}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_back'])->name('billing.nota-tagihan.detail-jenis.keranjang.back');
-            });
 
-            Route::prefix('nota-bayar')->group(function() {
-                Route::get('/{vendor}', [App\Http\Controllers\BillingController::class, 'nota_bayar'])->name('billing.nota-bayar');
-                Route::get('/{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_jenis'])->name('billing.nota-bayar.detail-jenis');
-                Route::post('{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_lanjut'])->name('billing.nota-bayar.detail-jenis.lanjut');
-                Route::get('/{vendor}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang'])->name('billing.nota-bayar.detail-jenis.keranjang');
-                Route::post('{vendor}/{jenis}/keranjang/{invoice}/lanjut', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-bayar.detail-jenis.keranjang.lanjut');
-                Route::post('{vendor}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_back'])->name('billing.nota-bayar.detail-jenis.keranjang.back');
-            });
 
         });
 

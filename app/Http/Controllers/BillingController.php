@@ -506,7 +506,7 @@ class BillingController extends Controller
 
         $tagihan_dari = $customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
         $dpp = $invoice->dpp;
-
+        
         $ruteGrouped = $data->groupBy(function($item) {
             return $item->rute->nama ?? 'Rute Tidak Ditemukan';
         })->map(function ($group) use ($tagihan_dari, $dpp) {

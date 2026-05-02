@@ -92,7 +92,7 @@
         </div>
 
         <div class="col-6 col-md-4 col-lg-2">
-            <a href="{{route('billing.index')}}" class="text-decoration-none">
+            <a href="{{in_array(auth()->user()->role, ['su', 'admin']) ? route('billing.index') : route('home')}}" class="text-decoration-none">
                 <div class="card h-100 border-0 shadow-sm text-center menu-card py-4 bg-light">
                     <div class="card-body d-flex flex-column align-items-center justify-content-center">
                         <div class="icon-wrapper mb-3">

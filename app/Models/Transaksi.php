@@ -433,8 +433,43 @@ class Transaksi extends Model
         $gt_penyesuaian = 0;
         $gt_penalty = 0;
         $gt_lain = 0;
+        $gt_komp_jr = 0;
+        $gt_peny_bbm = 0;
+
+        $invoiceAdditional = InvoiceAdditional::selectRaw('MONTH(updated_at) as bulan, jenis, SUM(nominal) as total_nominal')
+            ->where('is_finished', 1)
+            ->whereYear('updated_at', $tahun)
+            ->groupByRaw('MONTH(updated_at), jenis')
+            ->get()
+            ->groupBy('bulan'); // Kelompokkan hasil berdasarkan bulan
+
+        $invoiceAddVendor = InvoiceAddVendor::selectRaw('MONTH(updated_at) as bulan, jenis, SUM(nominal) as total_nominal')
+            ->where('is_finished', 1)
+            ->whereYear('updated_at', $tahun)
+            ->groupByRaw('MONTH(updated_at), jenis')
+            ->get()
+            ->groupBy('bulan');
 
         for ($bulan = 1; $bulan <= 12; $bulan++) {
+
+            $tagihanBulanIni = isset($invoiceAdditional[$bulan])
+                ? $invoiceAdditional[$bulan]->pluck('total_nominal', 'jenis')
+                : collect([]);
+
+            $vendorBulanIni = isset($invoiceAddVendor[$bulan])
+                ? $invoiceAddVendor[$bulan]->pluck('total_nominal', 'jenis')
+                : collect([]);
+
+            // --- Kalkulasi Kompensasi JR ---
+            // Gunakan get() dari collection, jika jenis tersebut tidak ada, fallback ke 0
+            $komp_jr_tagihan = ($tagihanBulanIni->get('kompensasi_jr', 0)) * 0.98;
+            $komp_jr_vendor  = $vendorBulanIni->get('kompensasi_jr', 0);
+            $komp_jr         = $komp_jr_tagihan - $komp_jr_vendor;
+
+            // --- Kalkulasi Penyesuaian BBM ---
+            $peny_bbm_tagihan = ($tagihanBulanIni->get('penyesuaian_bbm', 0)) * 0.98;
+            $peny_bbm_vendor  = $vendorBulanIni->get('penyesuaian_bbm', 0);
+            $peny_bbm         = $peny_bbm_tagihan - $peny_bbm_vendor;
 
             $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
                                 // ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
@@ -497,7 +532,7 @@ class Transaksi extends Model
 
             $grand_total_profit += $data->sum('profit');
             $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor;
-            $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty+$total_lain) + $penyesuaian;
+            $grand_total_bersih += $data->sum('profit') + $komp_jr + $peny_bbm  - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty+$total_lain) + $penyesuaian;
 
             $grand_total_gaji += $total_gaji_bersih;
             $grant_total_co += $total_co;
@@ -506,11 +541,16 @@ class Transaksi extends Model
             $gt_penyesuaian += $penyesuaian;
             $gt_penalty += $penalty;
             $gt_lain += $total_lain;
+            $gt_komp_jr  += $komp_jr;
+            $gt_peny_bbm += $peny_bbm;
 
             $total_pengeluaran = $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co+$bungaInvestor+$penalty+$total_lain;
 
             $statistics[$bulan] = [
+                'bulan' => $bulan,
                 'nama_bulan' => $nama_bulan[$bulan],
+                'komp_jr' => $komp_jr,
+                'peny_bbm' => $peny_bbm,
                 'profit' => $data->sum('profit'),
                 'total_gaji' => $total_gaji_bersih,
                 'total_co' => $total_co,
@@ -520,7 +560,7 @@ class Transaksi extends Model
                 'lain' => $total_lain,
                 'penalty' => $penalty,
                 'pengeluaran' => $total_pengeluaran,
-                'bersih' => ($data->sum('profit') - $total_pengeluaran) + $penyesuaian,
+                'bersih' => ($data->sum('profit') + $komp_jr + $peny_bbm - $total_pengeluaran) + $penyesuaian,
             ];
 
         }
@@ -540,6 +580,8 @@ class Transaksi extends Model
             'gt_penyesuaian' => $gt_penyesuaian,
             'gt_penalty' => $gt_penalty,
             'gt_lain' => $gt_lain,
+            'gt_komp_jr' => $gt_komp_jr,
+            'gt_peny_bbm' => $gt_peny_bbm,
         ];
 
         return $all;
