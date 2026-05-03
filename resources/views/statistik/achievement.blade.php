@@ -54,7 +54,7 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4">
-                    <div class="text-muted small fw-bold text-uppercase mb-2">Total Masuk (98%)</div>
+                    <div class="text-muted small fw-bold text-uppercase mb-2">Total Masuk</div>
                     <h3 class="text-success fw-bold mb-0">Rp {{number_format($totalTagihan, 0, ',', '.')}}</h3>
                 </div>
             </div>
@@ -119,11 +119,30 @@
                         </td>
                     </tr>
                     @endforeach
+                    @foreach ($history as $h)
+                    <tr>
+                        <td class="text-center small text-muted">{{$h->created_at->format('Y-m-d')}}</td>
+                        <td>
+                            <div class="fw-bold text-uppercase" style="font-size: 0.85rem;">{{$h->uraian}}</div>
+                        </td>
+                        <td class="text-end text-muted">
+                            @if ($h->jenis == 1)
+                                Rp {{number_format($h->nominal, 0, ',', '.')}}
+                            @endif
+                        </td>
+                        <td class="text-end fw-bold text-danger">
+                            @if ($h->jenis == 0)
+                                Rp {{number_format($h->nominal, 0, ',', '.')}}
+                            @endif
+
+                        </td>
+                    </tr>
+                    @endforeach
                 </tbody>
                 <!-- Tfoot untuk perhitungan selisih awam -->
                 <tfoot class="bg-light fw-bold">
                     <tr>
-                        <td colspan="2" class="text-end py-3">TOTAL MASUK (DITERIMA 98%)</td>
+                        <td colspan="2" class="text-end py-3">TOTAL MASUK</td>
                         <td class="text-end text-success py-3">Rp {{number_format($totalTagihan, 0, ',', '.')}}</td>
                         <td></td>
                     </tr>
@@ -171,7 +190,7 @@
             "info": false,
             "scrollCollapse": true,
             "scrollY": "550px",
-            "ordering": false, // Pertahankan urutan input asli agar tfoot tidak pindah
+        
             "language": {
                 "search": "Cari Transaksi:"
             }

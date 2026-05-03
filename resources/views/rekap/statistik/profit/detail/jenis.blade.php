@@ -83,7 +83,7 @@
                             <div class="fw-bold">Tagihan Customer</div>
                             <div class="small text-muted">{{$t->customer?->nama}}</div>
                         </td>
-                        <td class="text-end fw-bold text-success">Rp. {{$t->nf_dpp}}</td>
+                        <td class="text-end fw-bold text-success">Rp. {{$t->nf_dpp_nominal}}</td>
                         <td class="text-end text-muted">-</td>
                     </tr>
                     @endforeach
