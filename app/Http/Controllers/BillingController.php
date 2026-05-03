@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AchievementHistory;
 use App\Models\CostOperational;
 use App\Models\Customer;
 use App\Models\db\Kreditor;
@@ -506,7 +507,7 @@ class BillingController extends Controller
 
         $tagihan_dari = $customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
         $dpp = $invoice->dpp;
-        
+
         $ruteGrouped = $data->groupBy(function($item) {
             return $item->rute->nama ?? 'Rute Tidak Ditemukan';
         })->map(function ($group) use ($tagihan_dari, $dpp) {
@@ -894,6 +895,168 @@ class BillingController extends Controller
             DB::rollBack();
 
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
+    }
+
+    public function form_achievement_masuk()
+    {
+        $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+        if (!$rekening) {
+            return redirect()->back()->with('error', 'Rekening Kas Besar belum diatur!');
+        }
+
+        return view('billing.form-achievement.masuk', compact('rekening'));
+    }
+
+    public function form_achievement_masuk_store(Request $request)
+    {
+        if ($request->has('nominal_transaksi')) {
+            $request->merge(['nominal_transaksi' => str_replace('.', '', $request->nominal_transaksi)]);
+        }
+
+        $data = $request->validate([
+            'uraian' => 'required|max:255',
+            'nominal_transaksi' => 'required|numeric|min:1',
+        ]);
+
+        DB::beginTransaction(); // Memulai transaksi database
+        try {
+            $rekening = Rekening::where('untuk', 'kas-besar')->first();
+
+            $last = KasBesar::latest('id')->lockForUpdate()->first();
+            $saldoTerakhir = $last ? $last->saldo : 0;
+            $modalTerakhir = $last ? $last->modal_investor_terakhir : 0;
+
+            $store = KasBesar::create([
+                'uraian' => $data['uraian'],
+                'nominal_transaksi' => $data['nominal_transaksi'],
+                'transfer_ke' => substr($rekening->nama_rekening, 0, 15),
+                'no_rekening' => $rekening->nomor_rekening,
+                'bank' => $rekening->nama_bank,
+                'jenis_transaksi_id' => 1,
+                'tanggal' => now()->format('Y-m-d'),
+                'achievement' => 1,
+                'saldo' => $saldoTerakhir + $data['nominal_transaksi'],
+                'modal_investor_terakhir' => $modalTerakhir,
+            ]);
+
+            AchievementHistory::create([
+                'uraian' => $data['uraian'],
+                'jenis' => 1,
+                'nominal' => $data['nominal_transaksi']
+            ]);
+
+            DB::commit(); // Simpan permanen jika semua proses di atas berhasil
+
+            $this->sendWhatsAppNotification($store, 'masuk');
+
+            return redirect()->route('billing.index')->with('success', 'Data Achievement (Masuk) berhasil disimpan');
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // Batalkan semua insert jika ada yang gagal
+            return redirect()->back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
+        }
+    }
+
+
+    // ====================================================================
+    // 2. FORM ACHIEVEMENT KELUAR
+    // ====================================================================
+    public function form_achievement_keluar()
+    {
+        return view('billing.form-achievement.keluar');
+    }
+
+    public function form_achievement_keluar_store(Request $request)
+    {
+        if ($request->has('nominal_transaksi')) {
+            $request->merge(['nominal_transaksi' => str_replace('.', '', $request->nominal_transaksi)]);
+        }
+
+        $data = $request->validate([
+            'uraian' => 'required|max:255',
+            'nominal_transaksi' => 'required|numeric|min:1',
+            'transfer_ke' => 'required',
+            'bank' => 'required',
+            'no_rekening' => 'required',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $last = KasBesar::latest('id')->lockForUpdate()->first();
+            $saldoTerakhir = $last ? $last->saldo : 0;
+            $modalTerakhir = $last ? $last->modal_investor_terakhir : 0;
+
+            // Pengecekan saldo
+            if ($saldoTerakhir < $data['nominal_transaksi']) {
+                DB::rollBack(); // Batalkan transaksi
+                return redirect()->back()->withInput()->with('error', 'Saldo Kas Besar tidak cukup!');
+            }
+
+            $store = KasBesar::create([
+                'uraian' => $data['uraian'],
+                'nominal_transaksi' => $data['nominal_transaksi'],
+                'transfer_ke' => substr($data['transfer_ke'], 0, 15),
+                'no_rekening' => $data['no_rekening'],
+                'bank' => $data['bank'],
+                'jenis_transaksi_id' => 2, // ID 2 untuk Keluar
+                'tanggal' => now()->format('Y-m-d'),
+                'achievement' => 1,
+                'saldo' => $saldoTerakhir - $data['nominal_transaksi'], // Pengurangan Saldo
+                'modal_investor_terakhir' => $modalTerakhir,
+            ]);
+
+            // ... [Insert ke tabel lain di sini nantinya] ...
+            AchievementHistory::create([
+                'uraian' => $data['uraian'],
+                'jenis' => 0,
+                'nominal' => $data['nominal_transaksi']
+            ]);
+
+            DB::commit();
+
+            $this->sendWhatsAppNotification($store, 'keluar');
+
+            return redirect()->route('billing.index')->with('success', 'Data Achievement (Keluar) berhasil disimpan');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
+        }
+    }
+
+
+    // ====================================================================
+    // 3. FUNGSI WHATSAPP (REUSABLE / SATU FUNGSI)
+    // ====================================================================
+    protected function sendWhatsAppNotification($store, $jenis)
+    {
+        $dbWa = new GroupWa();
+        $group = $dbWa->where('untuk', 'kas-besar')->first();
+
+        if ($group) {
+            // Tentukan UI Notifikasi berdasarkan parameter $jenis
+            $emoji = $jenis === 'masuk' ? "🔵🔵🔵🔵🔵🔵🔵🔵🔵" : "🔴🔴🔴🔴🔴🔴🔴🔴🔴";
+            $title = $jenis === 'masuk' ? "*FORM ACHIEVEMENT (MASUK)*" : "*FORM ACHIEVEMENT (KELUAR)*";
+
+            $pesan = "{$emoji}\n" .
+                    "{$title}\n" .
+                    "{$emoji}\n\n" .
+                    "Uraian : " . $store->uraian . "\n" .
+                    "Nilai : *Rp " . number_format($store->nominal_transaksi, 0, ',', '.') . "*\n\n" .
+                    "Ditransfer ke rek:\n" .
+                    "Bank : " . $store->bank . "\n" .
+                    "Nama : " . $store->transfer_ke . "\n" .
+                    "No. Rek : " . $store->no_rekening . "\n\n" .
+                    "==========================\n" .
+                    "Sisa Saldo Kas Besar :\n" .
+                    "*Rp " . number_format($store->saldo, 0, ',', '.') . "*\n\n" .
+                    "Total Modal Investor :\n" .
+                    "*Rp " . number_format($store->modal_investor_terakhir, 0, ',', '.') . "*\n\n" .
+                    "Terima kasih 🙏";
+
+            $dbWa->sendWa($group->nama_group, $pesan);
         }
     }
 }

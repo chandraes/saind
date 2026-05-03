@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatistikController;
+use App\Http\Controllers\BillingController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -72,6 +73,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::post('/settings', [SettingController::class, 'update'])->name('admin.settings.update');
         });
 
+
         Route::prefix('form-setor-pph')->group(function() {
             Route::get('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk'])->name('form-setor-pph.masuk');
             Route::post('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk_store'])->name('form-setor-pph.masuk.store');
@@ -132,6 +134,28 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('database')->group(function(){
             Route::get('/', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
+
+            Route::get('/customer/preview-customer', [App\Http\Controllers\CustomerController::class, 'preview_customer'])->name('database.customer.preview-customer');
+            Route::post('/kategori-barang-store', [App\Http\Controllers\KategoriBarangController::class, 'kategori_store'])->name('database.kategori-barang-store');
+            Route::delete('/kategori-barang-destroy/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_destroy'])->name('database.kategori-barang-destroy');
+            Route::patch('/kategori-barang-update/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_update'])->name('database.kategori-barang-update');
+
+            Route::prefix('aktivasi-maintenance')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance'])->name('database.aktivasi-maintenance');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_store'])->name('database.aktivasi-maintenance.store');
+                Route::patch('/update/{am}', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_update'])->name('database.aktivasi-maintenance.update');
+                Route::delete('/destroy/{am}', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_destroy'])->name('database.aktivasi-maintenance.destroy');
+            });
+            Route::prefix('barang-maintenance')->group(function(){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance'])->name('database.barang-maintenance');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_store'])->name('database.barang-maintenance.store');
+                Route::patch('/update/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_update'])->name('database.barang-maintenance.update');
+                Route::delete('/destroy/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_destroy'])->name('database.barang-maintenance.destroy');
+
+                Route::post('/store-kategori', [App\Http\Controllers\DatabaseController::class, 'kategori_store'])->name('database.barang-maintenance.kategori.store');
+                Route::patch('/update-kategori/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_update'])->name('database.barang-maintenance.kategori.update');
+                Route::delete('/destroy-kategori/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_destroy'])->name('database.barang-maintenance.kategori.destroy');
+            });
 
              Route::prefix('upah-gendong')->group(function(){
                 Route::get('/', [App\Http\Controllers\DatabaseController::class, 'upah_gendong'])->name('database.upah-gendong');
@@ -235,31 +259,6 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::resource('kategori-barang', App\Http\Controllers\KategoriBarangController::class);
 
-
-        Route::prefix('database')->group(function(){
-            Route::get('/customer/preview-customer', [App\Http\Controllers\CustomerController::class, 'preview_customer'])->name('database.customer.preview-customer');
-            Route::post('/kategori-barang-store', [App\Http\Controllers\KategoriBarangController::class, 'kategori_store'])->name('database.kategori-barang-store');
-            Route::delete('/kategori-barang-destroy/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_destroy'])->name('database.kategori-barang-destroy');
-            Route::patch('/kategori-barang-update/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_update'])->name('database.kategori-barang-update');
-
-            Route::prefix('aktivasi-maintenance')->group(function(){
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance'])->name('database.aktivasi-maintenance');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_store'])->name('database.aktivasi-maintenance.store');
-                Route::patch('/update/{am}', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_update'])->name('database.aktivasi-maintenance.update');
-                Route::delete('/destroy/{am}', [App\Http\Controllers\DatabaseController::class, 'aktivasi_maintenance_destroy'])->name('database.aktivasi-maintenance.destroy');
-            });
-            Route::prefix('barang-maintenance')->group(function(){
-                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance'])->name('database.barang-maintenance');
-                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_store'])->name('database.barang-maintenance.store');
-                Route::patch('/update/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_update'])->name('database.barang-maintenance.update');
-                Route::delete('/destroy/{bm}', [App\Http\Controllers\DatabaseController::class, 'barang_maintenance_destroy'])->name('database.barang-maintenance.destroy');
-
-                Route::post('/store-kategori', [App\Http\Controllers\DatabaseController::class, 'kategori_store'])->name('database.barang-maintenance.kategori.store');
-                Route::patch('/update-kategori/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_update'])->name('database.barang-maintenance.kategori.update');
-                Route::delete('/destroy-kategori/{kategori}', [App\Http\Controllers\DatabaseController::class, 'kategori_destroy'])->name('database.barang-maintenance.kategori.destroy');
-            });
-        });
-
         Route::resource('barang', App\Http\Controllers\BarangController::class)->only([
             'store','update','destroy'
         ]);
@@ -322,6 +321,18 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::prefix('masuk')->group(function(){
                     Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk'])->name('billing.form-cost-operational.masuk');
                     Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk_store'])->name('billing.form-cost-operational.masuk.store');
+                });
+            });
+
+            Route::prefix('form-achievement')->group(function(){
+                Route::prefix('masuk')->group(function(){
+                    Route::get('/', [BillingController::class, 'form_achievement_masuk'])->name('billing.form-achievement.masuk');
+                    Route::post('/', [BillingController::class, 'form_achievement_masuk_store'])->name('billing.form-achievement.masuk.store');
+                });
+
+                Route::prefix('keluar')->group(function(){
+                    Route::get('/', [BillingController::class, 'form_achievement_keluar'])->name('billing.form-achievement.keluar');
+                    Route::post('/', [BillingController::class, 'form_achievement_keluar_store'])->name('billing.form-achievement.keluar.store');
                 });
             });
         });

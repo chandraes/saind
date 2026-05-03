@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AchievementHistory;
 use App\Models\Transaksi;
 use App\Models\Vehicle;
 use App\Models\Vendor;
@@ -20,6 +21,7 @@ use App\Models\UpahGendong;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StatistikController extends Controller
@@ -627,9 +629,15 @@ class StatistikController extends Controller
             ->whereYear('updated_at', $tahun)
             ->get();
 
+        $achievementHistory = AchievementHistory::whereMonth('created_at', $bulan)
+                                ->whereYear('created_at', $tahun)->get();
+
+        $historiKeluar = $achievementHistory->where('jenis', 0)->sum('nominal');
+        $historiMasuk = $achievementHistory->where('jenis', 1)->sum('nominal');
+
         // Hitung total dalam bentuk angka mentah (Raw Numeric)
-        $rawTotalTagihan = $invoiceTagihan->sum('nominal') * 0.98;
-        $rawTotalVendor = $invoiceVendor->sum('nominal');
+        $rawTotalTagihan = ($invoiceTagihan->sum('nominal') * 0.98) + $historiMasuk;
+        $rawTotalVendor = $invoiceVendor->sum('nominal') + $historiKeluar;
         $rawSelisih = $rawTotalTagihan - $rawTotalVendor;
 
         $nama_bulan = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
@@ -645,6 +653,7 @@ class StatistikController extends Controller
             'totalTagihan' => $rawTotalTagihan, // Kirim raw agar diformat di Blade
             'totalBayar'   => $rawTotalVendor,
             'selisih'      => $rawSelisih,
+            'history'      => $achievementHistory
         ]);
     }
 
@@ -799,7 +808,7 @@ class StatistikController extends Controller
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
 
-        $vendor = auth()->user()->vendor_id;
+        $vendor = Auth::user()->vendor_id;
         // nama bulan dalam indonesia berdasarkan $bulan
         $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
@@ -1136,7 +1145,7 @@ class StatistikController extends Controller
 
     public function statistik_pervendor()
     {
-        $vendorId = auth()->user()->vendor_id;
+        $vendorId = Auth::user()->vendor_id;
 
         $sums = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
                         ->where('kuj.vendor_id', $vendorId)
