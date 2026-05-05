@@ -104,7 +104,7 @@ class Customer extends Model
                             'penalty' => $i->penalty + $i->penalty_akhir,
                             'ppn' => $i->ppn,
                             'pph' => $i->pph,
-                            'tagihan_awal' => $i->total_awal,
+                            'tagihan_awal' => $i->total_awal + $i->kompensasi_jr + $i->penyesuaian_bbm + $i->achievement,
                             'total_tagihan' => $i->total_tagihan,
                             'no_resi' => $i->no_resi,
                             'no_validasi' => $i->no_validasi,

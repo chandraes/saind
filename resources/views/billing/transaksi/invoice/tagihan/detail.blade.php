@@ -251,7 +251,7 @@
                 <td class="text-center align-middle"><strong>Sub Total</strong></td>
                 <td align="right" class="align-middle text-end">
 
-                    {{number_format($invoice->total_awal+$invoice->kompensasi_jr+$invoice->penyesuaian_bbm+$invoice->archievement, 0, ',', '.')}}
+                    {{number_format($invoice->total_awal+$invoice->kompensasi_jr+$invoice->penyesuaian_bbm+$invoice->achievement, 0, ',', '.')}}
 
                 </td>
                 <td></td>
