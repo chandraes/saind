@@ -407,18 +407,10 @@ Route::group(['middleware' => ['auth']], function() {
 
             });
 
-            Route::get('/nota-bayar/{vendor}', [App\Http\Controllers\TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
-            Route::post('/nota-bayar/{vendor}/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_lanjut'])->name('transaksi.nota-bayar.lanjut');
+
         });
 
-        Route::prefix('billing/nota-bayar')->group(function() {
-            Route::get('/{vendor}', [App\Http\Controllers\BillingController::class, 'nota_bayar'])->name('billing.nota-bayar');
-            Route::get('/{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_jenis'])->name('billing.nota-bayar.detail-jenis');
-            Route::post('{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_lanjut'])->name('billing.nota-bayar.detail-jenis.lanjut');
-            Route::get('/{vendor}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang'])->name('billing.nota-bayar.detail-jenis.keranjang');
-            Route::post('{vendor}/{jenis}/keranjang/{invoice}/lanjut', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-bayar.detail-jenis.keranjang.lanjut');
-            Route::post('{vendor}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_back'])->name('billing.nota-bayar.detail-jenis.keranjang.back');
-        });
+
 
          Route::prefix('billing/nota-tagihan')->group(function(){
                 Route::get('/{customer}', [App\Http\Controllers\BillingController::class, 'nota_tagihan'])->name('billing.nota-tagihan');
@@ -435,6 +427,20 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/histori-data', [App\Http\Controllers\BanController::class, 'histori_data'])->name('statistik.ban-luar.histori-data');
             Route::post('/histori-destroy/{histori}', [App\Http\Controllers\BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
             Route::patch('/histori-update/{histori}', [App\Http\Controllers\BanController::class, 'histori_update'])->name('statistik.ban-luar.histori-update');
+        });
+    });
+
+    Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor'], function() {
+        Route::get('transaksi/nota-bayar/{vendor}', [App\Http\Controllers\TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
+        Route::post('transaksi/nota-bayar/{vendor}/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_lanjut'])->name('transaksi.nota-bayar.lanjut');
+
+         Route::prefix('billing/nota-bayar')->group(function() {
+            Route::get('/{vendor}', [App\Http\Controllers\BillingController::class, 'nota_bayar'])->name('billing.nota-bayar');
+            Route::get('/{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_jenis'])->name('billing.nota-bayar.detail-jenis');
+            Route::post('{vendor}/{jenis}', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_lanjut'])->name('billing.nota-bayar.detail-jenis.lanjut');
+            Route::get('/{vendor}/{jenis}/keranjang', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang'])->name('billing.nota-bayar.detail-jenis.keranjang');
+            Route::post('{vendor}/{jenis}/keranjang/{invoice}/lanjut', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-bayar.detail-jenis.keranjang.lanjut');
+            Route::post('{vendor}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_back'])->name('billing.nota-bayar.detail-jenis.keranjang.back');
         });
     });
 
@@ -766,7 +772,7 @@ Route::group(['middleware' => ['auth']], function() {
 
     });
 
-    Route::group(['middleware' => 'role:admin,user,su,operasional'], function() {
+    Route::group(['middleware' => 'role:admin,user,su,operasional,vendor'], function() {
         Route::prefix('statistik/perform-unit')->group(function() {
             Route::get('/all-vendor', [StatistikController::class, 'perform_unit_all_vendor'])->name('statistik.perform-unit.all-vendor');
             Route::get('/all-vendor/pdf', [StatistikController::class, 'perform_unit_all_vendor_pdf'])->name('statistik.perform-unit.all-vendor.pdf');

@@ -21,7 +21,7 @@
                 <a href="{{ route('home') }}" class="text-decoration-none text-dark">
                     <img src="{{ asset('images/dashboard.svg') }}" alt="dashboard" width="30" class="me-1"> Dashboard
                 </a>
-                @if (auth()->user()->role != 'operasional')
+                @if (auth()->user()->role != 'operasional' && auth()->user()->role != 'vendor')
                 <a href="{{ route('statisik.index') }}" class="text-decoration-none text-dark">
                     <img src="{{ asset('images/statistik.svg') }}" alt="dokumen" width="30" class="me-1"> STATISTIK
                 </a>
@@ -76,8 +76,8 @@
     </div>
 
     <hr>
-
     {{-- Filter Khusus Vendor --}}
+    @if (auth()->user()->role !== 'vendor')
     <div class="row mb-3">
         <div class="col-md-6">
             <form action="{{ url()->current() }}" method="get">
@@ -101,6 +101,8 @@
             </form>
         </div>
     </div>
+    @endif
+
     <div style="font-size: 12px" class="table-responsive shadow-sm p-2 mb-5 bg-body rounded">
         <table class="table table-bordered table-hover align-middle" id="rekapTable">
             <thead class="table-success">

@@ -21,6 +21,7 @@ use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BillingController extends Controller
@@ -580,6 +581,10 @@ class BillingController extends Controller
     public function nota_bayar(Vendor $vendor)
     {
 
+        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
+        }
+
         $counts = TransaksiAdditional::where('vendor_id', $vendor->id)
             ->whereIn('status', [3,4])
             ->selectRaw('jenis, count(*) as total')
@@ -595,8 +600,11 @@ class BillingController extends Controller
         ]);
     }
 
-    public function nota_bayar_detail_jenis(Request $request, Vendor $vendor, $jenis)
+    public function nota_bayar_detail_jenis(Request $request, Vendor $vendor, string $jenis)
     {
+         if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
+        }
 
         $db = new TransaksiAdditional;
 
@@ -626,6 +634,11 @@ class BillingController extends Controller
 
     public function nota_bayar_detail_by_jenis_keranjang(Vendor $vendor, $jenis)
     {
+
+        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
+        }
+
         $db = new TransaksiAdditional;
 
         $data = $db->with(['transaksi.kas_uang_jalan.vendor','transaksi.kas_uang_jalan.rute','transaksi.kas_uang_jalan.vehicle', 'rute', 'customer'])
@@ -709,6 +722,11 @@ class BillingController extends Controller
 
     public function nota_bayar_detail_by_jenis_lanjut(Request $request, Vendor $vendor, $jenis)
     {
+
+        if (!in_array(Auth::user()->role, ['su', 'admin'])){
+            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk aksi ini!!");
+        }
+
         $req = $request->validate([
             'dpp' => 'required',
         ]);
@@ -849,7 +867,9 @@ class BillingController extends Controller
 
     public function nota_bayar_detail_by_jenis_keranjang_back(Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
     {
-
+        if (!in_array(Auth::user()->role, ['su', 'admin'])){
+            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk aksi ini!!");
+        }
         $detailsId = $invoice->details()->pluck('transaksi_additional_id')->toArray();
 
         TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 3]);

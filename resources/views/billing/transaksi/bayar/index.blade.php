@@ -26,7 +26,7 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    @if (auth()->user()->role != 'asisten-user')
+                    @if (auth()->user()->role != 'asisten-user' && auth()->user()->role != 'vendor')
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
                                 width="30"> Billing</a></td>
                     @endif
@@ -263,6 +263,7 @@
         </tfoot>
     </table>
 </div>
+@if (auth()->user()->role !== 'vendor')
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
 
@@ -276,6 +277,8 @@
         {{-- <a class="btn btn-success btn-lg" href="#">Export</a> --}}
     </div>
 </div>
+@endif
+
 
 @endsection
 @push('css')
