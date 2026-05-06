@@ -1566,6 +1566,10 @@ class StatistikController extends Controller
 
         $transaksiModel = new Transaksi();
 
+        if (Auth::user()->role === 'vendor') {
+            $filters['vendor'] = Auth::user()->vendor_id;
+        }
+
         // 2. Panggil function di Model yang akan mengembalikan array data lengkap
         $viewData = $transaksiModel->performUnitAllVendor($filters);
 
@@ -1582,6 +1586,10 @@ class StatistikController extends Controller
             'vendor' => $request->input('vendor'),           // Bisa null
             'offset' => $request->input('offset', 0)
         ];
+
+        if (Auth::user()->role === 'vendor') {
+            $filters['vendor'] = Auth::user()->vendor_id;
+        }
 
         $transaksiModel = new Transaksi();
 

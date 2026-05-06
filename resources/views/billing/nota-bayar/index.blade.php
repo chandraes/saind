@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@include('swal')
 <div class="container pb-5">
     <div class="row justify-content-center mb-4 mt-3">
         <div class="col-md-8 text-center">

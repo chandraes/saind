@@ -188,6 +188,8 @@ class TransaksiController extends Controller
             return redirect()->back()->with('error', 'Tanggal bongkar tidak boleh lebih kecil dari tanggal muat!!');
         }
 
+        $penalty=0;
+
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
@@ -617,6 +619,8 @@ class TransaksiController extends Controller
         $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
 
         $data['tanggal_bongkar'] = date('Y-m-d', strtotime($data['tanggal_bongkar']));
+
+        $penalty=0;
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
@@ -1167,7 +1171,10 @@ class TransaksiController extends Controller
 
     public function nota_bayar(Vendor $vendor)
     {
-
+         if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
+        }
+        
         $data = Transaksi::getNotaBayar($vendor->id);
 
         return view('billing.transaksi.bayar.index', [
