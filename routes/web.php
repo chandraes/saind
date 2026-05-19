@@ -773,6 +773,10 @@ Route::group(['middleware' => ['auth']], function() {
     });
 
     Route::group(['middleware' => 'role:admin,user,su,operasional,vendor'], function() {
+        Route::prefix('billing/transaksi/invoice/bayar')->group(function(){
+            Route::get('/{invoice}/detail-jenis', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_detail_add'])->name('invoice.bayar.detail-jenis');
+        });
+
         Route::prefix('statistik/perform-unit')->group(function() {
             Route::get('/all-vendor', [StatistikController::class, 'perform_unit_all_vendor'])->name('statistik.perform-unit.all-vendor');
             Route::get('/all-vendor/pdf', [StatistikController::class, 'perform_unit_all_vendor_pdf'])->name('statistik.perform-unit.all-vendor.pdf');

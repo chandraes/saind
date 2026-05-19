@@ -24,6 +24,7 @@ use App\Models\TransaksiAdditional;
 use Illuminate\Http\Request;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
@@ -321,6 +322,10 @@ class InvoiceController extends Controller
 
     public function invoice_bayar_detail_add(InvoiceAddVendor $invoice)
     {
+        if (Auth::user()->role == 'vendor' && $invoice->vendor_id != Auth::user()->vendor_id) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melihat invoice ini');
+        }
+
 
         $vendor = $invoice->vendor;
 

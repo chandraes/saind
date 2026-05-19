@@ -20,8 +20,11 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
+                    @if (auth()->user()->role !== 'vendor')
+                        <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
                                 alt="dokumen" width="30"> Billing</a></td>
+                    @endif
+
                       <td><a href="{{url()->previous()}}"><img src="{{asset('images/back.svg')}}"
                                     alt="dokumen" width="30"> Kembali</a></td>
                 </tr>
