@@ -36,7 +36,7 @@
         </div>
     </div>
     <div class="col-md-3 text-center mb-5">
-        <a href="{{route('operasional.perform-unit')}}" class="text-decoration-none">
+        <a href="{{route('statistik.perform-unit')}}" class="text-decoration-none">
             <img src="{{asset('images/perform-unit.svg')}}" alt="" width="80">
             <h4 class="mt-3">Perform Unit</h4>
         </a>

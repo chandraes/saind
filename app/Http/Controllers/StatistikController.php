@@ -131,168 +131,73 @@ class StatistikController extends Controller
 
     public function perform_unit(Request $request)
     {
-        $bulan = $request->bulan ?? date('m');
-        $tahun = $request->tahun ?? date('Y');
-        $offset = $request->offset ?? 0;
-
+        // Default rentang tanggal berjalan (Awal bulan ini s/d hari ini)
+        $start_date = $request->start_date ?? date('Y-m-01');
+        $end_date = $request->end_date ?? date('Y-m-d');
         $vendor = $request->vendor ?? null;
-        // nama bulan dalam indonesia berdasarkan $bulan
+
+        if(Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
+            $vendor = Auth::user()->vendor_id;
+        }
+
+        // VALIDASI DI CONTROLLER
+        $start = \Carbon\Carbon::parse($start_date);
+        $end = \Carbon\Carbon::parse($end_date);
+
+        // Tangani jika user tidak sengaja memasukkan tanggal terbalik
+        if ($start->greaterThan($end)) {
+            $end_date = $start_date;
+            $end = \Carbon\Carbon::parse($end_date);
+        }
+
+        // Batasi Maksimal Jarak 1 Bulan (31 Hari)
+        if ($start->diffInDays($end) > 31) {
+            $end_date = $start->copy()->addDays(31)->format('Y-m-d');
+        }
 
         $db = new Transaksi();
-
-        $all = $db->performUnit($bulan, $tahun, $offset, $vendor);
+        $all = $db->performUnitRange($start_date, $end_date, $vendor);
 
         return view('rekap.statistik.perform-unit', $all);
     }
 
     public function perform_unit_print(Request $request)
     {
-        $bulan = $request->bulan ?? date('m');
-        $tahun = $request->tahun ?? date('Y');
-        $offset = $request->offset ?? 0;
-        $vendor = $request->vendor ?? 0;
-        // nama bulan dalam indonesia berdasarkan $bulan
-        $nama_bulan = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-
-        // get array list date vrom $bulan
-        $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
-
-        $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->when($vendor, function ($query, $vendor) {
-                                return $query->where('v.vendor_id', $vendor);
-                            })
-                            ->get();
-
-        $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
-                                    $tonase = $transaction->timbangan_bongkar ?? 0;
-                                    return $carry + $tonase;
-                                }, 0);
-
-        $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
-
-
-        $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
-
-        if ($vehicle->count() == 0) {
-            $offset = 0;
-            $vehicle = Vehicle::orderBy('nomor_lambung')
-                        ->when($vendor, function ($query, $vendor) {
-                            return $query->where('vendor_id', $vendor);
-                        })
-                        ->limit(10)
-                        ->offset($offset)
-                        ->get();
+        if(Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
+            $request->vendor = Auth::user()->vendor_id;
         }
 
-        $statistics = [];
-
-        foreach ($vehicle as $v) {
-            $statistics[$v->nomor_lambung] = [
-                'vehicle' => $v,
-                'long_route_count' => 0,
-                'short_route_count' => 0,
-            ];
+        if (empty($request->vendor)) {
+            return redirect()->back()->with('error', 'Gagal mencetak! Anda wajib memilih salah satu vendor pada filter terlebih dahulu.');
         }
 
-        for ($i = 1; $i <= $date; $i++) {
-            foreach ($vehicle as $v) {
-                $dateString = date('Y-m-d', strtotime($i.'-'.$bulan.'-'.$tahun));
+        $start_date = $request->start_date ?? date('Y-m-01');
+        $end_date = $request->end_date ?? date('Y-m-d');
+        $vendor = $request->vendor;
 
-                $transactions = $data->filter(function ($transaction) use ($v, $dateString) {
-                    return $transaction->nomor_lambung == $v->nomor_lambung && $transaction->tanggal == $dateString && $transaction->void == 0;
-                });
+        // 2. Validasi & Batasi Rentang Maksimal 1 Bulan (31 Hari)
+        $start = \Carbon\Carbon::parse($start_date);
+        $end = \Carbon\Carbon::parse($end_date);
 
-                $total_tonase = 0; // reset total tonase for each vehicle
-
-                if ($transactions->isEmpty()) {
-                    $statistics[$v->nomor_lambung]['data'][] = [
-                        'day' => $i,
-                        'rute' => '-',
-                        'tonase' => '-',
-                    ];
-                } else {
-                    $rutes = [];
-                    $tonases = [];
-
-                    foreach ($transactions as $transaction) {
-                        $rute = $transaction->kas_uang_jalan->rute->nama ?? '-';
-                        $jarak = $transaction->jarak ?? 0;
-
-                        if ($jarak > 50) {
-                            $statistics[$v->nomor_lambung]['long_route_count']++;
-                        } else if ($jarak > 0 && $jarak <= 50) {
-                            $statistics[$v->nomor_lambung]['short_route_count']++;
-                        }
-
-                        $tonase = $transaction->timbangan_bongkar ?? 0;
-                        $total_tonase += $tonase; // add tonase to total
-
-                        $rutes[] = $rute;
-                        $tonases[] = $tonase;
-                    }
-
-                    $statistics[$v->nomor_lambung]['data'][] = [
-                        'day' => $i,
-                        'rute' => implode(",", $rutes),
-                        'tonase' => implode(",", $tonases),
-                    ];
-                }
-
-                $statistics[$v->nomor_lambung]['total_tonase'] = $total_tonase; // store total tonase for each vehicle
-            }
+        if ($start->greaterThan($end)) {
+            $end_date = $start_date;
+            $end = \Carbon\Carbon::parse($end_date);
         }
 
-
-
-        foreach ($statistics as $nomor_lambung => $statistic) {
-            $total_tonase = array_reduce($statistic['data'], function ($carry, $item) {
-                if (strpos($item['tonase'], ',') !== false) {
-                    $tonases = explode(',', $item['tonase']);
-                    $tonase_sum = array_sum(array_map('floatval', $tonases));
-                } else {
-                    $tonase_sum = is_numeric($item['tonase']) ? $item['tonase'] : 0;
-                }
-
-                return $carry + $tonase_sum;
-            }, 0);
-
-            $statistics[$nomor_lambung]['total_tonase'] = $total_tonase;
+        if ($start->diffInDays($end) > 31) {
+            $end_date = $start->copy()->addDays(31)->format('Y-m-d');
         }
 
-        $vendors = Vendor::all();
+        // 3. Ambil Data Performa Unit dari DB
+        $db = new Transaksi();
+        $all = $db->performUnitRange($start_date, $end_date, $vendor);
 
-        $pdf = PDF::loadview('rekap.statistik.perform-unit-print', [
-            // 'data' => $data,
-            'statistics' => $statistics,
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'vendor' => $vendor,
-            'bulan_angka' => $bulan,
-            'vehicle' => $vehicle,
-            'nama_bulan' => $nama_bulan,
-            'date' => $date,
-            'vendors' => $vendors,
-            'offset' => $offset,
-            'dataTahun' => $dataTahun,
-            'grand_total_tonase' => $grand_total_tonase,
-        ])->setPaper('a4', 'landscape');
+        // Ambil Informasi Detail Vendor untuk Judul Kertas
+        $vendorData = \App\Models\Vendor::find($vendor);
+        $all['nama_vendor'] = $vendorData ? $vendorData->nama : 'Vendor Tidak Ditemukan';
 
-        return $pdf->stream('Perform Unit Bulan '.$nama_bulan.' '.$tahun.'.pdf');
+        // 4. Return ke blade view khusus Print
+        return view('rekap.statistik.perform-unit-print', $all);
     }
 
     public function profit_harian(Request $request)
