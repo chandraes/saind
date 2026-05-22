@@ -963,6 +963,7 @@ class BillingController extends Controller
 
             AchievementHistory::create([
                 'uraian' => $data['uraian'],
+                'nama_rek' => $data['transfer_ke'],
                 'jenis' => 1,
                 'nominal' => $data['nominal_transaksi']
             ]);
@@ -1030,6 +1031,7 @@ class BillingController extends Controller
             // ... [Insert ke tabel lain di sini nantinya] ...
             AchievementHistory::create([
                 'uraian' => $data['uraian'],
+                'nama_rek' => $data['transfer_ke'],
                 'jenis' => 0,
                 'nominal' => $data['nominal_transaksi']
             ]);

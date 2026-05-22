@@ -136,7 +136,7 @@
 <div class="row justify-content-left mt-5">
     <h2>STATISTIK PERFORM UNIT</h2>
     <div class="col-md-2 text-center mt-5">
-        <a href="{{route('asisten-user.perform-unit')}}" class="text-decoration-none">
+        <a href="{{route('statistik.perform-unit')}}" class="text-decoration-none">
             <img src="{{asset('images/perform-unit.svg')}}" alt="" width="80">
             <h5 class="mt-3">BULANAN</h5>
         </a>

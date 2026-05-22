@@ -430,6 +430,13 @@ Route::group(['middleware' => ['auth']], function() {
         });
     });
 
+    Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational'], function() {
+        Route::prefix('statistik/perform-unit')->group(function(){
+            Route::get('/', [App\Http\Controllers\StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
+            Route::get('/print', [App\Http\Controllers\StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
+        });
+    });
+
     Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor'], function() {
         Route::get('transaksi/nota-bayar/{vendor}', [App\Http\Controllers\TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
         Route::post('transaksi/nota-bayar/{vendor}/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_lanjut'])->name('transaksi.nota-bayar.lanjut');
@@ -750,8 +757,7 @@ Route::group(['middleware' => ['auth']], function() {
         });
 
         Route::prefix('statistik')->group(function(){
-            Route::get('/perform-unit', [App\Http\Controllers\StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
-            Route::get('/perform-unit/print', [App\Http\Controllers\StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
+
             Route::get('/perform-unit-tahunan', [App\Http\Controllers\StatistikController::class, 'perform_unit_tahunan'])->name('statistik.perform-unit-tahunan');
             Route::get('/perform-unit-tahunan/print', [App\Http\Controllers\StatistikController::class, 'perform_unit_tahunan_print'])->name('statistik.perform-unit-tahunan.print');
 

@@ -124,6 +124,7 @@
                         <td class="text-center small text-muted">{{$h->created_at->format('Y-m-d')}}</td>
                         <td>
                             <div class="fw-bold text-uppercase" style="font-size: 0.85rem;">{{$h->uraian}}</div>
+                            <div class="small text-muted">{{$h->nama_rek}}</div>
                         </td>
                         <td class="text-end text-muted">
                             @if ($h->jenis == 1)
@@ -190,7 +191,7 @@
             "info": false,
             "scrollCollapse": true,
             "scrollY": "550px",
-        
+
             "language": {
                 "search": "Cari Transaksi:"
             }
