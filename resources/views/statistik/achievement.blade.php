@@ -126,7 +126,7 @@
                             <div class="fw-bold text-uppercase" style="font-size: 0.85rem;">{{$h->uraian}}</div>
                             <div class="small text-muted">{{$h->nama_rek}}</div>
                         </td>
-                        <td class="text-end text-muted">
+                        <td class="text-end fw-bold text-success">
                             @if ($h->jenis == 1)
                                 Rp {{number_format($h->nominal, 0, ',', '.')}}
                             @endif
