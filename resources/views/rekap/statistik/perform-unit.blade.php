@@ -165,7 +165,7 @@
         <div class="card-body p-0">
             <div style="font-size: 11px" class="table-responsive">
                 <table class="table table-bordered table-hover mb-0 align-middle" id="rekapTable">
-                    <thead class="table-dark">
+                    <thead class="table-success">
                         <tr>
                             <th rowspan="2" class="text-center align-middle" style="min-width: 90px;">Tanggal</th>
                             @foreach ($vehicle as $v)
@@ -177,7 +177,7 @@
                                 @if ($v->gps == 1) <span class="badge bg-primary px-1 py-0">GPS</span> @endif
                                 @if($v->vendor->support_operational == 1) <span
                                     class="badge bg-info text-dark px-1 py-0">SO</span> @endif <br>
-                                <small class="text-muted text-white-50">Idx {{$v->no_index}} ({{$v->tahun}})</small>
+                                <small class="text-muted ">Idx {{$v->no_index}} ({{$v->tahun}})</small>
                             </th>
                             @endforeach
                         </tr>
