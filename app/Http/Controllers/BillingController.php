@@ -411,7 +411,7 @@ class BillingController extends Controller
         ]);
 
         // 1. Sanitasi input DPP & Penentuan kolom muatan
-        $dpp = (float) str_replace('.', '', $req['dpp']);
+         $dpp = (float) str_replace(['.', ','], ['', '.'], $req['dpp']);
         $tagihan_dari = $customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
 
         // 2. Eager Loading untuk efisiensi

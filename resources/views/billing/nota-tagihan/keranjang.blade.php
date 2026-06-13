@@ -190,7 +190,7 @@
                             <td class="fw-bold">{{ $namaRute }}</td>
                             <td class="text-center">{{ $item['jarak'] }}</td>
                             <td class="text-center">{{ number_format($item['total_muatan'], 2, ',', '.') }}</td>
-                            <td class="text-center">Rp {{ number_format($item['dpp'], 0, ',', '.') }}</td>
+                            <td class="text-center">Rp {{ number_format($item['dpp'], 2, ',', '.') }}</td>
                             <td class="text-end fw-bold">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                         </tr>
                         @endforeach

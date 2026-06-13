@@ -1174,7 +1174,7 @@ class TransaksiController extends Controller
          if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
         }
-        
+
         $data = Transaksi::getNotaBayar($vendor->id);
 
         return view('billing.transaksi.bayar.index', [
