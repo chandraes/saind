@@ -67,12 +67,69 @@ Route::group(['middleware' => ['auth']], function() {
         });
     });
 
+    // Routing untuk admin dan superuser
     Route::group(['middleware' => 'role:admin,su'], function() {
          Route::prefix('admin')->group(function () {
             Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings.index');
             Route::post('/settings', [SettingController::class, 'update'])->name('admin.settings.update');
         });
 
+        Route::prefix('kas-besar')->group(function(){
+            Route::get('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
+            Route::post('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
+            Route::get('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar'])->name('kas-besar.keluar');
+            Route::post('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar_store'])->name('kas-besar.keluar.store');
+        });
+
+        Route::prefix('billing')->group(function(){
+            // Form Deviden
+            Route::get('/deviden', [App\Http\Controllers\FormDevidenController::class, 'index'])->name('billing.deviden.index');
+            Route::post('/deviden/store', [App\Http\Controllers\FormDevidenController::class, 'store'])->name('billing.deviden.store');
+
+            Route::prefix('form-cost-operational')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_cost_operational'])->name('billing.form-cost-operational');
+
+                Route::prefix('cost-operational')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational'])->name('billing.form-cost-operational.cost-operational');
+                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_store'])->name('billing.form-cost-operational.cost-operational.store');
+                });
+
+                Route::prefix('masuk')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk'])->name('billing.form-cost-operational.masuk');
+                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk_store'])->name('billing.form-cost-operational.masuk.store');
+                });
+            });
+
+            // Form Bunga Investor
+            Route::prefix('bunga-investor')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
+                Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
+            });
+
+            Route::prefix('storing')->group(function(){
+                Route::get('/index', [App\Http\Controllers\FormStoringConroller::class, 'index'])->name('billing.storing.index');
+                Route::post('/store', [App\Http\Controllers\FormStoringConroller::class, 'store'])->name('billing.storing.store');
+                Route::get('/void', [App\Http\Controllers\FormStoringConroller::class, 'void'])->name('billing.storing.void');
+                Route::get('/get-storing', [App\Http\Controllers\FormStoringConroller::class, 'get_storing'])->name('billing.storing.get-storing');
+                Route::get('/get-status-so', [App\Http\Controllers\FormStoringConroller::class, 'get_status_so'])->name('billing.storing.get-status-so');
+                Route::get('/get-vendor', [App\Http\Controllers\FormStoringConroller::class, 'get_vendor'])->name('billing.storing.get-vendor');
+                Route::get('/storing-latest', [App\Http\Controllers\FormStoringConroller::class, 'storing_latest'])->name('billing.storing.storing-latest');
+            });
+
+            // form vendor
+            Route::prefix('vendor')->group(function(){
+                Route::get('/titipan', [App\Http\Controllers\FormVendorController::class, 'titipan'])->name('billing.vendor.titipan');
+                Route::post('/titipan-store', [App\Http\Controllers\FormVendorController::class, 'titipan_store'])->name('billing.vendor.titipan-store');
+                Route::get('/pelunasan', [App\Http\Controllers\FormVendorController::class, 'pelunasan'])->name('billing.vendor.pelunasan');
+                Route::post('/pelunasan-store', [App\Http\Controllers\FormVendorController::class, 'pelunasan_store'])->name('billing.vendor.pelunasan-store');
+                Route::get('/get-kas-vendor', [App\Http\Controllers\FormVendorController::class, 'get_kas_vendor'])->name('billing.vendor.get-kas-vendor');
+                Route::get('/bayar', [App\Http\Controllers\FormVendorController::class, 'bayar'])->name('billing.vendor.bayar');
+                Route::post('/bayar-store', [App\Http\Controllers\FormVendorController::class, 'bayar_store'])->name('billing.vendor.bayar-store');
+                Route::get('/get-vehicle', [App\Http\Controllers\FormVendorController::class, 'get_vehicle'])->name('billing.vendor.get-vehicle');
+                Route::get('/get-plafon-titipan', [App\Http\Controllers\FormVendorController::class, 'get_plafon_titipan'])->name('billing.vendor.get-plafon-titipan');
+            });
+
+        });
 
         Route::prefix('form-setor-pph')->group(function() {
             Route::get('/masuk', [App\Http\Controllers\BillingController::class, 'form_setor_pph_masuk'])->name('form-setor-pph.masuk');
@@ -317,12 +374,7 @@ Route::group(['middleware' => ['auth']], function() {
         });
 
         Route::prefix('billing')->group(function(){
-            Route::prefix('form-cost-operational')->group(function(){
-                Route::prefix('masuk')->group(function(){
-                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk'])->name('billing.form-cost-operational.masuk');
-                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk_store'])->name('billing.form-cost-operational.masuk.store');
-                });
-            });
+
 
             Route::prefix('form-achievement')->group(function(){
                 Route::prefix('masuk')->group(function(){
@@ -505,13 +557,6 @@ Route::group(['middleware' => ['auth']], function() {
 
         // Route::resource('kas-besar', App\Http\Controllers\KasBesarController::class);
 
-        Route::prefix('kas-besar')->group(function(){
-            Route::get('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
-            Route::post('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
-            Route::get('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar'])->name('kas-besar.keluar');
-            Route::post('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar_store'])->name('kas-besar.keluar.store');
-        });
-
         Route::prefix('kas-kecil')->group(function(){
             Route::get('/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk'])->name('kas-kecil.masuk');
             Route::post('/masuk', [App\Http\Controllers\FormKasKecilController::class, 'masuk_store'])->name('kas-kecil.masuk.store');
@@ -569,34 +614,6 @@ Route::group(['middleware' => ['auth']], function() {
                 });
             });
 
-            // form vendor
-            Route::prefix('vendor')->group(function(){
-                Route::get('/titipan', [App\Http\Controllers\FormVendorController::class, 'titipan'])->name('billing.vendor.titipan');
-                Route::post('/titipan-store', [App\Http\Controllers\FormVendorController::class, 'titipan_store'])->name('billing.vendor.titipan-store');
-                Route::get('/pelunasan', [App\Http\Controllers\FormVendorController::class, 'pelunasan'])->name('billing.vendor.pelunasan');
-                Route::post('/pelunasan-store', [App\Http\Controllers\FormVendorController::class, 'pelunasan_store'])->name('billing.vendor.pelunasan-store');
-                Route::get('/get-kas-vendor', [App\Http\Controllers\FormVendorController::class, 'get_kas_vendor'])->name('billing.vendor.get-kas-vendor');
-                Route::get('/bayar', [App\Http\Controllers\FormVendorController::class, 'bayar'])->name('billing.vendor.bayar');
-                Route::post('/bayar-store', [App\Http\Controllers\FormVendorController::class, 'bayar_store'])->name('billing.vendor.bayar-store');
-                Route::get('/get-vehicle', [App\Http\Controllers\FormVendorController::class, 'get_vehicle'])->name('billing.vendor.get-vehicle');
-                Route::get('/get-plafon-titipan', [App\Http\Controllers\FormVendorController::class, 'get_plafon_titipan'])->name('billing.vendor.get-plafon-titipan');
-            });
-
-            Route::prefix('form-cost-operational')->group(function(){
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_cost_operational'])->name('billing.form-cost-operational');
-                Route::prefix('cost-operational')->group(function(){
-                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational'])->name('billing.form-cost-operational.cost-operational');
-                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_store'])->name('billing.form-cost-operational.cost-operational.store');
-                });
-            });
-
-            // Form Bunga Investor
-            Route::prefix('bunga-investor')->group(function(){
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
-                Route::post('/store', [App\Http\Controllers\BillingController::class, 'bunga_investor_store'])->name('billing.bunga-investor.store');
-            });
-
-
             // form kasbon
             Route::prefix('kasbon')->group(function(){
                 Route::get('/', [App\Http\Controllers\FormKasbonController::class, 'index'])->name('billing.kasbon.index');
@@ -617,20 +634,6 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('/kas-bon-cicil/void/{kas}', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil_void'])->name('billing.kasbon.kas-bon-cicil.void');
                 Route::post('/kas-bon-cicil-store', [App\Http\Controllers\FormKasbonController::class, 'kas_bon_cicil_store'])->name('billing.kasbon.kas-bon-cicil-store');
             });
-
-            Route::prefix('storing')->group(function(){
-                Route::get('/index', [App\Http\Controllers\FormStoringConroller::class, 'index'])->name('billing.storing.index');
-                Route::post('/store', [App\Http\Controllers\FormStoringConroller::class, 'store'])->name('billing.storing.store');
-                Route::get('/void', [App\Http\Controllers\FormStoringConroller::class, 'void'])->name('billing.storing.void');
-                Route::get('/get-storing', [App\Http\Controllers\FormStoringConroller::class, 'get_storing'])->name('billing.storing.get-storing');
-                Route::get('/get-status-so', [App\Http\Controllers\FormStoringConroller::class, 'get_status_so'])->name('billing.storing.get-status-so');
-                Route::get('/get-vendor', [App\Http\Controllers\FormStoringConroller::class, 'get_vendor'])->name('billing.storing.get-vendor');
-                Route::get('/storing-latest', [App\Http\Controllers\FormStoringConroller::class, 'storing_latest'])->name('billing.storing.storing-latest');
-            });
-
-            // Form Deviden
-            Route::get('/deviden', [App\Http\Controllers\FormDevidenController::class, 'index'])->name('billing.deviden.index');
-            Route::post('/deviden/store', [App\Http\Controllers\FormDevidenController::class, 'store'])->name('billing.deviden.store');
 
             // Form Gaji
             Route::get('/gaji', [App\Http\Controllers\FormGajiController::class, 'index'])->name('billing.gaji.index');

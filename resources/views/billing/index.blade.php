@@ -8,9 +8,12 @@
     </div>
     {{-- if session has success, trigger sweet alert --}}
     @include('swal')
+    @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
     @include('billing.form-cost-operational.modal-co')
+    @endif
     <div class="row justify-content-left">
         <h4 class="mt-3">UMUM</h4>
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="formKasBesar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -66,6 +69,7 @@
                 </div>
             </div>
         </div>
+        @endif
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#direksiStaff">
                 <img src="{{asset('images/kasbon.svg')}}" alt="" width="70">
@@ -198,6 +202,7 @@
 
     <div class="row justify-content-left">
         <h4 class="mt-3">COST OPERATIONAL</h4>
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a @if (Auth::user()->role == 'admin' || Auth::user()->role == 'su')
                 href="#" data-bs-toggle="modal" data-bs-target="#modalCo"
@@ -208,6 +213,7 @@
                 <h4 class="mt-3">FORM OPERATIONAL</h4>
             </a>
         </div>
+        @endif
         <div class="col-md-2 text-center mt-5">
             <!-- Modal trigger button -->
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasKecil">
@@ -244,12 +250,14 @@
                 <h4 class="mt-3">FORM GAJI</h3>
             </a>
         </div>
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.bunga-investor')}}" class="text-decoration-none">
                 <img src="{{asset('images/bunga-kreditor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM BUNGA KREDITUR</h4>
             </a>
         </div>
+        @endif
     </div>
     <hr>
     <br>
@@ -312,6 +320,7 @@
                 </div>
             </div>
         </div>
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.storing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/storing.svg')}}" alt="" width="70">
@@ -324,6 +333,7 @@
                 <h4 class="mt-3">FORM VENDOR</h4>
             </a>
         </div>
+         @endif
     </div>
     <hr>
     <br>
