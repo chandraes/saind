@@ -23,54 +23,54 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (Schema::hasTable('settings')) {
+       if (Schema::hasTable('settings')) {
 
-            // 1. Coba ambil dari Cache. Jika tidak ada, ambil dari DB & simpan ke Cache selamanya
+            // 1. Ambil dari Cache atau DB
             $settings = Cache::rememberForever('app_settings', function () {
                 return Setting::pluck('value', 'key')->toArray();
             });
 
             // 2. Logika Default (Fallback)
-            // Jika key di DB tidak ada atau nilainya null, ambil dari config
             $appName = $settings['app_name'] ?? config('app.name');
-             // TAMBAHKAN: Fallback untuk Perusahaan dan Alamat
             $appPerusahaan = $settings['app_perusahaan'] ?? 'Nama Perusahaan Default';
             $appAlamat = $settings['app_alamat'] ?? 'Alamat Default';
             $appKeuangan = $settings['app_keuangan'] ?? 'Nama Manajer Keuangan Default';
 
-           $logoFilename = !empty($settings['app_logo'])
+            $logoFilename = !empty($settings['app_logo'])
                 ? 'storage/' . $settings['app_logo']
-                : config('app.default_logo'); // misal 'assets/img/logo-default.png'
+                : config('app.default_logo', 'assets/img/logo-default.png');
 
-            // 2. Versi URL (Untuk Tampilan Web Browser) -> http://...
+            // Versi URL untuk Web Browser
             $appLogoUrl = asset($logoFilename);
 
-            // 3. Versi PATH (Untuk PDF) -> C:\xampp\htdocs\...
-            // Gunakan public_path() untuk mendapatkan lokasi file di server
+            // Versi PATH untuk PDF
             $appLogoPath = public_path($logoFilename);
 
-            $path = public_path($logoFilename);
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            $data = file_get_contents($path);
-            $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            // --- PERBAIKAN DI SINI: Cek file_exists SEBELUM file_get_contents ---
+            // file_exists() otomatis mengembalikan false jika symlink rusak/corrupt
+            if (!file_exists($appLogoPath) || is_dir($appLogoPath)) {
+                $appLogoPath = public_path('assets/img/no-image.png'); // Pastikan file fallback ini ada
+            }
 
-            // Validasi opsional: Jika file tidak ada di path, gunakan gambar kosong/placeholder
-            if (!file_exists($appLogoPath)) {
-                // Fallback jika file fisik tidak ketemu (opsional)
-                $appLogoPath = public_path('assets/img/no-image.png');
+            // Ambil data base64 dengan aman setelah path dipastikan valid
+            $base64 = '';
+            if (file_exists($appLogoPath)) {
+                $type = pathinfo($appLogoPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($appLogoPath);
+                $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             }
 
             $appFavicon = !empty($settings['app_favicon'])
                 ? asset('storage/' . $settings['app_favicon'])
-                : asset(config('app.default_favicon'));
+                : asset(config('app.default_favicon', 'assets/img/favicon-default.png'));
 
             // 3. Bagikan variabel ke SEMUA view
             View::share([
                 'global_app_name' => $appName,
-                'global_app_perusahaan' => $appPerusahaan, // Bagikan ke view
-                'global_app_alamat' => $appAlamat,         //
-                'global_app_logo' => $appLogoUrl,  // <-- Pakai ini di blade biasa (index, create, edit)
-               'global_app_logo_base64' => $base64,
+                'global_app_perusahaan' => $appPerusahaan,
+                'global_app_alamat' => $appAlamat,
+                'global_app_logo' => $appLogoUrl,
+                'global_app_logo_base64' => $base64,
                 'global_app_favicon' => $appFavicon,
                 'global_app_keuangan' => $appKeuangan,
             ]);
