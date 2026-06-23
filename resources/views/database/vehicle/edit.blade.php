@@ -196,3 +196,22 @@
             }
         });
 </script>
+<script>
+         $('#editForm{{$d->id}}').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah data sudah benar?',
+                text: "Pastikan data sudah benar sebelum disimpan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#spinner').show();
+                    this.submit();
+                }
+            })
+        });
+    </script>
