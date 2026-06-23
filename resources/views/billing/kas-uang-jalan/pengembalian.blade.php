@@ -7,15 +7,7 @@
         </div>
     </div>
     @include('swal')
-    @if (session('error'))
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: '{{session('error')}}',
-            })
-        </script>
-    @endif
+
     <form action="{{route('kas-uang-jalan.pengembalian.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">
