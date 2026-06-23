@@ -17,6 +17,7 @@
                         <th class="text-center align-middle">Harga Tagihan ke Tambang</th>
                         <th class="text-center align-middle">Harga Vendor Opname</th>
                         <th class="text-center align-middle">Harga Vendor Khusus</th>
+                        <th class="text-center align-middle">Harga Vendor Titipan</th>
                     </tr>
                 </thead>
                 <tbody>
