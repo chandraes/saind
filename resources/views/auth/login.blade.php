@@ -6,7 +6,11 @@
         <div class="col col-login mx-auto mt-7">
             <div class="text-center text-white">
                 <div class="">
-                    <img src="{{asset('images/saind.png')}}" class="" alt="" width="200">
+                    @if ($global_app_logo)
+                    <img src="{{ $global_app_logo }}" alt="{{ $global_app_name }}" class="img-responsive" width="200">
+                    @else
+                    <h3>{{ $global_app_name }}</h3>
+                    @endif
                 </div>
                 <br>
                 {{-- <h2>SAIND</h2> --}}
