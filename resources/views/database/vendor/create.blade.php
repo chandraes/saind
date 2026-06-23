@@ -349,16 +349,21 @@
             theme: 'bootstrap-5'
         });
 
-        $('#plafon_titipan').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+        new Cleave('#plafon_titipan', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
-        $('#plafon_lain').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+
+        new Cleave('#plafon_lain', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
+
+
 
          var nominal = new Cleave('#pph_value', {
                 numeral: true,
