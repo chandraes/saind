@@ -15,7 +15,7 @@
             </h1>
         </div>
     </div>
-
+    @include('swal')
     @if (session('error'))
     <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
         <i class="fa fa-exclamation-triangle me-2"></i>
