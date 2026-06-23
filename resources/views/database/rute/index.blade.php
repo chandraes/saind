@@ -94,11 +94,12 @@
         $("#success-alert").slideUp(500);
     });
 
-    $('#uang_jalan').maskMoney({
-        thousands: '.',
-        decimal: ',',
-        precision: 0
-    });
+      var nominal = new Cleave('#uang_jalan', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            });
 
 
 
