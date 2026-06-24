@@ -42,12 +42,12 @@
             </a>
         </div>
 
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.deviden.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/dividen.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM DIVIDEN</h4>
             </a>
-        </div>
+        </div> --}}
 
         <div class="modal fade" id="formVendor" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
             role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
@@ -70,7 +70,7 @@
             </div>
         </div>
         @endif
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#direksiStaff">
                 <img src="{{asset('images/kasbon.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM KASBON</h4>
@@ -96,10 +96,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formLain">
                 <img src="{{asset('images/form-lain.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM LAIN-LAIN</h4>
@@ -182,9 +182,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         @endif
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM GANTI RUGI</h4>
@@ -195,10 +195,10 @@
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM CSR<br>(TIDAK TERTENTU)</h4>
             </a>
-        </div>
+        </div> --}}
     </div>
     <hr>
-    <br>
+    {{-- <br>
 
     <div class="row justify-content-left">
         <h4 class="mt-3">COST OPERATIONAL</h4>
@@ -259,9 +259,9 @@
         </div>
         @endif
     </div>
-    <hr>
+    <hr> --}}
     <br>
-    <div class="row justify-content-left">
+    {{-- <div class="row justify-content-left">
         <h4 class="mt-3">KHUSUS</h4>
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formBarang">
@@ -336,7 +336,7 @@
          @endif
     </div>
     <hr>
-    <br>
+    <br> --}}
     <div class="row justify-content-left">
         <h4 class="mt-3">TRANSAKSI</h4>
         <div class="col-md-2 text-center mt-5">
@@ -434,7 +434,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#vendorBayar">
                 <img src="{{asset('images/bayar.svg')}}" alt="Nota Bayar Vendor" width="70">
                 <h4 class="mt-3">NOTA BAYAR VENDOR</h4>
@@ -478,9 +478,7 @@
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sponsorModal">
                 <img src="{{asset('images/bonus.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA BONUS SPONSOR
-                    {{-- <span class="text-danger">{{$data->where('status',
-                        3)->where('bonus', 0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('bonus', 0)->count().")" : '' }}</span> --}}
+
                 </h4>
             </a>
 
@@ -517,11 +515,7 @@
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#csrModal">
                 <img src="{{asset('images/csr.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA CSR (TERTENTU)
-                    {{-- <span class="text-danger">{{$data->where('status', 3)->where('csr', 0)->where('nominal_csr',
-                        '>',
-                        0)->count() > 0 ?
-                        "(".$data->where('status', 3)->where('csr', 0)->where('nominal_csr', '>', 0)->count().")" : ''
-                        }}</span> --}}
+
                 </h4>
             </a>
 
@@ -553,9 +547,9 @@
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </div> --}}
+            {{-- </div>
+        </div> --}}
     </div>
     <hr>
     <br>
@@ -568,7 +562,7 @@
                         ''}}</span></h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('invoice.bayar.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/invoice-bayar.svg')}}" alt="" width="70">
                 <h4 class="mt-3">INVOICE BAYAR VENDOR <span class="text-danger">{{$bayar > 0 ? "(".$bayar.")" :
@@ -589,7 +583,7 @@
                         "(".$invoice_csr.")" :
                         ''}}</span></h4>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">
