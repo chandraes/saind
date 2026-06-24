@@ -16,12 +16,12 @@
                 <h5 class="mt-3">KAS BESAR</h5>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.nota-void')}}" class="text-decoration-none">
                 <img src="{{asset('images/void.svg')}}" alt="" width="70">
                 <h5 class="mt-3">NOTA VOID TRANSAKSI</h5>
             </a>
-        </div>
+        </div> --}}
     </div>
     {{-- <div class="row justify-content-left">
         <div class="col-md-2 text-center mt-5">
