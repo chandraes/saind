@@ -60,7 +60,7 @@
                 <h4 class="mt-3">STATISTIK</h4>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('legalitas')}}" class="text-decoration-none">
                 <img src="{{asset('images/legalitas.svg')}}" alt="" width="70">
                 <h4 class="mt-3">LEGALITAS</h4>
@@ -71,15 +71,15 @@
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">STRUKTUR<br>ORGANISASI</h4>
             </a>
-        </div>
+        </div> --}}
         @endif
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-        <div class="col-md-3 text-center mb-5 mt-3">
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('dokumen')}}" class="text-decoration-none">
                 <img src="{{asset('images/document.svg')}}" alt="" width="70">
                 <h4 class="mt-3">DOKUMEN</h4>
             </a>
-        </div>
+        </div> --}}
         @if (auth()->user()->role === 'su')
         {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('bypass.index')}}" class="text-decoration-none">
@@ -88,12 +88,12 @@
             </a>
         </div> --}}
         @endif
-        <div class="col-md-3 text-center mb-5 mt-3">
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('company-profile')}}" class="text-decoration-none">
                 <img src="{{asset('images/company-profile.svg')}}" alt="" width="70">
                 <h4 class="mt-3">COMPANY PROFILE</h4>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('pengaturan')}}" class="text-decoration-none">
                 <img src="{{asset('images/pengaturan.svg')}}" alt="" width="70">
