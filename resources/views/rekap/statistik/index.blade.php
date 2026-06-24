@@ -161,13 +161,14 @@
                 <h5 class="mt-3">STATISTIK CUSTOMER</h5>
             </a>
         </div> --}}
+
+        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#tonaseTambang">
                 <img src="{{asset('images/tonase-tambang.svg')}}" alt="" width="80">
                 <h5 class="mt-3">STATISTIK TONASE</h5>
             </a>
         </div>
-        @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
          {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.achievement')}}" class="text-decoration-none" >
                 <img src="{{asset('images/achievement.svg')}}" alt="" width="80">
