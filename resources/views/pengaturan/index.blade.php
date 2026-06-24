@@ -71,12 +71,12 @@ $password = \App\Models\PasswordKonfirmasi::first();
             </div>
 
         </div>
-         <div class="col-md-3 text-center mt-5">
+         {{-- <div class="col-md-3 text-center mt-5">
             <a href="{{route('pengaturan.rekening-pajak')}}" class="text-decoration-none">
                 <img src="{{asset('images/rekening-pajak.svg')}}" alt="" width="70">
                 <h5 class="mt-3">REKENING PAJAK</h5>
             </a>
-        </div>
+        </div> --}}
     </div>
     <br>
     <hr>
@@ -88,18 +88,18 @@ $password = \App\Models\PasswordKonfirmasi::first();
                 <h5 class="mt-3">APLIKASI</h5>
             </a>
         </div>
-        <div class="col-md-3 text-center mt-5">
+        {{-- <div class="col-md-3 text-center mt-5">
             <a href="{{route('pengaturan.nota-transaksi')}}" class="text-decoration-none">
                 <img src="{{asset('images/limitasi.svg')}}" alt="" width="70">
                 <h5 class="mt-3">BATASAN</h5>
             </a>
-        </div>
-        <div class="col-md-3 text-center mt-5">
+        </div> --}}
+        {{-- <div class="col-md-3 text-center mt-5">
             <a href="{{route('pengaturan.histori-pesan')}}" class="text-decoration-none">
                 <img src="{{asset('images/histori.svg')}}" alt="" width="70">
                 <h5 class="mt-3">HISTORI PESAN WHATSAPP</h5>
             </a>
-        </div>
+        </div> --}}
         @endif
         <div class="col-md-3 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
