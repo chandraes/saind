@@ -30,7 +30,7 @@
             </a>
         </div>
 
-        <div class="col-md-3 text-center mb-5 mt-3">
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">PURCHASE<br>ORDER</h4>
@@ -53,7 +53,7 @@
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">LAPORAN<br>KEUANGAN</h4>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('statisik.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik.svg')}}" alt="" width="70">

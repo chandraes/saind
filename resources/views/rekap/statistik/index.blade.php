@@ -8,7 +8,7 @@
     </div>
     @include('swal')
     @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-    <div class="row justify-content-left mt-5">
+    {{-- <div class="row justify-content-left mt-5">
         <h2>PROFIT BERDASARKAN AKUMULASI</h2>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.profit-harian')}}" class="text-decoration-none">
@@ -30,8 +30,8 @@
         </div>
 
     </div>
-    <hr>
-    <div class="row justify-content-left mt-5">
+    <hr> --}}
+    {{-- <div class="row justify-content-left mt-5">
         <h2>PROFIT BERDASARKAN VENDOR</h2>
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('statisik.profit-bulanan')}}" class="text-decoration-none">
@@ -46,7 +46,7 @@
             </a>
         </div>
     </div>
-    <hr>
+    <hr> --}}
     @endif
 
     <div class="row justify-content-left mt-5">
@@ -71,7 +71,7 @@
         </div>
 
     </div>
-    <div class="row justify-content-left mt-5">
+    {{-- <div class="row justify-content-left mt-5">
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
                 <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="80">
@@ -108,12 +108,7 @@
                 </div>
             </div>
         </div>
-        {{-- <div class="col-md-2 text-center mt-5">
-            <a href="{{route('statistik.perform-unit-tahunan')}}" class="text-decoration-none">
-                <img src="{{asset('images/aktivasi-maintenance.svg')}}" alt="" width="80">
-                <h5 class="mt-3">MAINTENANCE</h5>
-            </a>
-        </div> --}}
+
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ban_luar">
                 <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
@@ -150,22 +145,22 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
     <hr>
     <div class="row justify-content-left mt-5">
         <h2>OTHERS</h2>
-        <div class="col-md-2 text-center mt-5">
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.perform-vendor')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="80">
                 <h5 class="mt-3">STATISTIK VENDOR</h5>
             </a>
-        </div>
-        <div class="col-md-2 text-center mt-5">
+        </div> --}}
+        {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.customer')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-customer.svg')}}" alt="" width="80">
                 <h5 class="mt-3">STATISTIK CUSTOMER</h5>
             </a>
-        </div>
+        </div> --}}
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#tonaseTambang">
                 <img src="{{asset('images/tonase-tambang.svg')}}" alt="" width="80">
@@ -173,12 +168,12 @@
             </a>
         </div>
         @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
-         <div class="col-md-2 text-center mt-5">
+         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('statistik.achievement')}}" class="text-decoration-none" >
                 <img src="{{asset('images/achievement.svg')}}" alt="" width="80">
                 <h5 class="mt-3">STATISTIK ACHIEVEMENT</h5>
             </a>
-        </div>
+        </div> --}}
         @endif
         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('rekap.index')}}" class="text-decoration-none">
