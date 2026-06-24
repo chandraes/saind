@@ -249,6 +249,8 @@ class FormKasUangJalanController extends Controller
             } else {
                 $data['harga_csr'] = $dbCustomer->harga_csr_bawah;
             }
+        } else {
+            $data['harga_csr'] = 0;
         }
 
         $minTonase = Pengaturan::where('untuk', 'limit-tonase-muat')->first()->nilai ?? 0;
@@ -293,10 +295,12 @@ class FormKasUangJalanController extends Controller
 
         $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
 
-        if($last->saldo < $data['nominal_transaksi'] || $last == null){
+        if(!$last && $data['nominal_transaksi'] > 0){
+            return redirect()->back()->with('error', 'Saldo Kas Uang Jalan Tidak Cukup');
+        } elseif($last && $last->saldo < $data['nominal_transaksi']) {
             return redirect()->back()->with('error', 'Saldo Kas Uang Jalan Tidak Cukup');
         } else {
-            $data['saldo'] = $last->saldo - $data['nominal_transaksi'];
+            $data['saldo'] = $last ? $last->saldo - $data['nominal_transaksi'] : 0;
         }
 
         // cek lock uj vehicle lalu cek tanggal kimper dan sim
