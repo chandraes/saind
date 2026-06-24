@@ -12,6 +12,8 @@
     $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
     $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
     $profit = $data->sum('profit');
+    $nominal_bayar = $data->sum('nominal_bayar');
+
     $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
     @endphp
     <div class="row justify-content-center">
