@@ -6,7 +6,7 @@
          <h1><u>DATABASE</u></h1>
         </div>
     </div>
-    <div class="row justify-content-left">
+    {{-- <div class="row justify-content-left">
         <h2>Data Lama</h2>
         <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('pemegang-saham.index')}}" class="text-decoration-none">
@@ -15,8 +15,8 @@
             </a>
         </div>
     </div>
-    <hr>
-    <div class="row justify-content-left">
+    <hr> --}}
+    {{-- <div class="row justify-content-left">
         <h2>Data Internal</h2>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="#" class="text-decoration-none">
@@ -55,7 +55,7 @@
             </a>
         </div>
     </div>
-    <hr>
+    <hr> --}}
     <div class="row justify-content-left">
         <h2>Data Eksternal</h2>
         <div class="col-md-2 text-center mt-3 mb-3">
@@ -76,21 +76,21 @@
                 <h4 class="mt-3">REKENING TRANSAKSI</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-3 mb-3">
+        {{-- <div class="col-md-2 text-center mt-3 mb-3">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">PERSENTASE PAJAK</h4>
             </a>
-        </div>
-        <div class="col-md-2 text-center mt-3 mb-3">
+        </div> --}}
+        {{-- <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.kreditor')}}" class="text-decoration-none">
                 <img src="{{asset('images/kreditor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">BIODATA KREDITUR</h4>
             </a>
-        </div>
+        </div> --}}
     </div>
     <hr>
-    <div class="row justify-content-left">
+    {{-- <div class="row justify-content-left">
         <h2>Data Kategori</h2>
         <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.cost-operational')}}" class="text-decoration-none">
@@ -117,7 +117,7 @@
             </a>
         </div>
     </div>
-    <hr>
+    <hr> --}}
     <div class="row justify-content-left">
         <h2>Data Transaksi</h2>
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
@@ -127,12 +127,12 @@
                 <h4 class="mt-3">RUTE</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-3 mb-3">
+        {{-- <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('bbm-storing.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/bbm.svg')}}" alt="" width="70">
                 <h4 class="mt-3">BBM STORING</h4>
             </a>
-        </div>
+        </div> --}}
 
         <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('vehicle.index')}}" class="text-decoration-none">
@@ -140,7 +140,7 @@
                 <h4 class="mt-3">VEHICLE</h4>
             </a>
         </div>
-        <div class="col-md-2 text-center mt-3 mb-3">
+        {{-- <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
                 <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="70">
                 <h4 class="mt-3">UPAH GENDONG</h4>
@@ -151,7 +151,7 @@
                 <img src="{{asset('images/aktivasi-maintenance.svg')}}" alt="" width="70">
                 <h4 class="mt-3">AKTIVASI MAINTENANCE VEHICLE</h4>
             </a>
-        </div>
+        </div> --}}
         @endif
         <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('home')}}" class="text-decoration-none">
