@@ -7,18 +7,7 @@
         </div>
     </div>
    @include('swal')
-   {{-- if has any error --}}
-    @if ($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>Whoops!</strong> Ada kesalahan dalam input data:
-        <ul>
-            @foreach ($errors->all() as $error)
-            <li><strong>{{$error}}</strong></li>
-            @endforeach
-        </ul>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
+   
     <div class="flex-row justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">
@@ -105,7 +94,7 @@
                     @csrf
                     @method('DELETE')
                     <a href="#" data-bs-toggle="modal" data-bs-target="#modalEdit{{$d->id}}" class="btn btn-warning m-2">Edit</a>
-                    <button type="submit" class="btn btn-danger m-2" 
+                    <button type="submit" class="btn btn-danger m-2"
                         onclick="return confirm('Apakah anda yakin ingin menghapus data ini?')">Hapus</button>
                 </form>
             </td>
