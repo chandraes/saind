@@ -553,7 +553,7 @@ class InvoiceController extends Controller
         }
 
         if ($last) {
-            $data['uraian'] = "Bonus ".$invoice->sponsor->nama.' - '.$invoice->periode;
+            $data['uraian'] = "Sponsor ".$invoice->periode;
             $data['jenis_transaksi_id'] = 2;
             $data['nominal_transaksi'] = $total_bayar;
             $data['saldo'] = $last->saldo - $total_bayar;
@@ -568,9 +568,9 @@ class InvoiceController extends Controller
             $store = KasBesar::create($data);
 
             $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Invoice Bonus*\n".
+                    "*Invoice Sponsor*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "Uraian : Bonus ".$invoice->sponsor->nama."\n".
+                    "Uraian : Sponsor \n".
                     "Periode : ".$invoice->periode."\n\n".
                     "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".

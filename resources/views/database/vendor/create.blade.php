@@ -190,7 +190,7 @@
                 <div class="col-md-4 mb-3">
                     <label for="sponsor_select" class="form-label">Sponsor</label>
                     <select class="form-select {{$errors->has('sponsor_id') ? 'is-invalid' : ''}}" name="sponsor_id"
-                        id="sponsor_select" required>
+                        id="sponsor_select">
                         <option value="">-- Pilih Sponsor --</option>
                         @foreach ($sponsor as $s)
                         <option value="{{$s->id}}">{{$s->nama}}</option>
@@ -349,16 +349,21 @@
             theme: 'bootstrap-5'
         });
 
-        $('#plafon_titipan').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+        new Cleave('#plafon_titipan', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
-        $('#plafon_lain').maskMoney({
-                thousands: '.',
-                decimal: ',',
-                precision: 0
+
+        new Cleave('#plafon_lain', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
             });
+
+
 
          var nominal = new Cleave('#pph_value', {
                 numeral: true,

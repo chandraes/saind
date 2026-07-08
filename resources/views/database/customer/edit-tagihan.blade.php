@@ -6,16 +6,7 @@
             <h1><u>Tagihan Customer</u></h1>
         </div>
     </div>
-    @if (session('error'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('error')}}
-            </strong>
-        </div>
-    </div>
-    @endif
+     @include('swal')
     <form action="{{route('customer.tagihan-update', $data)}}" method="post">
         @method('patch')
         @csrf

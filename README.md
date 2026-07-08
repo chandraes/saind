@@ -1,6 +1,6 @@
 # SAIND - 
 
-![Laravel](https://img.shields.io/badge/Laravel-10.x-red?style=flat-square&logo=laravel)
+![Laravel](https://img.shields.io/badge/Laravel-12.x-red?style=flat-square&logo=laravel)
 ![PHP](https://img.shields.io/badge/PHP-8.x-purple?style=flat-square&logo=php)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
@@ -29,7 +29,7 @@
 ## 🛠 Teknologi yang Digunakan
 
 ### Backend
-- **Framework**: Laravel 10.x
+- **Framework**: Laravel 12.x
 - **Bahasa**: PHP 8.x
 - **Autentikasi**: Laravel UI
 - **PDF**: Barryvdh/laravel-dompdf

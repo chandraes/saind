@@ -6,16 +6,7 @@
             <h1><u>Tagihan Customer</u></h1>
         </div>
     </div>
-    @if (session('error'))
-    <div class="row">
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            <strong>
-                {{session('error')}}
-            </strong>
-        </div>
-    </div>
-    @endif
+    @include('swal')
     <form action="{{route('customer.tagihan-store', $data)}}" method="post">
         @csrf
         <div class="row mt-3 mb-3">
@@ -26,6 +17,7 @@
                         <th class="text-center align-middle">Harga Tagihan ke Tambang</th>
                         <th class="text-center align-middle">Harga Vendor Opname</th>
                         <th class="text-center align-middle">Harga Vendor Khusus</th>
+                        <th class="text-center align-middle">Harga Vendor Titipan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -102,6 +94,27 @@
                                         delimiter: '.'
                                     });
                                 });
+                            </script>
+                        </td>
+                        <td class="text-center align-middle">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1">Rp</span>
+                                <input type="text" class="form-control @if ($errors->has('titipan_khusus'))
+                                is-invalid
+                            @endif" name="titipan_khusus[]" id="titipan_khusus-{{$i->id}}" required data-thousands="." @if ($data->customer_tagihan->where('rute_id', $i->id)->first() != null) value="{{$data->customer_tagihan->where('rute_id', $i->id)->first()->nf_titipan_khusus}}" @endif>
+                              </div>
+                            @if ($errors->has('titipan_khusus'))
+                            <div class="invalid-feedback">
+                                {{$errors->first('titipan_khusus')}}
+                            </div>
+                            @endif
+                            <script>
+                                  var titipanKhususCleave{{$i->id}} = new Cleave('#titipan_khusus-{{$i->id}}', {
+                                        numeral: true,
+                                        numeralThousandsGroupStyle: 'thousand',
+                                        numeralDecimalMark: ',',
+                                        delimiter: '.'
+                                    });
                             </script>
                         </td>
                     </tr>

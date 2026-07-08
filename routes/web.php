@@ -321,6 +321,12 @@ Route::group(['middleware' => ['auth']], function() {
         ]);
 
         Route::resource('vehicle', App\Http\Controllers\VehicleController::class);
+        // Rute untuk memanggil modal form rekening via AJAX
+        Route::get('vehicle/{vehicle}/edit-rekening', [App\Http\Controllers\VehicleController::class, 'editRekening'])->name('vehicle.edit-rekening');
+
+        // Rute untuk memproses update data rekening
+        Route::patch('vehicle/{vehicle}/update-rekening', [App\Http\Controllers\VehicleController::class, 'updateRekening'])->name('vehicle.update-rekening');
+        
         Route::get('print-preview-vehicle', [App\Http\Controllers\VehicleController::class, 'print_preview_vehicle'])->name('print-preview-vehicle');
 
         Route::view('template', 'dokumen.template.index')->name('template');

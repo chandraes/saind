@@ -48,12 +48,11 @@
     </div>
 </div>
 <script>
-    $('#uang_jalan-{{$d->id}}').maskMoney({
-        thousands: '.',
-        decimal: ',',
-        precision: 0
-    });
 
-    $('#uang_jalan-{{$d->id}}').maskMoney('mask', {{$d->uang_jalan}});
-
+  new Cleave('#uang_jalan-{{$d->id}}', {
+                numeral: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+        });
 </script>

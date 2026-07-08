@@ -6,6 +6,7 @@
             <h1><u>Penambahan Deposit</u></h1>
         </div>
     </div>
+    @include('swal')
     <form action="{{route('kas-besar.masuk.store')}}" method="post" id="masukForm">
         @csrf
         <div class="row">

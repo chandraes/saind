@@ -1,0 +1,16 @@
+{
+    "agents": [
+        "copilot",
+        "cursor",
+        "antigravity"
+    ],
+    "cloud": true,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "deploying-laravel-cloud"
+    ]
+}
