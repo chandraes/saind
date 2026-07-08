@@ -3,7 +3,7 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-13 text-center">
-            <h1><u>INVOICE BONUS</u></h1>
+            <h1><u>INVOICE SPONSOR</u></h1>
             <h1>{{strtoupper($periode)}}</h1>
         </div>
     </div>
