@@ -230,9 +230,6 @@ class DatabaseController extends Controller
 
     public function cost_operational()
     {
-
-        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
-        
         $data = CostOperational::all();
 
         return view('database.cost-operational.index', [
@@ -240,13 +237,17 @@ class DatabaseController extends Controller
         ]);
     }
 
-    public function cost_operational_store(Request $req)
+   public function cost_operational_store(Request $req)
     {
         $data = $req->validate([
             'nama' => 'required',
+            'nominal' => 'required',
             'periode' => 'required|in:mingguan,bulanan',
             'jumlah_limit' => 'required|integer|min:1',
         ]);
+
+        // Menghilangkan format titik (ex: 1.500.000 menjadi 1500000) sebelum disimpan
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
 
         CostOperational::create($data);
 
@@ -257,9 +258,12 @@ class DatabaseController extends Controller
     {
         $data = $req->validate([
             'nama' => 'required',
+            'nominal' => 'required',
             'periode' => 'required|in:mingguan,bulanan',
             'jumlah_limit' => 'required|integer|min:1',
         ]);
+
+        $data['nominal'] = str_replace('.', '', $data['nominal']);
 
         $cost->update($data);
 
