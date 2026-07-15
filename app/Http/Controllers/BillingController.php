@@ -109,7 +109,6 @@ class BillingController extends Controller
     public function cost_operational()
     {
 
-        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $data = CostOperational::all();
 
         if($data->isEmpty()) {
@@ -124,28 +123,29 @@ class BillingController extends Controller
     public function cost_operational_store(Request $request)
     {
 
-        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $data = $request->validate([
-                    'nominal_transaksi' => 'required',
-                    'cost_operational_id' => 'required|exists:cost_operationals,id',
-                    'transfer_ke' => 'required',
-                    'no_rekening' => 'required',
-                    'bank' => 'required',
-                ]);
-
+            'cost_operational_id' => 'required|exists:cost_operationals,id',
+            'transfer_ke'         => 'required',
+            'no_rekening'         => 'required',
+            'bank'                => 'required',
+        ]);
 
         $db = new KasBesar();
 
+        // Jalankan fungsi penyimpanan
         $res = $db->cost_operational($data);
 
-        return redirect()->route('billing.form-cost-operational')->with($res['status'], $res['message']);
+        if ($res['status'] == 'error') {
+            return redirect()->back()->withInput()->with($res['status'], $res['message']);
+        }
+
+        return redirect()->route('billing.index')->with($res['status'], $res['message']);
 
     }
 
     public function cost_operational_masuk()
     {
 
-        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         return view('billing.form-cost-operational.form-operational.masuk', [
@@ -156,7 +156,6 @@ class BillingController extends Controller
     public function cost_operational_masuk_store(Request $request)
     {
 
-        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $data = $request->validate([
             'uraian' => 'required',
             'nominal_transaksi' => 'required',

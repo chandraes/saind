@@ -97,9 +97,9 @@ class KasBesar extends Model
 
     }
 
-    public function cost_operational($data)
+   public function cost_operational($data)
     {
-        // 1. Ambil data kategori operasional berdasarkan ID untuk melihat aturan limitnya
+        // 1. Cari data kategori pengeluaran operasional
         $category = CostOperational::find($data['cost_operational_id']);
 
         if (!$category) {
@@ -109,7 +109,17 @@ class KasBesar extends Model
             ];
         }
 
-        // 2. Tentukan rentang tanggal berdasarkan tipe periode kategori
+        // 2. AMANKAN NOMINAL: Ambil nominal langsung dari database kategori (bukan dari input user)
+        $data['nominal_transaksi'] = $category->nominal;
+
+        if ($category->nominal == 0) {
+            return [
+                'status' => 'error',
+                'message' => 'Kategori Cost Operational masih memiliki nominal standar 0. Silahkan hubungi adm!',
+            ];
+        }
+
+        // 3. Hitung rentang waktu berdasarkan periode kategori (mingguan/bulanan)
         $now = \Carbon\Carbon::now();
         if ($category->periode === 'mingguan') {
             $startDate = $now->copy()->startOfWeek()->format('Y-m-d');
@@ -121,26 +131,24 @@ class KasBesar extends Model
             $namaPeriode = 'Bulan Ini';
         }
 
-        // 3. Hitung jumlah transaksi dengan cost_operational_id yang sama pada rentang tanggal tersebut
+        // 4. Hitung jumlah transaksi sejenis pada rentang waktu tersebut
         $existingTransactionsCount = $this->where('cost_operational_id', $data['cost_operational_id'])
                                         ->whereBetween('tanggal', [$startDate, $endDate])
                                         ->count();
 
-        // Jika jumlah transaksi saat ini sudah sama atau melebihi limit yang ditentukan
+        // Validasi pembatasan transaksi jika telah melebihi batas jumlah_limit
         if ($existingTransactionsCount >= $category->jumlah_limit) {
             return [
                 'status' => 'error',
-                'message' => "Transaksi Gagal! Kategori '{$category->nama}' dibatasi maksimal {$category->jumlah_limit} kali untuk {$namaPeriode}. (Sudah digunakan {$existingTransactionsCount} kali).",
+                'message' => "Transaksi Ditolak! Kategori '{$category->nama}' dibatasi maksimal {$category->jumlah_limit} kali untuk {$namaPeriode}. (Saat ini sudah digunakan {$existingTransactionsCount} kali).",
             ];
         }
 
-        // 4. Lanjutkan proses transaksi yang sudah ada
+        // 5. Lanjutkan proses input transaksi ke database kas besar
         $data['cost_operational'] = 1;
         $data['uraian'] = $category->nama;
 
-        // CATATAN: Jangan lakukan unset($data['cost_operational_id']) agar tersimpan di DB untuk pelacakan masa depan
-
-        $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
+        // Karena nominal_transaksi diambil langsung dari DB (berupa integer), kita tidak perlu str_replace lagi
         $data['jenis_transaksi_id'] = 2;
         $data['saldo'] = $this->saldoTerakhir() - $data['nominal_transaksi'];
         $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
@@ -179,6 +187,7 @@ class KasBesar extends Model
             DB::commit();
 
             $tujuan = GroupWa::where('untuk', 'kas-besar')->first()->nama_group;
+
             $this->sendWa($tujuan, $pesan);
 
             return [
@@ -188,6 +197,7 @@ class KasBesar extends Model
 
         } catch (\Throwable $th) {
             DB::rollback();
+
             return [
                 'status' => 'error',
                 'message' => $th->getMessage(),

@@ -3,55 +3,46 @@
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
-
             @include('swal')
-
             <div class="card shadow border-0">
                 <div class="card-header bg-dark text-white p-3 text-center">
                     <h3 class="mb-0 text-uppercase tracking-wider">
                         <i class="fa fa-file-invoice-dollar me-2"></i>Form Operational
                     </h3>
                 </div>
-
                 <div class="card-body p-4">
                     <form action="{{route('billing.form-cost-operational.cost-operational.store')}}" method="post" id="masukForm">
                         @csrf
-
                         <h5 class="text-secondary border-bottom pb-2 mb-3">
                             <i class="fa fa-info-circle me-1"></i> Informasi Transaksi
                         </h5>
-
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label for="tanggal" class="form-label fw-bold text-muted">Tanggal</label>
+                                <label class="form-label fw-bold text-muted">Tanggal</label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="fa fa-calendar-alt"></i></span>
-                                    <input type="text" class="form-control bg-light" name="tanggal" id="tanggal" value="{{date('d M Y')}}" disabled>
+                                    <span class="input-group-text bg-light text-muted"><i class="fa fa-calendar"></i></span>
+                                    <input type="text" class="form-control bg-light" name="tanggal" value="{{date('d M Y')}}" disabled>
                                 </div>
                             </div>
                             <div class="col-md-8 mb-3">
                                 <label for="cost_operational_id" class="form-label fw-bold text-muted">Uraian / Kategori</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fa fa-list"></i></span>
-                                    <select class="form-select" name="cost_operational_id" id="cost_operational_id" required>
+                                    <select class="form-select" name="cost_operational_id" id="cost_operational_id" required onchange="updateNominal()">
                                         <option value="" disabled selected>-- Pilih Kategori Cost Operational --</option>
                                         @foreach ($data as $d)
-                                            <option value="{{$d->id}}">{{$d->nama}} (Maks: {{$d->jumlah_limit}}x / {{$d->periode}})</option>
+                                            <option value="{{$d->id}}" data-nominal="{{$d->nominal}}">
+                                                {{$d->nama}} (Limit: {{$d->jumlah_limit}}x / {{$d->periode}})
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-12 mb-4">
-                                <label for="nominal_transaksi" class="form-label fw-bold text-muted">Nominal Transaksi</label>
+                           <div class="col-12 mb-4">
+                                <label for="nominal_transaksi" class="form-label fw-bold text-muted">Nominal Transaksi (Otomatis Terkunci)</label>
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text bg-primary text-white fw-bold">Rp</span>
-                                    <input type="text" class="form-control fw-bold @error('nominal_transaksi') is-invalid @enderror"
-                                           name="nominal_transaksi" id="nominal_transaksi" data-thousands="." placeholder="0">
-                                    @error('nominal_transaksi')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                    @enderror
+                                    <input type="text" class="form-control fw-bold bg-light" id="nominal_transaksi" placeholder="0" readonly>
                                 </div>
                             </div>
                         </div>
@@ -112,3 +103,52 @@
     </div>
 </div>
 @endsection
+
+@push('js')
+<script src="{{asset('assets/js/cleave.min.js')}}"></script>
+<script>
+    // Fungsi otomatis memasukkan nominal standar dari kategori yang dipilih
+    function updateNominal() {
+        var selectElement = document.getElementById('cost_operational_id');
+        var selectedOption = selectElement.options[selectElement.selectedIndex];
+        var nominalValue = selectedOption.getAttribute('data-nominal');
+
+        var nominalInput = document.getElementById('nominal_transaksi');
+        nominalInput.value = nominalValue;
+
+        if (window.cleaveNominalTransaksi) {
+            window.cleaveNominalTransaksi.destroy();
+        }
+        window.cleaveNominalTransaksi = new Cleave('#nominal_transaksi', {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalMark: ',',
+            delimiter: '.'
+        });
+    }
+
+    $(document).ready(function() {
+        new Cleave('#no_rekening', {
+            delimiter: '-',
+            blocks: [4, 4, 8]
+        });
+        
+        $('#masukForm').submit(function(e){
+            e.preventDefault();
+            Swal.fire({
+                title: 'Apakah anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, simpan!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#spinner').show();
+                    this.submit();
+                }
+            })
+        });
+    });
+</script>
+@endpush

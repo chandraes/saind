@@ -10,14 +10,9 @@
         <div class="col-md-6">
             <table class="table" id="data-table">
                 <tr>
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30">
-                            Database</a></td>
-                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#createInvestor"><img
-                                src="{{asset('images/cost-operational.svg')}}" width="30"> Tambah Kategori</a>
-
-                    </td>
+                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30"> Dashboard</a></td>
+                    <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen" width="30"> Database</a></td>
+                    <td><a href="#" data-bs-toggle="modal" data-bs-target="#createInvestor"><img src="{{asset('images/cost-operational.svg')}}" width="30"> Tambah Kategori</a></td>
                 </tr>
             </table>
         </div>
@@ -26,12 +21,14 @@
 @include('swal')
 @include('database.cost-operational.create')
 @include('database.cost-operational.edit')
+
 <div class="container mt-5 table-responsive">
     <table class="table table-bordered table-hover shadow-sm" id="data">
         <thead class="table-warning bg-gradient">
             <tr>
                 <th class="text-center align-middle" style="width: 5%">NO</th>
                 <th class="text-center align-middle">NAMA KATEGORI</th>
+                <th class="text-center align-middle">NOMINAL STANDAR</th>
                 <th class="text-center align-middle" style="width: 15%">PERIODE</th>
                 <th class="text-center align-middle" style="width: 15%">LIMIT PENGGUNAAN</th>
                 <th class="text-center align-middle" style="width: 20%">AKSI</th>
@@ -42,6 +39,9 @@
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="align-middle fw-bold text-dark">{{$d->nama}}</td>
+                <td class="align-middle text-end fw-bold text-success">
+                    Rp {{ number_format($d->nominal, 0, ',', '.') }}
+                </td>
                 <td class="text-center align-middle text-capitalize">
                     @if($d->periode == 'mingguan')
                         <span class="badge bg-info text-dark"><i class="fa fa-calendar-week me-1"></i>Mingguan</span>
@@ -55,7 +55,7 @@
                 <td class="text-center align-middle">
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-warning me-1 rounded"
-                                onclick="editInvestor({{$d->id}}, '{{$d->nama}}', '{{$d->periode}}', {{$d->jumlah_limit}})">
+                                onclick="editInvestor({{$d->id}}, '{{$d->nama}}', {{$d->nominal}}, '{{$d->periode}}', {{$d->jumlah_limit}})">
                             <i class="fa fa-edit"></i> Edit
                         </button>
                         <form action="{{route('database.cost-operational.delete', $d->id)}}" method="post" class="deleteForm d-inline">
@@ -72,70 +72,86 @@
         </tbody>
     </table>
 </div>
-
 @endsection
-@push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
-@endpush
+
 @push('js')
-
-
-
-<script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
-    function editInvestor(data, id) {
-        document.getElementById('edit_nama').value = data.nama;
-        document.getElementById('edit_periode').value = data.periode;
-        document.getElementById('edit_jumlah_limit').value = data.jumlah_limit;
-        // Populate other fields...
+    // Membuka modal edit dengan jQuery agar terhindar dari ReferenceError: bootstrap is not defined
+    function editInvestor(id, nama, nominal, periode, jumlah_limit) {
+        document.getElementById('edit_nama').value = nama;
+        document.getElementById('edit_periode').value = periode;
+        document.getElementById('edit_jumlah_limit').value = jumlah_limit;
+
+        var editNominalInput = document.getElementById('edit_nominal');
+        editNominalInput.value = nominal;
+
+        if(window.cleaveEditNominal) {
+            window.cleaveEditNominal.destroy();
+        }
+        window.cleaveEditNominal = new Cleave('#edit_nominal', {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalMark: ',',
+            delimiter: '.'
+        });
+
         document.getElementById('editForm').action = '/database/cost-operational/update/' + id;
 
-        var editModal = new bootstrap.Modal(document.getElementById('editInvestor'));
-        editModal.show();
+        // Memicu Modal menggunakan jQuery
+        $('#editInvestor').modal('show');
     }
 
-    $('#data').DataTable({
-        paging: false,
-        scrollCollapse: true,
-        scrollY: "550px",
+    $(document).ready(function() {
+        // Inisialisasi Masking nominal pada form Tambah Data
+        new Cleave('#nominal', {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalMark: ',',
+            delimiter: '.'
+        });
+
+        $('#data').DataTable({
+            paging: false,
+            scrollCollapse: true,
+            scrollY: "550px",
+        });
     });
 
     $('#createForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah data sudah benar?',
-                text: "Pastikan data sudah benar sebelum disimpan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    this.submit();
-                }
-            })
-        });
-
+        e.preventDefault();
+        Swal.fire({
+            title: 'Apakah data sudah benar?',
+            text: "Pastikan data sudah benar sebelum disimpan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, simpan!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#spinner').show();
+                this.submit();
+            }
+        })
+    });
 
     $('#editForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah data sudah benar?',
-                text: "Pastikan data sudah benar sebelum disimpan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    this.submit();
-                }
-            })
-        });
-
+        e.preventDefault();
+        Swal.fire({
+            title: 'Apakah data sudah benar?',
+            text: "Pastikan data sudah benar sebelum disimpan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, simpan!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#spinner').show();
+                this.submit();
+            }
+        })
+    });
 </script>
 @endpush
