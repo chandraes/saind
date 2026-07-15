@@ -230,6 +230,9 @@ class DatabaseController extends Controller
 
     public function cost_operational()
     {
+
+        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
+        
         $data = CostOperational::all();
 
         return view('database.cost-operational.index', [
@@ -241,6 +244,8 @@ class DatabaseController extends Controller
     {
         $data = $req->validate([
             'nama' => 'required',
+            'periode' => 'required|in:mingguan,bulanan',
+            'jumlah_limit' => 'required|integer|min:1',
         ]);
 
         CostOperational::create($data);
@@ -252,6 +257,8 @@ class DatabaseController extends Controller
     {
         $data = $req->validate([
             'nama' => 'required',
+            'periode' => 'required|in:mingguan,bulanan',
+            'jumlah_limit' => 'required|integer|min:1',
         ]);
 
         $cost->update($data);

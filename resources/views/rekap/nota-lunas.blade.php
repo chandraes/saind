@@ -70,6 +70,11 @@
                 <th class="text-center align-middle">Tanggal</th>
                 <th class="text-center align-middle">Tambang</th>
                 <th class="text-center align-middle">Periode</th>
+                <th class="text-center align-middle">Tgl Submit Softcopy</th>
+                <th class="text-center align-middle">Tgl Submit Hardcopy</th>
+                <th class="text-center align-middle">Est. Tgl Pembayaran </th>
+                <th class="text-center align-middle">No Resi</th>
+                <th class="text-center align-middle">No Validasi</th>
                 <th class="text-center align-middle">Nominal</th>
             </tr>
             </thead>
@@ -83,6 +88,11 @@
                     <td class="text-center align-middle">
                         <a href="{{route('rekap.nota-lunas-detail', $d)}}"> {{$d->periode}}</a>
                     </td>
+                    <td class="text-center align-middle">{{$d->id_tanggal_softcopy}}</td>
+                    <td class="text-center align-middle">{{$d->id_tanggal_hardcopy}}</td>
+                    <td class="text-center align-middle">{{$d->id_estimasi_pembayaran}}</td>
+                    <td class="text-center align-middle">{{$d->no_resi}}</td>
+                    <td class="text-center align-middle">{{$d->no_validasi}}</td>
                     <td class="text-center align-middle">
                         {{number_format($d->total_bayar, 0,',','.')}}
                     </td>

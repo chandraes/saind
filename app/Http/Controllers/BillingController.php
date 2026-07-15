@@ -108,6 +108,8 @@ class BillingController extends Controller
 
     public function cost_operational()
     {
+
+        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $data = CostOperational::all();
 
         if($data->isEmpty()) {
@@ -121,6 +123,8 @@ class BillingController extends Controller
 
     public function cost_operational_store(Request $request)
     {
+
+        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $data = $request->validate([
                     'nominal_transaksi' => 'required',
                     'cost_operational_id' => 'required|exists:cost_operationals,id',
@@ -140,6 +144,8 @@ class BillingController extends Controller
 
     public function cost_operational_masuk()
     {
+
+        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $rekening = Rekening::where('untuk', 'kas-besar')->first();
 
         return view('billing.form-cost-operational.form-operational.masuk', [
@@ -149,6 +155,8 @@ class BillingController extends Controller
 
     public function cost_operational_masuk_store(Request $request)
     {
+
+        return redirect()->back()->with('error', 'Fitur ini sedang dalam perbaikan');
         $data = $request->validate([
             'uraian' => 'required',
             'nominal_transaksi' => 'required',

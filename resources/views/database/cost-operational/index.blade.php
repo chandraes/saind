@@ -27,54 +27,49 @@
 @include('database.cost-operational.create')
 @include('database.cost-operational.edit')
 <div class="container mt-5 table-responsive">
-    <table class="table table-bordered table-hover" id="data">
+    <table class="table table-bordered table-hover shadow-sm" id="data">
         <thead class="table-warning bg-gradient">
             <tr>
                 <th class="text-center align-middle" style="width: 5%">NO</th>
-                <th class="text-center align-middle">NAMA</th>
-                <th class="text-center align-middle">ACT</th>
+                <th class="text-center align-middle">NAMA KATEGORI</th>
+                <th class="text-center align-middle" style="width: 15%">PERIODE</th>
+                <th class="text-center align-middle" style="width: 15%">LIMIT PENGGUNAAN</th>
+                <th class="text-center align-middle" style="width: 20%">AKSI</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($data as $d)
             <tr>
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
-                <td class="text-center align-middle">{{$d->nama}}</td>
+                <td class="align-middle fw-bold text-dark">{{$d->nama}}</td>
+                <td class="text-center align-middle text-capitalize">
+                    @if($d->periode == 'mingguan')
+                        <span class="badge bg-info text-dark"><i class="fa fa-calendar-week me-1"></i>Mingguan</span>
+                    @else
+                        <span class="badge bg-primary"><i class="fa fa-calendar-alt me-1"></i>Bulanan</span>
+                    @endif
+                </td>
                 <td class="text-center align-middle">
-                    <div class="d-flex justify-content-center">
-                        <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
-                            data-bs-target="#editInvestor" onclick="editInvestor({{$d}}, {{$d->id}})"><i
-                                class="fa fa-edit"></i></button>
-                        <form action="{{route('database.cost-operational.delete', $d)}}" method="post" id="deleteForm-{{$d->id}}">
+                    <span class="fw-bold text-secondary">{{$d->jumlah_limit}} Kali</span>
+                </td>
+                <td class="text-center align-middle">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-warning me-1 rounded"
+                                onclick="editInvestor({{$d->id}}, '{{$d->nama}}', '{{$d->periode}}', {{$d->jumlah_limit}})">
+                            <i class="fa fa-edit"></i> Edit
+                        </button>
+                        <form action="{{route('database.cost-operational.delete', $d->id)}}" method="post" class="deleteForm d-inline">
                             @csrf
                             @method('delete')
-                            <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i></button>
+                            <button type="submit" class="btn btn-sm btn-danger rounded">
+                                <i class="fa fa-trash"></i> Hapus
+                            </button>
                         </form>
                     </div>
-
                 </td>
             </tr>
-            <script>
-                $('#deleteForm-{{$d->id}}').submit(function(e){
-                       e.preventDefault();
-                       Swal.fire({
-                           title: 'Apakah data yakin untuk menghapus data ini?',
-                           icon: 'warning',
-                           showCancelButton: true,
-                           confirmButtonColor: '#3085d6',
-                           cancelButtonColor: '#6c757d',
-                           confirmButtonText: 'Ya, hapus!'
-                           }).then((result) => {
-                           if (result.isConfirmed) {
-                            $('#spinner').show();
-                               this.submit();
-                           }
-                       })
-                   });
-            </script>
             @endforeach
         </tbody>
-
     </table>
 </div>
 
@@ -90,8 +85,13 @@
 <script>
     function editInvestor(data, id) {
         document.getElementById('edit_nama').value = data.nama;
+        document.getElementById('edit_periode').value = data.periode;
+        document.getElementById('edit_jumlah_limit').value = data.jumlah_limit;
         // Populate other fields...
         document.getElementById('editForm').action = '/database/cost-operational/update/' + id;
+
+        var editModal = new bootstrap.Modal(document.getElementById('editInvestor'));
+        editModal.show();
     }
 
     $('#data').DataTable({
