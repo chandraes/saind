@@ -26,7 +26,7 @@ class InvoiceTagihan extends Model
 
     public function getIdTanggalHardcopyAttribute()
     {
-        return date('d-m-Y', strtotime($this->tanggal_hardcopy));
+        return $this->tanggal_hardcopy ? date('d-m-Y', strtotime($this->tanggal_hardcopy)) : '-';
     }
 
     public function getIdTanggalSoftcopyAttribute()
@@ -36,7 +36,7 @@ class InvoiceTagihan extends Model
 
     public function getIdEstimasiPembayaranAttribute()
     {
-        return date('d-m-Y', strtotime($this->estimasi_pembayaran));
+        return $this->estimasi_pembayaran ? date('d-m-Y', strtotime($this->estimasi_pembayaran)) : '-';
     }
 
     public function getNfKompensasiJrAttribute()

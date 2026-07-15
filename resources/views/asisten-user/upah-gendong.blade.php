@@ -208,12 +208,18 @@
                         @endif
                     </td>
                     <td class="text-center">
+                              @if ($kelebihan_tonase < 0) 0 @else {{$kelebihan_tonase}}
+                              @php $upah_gendong=$kelebihan_tonase * $ug->nominal;
 
-                        {{$kelebihan_tonase}}
+                                $total += $upah_gendong;
+                                $total_kelebihan_tonase += $kelebihan_tonase;
+                            @endphp
+                            @endif
+                        {{-- {{$kelebihan_tonase}}
                         @php $upah_gendong=$kelebihan_tonase * $ug->nominal;
                             $total += $upah_gendong;
                             $total_kelebihan_tonase += $kelebihan_tonase;
-                            @endphp
+                            @endphp --}}
 
 
                     </td>
