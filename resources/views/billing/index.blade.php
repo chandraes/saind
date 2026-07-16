@@ -202,7 +202,6 @@
 
     <div class="row justify-content-left">
         <h4 class="mt-3">COST OPERATIONAL</h4>
-        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a @if (Auth::user()->role == 'admin' || Auth::user()->role == 'su')
                 href="#" data-bs-toggle="modal" data-bs-target="#modalCo"
@@ -213,7 +212,6 @@
                 <h4 class="mt-3">FORM OPERATIONAL</h4>
             </a>
         </div>
-        @endif
         <div class="col-md-2 text-center mt-5">
             <!-- Modal trigger button -->
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formKasKecil">
