@@ -120,7 +120,7 @@ class KasBesar extends Model
         }
 
         // 3. Hitung rentang waktu berdasarkan periode kategori (mingguan/bulanan)
-        $now = \Carbon\Carbon::now();
+        $now = Carbon::now();
         if ($category->periode === 'mingguan') {
             $startDate = $now->copy()->startOfWeek()->format('Y-m-d');
             $endDate = $now->copy()->endOfWeek()->format('Y-m-d');

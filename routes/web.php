@@ -86,20 +86,6 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/deviden', [App\Http\Controllers\FormDevidenController::class, 'index'])->name('billing.deviden.index');
             Route::post('/deviden/store', [App\Http\Controllers\FormDevidenController::class, 'store'])->name('billing.deviden.store');
 
-            Route::prefix('form-cost-operational')->group(function(){
-                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_cost_operational'])->name('billing.form-cost-operational');
-
-                Route::prefix('cost-operational')->group(function(){
-                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational'])->name('billing.form-cost-operational.cost-operational');
-                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_store'])->name('billing.form-cost-operational.cost-operational.store');
-                });
-
-                Route::prefix('masuk')->group(function(){
-                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk'])->name('billing.form-cost-operational.masuk');
-                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk_store'])->name('billing.form-cost-operational.masuk.store');
-                });
-            });
-
             // Form Bunga Investor
             Route::prefix('bunga-investor')->group(function(){
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'bunga_investor'])->name('billing.bunga-investor');
@@ -326,7 +312,7 @@ Route::group(['middleware' => ['auth']], function() {
 
         // Rute untuk memproses update data rekening
         Route::patch('vehicle/{vehicle}/update-rekening', [App\Http\Controllers\VehicleController::class, 'updateRekening'])->name('vehicle.update-rekening');
-        
+
         Route::get('print-preview-vehicle', [App\Http\Controllers\VehicleController::class, 'print_preview_vehicle'])->name('print-preview-vehicle');
 
         Route::view('template', 'dokumen.template.index')->name('template');
@@ -678,7 +664,19 @@ Route::group(['middleware' => ['auth']], function() {
 
             });
 
+            Route::prefix('form-cost-operational')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'form_cost_operational'])->name('billing.form-cost-operational');
 
+                Route::prefix('cost-operational')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational'])->name('billing.form-cost-operational.cost-operational');
+                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_store'])->name('billing.form-cost-operational.cost-operational.store');
+                });
+
+                Route::prefix('masuk')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk'])->name('billing.form-cost-operational.masuk');
+                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'cost_operational_masuk_store'])->name('billing.form-cost-operational.masuk.store');
+                });
+            });
 
         });
 
