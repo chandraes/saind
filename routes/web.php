@@ -67,6 +67,13 @@ Route::group(['middleware' => ['auth']], function() {
         });
     });
 
+    Route::group(['middleware' => 'role:admin,su,user'], function() {
+        Route::prefix('kas-besar')->group(function(){
+            Route::get('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
+            Route::post('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
+        });
+    });
+
     // Routing untuk admin dan superuser
     Route::group(['middleware' => 'role:admin,su'], function() {
          Route::prefix('admin')->group(function () {
@@ -75,8 +82,6 @@ Route::group(['middleware' => ['auth']], function() {
         });
 
         Route::prefix('kas-besar')->group(function(){
-            Route::get('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
-            Route::post('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
             Route::get('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar'])->name('kas-besar.keluar');
             Route::post('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar_store'])->name('kas-besar.keluar.store');
         });
