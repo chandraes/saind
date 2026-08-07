@@ -569,7 +569,7 @@ class FormKasUangJalanController extends Controller
                             $additionalMessage.
                             "Terima kasih 🙏🙏🙏\n";
 
-            $sendVendor = $dbWa->sendWa($dbVendor->no_hp, $pesanVendor);
+            // $sendVendor = $dbWa->sendWa($dbVendor->no_hp, $pesanVendor);
         }
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
