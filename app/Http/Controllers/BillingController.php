@@ -141,6 +141,63 @@ class BillingController extends Controller
         return view('billing.uj-ditahan.show', compact('master', 'details'));
     }
 
+    public function uj_ditahan_cairkan(Request $request)
+    {
+
+        $nominalBersih = (int) str_replace('.', '', $request->nominal);
+
+        // Sisipkan nilai bersih ke request agar bisa melewati validasi Laravel jika mau
+        $request->merge(['nominal_bersih' => $nominalBersih]);
+        
+        $request->validate([
+            'uj_ditahan_id' => 'required|exists:uj_ditahans,id',
+            'nominal' => 'required|numeric|min:1',
+            'keterangan' => 'required|string|max:255',
+            'bank' => 'required|string|max:50',
+            'no_rekening' => 'required|string|max:50',
+            'nama_rekening' => 'required|string|max:100',
+        ]);
+
+        // Bersihkan format nominal (misal jika ada titik/koma dari input form)
+        $nominalCair = str_replace('.', '', $request->nominal);
+
+        try {
+            DB::beginTransaction();
+
+            // Lock row master agar tidak ada transaksi ganda bersamaan
+            $master = UjDitahan::where('id', $request->uj_ditahan_id)->lockForUpdate()->first();
+
+            // Validasi: Nominal tidak boleh melebihi saldo
+            if ($nominalCair > $master->saldo) {
+                return redirect()->back()->with('error', 'Nominal pencairan melebihi sisa saldo bulan ini!');
+            }
+
+            // 1. Buat Detail Keluar (Pencairan)
+            UjDitahanDetail::create([
+                'uj_ditahan_id' => $master->id,
+                'jenis'         => 'keluar',
+                'nominal'       => $nominalCair,
+                'keterangan'    => $request->keterangan,
+                'bank'          => $request->bank,
+                'no_rekening'   => $request->no_rekening,
+                'nama_rekening' => $request->nama_rekening,
+                // driver_id dan transaksi_id dibiarkan null karena ini transaksi luar (pencairan manual)
+            ]);
+
+            // 2. Update Master (Kurangi saldo, tambah total_keluar)
+            $master->decrement('saldo', $nominalCair);
+            $master->increment('total_keluar', $nominalCair);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Pencairan saldo berhasil dicatat.');
+
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $th->getMessage());
+        }
+    }
+
     public function form_cost_operational()
     {
         $check = RekapGaji::orderBy('id', 'desc')->first();

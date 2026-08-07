@@ -580,6 +580,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::prefix('uj-ditahan')->group(function(){
                 Route::get('/', [BillingController::class, 'uj_ditahan'])->name('billing.uj-ditahan');
                 Route::get('/{id}', [BillingController::class, 'uj_ditahan_show'])->name('billing.uj-ditahan.show');
+                Route::post('/cairkan', [BillingController::class, 'uj_ditahan_cairkan'])->name('billing.uj-ditahan.cairkan');
             });
 
             Route::get('/notif-count', [App\Http\Controllers\BillingController::class, 'getNotifCount'])->name('billing.notif-count');

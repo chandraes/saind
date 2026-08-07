@@ -18,7 +18,7 @@
             <div class="card shadow-sm border-0">
                 <div class="card-body d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
                     <a href="{{ route('home') }}" class="btn btn-outline-secondary">
-                        <i class="fa fa-cloud-lightning me-2"></i> Dashboard
+                        <i class="fa fa-cloud me-2"></i> Dashboard
                     </a>
                     <a href="{{ route('billing.index') }}" class="btn btn-outline-info">
                         <i class="fa fa-database me-2"></i> BILLING
@@ -28,22 +28,39 @@
         </div>
     </div>
 
-    <!-- TAMBAHAN: Informasi Total Saldo Bulan Ini -->
+    <!-- Informasi Total Saldo Bulan Ini (Desain Modern Gradient & Glassmorphism) -->
     <div class="row mb-4">
-        <div class="col-xl-4 col-md-6">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Total Saldo Ditahan ({{ \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->translatedFormat('F') }} {{ $tahun }})
+        <div class="col-xl-5 col-md-7 col-12">
+            <div class="card border-0 shadow-lg text-white position-relative overflow-hidden"
+                 style="background: linear-gradient(135deg, #dc3545 0%, #851419 100%); border-radius: 18px;">
+
+                <!-- Ornamen Lingkaran Transparan Latar Belakang -->
+                <div class="position-absolute" style="top: -20px; right: -20px; width: 130px; height: 130px; background: rgba(255, 255, 255, 0.12); border-radius: 50%; pointer-events: none;"></div>
+                <div class="position-absolute" style="bottom: -35px; right: 40px; width: 150px; height: 150px; background: rgba(255, 255, 255, 0.06); border-radius: 50%; pointer-events: none;"></div>
+
+                <div class="card-body p-4 position-relative" style="z-index: 1;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <!-- Badge Periode Terpilih -->
+                            <span class="badge bg-white text-danger px-3 py-2 rounded-pill font-weight-bold shadow-sm mb-2 d-inline-block" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                <i class="fas fa-calendar-alt me-1"></i> PERIODE {{ strtoupper(\Carbon\Carbon::createFromDate($tahun, $bulan, 1)->translatedFormat('F')) }} {{ $tahun }}
+                            </span>
+
+                            <!-- Label Judul Card -->
+                            <div class="text-white-50 text-uppercase fw-semibold mb-1" style="font-size: 0.85rem; letter-spacing: 0.8px;">
+                                Total Saldo Ditahan
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+
+                            <!-- Angka Total Saldo -->
+                            <h2 class="fw-bold mb-0 text-white" style="font-size: 2.1rem; letter-spacing: -0.5px;">
                                 Rp {{ number_format($totalSaldoBulanIni, 0, ',', '.') }}
-                            </div>
+                            </h2>
                         </div>
-                        <div class="col-auto">
-                            <i class="fas fa-wallet fa-2x text-gray-300"></i>
+
+                        <!-- Icon dengan Lingkaran Kaca (Glassmorphism) -->
+                        <div class="d-flex align-items-center justify-content-center rounded-circle shadow-sm"
+                             style="width: 68px; height: 68px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, 0.3);">
+                            <i class="fas fa-wallet fa-2x text-white"></i>
                         </div>
                     </div>
                 </div>
@@ -56,7 +73,7 @@
             <h6 class="m-0 font-weight-bold text-primary">Data Detail Uang Jalan Ditahan</h6>
         </div>
         <div class="card-body">
-            <!-- Form Filter (Diperbaiki alignment-nya agar sejajar) -->
+            <!-- Form Filter -->
             <form action="{{ route('billing.uj-ditahan') }}" method="GET" class="mb-4">
                 <div class="row align-items-start">
                     <div class="col-md-3 mb-3">
@@ -72,7 +89,6 @@
                                     $checkKey = $numBulan . '-' . $tahun;
                                     $hasSaldo = in_array($checkKey, $activeBalances);
                                 @endphp
-                                <!-- Menampilkan tanda seru jika bulan & tahun ini memiliki saldo -->
                                 <option value="{{ $numBulan }}" {{ $bulan == $numBulan ? 'selected' : '' }}>
                                     {{ $nama }} {!! $hasSaldo ? '&#10071;' : '' !!}
                                 </option>
@@ -97,7 +113,7 @@
             <!-- Table List UJ Ditahan -->
             <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover" id="dataTable" width="100%" cellspacing="0">
-                    <thead class="table-dark">
+                    <thead class="table-success">
                         <tr>
                             <th class="text-center">No</th>
                             <th>Nomor Lambung</th>
@@ -112,12 +128,11 @@
                         @forelse($data as $item)
                         <tr>
                             <td class="text-center align-middle">{{ $loop->iteration }}</td>
-                            <td class="align-middle font-weight-bold">{{ $item->vehicle->nomor_lambung ?? '-' }}</td>
-                            <td class="align-middle">{{ $item->vehicle->driver->nama ?? '-' }}</td>
+                            <td class="align-middle font-weight-bold">{{ $item->vehicle?->nomor_lambung ?? '-' }}</td>
+                            <td class="align-middle">{{ $item->vehicle->driver?->nama ?? '-' }}</td>
                             <td class="text-right align-middle">Rp {{ number_format($item->total_masuk, 0, ',', '.') }}</td>
                             <td class="text-right align-middle">Rp {{ number_format($item->total_keluar, 0, ',', '.') }}</td>
 
-                            <!-- Highlight merah tebal jika saldo masih ada -->
                             <td class="text-right align-middle {{ $item->saldo > 0 ? 'text-danger font-weight-bold' : 'text-success' }}">
                                 Rp {{ number_format($item->saldo, 0, ',', '.') }}
                             </td>
