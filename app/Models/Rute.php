@@ -13,6 +13,7 @@ class Rute extends Model
         'nama',
         'jarak',
         'uang_jalan',
+        'uj_ditahan',
         'user_id',
         'edited_by',
     ];

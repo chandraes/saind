@@ -6,10 +6,13 @@ use App\Models\AktivasiMaintenance;
 use App\Models\BarangMaintenance;
 use App\Models\CostOperational;
 use App\Models\db\Kreditor;
+use App\Models\Driver;
 use App\Models\KategoriBarangMaintenance;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\DataTables;
 
 class DatabaseController extends Controller
 {
@@ -325,5 +328,124 @@ class DatabaseController extends Controller
         $kreditor->update(['is_active' => 0]);
 
         return redirect()->back()->with('success', 'Data berhasil dihapus');
+    }
+
+    public function driver(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Driver::query();
+
+            // Filter berdasarkan status dari frontend
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->editColumn('masa_berlaku_sim', function ($row) {
+                    return $row->masa_berlaku_sim ? $row->masa_berlaku_sim->format('d/m/Y') : '-';
+                })
+                ->editColumn('foto_sim', function ($row) {
+                    if ($row->foto_sim) {
+                        $url = asset('storage/' . $row->foto_sim);
+                        return '<a href="'.$url.'" target="_blank" class="btn btn-sm btn-outline-info"><i class="fa fa-image"></i> Lihat SIM</a>';
+                    }
+                    return '<span class="badge bg-secondary">Tidak Ada</span>';
+                })
+                ->editColumn('status', function ($row) {
+                    if ($row->status === 'aktif') {
+                        return '<span class="badge bg-success"><i class="fa fa-check-circle"></i> Aktif</span>';
+                    }
+                    return '<span class="badge bg-danger"><i class="fa fa-times-circle"></i> Non-Aktif</span>';
+                })
+                ->addColumn('action', function ($row) {
+                    return '
+                        <button onclick="editDriver('.$row->id.')" class="btn btn-warning btn-sm me-1" title="Edit"><i class="fa fa-edit"></i></button>
+                        <button onclick="deleteDriver('.$row->id.')" class="btn btn-danger btn-sm" title="Hapus"><i class="fa fa-trash"></i></button>
+                    ';
+                })
+                ->rawColumns(['foto_sim', 'status', 'action'])
+                ->make(true);
+        }
+
+        return view('database.drivers.index');
+    }
+
+    public function driver_store(Request $request)
+    {
+        $validated = $request->validate([
+            'nama'             => 'required|string|max:255',
+            'no_sim'           => 'required|string|max:50|unique:drivers,no_sim',
+            'masa_berlaku_sim' => 'required|date',
+            'no_hp'            => 'required|string|max:20',
+            'no_rek'           => 'required|string|max:50',
+            'nama_rek'         => 'required|string|max:255',
+            'bank'             => 'required|string|max:100',
+            'alamat'           => 'required|string',
+            'foto_sim'         => 'required|image|mimes:jpeg,png,jpg|max:2048', // WAJIB DIISI
+            'status'           => 'required|in:aktif,non_aktif',
+            'keterangan'       => 'required_if:status,non_aktif|nullable|string',
+        ], [
+            'foto_sim.required' => 'Foto / Dokumen SIM wajib diunggah!',
+            'keterangan.required_if' => 'Keterangan wajib diisi apabila status driver Non-Aktif!'
+        ]);
+
+        if ($request->hasFile('foto_sim')) {
+            $validated['foto_sim'] = $request->file('foto_sim')->store('drivers_sim', 'public');
+        }
+
+        Driver::create($validated);
+
+        return response()->json(['message' => 'Data Driver berhasil disimpan!']);
+    }
+
+    public function driver_edit($id)
+    {
+        $driver = Driver::findOrFail($id);
+        return response()->json($driver);
+    }
+
+    public function driver_update(Request $request, $id)
+    {
+        $driver = Driver::findOrFail($id);
+
+        $validated = $request->validate([
+            'nama'             => 'required|string|max:255',
+            'no_sim'           => 'required|string|max:50|unique:drivers,no_sim,'.$id,
+            'masa_berlaku_sim' => 'required|date',
+            'no_hp'            => 'required|string|max:20',
+            'no_rek'           => 'required|string|max:50',
+            'nama_rek'         => 'required|string|max:255',
+            'bank'             => 'required|string|max:100',
+            'alamat'           => 'required|string',
+            'foto_sim'         => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Optional saat edit (kecuali ingin diganti)
+            'status'           => 'required|in:aktif,non_aktif',
+            'keterangan'       => 'required_if:status,non_aktif|nullable|string',
+        ], [
+            'keterangan.required_if' => 'Keterangan wajib diisi apabila status driver Non-Aktif!'
+        ]);
+
+        if ($request->hasFile('foto_sim')) {
+            if ($driver->foto_sim && Storage::disk('public')->exists($driver->foto_sim)) {
+                Storage::disk('public')->delete($driver->foto_sim);
+            }
+            $validated['foto_sim'] = $request->file('foto_sim')->store('drivers_sim', 'public');
+        }
+
+        $driver->update($validated);
+
+        return response()->json(['message' => 'Data Driver berhasil diperbarui!']);
+    }
+
+    public function driver_destroy($id)
+    {
+        $driver = Driver::findOrFail($id);
+
+        if ($driver->foto_sim && Storage::disk('public')->exists($driver->foto_sim)) {
+            Storage::disk('public')->delete($driver->foto_sim);
+        }
+        $driver->delete();
+
+        return response()->json(['message' => 'Data Driver berhasil dihapus!']);
     }
 }

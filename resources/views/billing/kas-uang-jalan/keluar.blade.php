@@ -18,6 +18,8 @@
         <input type="hidden" id="old_rute_id" value="{{ old('rute_id') }}">
         <input type="hidden" id="min_tonase_config" value="{{ $limitValue }}">
         <input type="hidden" id="vendor_limit_status" value="0">
+        <!-- Input hidden untuk status UJ Ditahan -->
+        <input type="hidden" id="status_uj_ditahan" value="0">
 
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-light py-3 fw-bold">
@@ -80,15 +82,35 @@
                         @error('rute_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
-                    <div class="col-md-4">
-                        <label for="hk_uang_jalan" class="form-label">Uang Jalan <span class="text-danger">*</span></label>
+                    <!-- Uang Jalan Sisa / Default -->
+                    <div class="col-md-4" id="div_hk_uang_jalan">
+                        <label for="hk_uang_jalan" class="form-label" id="label_hk_uang_jalan">Uang Jalan <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text">Rp</span>
-                            <input type="text" class="form-control @error('nominal_transaksi') is-invalid @enderror" name="nominal_transaksi" id="hk_uang_jalan" required
+                            <span class="input-group-text fw-bold text-success">Rp</span>
+                            <input type="text" class="form-control fw-bold text-success @error('nominal_transaksi') is-invalid @enderror" name="nominal_transaksi" id="hk_uang_jalan" required
                                 @if(auth()->user()->role != 'admin') readonly @endif data-thousands="." value="{{ old('nominal_transaksi') }}">
                             @error('nominal_transaksi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
+
+                    <!-- Total Uang Jalan (Kotor) - Sembunyi secara default -->
+                    <div class="col-md-4 mt-3" id="div_uang_jalan_kotor" style="display: none;">
+                        <label for="uang_jalan_kotor" class="form-label">Total Uang Jalan (Kotor)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="text" class="form-control bg-light" id="uang_jalan_kotor" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Potongan UJ Ditahan - Sembunyi secara default -->
+                    <div class="col-md-4 mt-3" id="div_potongan_uj" style="display: none;">
+                        <label for="potongan_uj" class="form-label">Potongan UJ Ditahan</label>
+                        <div class="input-group">
+                            <span class="input-group-text text-danger">- Rp</span>
+                            <input type="text" class="form-control text-danger bg-light" name="potongan_uj" id="potongan_uj" readonly value="0">
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -240,6 +262,23 @@
                 $('#p_vendor').val(data.id_vendor);
                 $('#vendor_limit_status').val(data.limit_tonase);
 
+                // --- LOGIKA TOGGLE TAMPILAN UJ DITAHAN ---
+                // Pastikan variabel uj_ditahan dari backend terbaca
+                let statusUjDitahan = data.uj_ditahan || 0;
+                $('#status_uj_ditahan').val(statusUjDitahan);
+
+                if (statusUjDitahan == 1) {
+                    $('#div_uang_jalan_kotor').fadeIn();
+                    $('#div_potongan_uj').fadeIn();
+                    $('#label_hk_uang_jalan').html('Sisa Transfer (Netto) <span class="text-danger">*</span>');
+                } else {
+                    $('#div_uang_jalan_kotor').hide();
+                    $('#div_potongan_uj').hide();
+                    $('#label_hk_uang_jalan').html('Uang Jalan <span class="text-danger">*</span>');
+                    $('#uang_jalan_kotor, #potongan_uj').val('');
+                }
+                // ------------------------------------------
+
                 if (data.transfer_ke == null || data.bank == null || data.no_rekening == null) {
                     // Matikan sweet alert otomatis jika sedang load dari old() agar tidak spam
                     if(!callback) {
@@ -268,31 +307,34 @@
             method: "GET",
             data: { id: id },
             success: function (data) {
-                $('#rute_id').empty().append('<option value="">-- Pilih Rute --</option>');
+                // Tambahkan data-uang-jalan pada opsi kosong
+                $('#rute_id').empty().append('<option value="" data-nominal="0" data-uang-jalan="0">-- Pilih Rute --</option>');
 
                 $.each(data.rute, function (index, value) {
-                    $('#rute_id').append('<option value="' + value.id + '">' + value.nama + '</option>');
+                    let nominalUjDitahan = value.uj_ditahan || 0;
+                    let uangJalanKotor = value.uang_jalan || 0; // Ambil nilai uang_jalan dari tabel rutes
+
+                    // Sisipkan kedua nilai tersebut ke dalam tag option
+                    $('#rute_id').append('<option value="' + value.id + '" data-nominal="' + nominalUjDitahan + '" data-uang-jalan="' + uangJalanKotor + '">' + value.nama + '</option>');
                 });
 
-                // Tampilan Disable/Enable Tonase + FIX Atribut Disabled
+                // (Logika Tampilan Disable/Enable Tonase tetap sama)
                 let gt_muat = data.gt_muat;
                 if (gt_muat == 0) {
                     $('#gt_muat_disable').removeAttr('hidden');
                     $('#gt_muat_enable').attr('hidden', 'hidden');
 
-                    // Aktifkan input tonase mandiri, matikan gross/tarra agar diabaikan validasi HTML5 & Laravel
                     $('#tonase_disable').removeAttr('disabled').attr('required', 'required');
                     $('#tonase_enable, #gross_muat, #tarra_muat').attr('disabled', 'disabled').removeAttr('required');
                 } else {
                     $('#gt_muat_enable').removeAttr('hidden');
                     $('#gt_muat_disable').attr('hidden', 'hidden');
 
-                    // Aktifkan gross/tarra, matikan tonase mandiri
                     $('#tonase_enable, #gross_muat, #tarra_muat').removeAttr('disabled').attr('required', 'required');
                     $('#tonase_disable').attr('disabled', 'disabled').removeAttr('required');
                 }
 
-                if (callback) callback(); // Jalankan perintah selanjutnya jika ada
+                if (callback) callback();
             }
         });
     }
@@ -318,14 +360,13 @@
         });
 
         // ==========================================
-        // PENANGANAN SAAT HALAMAN DI-LOAD (VALIDASI ERROR)
+        // PENANGANAN SAAT HALAMAN DI-LOAD
         // ==========================================
         var initVehicle = $('#vehicle_id').val();
         var initCustomer = $('#customer_id').val();
         var oldRute = $('#old_rute_id').val();
 
         if (initVehicle && initCustomer) {
-            // Jika keduanya ada, jalankan secara BERURUTAN (Vehicle -> Customer -> Rute)
             loadVehicle(initVehicle, function() {
                 loadCustomer(initCustomer, function() {
                     if (oldRute) {
@@ -346,11 +387,10 @@
         }
 
         // ==========================================
-        // EVENT ON CHANGE (SAAT USER MENGUBAH MANUAL)
+        // EVENT ON CHANGE
         // ==========================================
         $('#vehicle_id').on('change', function () {
             loadVehicle($(this).val(), function() {
-                // Jika rute sudah terisi, pancing trigger change rute agar nilai uang jalan terupdate
                 if ($('#rute_id').val()) {
                     $('#rute_id').trigger('change');
                 }
@@ -359,27 +399,64 @@
 
         $('#customer_id').on('change', function () {
             loadCustomer($(this).val(), function() {
-                // Reset nominal uang jalan tiap kali customer diganti
-                $('#hk_uang_jalan').val('');
+                // Reset form uang jalan
+                $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
             });
         });
 
-        $('#rute_id').on('change', function () {
+      $('#rute_id').on('change', function () {
             var rute_id = $(this).val();
             var vendor_id = $('#p_vendor').val();
 
-            if (rute_id && vendor_id) {
-                $.ajax({
-                    url: "{{route('kas-uang-jalan.get-uang-jalan')}}",
-                    method: "GET",
-                    data: {
-                        rute_id: rute_id,
-                        vendor_id: vendor_id,
-                    },
-                    success: function (data) {
-                        $('#hk_uang_jalan').val(data.hk_uang_jalan.toLocaleString('id-ID'));
-                    }
-                });
+            var statusUjDitahan = $('#status_uj_ditahan').val();
+
+            // Jika rute dikosongkan, reset semua nilai
+            if (!rute_id) {
+                $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
+                return;
+            }
+
+            if (statusUjDitahan == 1) {
+                // JIKA UJ DITAHAN: Ambil nilai langsung dari atribut opsi rute (tanpa AJAX VendorUangJalan)
+                var nominalRute = $(this).find(':selected').data('nominal') || 0;
+                var uangJalanKotor = $(this).find(':selected').data('uang-jalan') || 0;
+
+                if (nominalRute <= 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validasi Gagal!',
+                        text: 'Nominal UJ ditahan pada rute ini belum di isi. silahkan hubungi admin!!',
+                    });
+
+                    $(this).val('').trigger('change.select2');
+                    $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
+                    return false;
+                }
+
+                // Hitung netto dari rutes.uang_jalan - rutes.uj_ditahan
+                var nettoUangJalan = uangJalanKotor - nominalRute;
+                if (nettoUangJalan < 0) nettoUangJalan = 0;
+
+                $('#uang_jalan_kotor').val(parseFloat(uangJalanKotor).toLocaleString('id-ID'));
+                $('#potongan_uj').val(parseFloat(nominalRute).toLocaleString('id-ID'));
+                $('#hk_uang_jalan').val(nettoUangJalan.toLocaleString('id-ID'));
+
+            } else {
+                // JIKA TIDAK DITAHAN: Ambil uang jalan dari VendorUangJalan seperti biasa
+                if (rute_id && vendor_id) {
+                    $.ajax({
+                        url: "{{route('kas-uang-jalan.get-uang-jalan')}}",
+                        method: "GET",
+                        data: {
+                            rute_id: rute_id,
+                            vendor_id: vendor_id,
+                        },
+                        success: function (data) {
+                            var baseUangJalan = parseFloat(data.hk_uang_jalan) || 0;
+                            $('#hk_uang_jalan').val(baseUangJalan.toLocaleString('id-ID'));
+                        }
+                    });
+                }
             }
         });
 
@@ -392,9 +469,8 @@
             const isLimitActive = $('#vendor_limit_status').val() == "1";
             const minRequired = parseFloat($('#min_tonase_config').val());
             const currentNetto = parseFloat($('#tonase_enable').val() || $('#tonase_disable').val() || 0);
-            const userRole = "{{ auth()->user()->role }}"; // Ambil role dari Laravel ke dalam JS
+            const userRole = "{{ auth()->user()->role }}";
 
-            // Tambahkan userRole !== 'admin' agar admin kebal dari peringatan ini
             if (userRole !== 'admin' && isLimitActive && currentNetto < minRequired) {
                 Swal.fire({
                     icon: 'error',

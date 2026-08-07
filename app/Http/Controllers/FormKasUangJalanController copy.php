@@ -12,11 +12,8 @@ use App\Models\Customer;
 use App\Models\CustomerTagihan;
 use App\Models\Konfigurasi;
 use App\Models\Pengaturan;
-use App\Models\Rute;
 use App\Models\VendorUangJalan;
 use App\Models\Transaksi;
-use App\Models\UjDitahan;
-use App\Models\UjDitahanDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\StarSender;
@@ -25,110 +22,6 @@ use Illuminate\Support\Facades\Auth;
 
 class FormKasUangJalanController extends Controller
 {
-    public function masuk()
-    {
-        $nomor = KasUangJalan::whereNotNull('nomor_kode_kas_uang_jalan')->latest()->orderBy('id', 'desc')->first();
-
-        if($nomor == null){
-            $nomor = 1;
-        }else{
-            $nomor = $nomor->nomor_kode_kas_uang_jalan + 1;
-        }
-
-        $rekening = Rekening::where('untuk', 'kas-uang-jalan')->first();
-        return view('billing.kas-uang-jalan.masuk', [
-            'nomor' => $nomor,
-            'rekening' => $rekening,
-        ]);
-    }
-
-    public function masuk_store(Request $request)
-    {
-        $data = $request->validate([
-            'nominal_transaksi' => 'required',
-        ]);
-
-        $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
-
-        $kuj = KasUangJalan::latest()->orderBy('id', 'desc')->first();
-        $kb = KasBesar::latest()->orderBy('id', 'desc')->first();
-        $rekening = Rekening::where('untuk', 'kas-uang-jalan')->first();
-
-        if ($kb == null || $kb->saldo < $data['nominal_transaksi']) {
-            return redirect()->back()->with('error', 'Saldo Kas Besar Tidak Cukup');
-        }
-
-        $lastNomor = KasUangJalan::whereNotNull('nomor_kode_kas_uang_jalan')->latest()->orderBy('id', 'desc')->first();
-
-        if($lastNomor == null){
-            $data['nomor_kode_kas_uang_jalan'] = 1;
-        }else{
-            $data['nomor_kode_kas_uang_jalan'] = $lastNomor->nomor_kode_kas_uang_jalan + 1;
-        }
-
-        if($kuj == null){
-            $data['saldo'] = $data['nominal_transaksi'];
-        }else{
-            $data['saldo'] = $kuj->saldo + $data['nominal_transaksi'];
-        }
-
-        $data['tanggal'] = date('Y-m-d');
-        $data['jenis_transaksi_id'] = 1;
-        $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
-        $data['bank'] = $rekening->nama_bank;
-        $data['no_rekening'] = $rekening->nomor_rekening;
-
-        $db = new KasBesar;
-
-        try {
-            //code...
-            DB::beginTransaction();
-
-            $store = KasUangJalan::create($data);
-
-            $data['saldo'] = $kb->saldo - $data['nominal_transaksi'];
-            $data['jenis_transaksi_id'] = 2;
-            $data['modal_investor_terakhir'] = $kb->modal_investor_terakhir;
-
-            $store2 = $db->create($data);
-
-            DB::commit();
-        } catch (\Throwable $th) {
-            //throw $th;
-            DB::rollback();
-            return redirect()->back()->with('error', 'Data Gagal Ditambahkan. '. $th->getMessage());
-        }
-
-
-        // $profit = $db->calculateProfitBulanan(date('m'), date('Y'));
-        $dbWa = new GroupWa();
-
-        $group = $dbWa->where('untuk', 'kas-besar')->first();
-
-        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Form Permintaan Kas Uang Jalan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "*KUJ".sprintf("%02d",$data['nomor_kode_kas_uang_jalan'])."*\n\n".
-                    "Nilai : *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    "Bank      : ".$data['bank']."\n".
-                    "Nama    : ".$data['transfer_ke']."\n".
-                    "No. Rek : ".$data['no_rekening']."\n\n".
-                    "==========================\n".
-                    "Sisa Saldo Kas Besar : \n".
-                    "Rp. ".number_format($store2->saldo, 0, ',', '.')."\n\n".
-                    "Sisa Saldo Kas Uang Jalan : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    // "Profit Bersih: \n".
-                    // "Rp. ".$profit."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
-
-        $send = $dbWa->sendWa($group->nama_group, $pesan);
-
-
-        return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');
-
-    }
 
     public function keluar()
     {
@@ -211,9 +104,6 @@ class FormKasUangJalanController extends Controller
             'tarra_muat' => 'nullable|numeric',
         ]);
 
-        // dd($data);
-
-
         $data['tonase'] = str_replace(',', '.', $data['tonase']);
         if (isset($data['gross_muat'])) $data['gross_muat'] = str_replace(',', '.', $data['gross_muat']);
         if (isset($data['tarra_muat'])) $data['tarra_muat'] = str_replace(',', '.', $data['tarra_muat']);
@@ -278,7 +168,6 @@ class FormKasUangJalanController extends Controller
         $data['status'] = 2;
 
         $vendor = $data['p_vendor'];
-        $kendaraan = Vehicle::find($data['vehicle_id']);
 
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
         $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
@@ -286,39 +175,15 @@ class FormKasUangJalanController extends Controller
         $data['tanggal'] = date('Y-m-d');
         $data['vendor_id'] = $vendor;
 
-        $nominalDitahan = 0;
-
         $auth = ['admin', 'su'];
 
         if (!in_array(Auth::user()->role, $auth)) {
-
-            if ($kendaraan->uj_ditahan == 1) {
-                // Jika UJ Ditahan: Harga dari rutes.uang_jalan - rutes.uj_ditahan
-                $rute = Rute::find($data['rute_id']);
-
-                $uang_jalan_kotor = $rute->uang_jalan ?? 0;
-                $potongan = $rute->uj_ditahan ?? 0;
-
-                $expectedNominal = $uang_jalan_kotor - $potongan;
-            } else {
-                // Jika Normal: Harga dari VendorUangJalan
-                $expectedNominal = VendorUangJalan::where('vendor_id', $vendor)
-                                        ->where('rute_id', $data['rute_id'])
-                                        ->first()->hk_uang_jalan ?? 0;
+            $check = VendorUangJalan::where('vendor_id', $vendor)
+                                    ->where('rute_id', $data['rute_id'])
+                                    ->first()->hk_uang_jalan ?? 0;
+            if($check != $data['nominal_transaksi']){
+                return redirect()->back()->with('error', 'Nominal Uang Jalan Tidak Sesuai');
             }
-
-            if ($expectedNominal < 0) {
-                $expectedNominal = 0;
-            }
-
-            if($expectedNominal != $data['nominal_transaksi']){
-                return redirect()->back()->with('error', 'Nominal Uang Jalan Tidak Sesuai dengan Sistem!');
-            }
-
-        }
-
-        if($kendaraan->uj_ditahan == 1){
-            $nominalDitahan = Rute::find($data['rute_id'])->uj_ditahan ?? 0;
         }
 
         unset($data['p_vendor']);
@@ -378,7 +243,7 @@ class FormKasUangJalanController extends Controller
                 'customer_id' => $data['customer_id'],
                 'rute_id' => $data['rute_id'],
                 'jenis_transaksi_id' => $data['jenis_transaksi_id'],
-                'nominal_transaksi' => $data['nominal_transaksi'] + $nominalDitahan,
+                'nominal_transaksi' => $data['nominal_transaksi'],
                 'saldo' => $data['saldo'],
                 'transfer_ke' => $data['transfer_ke'],
                 'bank' => $data['bank'],
@@ -386,7 +251,7 @@ class FormKasUangJalanController extends Controller
             ]);
 
 
-            $transaksi = Transaksi::create([
+            Transaksi::create([
                 'kas_uang_jalan_id' => $store->id,
                 'harga_customer' => $data['harga_customer'],
                 'harga_vendor' => $data['harga_vendor'],
@@ -398,49 +263,7 @@ class FormKasUangJalanController extends Controller
                 'tarra_muat' => isset($data['tarra_muat']) ? $data['tarra_muat'] : 0,
                 'status' => $data['status'],
                 ]);
-
             Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
-
-            // =========================================================
-            // PENCATATAN UJ DITAHAN (MASTER & DETAIL)
-            // =========================================================
-            if ($kendaraan->uj_ditahan == 1 && $nominalDitahan > 0) {
-                // Ambil bulan dan tahun dari tanggal transaksi (bisa dari $data['tanggal'])
-                $bulanTrx = date('n', strtotime($data['tanggal']));
-                $tahunTrx = date('Y', strtotime($data['tanggal']));
-
-                // 1. Catat/Update ke Tabel Master (uj_ditahans)
-                // firstOrCreate akan mencari kecocokan. Jika tidak ada, baris baru dibuat.
-                $ujMaster = UjDitahan::firstOrCreate(
-                    [
-                        'bulan' => $bulanTrx,
-                        'tahun' => $tahunTrx,
-                        'vehicle_id' => $data['vehicle_id'],
-                    ],
-                    [
-                        'total_masuk' => 0,
-                        'total_keluar' => 0,
-                        'saldo' => 0,
-                    ]
-                );
-
-                // Tambahkan nominal masuk dan saldo
-                $ujMaster->increment('total_masuk', $nominalDitahan);
-                $ujMaster->increment('saldo', $nominalDitahan);
-
-                // 2. Catat Histori ke Tabel Detail (uj_ditahan_details)
-                UjDitahanDetail::create([
-                    'uj_ditahan_id' => $ujMaster->id,
-                    'transaksi_id'  => $transaksi->id,
-                    // Silakan sesuaikan jika Anda menyimpan driver_id di tabel Vehicle, misalnya:
-                    'driver_id'  => $kendaraan->driver_id ?? null,
-                    // 'driver_id'     => null,
-                    'jenis'         => 'masuk',
-                    'nominal'       => $nominalDitahan,
-                    'keterangan'    => 'UJ Ditahan (Trx UJ' . sprintf("%02d", $data['nomor_uang_jalan']) . ')',
-                ]);
-            }
-            // =========================================================
 
             DB::commit();
         } catch (\Throwable $th) {
@@ -518,36 +341,7 @@ class FormKasUangJalanController extends Controller
                     $additionalMessage.
                     "Terima kasih 🙏🙏🙏\n";
 
-        $pesan2 = '';
-
-        if($kendaraan->uj_ditahan == 1){
-
-            $rekeningUjDitahan = Rekening::where('untuk', 'uang-jalan-ditahan')->first();
-            $pesan2 =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Form Uang Jalan Ditahan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    "*UJ".sprintf("%02d",$data['nomor_uang_jalan'])."*\n\n".
-                    "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
-                    "Vendor : ".$store->vendor->nama."\n\n".
-                    "Tambang : ".$store->customer->singkatan."\n".
-                    "Rute : ".$store->rute->nama."\n\n".
-                    "Nilai :  *Rp. ".number_format($nominalDitahan, 0, ',', '.').",-*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    "Bank     : ".$rekeningUjDitahan['nama_bank']."\n".
-                    "Nama    : ".$rekeningUjDitahan['nama_rekening']."\n".
-                    "No. Rek : ".$rekeningUjDitahan['nomor_rekening']."\n\n".
-                    "==========================\n".
-                    // "Sisa Saldo Kas Uang Jalan : \n".
-                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    // $additionalMessage.
-                    "Terima kasih 🙏🙏🙏\n";
-        }
-
         $send = $dbWa->sendWa($group->nama_group, $pesan);
-
-        if($pesan2 != ''){
-            $send2 = $dbWa->sendWa($group->nama_group, $pesan2);
-        }
 
         $dbVendor = Vendor::find($vendor);
 
@@ -577,65 +371,4 @@ class FormKasUangJalanController extends Controller
 
     }
 
-     public function pengembalian()
-    {
-        $db = new KasUangJalan();
-        $saldo = $db->saldoTerakhir();
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
-
-        return view('billing.kas-uang-jalan.pengembalian', [
-            'saldo' => $saldo,
-            'rekening' => $rekening,
-        ]);
-    }
-
-    public function pengembalian_store(Request $request)
-    {
-        $data = $request->validate([
-            'nominal_transaksi' => 'required',
-        ]);
-
-        $db = new KasUangJalan();
-
-        $req = $db->pengembalian($data);
-
-        if($req['status'] == 'error'){
-            return redirect()->back()->withInput()->with('error', $req['message']);
-        }
-
-        return redirect()->route('billing.index')->with($req['status'], $req['message']);
-    }
-
-     public function penyesuaian()
-    {
-        $rekening = Rekening::where('untuk', 'kas-uang-jalan')->first();
-        $batasan = Pengaturan::where('untuk', 'kas-uang-jalan')->first()->nilai;
-
-        return view('billing.kas-uang-jalan.penyesuaian', [
-            'rekening' => $rekening,
-            'batasan' => $batasan,
-        ]);
-    }
-
-    public function penyesuaian_store(Request $request)
-    {
-        $data = $request->validate([
-            'uraian' => 'required',
-            'nominal_transaksi' => 'required',
-            'tipe' => 'required',
-            'transfer_ke' => 'required',
-            'bank' => 'required',
-            'no_rekening' => 'required',
-        ]);
-
-        $db = new KasUangJalan();
-
-        $req = $db->penyesuaian($data);
-
-        if($req['status'] == 'error'){
-            return redirect()->back()->withInput()->with('error', $req['message']);
-        }
-
-        return redirect()->route('billing.index')->with($req['status'], $req['message']);
-    }
 }

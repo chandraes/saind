@@ -19,6 +19,8 @@ use App\Models\Rekening;
 use App\Models\Sponsor;
 use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
+use App\Models\UjDitahan;
+use App\Models\UjDitahanDetail;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -90,6 +92,53 @@ class BillingController extends Controller
             // 'csr' => $csr,
             'invoice_csr' => $invoice_csr,
         ]);
+    }
+
+    public function uj_ditahan(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        // 2. Ambil data list utama berdasarkan filter bulan & tahun
+        $data = UjDitahan::with(['vehicle.driver'])
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->get();
+
+        // TAMBAHAN: Hitung total seluruh saldo yang ditahan pada bulan & tahun terpilih
+        $totalSaldoBulanIni = $data->sum('saldo');
+
+        // 3. Cari tahu bulan & tahun mana saja yang saldonya belum 0 (untuk indikator filter)
+        $activeBalances = UjDitahan::where('saldo', '>', 0)
+            ->select('bulan', 'tahun')
+            ->distinct()
+            ->get()
+            ->map(function($item) {
+                // Gabungkan jadi format "Bulan-Tahun" misal: "8-2026"
+                return $item->bulan . '-' . $item->tahun;
+            })->toArray();
+
+        // 4. Ambil list tahun yang ada di database untuk opsi select tahun (opsional, agar dinamis)
+        $listTahun = UjDitahan::select('tahun')->distinct()->pluck('tahun')->toArray();
+        if (!in_array(date('Y'), $listTahun)) {
+            $listTahun[] = date('Y'); // Pastikan tahun ini tetap ada di pilihan
+        }
+        sort($listTahun);
+
+        // Jangan lupa tambahkan $totalSaldoBulanIni ke dalam compact()
+        return view('billing.uj-ditahan.index', compact('data', 'bulan', 'tahun', 'activeBalances', 'listTahun', 'totalSaldoBulanIni'));
+    }
+
+    public function uj_ditahan_show($id)
+    {
+       $master = UjDitahan::with(['vehicle.driver'])->findOrFail($id);
+
+        // Ambil detail dan urutkan dari yang paling lama ke baru agar seperti rekening koran
+        $details = UjDitahanDetail::where('uj_ditahan_id', $id)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+
+        return view('billing.uj-ditahan.show', compact('master', 'details'));
     }
 
     public function form_cost_operational()
@@ -1088,4 +1137,5 @@ class BillingController extends Controller
             $dbWa->sendWa($group->nama_group, $pesan);
         }
     }
+
 }

@@ -13,7 +13,7 @@
     @endif
     <div class="row justify-content-left">
         <h4 class="mt-3">UMUM</h4>
-        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
+
         <div class="col-md-2 text-center mt-5">
             <!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
             <div class="modal fade" id="formKasBesar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -24,7 +24,9 @@
                             <div class="mb-3 mt-3">
                                 <select class="form-select form-select-lg" name="" id="tipeKasBesar">
                                     <option value="masuk">Penambahan Deposit</option>
+                                    @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
                                     <option value="keluar">Pengembalian Deposit</option>
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -41,7 +43,7 @@
                 <h4 class="mt-3">FORM DEPOSIT</h4>
             </a>
         </div>
-
+         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.deviden.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/dividen.svg')}}" alt="" width="70">
@@ -371,6 +373,15 @@
             <a href="{{route('transaksi.nota-bongkar')}}" class="text-decoration-none">
                 <img src="{{asset('images/bongkar.svg')}}" alt="" width="70">
                 <h4 class="mt-3">NOTA BONGKAR
+                    {{-- <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
+                        "(".$data->where('status', 2)->count().")" : '' }}</span> --}}
+                </h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.uj-ditahan')}}" class="text-decoration-none">
+                <img src="{{asset('images/uj-ditahan.svg')}}" alt="" width="70">
+                <h4 class="mt-3">UJ DITAHAN
                     {{-- <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
                         "(".$data->where('status', 2)->count().")" : '' }}</span> --}}
                 </h4>

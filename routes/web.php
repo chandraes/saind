@@ -67,6 +67,13 @@ Route::group(['middleware' => ['auth']], function() {
         });
     });
 
+    Route::group(['middleware' => 'role:admin,su,user'], function() {
+        Route::prefix('kas-besar')->group(function(){
+            Route::get('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
+            Route::post('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
+        });
+    });
+
     // Routing untuk admin dan superuser
     Route::group(['middleware' => 'role:admin,su'], function() {
          Route::prefix('admin')->group(function () {
@@ -75,8 +82,6 @@ Route::group(['middleware' => ['auth']], function() {
         });
 
         Route::prefix('kas-besar')->group(function(){
-            Route::get('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk'])->name('kas-besar.masuk');
-            Route::post('/masuk', [App\Http\Controllers\FormKasBesarController::class, 'masuk_store'])->name('kas-besar.masuk.store');
             Route::get('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar'])->name('kas-besar.keluar');
             Route::post('/keluar', [App\Http\Controllers\FormKasBesarController::class, 'keluar_store'])->name('kas-besar.keluar.store');
         });
@@ -177,6 +182,14 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('database')->group(function(){
             Route::get('/', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
+
+            Route::prefix('driver')->group(function (){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'driver'])->name('database.driver');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'driver_store'])->name('database.driver.store');
+                Route::get('/{id}/edit', [App\Http\Controllers\DatabaseController::class, 'driver_edit'])->name('database.driver.edit');
+                Route::patch('/update/{id}', [App\Http\Controllers\DatabaseController::class, 'driver_update'])->name('database.driver.update');
+                Route::delete('/destroy/{driver}', [App\Http\Controllers\DatabaseController::class, 'driver_destroy'])->name('database.driver.destroy');
+            });
 
             Route::get('/customer/preview-customer', [App\Http\Controllers\CustomerController::class, 'preview_customer'])->name('database.customer.preview-customer');
             Route::post('/kategori-barang-store', [App\Http\Controllers\KategoriBarangController::class, 'kategori_store'])->name('database.kategori-barang-store');
@@ -564,6 +577,11 @@ Route::group(['middleware' => ['auth']], function() {
         //Form maintenance
         Route::prefix('billing')->group(function(){
 
+            Route::prefix('uj-ditahan')->group(function(){
+                Route::get('/', [BillingController::class, 'uj_ditahan'])->name('billing.uj-ditahan');
+                Route::get('/{id}', [BillingController::class, 'uj_ditahan_show'])->name('billing.uj-ditahan.show');
+            });
+
             Route::get('/notif-count', [App\Http\Controllers\BillingController::class, 'getNotifCount'])->name('billing.notif-count');
 
             Route::get('/nota-csr', [App\Http\Controllers\TransaksiController::class, 'nota_csr'])->name('billing.nota-csr');
@@ -778,9 +796,9 @@ Route::group(['middleware' => ['auth']], function() {
 
         });
 
-        Route::get('dokumen/template-new', [App\Http\Controllers\DokumenNewController::class, 'index'])->name('template-new');
-        Route::get('dokumen/template-new/kontrak', [App\Http\Controllers\DokumenNewController::class, 'kontrak_new'])->name('template-new.kontrak');
-        Route::post('dokumen/template-new/kontrak/create', [App\Http\Controllers\DokumenNewController::class, 'create_template_kontrak'])->name('template-new.kontrak.create');
+        // Route::get('dokumen/template-new', [App\Http\Controllers\DokumenNewController::class, 'index'])->name('template-new');
+        // Route::get('dokumen/template-new/kontrak', [App\Http\Controllers\DokumenNewController::class, 'kontrak_new'])->name('template-new.kontrak');
+        // Route::post('dokumen/template-new/kontrak/create', [App\Http\Controllers\DokumenNewController::class, 'create_template_kontrak'])->name('template-new.kontrak.create');
 
 
     });
