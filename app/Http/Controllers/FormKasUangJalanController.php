@@ -537,8 +537,9 @@ class FormKasUangJalanController extends Controller
                     "Nama    : ".$rekeningUjDitahan['nama_rekening']."\n".
                     "No. Rek : ".$rekeningUjDitahan['nomor_rekening']."\n\n".
                     "==========================\n".
-                    // "Sisa Saldo Kas Uang Jalan : \n".
-                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Sisa Saldo Kas Uang Jalan : \n".
+                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total UJ Ditahan : \n".
                     // $additionalMessage.
                     "Terima kasih 🙏🙏🙏\n";
         }

@@ -260,9 +260,9 @@ class VehicleController extends Controller
 
         // Bersihkan data sesuai kondisi
         if ($data['uj_ditahan'] == 1) {
-            $data['transfer_ke'] = null;
-            $data['bank'] = null;
-            $data['no_rekening'] = null;
+            // $data['transfer_ke'] = null;
+            // $data['bank'] = null;
+            // $data['no_rekening'] = null;
         } else {
             $data['driver_id'] = null;
         }
