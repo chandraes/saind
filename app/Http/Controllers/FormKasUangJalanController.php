@@ -427,17 +427,21 @@ class FormKasUangJalanController extends Controller
                 // Tambahkan nominal masuk dan saldo
                 $ujMaster->increment('total_masuk', $nominalDitahan);
                 $ujMaster->increment('saldo', $nominalDitahan);
+                $rekeningUjDitahan = Rekening::where('untuk', 'uang-jalan-ditahan')->first();
 
                 // 2. Catat Histori ke Tabel Detail (uj_ditahan_details)
                 UjDitahanDetail::create([
                     'uj_ditahan_id' => $ujMaster->id,
                     'transaksi_id'  => $transaksi->id,
                     // Silakan sesuaikan jika Anda menyimpan driver_id di tabel Vehicle, misalnya:
-                    'driver_id'  => $kendaraan->driver_id ?? null,
+                    'driver_id'     => $kendaraan->driver_id ?? null,
                     // 'driver_id'     => null,
                     'jenis'         => 'masuk',
                     'nominal'       => $nominalDitahan,
                     'keterangan'    => 'UJ Ditahan (Trx UJ' . sprintf("%02d", $data['nomor_uang_jalan']) . ')',
+                    'bank'          => $rekeningUjDitahan->nama_bank ?? null,
+                    'no_rekening'   => $rekeningUjDitahan->nomor_rekening ?? null,
+                    'nama_rekening' => $rekeningUjDitahan->nama_rekening ?? null,
                 ]);
             }
             // =========================================================
@@ -523,6 +527,9 @@ class FormKasUangJalanController extends Controller
         if($kendaraan->uj_ditahan == 1){
 
             $rekeningUjDitahan = Rekening::where('untuk', 'uang-jalan-ditahan')->first();
+
+            $totalUjDitahan = UjDitahan::where('saldo', '>', '0')->sum('saldo');
+
             $pesan2 =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Uang Jalan Ditahan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -539,7 +546,8 @@ class FormKasUangJalanController extends Controller
                     "==========================\n".
                     "Sisa Saldo Kas Uang Jalan : \n".
                     "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Total UJ Ditahan : \n".
+                    "Grand Total UJ Ditahan : \n".
+                    "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
                     // $additionalMessage.
                     "Terima kasih 🙏🙏🙏\n";
         }
@@ -547,7 +555,56 @@ class FormKasUangJalanController extends Controller
         $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         if($pesan2 != ''){
+
             $send2 = $dbWa->sendWa($group->nama_group, $pesan2);
+
+            if($dbVehicle->driver && $dbVehicle->driver->no_hp != null && $dbVehicle->driver->no_hp != '' && $dbVehicle->driver->no_hp != '-' && $dbVehicle->driver->no_hp != '0' && strlen($dbVehicle->driver->no_hp) >= 10){
+
+                $pesanDriver =  "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                                "*Form Pengeluaran Uang Jalan*\n".
+                                "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                                "*UJ".sprintf("%02d",$data['nomor_uang_jalan'])."*\n\n".
+                                "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+                                "Vendor : ".$store->vendor->nama."\n\n".
+                                "Tambang : ".$store->customer->singkatan."\n".
+                                "Rute : ".$store->rute->nama."\n\n".
+                                "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
+                                "Ditransfer ke rek:\n\n".
+                                "Bank     : ".$data['bank']."\n".
+                                "Nama    : ".$data['transfer_ke']."\n".
+                                "No. Rek : ".$data['no_rekening']."\n\n".
+                                "==========================\n".
+                                $additionalMessage.
+                                "Terima kasih 🙏🙏🙏\n";
+
+                $pesanDriver2 =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Uang Jalan Ditahan*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "*UJ".sprintf("%02d",$data['nomor_uang_jalan'])."*\n\n".
+                    "Nomor Lambung : ".Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+                    "Vendor : ".$store->vendor->nama."\n\n".
+                    "Tambang : ".$store->customer->singkatan."\n".
+                    "Rute : ".$store->rute->nama."\n\n".
+                    "Nilai :  *Rp. ".number_format($nominalDitahan, 0, ',', '.').",-*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$rekeningUjDitahan['nama_bank']."\n".
+                    "Nama    : ".$rekeningUjDitahan['nama_rekening']."\n".
+                    "No. Rek : ".$rekeningUjDitahan['nomor_rekening']."\n\n".
+                    "==========================\n".
+                    // "Sisa Saldo Kas Uang Jalan : \n".
+                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    // "Grand Total UJ Ditahan : \n".
+                    // "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
+                    $additionalMessage.
+                    "Terima kasih 🙏🙏🙏\n";
+                // delete all non numeric and space characters from $dbVehicle->driver->no_hp
+
+                $hpDriver = $dbVehicle->driver->no_hp = preg_replace('/\D/', '', $dbVehicle->driver->no_hp);
+
+                $dbWa->sendWa($hpDriver, $pesanDriver2);
+                $dbWa->sendWa($hpDriver, $pesanDriver);
+            }
+
         }
 
         $dbVendor = Vendor::find($vendor);
@@ -561,7 +618,7 @@ class FormKasUangJalanController extends Controller
                             "Vendor : ".$store->vendor->nama."\n\n".
                             "Tambang : ".$store->customer->singkatan."\n".
                             "Rute : ".$store->rute->nama."\n\n".
-                            "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
+                            "Nilai :  *Rp. ".number_format($data['nominal_transaksi']+$nominalDitahan, 0, ',', '.').",-*\n\n".
                             "Ditransfer ke rek:\n\n".
                             "Bank     : ".$data['bank']."\n".
                             "Nama    : ".$data['transfer_ke']."\n".
@@ -570,7 +627,7 @@ class FormKasUangJalanController extends Controller
                             $additionalMessage.
                             "Terima kasih 🙏🙏🙏\n";
 
-            // $sendVendor = $dbWa->sendWa($dbVendor->no_hp, $pesanVendor);
+            $sendVendor = $dbWa->sendWa($dbVendor->no_hp, $pesanVendor);
         }
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');

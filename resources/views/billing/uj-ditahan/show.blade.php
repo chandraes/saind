@@ -32,9 +32,15 @@
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Rincian Transaksi (Ledger)</h6>
             <div>
-                <a href="{{ route('billing.uj-ditahan') }}" class="btn btn-sm btn-secondary shadow-sm">
-                    <i class="fa fa-arrow-left"></i> Kembali
-                </a>
+                @if(request('from') == 'rekap')
+                    <a href="{{ route('rekap.uj-ditahan') }}" class="btn btn-sm btn-secondary shadow-sm">
+                        <i class="fa fa-arrow-left"></i> Kembali ke Rekap
+                    </a>
+                @else
+                    <a href="{{ route('billing.uj-ditahan') }}" class="btn btn-sm btn-secondary shadow-sm">
+                        <i class="fa fa-arrow-left"></i> Kembali ke UJ Ditahan
+                    </a>
+                @endif
 
                 <!-- Tombol pencairan dengan Bootstrap 5 attributes -->
                 @if($master->saldo > 0)
@@ -50,9 +56,10 @@
                     <thead class="table-success">
                         <tr>
                             <th class="text-center" width="5%">No</th>
-                            <th width="15%">Tanggal & Waktu</th>
-                            <th width="25%">Keterangan</th>
-                            <th width="15%">Info Rekening (Tujuan)</th>
+                            <th width="12%">Tanggal</th>
+                            <th width="23%">Uraian</th>
+                            <th width="15%">Info Rekening</th>
+                            <th class="text-center" width="15%">Bukti Dokumen</th>
                             <th class="text-right text-success" width="15%">Masuk (+)</th>
                             <th class="text-right text-danger" width="15%">Keluar (-)</th>
                         </tr>
@@ -61,7 +68,7 @@
                         @forelse($details as $d)
                         <tr>
                             <td class="text-center align-middle">{{ $loop->iteration }}</td>
-                            <td class="align-middle">{{ $d->created_at->format('d-m-Y H:i') }}</td>
+                            <td class="align-middle">{{ $d->created_at->format('d-m-Y') }}</td>
                             <td class="align-middle">
                                 {{ $d->keterangan }}
                                 @if($d->driver)
@@ -72,6 +79,17 @@
                                 @if($d->bank && $d->no_rekening)
                                     <strong>{{ $d->bank }}</strong> - {{ $d->no_rekening }}<br>
                                     <small>a.n {{ $d->nama_rekening }}</small>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+
+                            <!-- Kolom Bukti PDF Baru -->
+                            <td class="text-center align-middle">
+                                @if($d->file_pdf)
+                                    <a href="{{ Storage::url($d->file_pdf) }}" target="_blank" class="btn btn-sm btn-outline-danger shadow-sm" title="Lihat Dokumen PDF">
+                                        <i class="fa fa-file me-1"></i> PDF
+                                    </a>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif
@@ -89,13 +107,14 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center py-4">Belum ada histori transaksi untuk data ini.</td>
+                            <td colspan="7" class="text-center py-4">Belum ada histori transaksi untuk data ini.</td>
                         </tr>
                         @endforelse
                     </tbody>
                     <tfoot class="table-light font-weight-bold">
                         <tr>
-                            <td colspan="4" class="text-right">Total Kumulatif:</td>
+                            <!-- Colspan disesuaikan dari 4 menjadi 5 karena ada kolom baru -->
+                            <td colspan="5" class="text-right">Total Kumulatif:</td>
                             <td class="text-right text-success">Rp {{ number_format($master->total_masuk, 0, ',', '.') }}</td>
                             <td class="text-right text-danger">Rp {{ number_format($master->total_keluar, 0, ',', '.') }}</td>
                         </tr>
@@ -110,7 +129,7 @@
 @if($master->saldo > 0)
 <div class="modal fade" id="modalCairkan" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalCairkanLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <form id="formPencairan" action="{{ route('billing.uj-ditahan.cairkan') }}" method="POST">
+        <form id="formPencairan" action="{{ route('billing.uj-ditahan.cairkan') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
@@ -153,6 +172,13 @@
                         <input type="text" class="form-control" id="nama_rekening" name="nama_rekening" required placeholder="Contoh: Budi Santoso">
                     </div>
 
+                    <!-- Input PDF -->
+                    <div class="form-group mb-3">
+                        <label for="bukti_pdf" class="font-weight-bold">Dokumen Bukti (PDF, Maks. 5MB)</label>
+                        <input type="file" class="form-control" id="bukti_pdf" name="bukti_pdf" accept="application/pdf" required>
+                        <small class="text-muted">Harus berupa file berformat .pdf</small>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -164,6 +190,7 @@
 </div>
 @endif
 @endsection
+
 @push('js')
 <!-- JavaScript Inisialisasi Cleave.js & SweetAlert -->
 <script>
@@ -210,6 +237,11 @@
         var formPencairan = document.getElementById('formPencairan');
         if (formPencairan) {
             formPencairan.addEventListener('submit', function(e) {
+                // Pastikan HTML5 file validation (wajib diisi & format file) terlewati dulu
+                if (!this.checkValidity()) {
+                    return;
+                }
+
                 e.preventDefault(); // Tahan pengiriman form otomatis
 
                 var rawValue = cleaveNominal ? cleaveNominal.getRawValue() : inputNominal.value;

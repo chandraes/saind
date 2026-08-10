@@ -223,6 +223,12 @@
                 <h5 class="mt-3">NOTA BONGKAR</h5>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('rekap.uj-ditahan')}}" class="text-decoration-none">
+                <img src="{{asset('images/uj-ditahan.svg')}}" alt="" width="70">
+                <h5 class="mt-3">UJ DITAHAN</h5>
+            </a>
+        </div>
     </div>
     <hr>
     <br>

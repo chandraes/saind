@@ -31,6 +31,7 @@ use App\Models\PasswordKonfirmasi;
 use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapBarang;
 use App\Models\RekapGajiDetail;
+use App\Models\UjDitahan;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -1270,6 +1271,35 @@ class RekapController extends Controller
                'bulan' => $bulan,
                'stringBulanNow' => $stringBulanNow,
            ]);
+    }
+
+   public function uj_ditahan(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        // 1. Buat Query Dasar berdasarkan filter (tanpa eksekusi get/paginate dulu)
+        $baseQuery = UjDitahan::where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->where('saldo', '<=', 0);
+
+        // 2. Hitung Total Masuk & Keluar dari seluruh data yang difilter
+        $totalMasuk = $baseQuery->sum('total_masuk');
+        $totalKeluar = $baseQuery->sum('total_keluar');
+
+        // 3. Eksekusi query dengan paginasi untuk ditampilkan ke tabel
+        $data = $baseQuery->with(['vehicle.driver'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(50);
+
+        $listTahun = UjDitahan::select('tahun')->distinct()->pluck('tahun')->toArray();
+        if (!in_array(date('Y'), $listTahun)) {
+            $listTahun[] = date('Y');
+        }
+        sort($listTahun);
+
+        // Tambahkan variabel total ke compact()
+        return view('rekap.uj-ditahan.index', compact('data', 'bulan', 'tahun', 'listTahun', 'totalMasuk', 'totalKeluar'));
     }
 
 }
