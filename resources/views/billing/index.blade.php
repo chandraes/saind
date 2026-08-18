@@ -25,7 +25,7 @@
                                 <select class="form-select form-select-lg" name="" id="tipeKasBesar">
                                     <option value="masuk">Penambahan Deposit</option>
                                     @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
-                                    <option value="keluar">Pengembalian Deposit</option>
+                                     <option value="keluar">Pengembalian Deposit</option>
                                     @endif
                                 </select>
                             </div>
@@ -43,7 +43,7 @@
                 <h4 class="mt-3">FORM DEPOSIT</h4>
             </a>
         </div>
-         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.deviden.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/dividen.svg')}}" alt="" width="70">
