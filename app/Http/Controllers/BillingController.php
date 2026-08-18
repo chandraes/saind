@@ -360,6 +360,8 @@ class BillingController extends Controller
 
         if($driver && $driver->no_hp != null && $driver->no_hp != '' && $driver->no_hp != '-' && $driver->no_hp != '0' && strlen($driver->no_hp) >= 10){
 
+            $ujDitahanVehicle = UjDitahan::where('vehicle_id', $master->vehicle_id)->where('saldo', '>', 0)->sum('saldo');
+
              $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pencairan UJ Ditahan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -373,8 +375,8 @@ class BillingController extends Controller
                     "==========================\n".
                     // "Sisa Saldo Kas Uang Jalan : \n".
                     // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    // "Grand Total UJ Ditahan : \n".
-                    // "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
+                    "Grand Total UJ Ditahan : \n".
+                    "Rp. ".number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
                     // $additionalMessage.
                     "Terima kasih 🙏🙏🙏\n";
 
