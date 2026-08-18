@@ -81,12 +81,59 @@
                             <label for="tgl_kimper_{{$d->id}}" class="form-label small fw-bold">TGL KIMPER</label>
                             <input type="text" class="form-control" name="tanggal_kimper" id="tgl_kimper_{{$d->id}}" value="{{$d->id_tanggal_kimper}}" required>
                         </div>
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="status_{{$d->id}}" class="form-label small fw-bold">STATUS KENDARAAN</label>
                             <select class="form-select" name="status" id="status_{{$d->id}}" required>
                                 <option value="aktif" {{$d->status == 'aktif' ? 'selected' : ''}}>Aktif</option>
                                 <option value="nonaktif" {{$d->status == 'nonaktif' ? 'selected' : ''}}>Nonaktif</option>
                             </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="lock_uj_{{$d->id}}" class="form-label small fw-bold text-danger">LOCK UJ SAAT KADALUARSA</label>
+                            <select class="form-select border-danger" name="lock_uj" id="lock_uj_{{$d->id}}" required>
+                                <option value="1" {{ $d->lock_uj == '1' ? 'selected' : '' }}>1 - Terkunci</option>
+                                <option value="0" {{ $d->lock_uj == '0' ? 'selected' : '' }}>0 - Terbuka</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary border-bottom pb-2 mt-4 mb-3 fw-bold"><i class="fa fa-wallet me-2"></i> Pengaturan Uang Jalan (UJ)</h6>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">APAKAH UJ DITAHAN?</label>
+                        <select class="form-select border-primary" name="uj_ditahan" id="uj_ditahan_{{$d->id}}" onchange="toggleUjEdit('{{$d->id}}')" required>
+                            <!-- Pastikan properti uj_ditahan dari DB ada nilainya dan ter-select -->
+                            <option value="1" {{$d->uj_ditahan == 1 ? 'selected' : ''}}>Ya (Potong via Driver)</option>
+                            <option value="0" {{$d->uj_ditahan == 0 ? 'selected' : ''}}>Tidak (Transfer Rekening)</option>
+                        </select>
+                    </div>
+
+                    <!-- Input Driver (Akan aktif via JS jika UJ Ditahan = 1) -->
+                    <div id="driver_section_{{$d->id}}" class="mb-3 p-3 bg-light border rounded" style="display: none;">
+                        <label for="driver_id_{{$d->id}}" class="form-label small fw-bold text-danger">PILIH DRIVER</label>
+                        <select class="form-select border-danger" name="driver_id" id="driver_id_{{$d->id}}">
+                            <option value="">-- Pilih Driver --</option>
+                            @foreach ($drivers as $dr)
+                                <option value="{{ $dr->id }}" {{$d->driver_id == $dr->id ? 'selected' : ''}}>{{ $dr->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Input Rekening (Akan aktif via JS jika UJ Ditahan = 0) -->
+                    <div id="banking_section_{{$d->id}}" class="p-3 bg-light border rounded mb-3" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="transfer_ke_{{$d->id}}" class="form-label small fw-bold">TRANSFER KE</label>
+                                <input type="text" class="form-control banking-input-{{$d->id}}" name="transfer_ke" id="transfer_ke_{{$d->id}}" value="{{$d->transfer_ke}}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="bank_{{$d->id}}" class="form-label small fw-bold">BANK</label>
+                                <input type="text" class="form-control banking-input-{{$d->id}}" name="bank" id="bank_{{$d->id}}" value="{{$d->bank}}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="no_rekening_{{$d->id}}" class="form-label small fw-bold">NO REKENING</label>
+                                <input type="text" class="form-control banking-input-{{$d->id}}" name="no_rekening" id="no_rekening_{{$d->id}}" value="{{$d->no_rekening}}">
+                            </div>
                         </div>
                     </div>
 
@@ -103,31 +150,6 @@
                             <input type="text" class="form-control" name="no_kartu_gps" id="no_kartu_gps_{{$d->id}}" value="{{$d->no_kartu_gps}}">
                         </div>
                     </div>
-
-                    <h6 class="text-primary border-bottom pb-2 mt-4 mb-3 fw-bold"><i class="fa fa-university me-2"></i> Rekening Uang Jalan</h6>
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label for="transfer_ke_{{$d->id}}" class="form-label small fw-bold">TRANSFER KE</label>
-                            <input type="text" class="form-control" name="transfer_ke" id="transfer_ke_{{$d->id}}" value="{{$d->transfer_ke}}" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="bank_{{$d->id}}" class="form-label small fw-bold">BANK</label>
-                            <input type="text" class="form-control" name="bank" id="bank_{{$d->id}}" value="{{$d->bank}}" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="no_rekening_{{$d->id}}" class="form-label small fw-bold">NO REKENING</label>
-                            <input type="text" class="form-control" name="no_rekening" id="no_rekening_{{$d->id}}" value="{{$d->no_rekening}}" required>
-                        </div>
-
-                        <div class="col-md-3 mb-3">
-                            <label for="lock_uj_{{$d->id}}" class="form-label small fw-bold text-danger">LOCK UJ</label>
-                            <select class="form-select border-danger" name="lock_uj" id="lock_uj_{{$d->id}}" required>
-                                <option value="1" {{ $d->lock_uj == '1' ? 'selected' : '' }}>1 - Terkunci</option>
-                                <option value="0" {{ $d->lock_uj == '0' ? 'selected' : '' }}>0 - Terbuka</option>
-                            </select>
-                            </div>
-                    </div>
-
                 </form>
             </div>
 
@@ -146,7 +168,30 @@
     flatpickr("#tgl_sim_{{$d->id}}", { dateFormat: "d-m-Y" });
     flatpickr("#tgl_kimper_{{$d->id}}", { dateFormat: "d-m-Y" });
 
-    // Script ini akan tetap menangkap event submit dari tombol yang memiliki atribut form="editForm..."
+    // Fungsi Toggle UJ untuk Form Edit
+    function toggleUjEdit(id) {
+        let val = $('#uj_ditahan_' + id).val();
+
+        if (val == '1') {
+            $('#banking_section_' + id).hide();
+            $('.banking-input-' + id).removeAttr('required');
+
+            $('#driver_section_' + id).show();
+            $('#driver_id_' + id).attr('required', true);
+        } else {
+            $('#driver_section_' + id).hide();
+            $('#driver_id_' + id).removeAttr('required');
+
+            $('#banking_section_' + id).show();
+            $('.banking-input-' + id).attr('required', true);
+        }
+    }
+
+    // Eksekusi fungsi saat modal baru dimuat agar tampilan menyesuaikan data database saat ini
+    $(document).ready(function() {
+        toggleUjEdit('{{$d->id}}');
+    });
+
     $('#editForm{{$d->id}}').submit(function(e){
         e.preventDefault();
 
@@ -155,26 +200,10 @@
         var tgl_sim = $('#tgl_sim_{{$d->id}}').val();
         var tgl_kimper = $('#tgl_kimper_{{$d->id}}').val();
 
-        if (tgl_stnk === '') {
-            alert('Tanggal Pajak STNK tidak boleh kosong');
-            $('#tgl_stnk_{{$d->id}}').focus();
-            return false;
-        }
-        if (tgl_kir === '') {
-            alert('Tanggal KIR tidak boleh kosong');
-            $('#tgl_kir_{{$d->id}}').focus();
-            return false;
-        }
-        if (tgl_sim === '') {
-            alert('Tanggal SIM tidak boleh kosong');
-            $('#tgl_sim_{{$d->id}}').focus();
-            return false;
-        }
-        if (tgl_kimper === '') {
-            alert('Tanggal KIMPER tidak boleh kosong');
-            $('#tgl_kimper_{{$d->id}}').focus();
-            return false;
-        }
+        if (tgl_stnk === '') { alert('Tanggal Pajak STNK tidak boleh kosong'); $('#tgl_stnk_{{$d->id}}').focus(); return false; }
+        if (tgl_kir === '') { alert('Tanggal KIR tidak boleh kosong'); $('#tgl_kir_{{$d->id}}').focus(); return false; }
+        if (tgl_sim === '') { alert('Tanggal SIM tidak boleh kosong'); $('#tgl_sim_{{$d->id}}').focus(); return false; }
+        if (tgl_kimper === '') { alert('Tanggal KIMPER tidak boleh kosong'); $('#tgl_kimper_{{$d->id}}').focus(); return false; }
 
         Swal.fire({
             title: 'Apakah data sudah benar?',
@@ -188,7 +217,6 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 $('#spinner').show();
-                // This akan men-submit form utama (HTMLFormElement), bukan memicu event jquery berulang
                 this.submit();
             }
         });

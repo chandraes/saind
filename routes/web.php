@@ -183,6 +183,14 @@ Route::group(['middleware' => ['auth']], function() {
         Route::prefix('database')->group(function(){
             Route::get('/', [App\Http\Controllers\DatabaseController::class, 'index'])->name('database');
 
+            Route::prefix('driver')->group(function (){
+                Route::get('/', [App\Http\Controllers\DatabaseController::class, 'driver'])->name('database.driver');
+                Route::post('/store', [App\Http\Controllers\DatabaseController::class, 'driver_store'])->name('database.driver.store');
+                Route::get('/{id}/edit', [App\Http\Controllers\DatabaseController::class, 'driver_edit'])->name('database.driver.edit');
+                Route::patch('/update/{id}', [App\Http\Controllers\DatabaseController::class, 'driver_update'])->name('database.driver.update');
+                Route::delete('/destroy/{driver}', [App\Http\Controllers\DatabaseController::class, 'driver_destroy'])->name('database.driver.destroy');
+            });
+
             Route::get('/customer/preview-customer', [App\Http\Controllers\CustomerController::class, 'preview_customer'])->name('database.customer.preview-customer');
             Route::post('/kategori-barang-store', [App\Http\Controllers\KategoriBarangController::class, 'kategori_store'])->name('database.kategori-barang-store');
             Route::delete('/kategori-barang-destroy/{kategori}', [App\Http\Controllers\KategoriBarangController::class, 'kategori_destroy'])->name('database.kategori-barang-destroy');
@@ -569,6 +577,13 @@ Route::group(['middleware' => ['auth']], function() {
         //Form maintenance
         Route::prefix('billing')->group(function(){
 
+            Route::prefix('uj-ditahan')->group(function(){
+                Route::get('/', [BillingController::class, 'uj_ditahan'])->name('billing.uj-ditahan');
+                Route::get('/{id}', [BillingController::class, 'uj_ditahan_show'])->name('billing.uj-ditahan.show');
+                Route::post('/cairkan', [BillingController::class, 'uj_ditahan_cairkan'])->name('billing.uj-ditahan.cairkan');
+                Route::post('/{id}/cutoff', [BillingController::class, 'uj_ditahan_cutoff'])->name('billing.uj-ditahan.cutoff');
+            });
+
             Route::get('/notif-count', [App\Http\Controllers\BillingController::class, 'getNotifCount'])->name('billing.notif-count');
 
             Route::get('/nota-csr', [App\Http\Controllers\TransaksiController::class, 'nota_csr'])->name('billing.nota-csr');
@@ -705,11 +720,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::post('/nota-tagihan-lanjut-pilih/{customer}', [App\Http\Controllers\TransaksiController::class, 'nota_tagihan_lanjut_pilih'])->name('transaksi.nota-tagihan.lanjut-pilih');
         });
 
-
-
         Route::resource('bbm-storing', App\Http\Controllers\BbmStoringController::class);
-
-
 
         Route::view('rekap-gaji', 'rekap.gaji')->name('rekap-gaji');
         Route::get('rekap-gaji-detail', [App\Http\Controllers\RekapController::class, 'rekap_gaji_detail'])->name('rekap-gaji-detail');
@@ -718,6 +729,10 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('rekap')->group(function(){
             Route::get('/', [App\Http\Controllers\RekapController::class, 'index'])->name('rekap.index');
+
+            Route::prefix('uj-ditahan')->group(function(){
+                Route::get('/', [App\Http\Controllers\RekapController::class, 'uj_ditahan'])->name('rekap.uj-ditahan');
+            });
 
             Route::prefix('bunga-investor')->group(function(){
                 Route::get('/', [App\Http\Controllers\RekapController::class, 'bunga_investor'])->name('rekap.bunga-investor');
@@ -783,9 +798,9 @@ Route::group(['middleware' => ['auth']], function() {
 
         });
 
-        Route::get('dokumen/template-new', [App\Http\Controllers\DokumenNewController::class, 'index'])->name('template-new');
-        Route::get('dokumen/template-new/kontrak', [App\Http\Controllers\DokumenNewController::class, 'kontrak_new'])->name('template-new.kontrak');
-        Route::post('dokumen/template-new/kontrak/create', [App\Http\Controllers\DokumenNewController::class, 'create_template_kontrak'])->name('template-new.kontrak.create');
+        // Route::get('dokumen/template-new', [App\Http\Controllers\DokumenNewController::class, 'index'])->name('template-new');
+        // Route::get('dokumen/template-new/kontrak', [App\Http\Controllers\DokumenNewController::class, 'kontrak_new'])->name('template-new.kontrak');
+        // Route::post('dokumen/template-new/kontrak/create', [App\Http\Controllers\DokumenNewController::class, 'create_template_kontrak'])->name('template-new.kontrak.create');
 
 
     });

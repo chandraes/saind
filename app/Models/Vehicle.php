@@ -14,6 +14,11 @@ class Vehicle extends Model
 
     protected $appends = ['id_tanggal_pajak_stnk', 'id_tanggal_kir', 'id_tanggal_kimper', 'id_tanggal_sim'];
 
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
+    }
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);

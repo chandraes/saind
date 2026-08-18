@@ -133,6 +133,12 @@
                 <h4 class="mt-3">BBM STORING</h4>
             </a>
         </div>
+         <div class="col-md-2 text-center mt-3 mb-3">
+            <a href="{{route('database.driver')}}" class="text-decoration-none">
+                <img src="{{asset('images/driver.svg')}}" alt="" width="70">
+                <h4 class="mt-3">DRIVER</h4>
+            </a>
+        </div>
 
         <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('vehicle.index')}}" class="text-decoration-none">

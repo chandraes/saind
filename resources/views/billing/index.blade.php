@@ -378,6 +378,15 @@
                 </h4>
             </a>
         </div>
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.uj-ditahan')}}" class="text-decoration-none">
+                <img src="{{asset('images/uj-ditahan.svg')}}" alt="" width="70">
+                <h4 class="mt-3">UJ DITAHAN
+                    {{-- <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
+                        "(".$data->where('status', 2)->count().")" : '' }}</span> --}}
+                </h4>
+            </a>
+        </div>
         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.sales-order')}}" class="text-decoration-none">
                 <img src="{{asset('images/sales-order.svg')}}" alt="" width="70">

@@ -19,6 +19,8 @@ use App\Models\Rekening;
 use App\Models\Sponsor;
 use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
+use App\Models\UjDitahan;
+use App\Models\UjDitahanDetail;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -90,6 +92,301 @@ class BillingController extends Controller
             // 'csr' => $csr,
             'invoice_csr' => $invoice_csr,
         ]);
+    }
+
+   public function uj_ditahan(Request $request)
+    {
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+
+        // Ambil data HANYA yang saldonya lebih dari 0
+        $data = UjDitahan::with(['vehicle.driver'])
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->where('saldo', '!=', 0)
+            ->get();
+
+        // Hitung total dari data yang aktif saja
+        $totalSaldoBulanIni = $data->sum('saldo');
+        $totalMasukBulanIni = $data->sum('total_masuk');
+        $totalKeluarBulanIni = $data->sum('total_keluar');
+
+        // Cari tahu bulan & tahun mana saja yang saldonya belum 0 (untuk indikator filter)
+        $activeBalances = UjDitahan::where('saldo', '!=', 0)
+            ->select('bulan', 'tahun')
+            ->distinct()
+            ->get()
+            ->map(function($item) {
+                return $item->bulan . '-' . $item->tahun;
+            })->toArray();
+
+        // Ambil list tahun
+        $listTahun = UjDitahan::select('tahun')->distinct()->pluck('tahun')->toArray();
+        if (!in_array(date('Y'), $listTahun)) {
+            $listTahun[] = date('Y');
+        }
+        sort($listTahun);
+
+        return view('billing.uj-ditahan.index', compact(
+            'data',
+            'bulan',
+            'tahun',
+            'activeBalances',
+            'listTahun',
+            'totalSaldoBulanIni',
+            'totalMasukBulanIni',
+            'totalKeluarBulanIni'
+        ));
+    }
+
+    // FUNGSI BARU UNTUK CUTOFF
+    public function uj_ditahan_cutoff(Request $request, $id)
+    {
+
+        $allowedRoles = ['su','admin'];
+
+        if (!in_array(Auth::user()->role, $allowedRoles)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk melakukan cutoff.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Lock row master
+            $master = UjDitahan::where('id', $id)->lockForUpdate()->firstOrFail();
+
+            if ($master->saldo <= 0) {
+                return redirect()->back()->with('error', 'Fitur cutoff saldo minus sedang dalam pengembangan!.');
+            }
+
+            $nominalCutoff = $master->saldo;
+
+            $driver = $master->vehicle->driver;
+
+            // 1. Buat Detail Keluar (Cutoff)
+            $store = UjDitahanDetail::create([
+                'uj_ditahan_id' => $master->id,
+                'jenis'         => 'keluar',
+                'nominal'       => $nominalCutoff,
+                'keterangan'    => 'Cutoff',
+                'bank'          => $driver->bank,
+                'no_rekening'   => $driver->no_rek,
+                'nama_rekening' => $driver->nama_rek,
+                // file_pdf dibiarkan null
+            ]);
+
+            // 2. Update Master (Nolkan saldo, tambah total_keluar)
+            $master->decrement('saldo', $nominalCutoff);
+            $master->increment('total_keluar', $nominalCutoff);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $th->getMessage());
+        }
+
+        $dbWa = new GroupWa();
+
+        $totalUjDitahan = UjDitahan::where('saldo', '>', 0)
+                            ->sum('saldo');
+
+         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Pencairan UJ Ditahan*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Nomor Lambung : ".$master->vehicle->nomor_lambung."\n".
+                    "Uraian : ".$store->keterangan."\n\n".
+                    "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.').",-*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$store['bank']."\n".
+                    "Nama    : ".$store['nama_rekening']."\n".
+                    "No. Rek : ".$store['no_rekening']."\n\n".
+                    "==========================\n".
+                    // "Sisa Saldo Kas Uang Jalan : \n".
+                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Grand Total UJ Ditahan : \n".
+                    "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
+                    // $additionalMessage.
+                    "Terima kasih 🙏🙏🙏\n";
+
+        $dbWa->sendWa($dbWa->where('untuk', 'kas-uj-ditahan')->first()->nama_group, $pesan);
+
+        if($driver && $driver->no_hp != null && $driver->no_hp != '' && $driver->no_hp != '-' && $driver->no_hp != '0' && strlen($driver->no_hp) >= 10){
+
+             $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Pencairan UJ Ditahan*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Nomor Lambung : ".$master->vehicle->nomor_lambung."\n".
+                    "Uraian : ".$store->keterangan."\n\n".
+                    "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.').",-*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$store['bank']."\n".
+                    "Nama    : ".$store['nama_rekening']."\n".
+                    "No. Rek : ".$store['no_rekening']."\n\n".
+                    "==========================\n".
+                    // "Sisa Saldo Kas Uang Jalan : \n".
+                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    // "Grand Total UJ Ditahan : \n".
+                    // "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
+                    // $additionalMessage.
+                    "Terima kasih 🙏🙏🙏\n";
+
+            $hpDriver = $driver->no_hp = preg_replace('/\D/', '', $driver->no_hp);
+
+            $dbWa->sendWa($hpDriver, $pesan);
+
+        }
+
+        return redirect()->back()->with('success', 'Cutoff berhasil dieksekusi. Saldo menjadi 0 dan telah dipindahkan.');
+    }
+
+    public function uj_ditahan_show($id)
+    {
+       $master = UjDitahan::with(['vehicle.driver'])->findOrFail($id);
+
+        // Ambil detail dan urutkan dari yang paling lama ke baru agar seperti rekening koran
+        $details = UjDitahanDetail::where('uj_ditahan_id', $id)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+
+        return view('billing.uj-ditahan.show', compact('master', 'details'));
+    }
+
+    public function uj_ditahan_cairkan(Request $request)
+    {
+
+        $nominalBersih = (int) str_replace('.', '', $request->nominal);
+
+        // Sisipkan nilai bersih ke request agar bisa melewati validasi Laravel jika mau
+        $request->merge(['nominal_bersih' => $nominalBersih]);
+
+        $request->validate([
+            'uj_ditahan_id' => 'required|exists:uj_ditahans,id',
+            'nominal' => 'required|numeric|min:1',
+            'keterangan' => 'required|string|max:255',
+            'bank' => 'required|string|max:50',
+            'no_rekening' => 'required|string|max:50',
+            'nama_rekening' => 'required|string|max:100',
+            'bukti_pdf'     => 'required|mimes:pdf|max:5120',
+        ]);
+
+        // Bersihkan format nominal (misal jika ada titik/koma dari input form)
+        $nominalCair = str_replace('.', '', $request->nominal);
+
+        try {
+            DB::beginTransaction();
+
+            // Lock row master agar tidak ada transaksi ganda bersamaan
+            $master = UjDitahan::where('id', $request->uj_ditahan_id)->lockForUpdate()->first();
+
+            $sumSaldoSebelumnya = UjDitahan::where('vehicle_id', $master->vehicle_id)
+                ->where('saldo', '>', 0)
+                ->where(function ($query) use ($master) {
+                    $query->where('tahun', '<', $master->tahun)
+                        ->orWhere(function ($q) use ($master) {
+                            $q->where('tahun', $master->tahun)
+                                ->where('bulan', '<', $master->bulan);
+                        });
+                })->sum('saldo');
+
+            // Jika jumlah saldo tertahan dari bulan sebelumnya > nominal yang ingin dicairkan
+            if ($sumSaldoSebelumnya > $nominalCair) {
+                return redirect()->back()->with('error', 'Silahkan gunakan Saldo UJ Ditahan pada bulan sebelumnya terlebih dahulu.');
+            }
+
+            // Validasi: Nominal tidak boleh melebihi saldo
+            if ($nominalCair > $master->saldo) {
+                return redirect()->back()->with('error', 'Nominal pencairan melebihi sisa saldo bulan ini!');
+            }
+
+            // --- TAMBAHAN LOGIKA UPLOAD FILE ---
+            $pdfPath = null;
+            if ($request->hasFile('bukti_pdf')) {
+                $file = $request->file('bukti_pdf');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                // Akan tersimpan di folder: storage/app/public/uj_ditahan_pdf/
+                $pdfPath = $file->storeAs('public/uj_ditahan_pdf', $fileName);
+            }
+
+            // 1. Buat Detail Keluar (Pencairan)
+            $store = UjDitahanDetail::create([
+                'uj_ditahan_id' => $master->id,
+                'jenis'         => 'keluar',
+                'nominal'       => $nominalCair,
+                'keterangan'    => $request->keterangan,
+                'bank'          => $request->bank,
+                'no_rekening'   => $request->no_rekening,
+                'nama_rekening' => $request->nama_rekening,
+                'file_pdf'      => $pdfPath,
+            ]);
+
+            // 2. Update Master (Kurangi saldo, tambah total_keluar)
+            $master->decrement('saldo', $nominalCair);
+            $master->increment('total_keluar', $nominalCair);
+
+            DB::commit();
+
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $th->getMessage());
+        }
+
+        $driver = $master->vehicle->driver;
+
+        $dbWa = new GroupWa();
+
+        $totalUjDitahan = UjDitahan::where('saldo', '>', 0)
+                            ->sum('saldo');
+
+        $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Pencairan UJ Ditahan*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Nomor Lambung : ".$master->vehicle->nomor_lambung."\n".
+                    "Uraian : ".$store->keterangan."\n\n".
+                    "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.').",-*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$store['bank']."\n".
+                    "Nama    : ".$store['nama_rekening']."\n".
+                    "No. Rek : ".$store['no_rekening']."\n\n".
+                    "==========================\n".
+                    // "Sisa Saldo Kas Uang Jalan : \n".
+                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Grand Total UJ Ditahan : \n".
+                    "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
+                    // $additionalMessage.
+                    "Terima kasih 🙏🙏🙏\n";
+
+        $dbWa->sendWa($dbWa->where('untuk', 'kas-uj-ditahan')->first()->nama_group, $pesan);
+
+        if($driver && $driver->no_hp != null && $driver->no_hp != '' && $driver->no_hp != '-' && $driver->no_hp != '0' && strlen($driver->no_hp) >= 10){
+
+            $ujDitahanVehicle = UjDitahan::where('vehicle_id', $master->vehicle_id)->where('saldo', '>', 0)->sum('saldo');
+
+             $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    "*Form Pencairan UJ Ditahan*\n".
+                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    "Nomor Lambung : ".$master->vehicle->nomor_lambung."\n".
+                    "Uraian : ".$store->keterangan."\n\n".
+                    "Nilai :  *Rp. ".number_format($store->nominal, 0, ',', '.').",-*\n\n".
+                    "Ditransfer ke rek:\n\n".
+                    "Bank     : ".$store['bank']."\n".
+                    "Nama    : ".$store['nama_rekening']."\n".
+                    "No. Rek : ".$store['no_rekening']."\n\n".
+                    "==========================\n".
+                    // "Sisa Saldo Kas Uang Jalan : \n".
+                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Grand Total UJ Ditahan : \n".
+                    "Rp. ".number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
+                    // $additionalMessage.
+                    "Terima kasih 🙏🙏🙏\n";
+
+            $hpDriver = $driver->no_hp = preg_replace('/\D/', '', $driver->no_hp);
+
+            $dbWa->sendWa($hpDriver, $pesan);
+
+        }
+
+        return redirect()->back()->with('success', 'Pencairan saldo berhasil dicatat.');
     }
 
     public function form_cost_operational()
@@ -1088,4 +1385,5 @@ class BillingController extends Controller
             $dbWa->sendWa($group->nama_group, $pesan);
         }
     }
+
 }

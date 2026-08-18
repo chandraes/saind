@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\KasUangJalan;
@@ -79,38 +80,15 @@ class VehicleController extends Controller
                     return '-';
                 })
 
-                // Action Buttons
-                ->addColumn('action', function ($row) {
-                    // Tombol Hapus (Form)
+                 ->addColumn('action', function ($row) {
                     $deleteUrl = route('vehicle.destroy', $row->id);
                     $csrf = csrf_field();
                     $method = method_field('DELETE');
 
-                    // Kita gunakan class "btn-edit-vehicle" untuk trigger modal via AJAX nanti
-                    $btnEdit = '<button type="button" class="btn btn-warning m-2 btn-edit-vehicle" data-id="' . $row->id . '">Edit</button>';
-
-                    $btnDelete = '
-                        <form action="' . $deleteUrl . '" method="post" style="display:inline-block;">
-                            ' . $csrf . '
-                            ' . $method . '
-                            <button type="submit" class="btn btn-danger m-2" onclick="return confirm(\'Apakah anda yakin ingin menghapus data ini?\')">Hapus</button>
-                        </form>
-                    ';
-
-                    return $btnEdit . $btnDelete;
-                })
-                ->addColumn('action', function ($row) {
-                    $deleteUrl = route('vehicle.destroy', $row->id);
-                    $csrf = csrf_field();
-                    $method = method_field('DELETE');
-
-                    // Tombol khusus Rekening (Warna Info/Biru Muda)
-                    $btnRekening = '<button type="button" class="btn btn-info m-1 btn-edit-rekening text-white" data-id="' . $row->id . '" title="Edit Rekening"><i class="fa fa-university"></i> Rekening</button>';
-
-                    // Tombol Edit
+                    // Tombol diubah menjadi Info UJ
+                    $btnRekening = '<button type="button" class="btn btn-info m-1 btn-edit-rekening text-white" data-id="' . $row->id . '" title="Edit Rekening / UJ"><i class="fa fa-bank"></i> Info UJ</button>';
                     $btnEdit = '<button type="button" class="btn btn-warning m-1 btn-edit-vehicle" data-id="' . $row->id . '"><i class="fa fa-edit"></i> Edit</button>';
 
-                    // Tombol Hapus
                     $btnDelete = '
                         <form action="' . $deleteUrl . '" method="post" style="display:inline-block;">
                             ' . $csrf . '
@@ -119,7 +97,6 @@ class VehicleController extends Controller
                         </form>
                     ';
 
-                    // Gabungkan semua tombol
                     return '<div class="d-flex justify-content-center">' . $btnRekening . $btnEdit . $btnDelete . '</div>';
                 })
                 // Beritahu Yajra kolom mana saja yang memuat tag HTML agar tidak di-escape
@@ -130,10 +107,14 @@ class VehicleController extends Controller
         // 2. Load View Awal (Hanya mengirim variabel pendukung, BUKAN semua data Vehicle)
         $vendors = Vendor::where('status', 'aktif')->get();
         $nomor_lambung = Vehicle::nextNomorLambung();
+        $assignedDriverIds = Vehicle::whereNotNull('driver_id')->pluck('driver_id')->toArray();
+        // 2. Ambil Driver yang ID-nya TIDAK ADA dalam daftar ID yang sudah terpakai
+        $availableDrivers = Driver::whereNotIn('id', $assignedDriverIds)->get();
 
         return view('database.vehicle.index', [
             'vendors' => $vendors,
             'no_lambung' => $nomor_lambung,
+            'drivers' => $availableDrivers
         ]);
     }
 
@@ -161,16 +142,26 @@ class VehicleController extends Controller
             'tahun' => 'required',
             'no_kartu_gps' => 'required',
             'status' => 'required',
-            'transfer_ke' => 'required',
-            'bank' => 'required',
-            'no_rekening' => 'required',
+            'transfer_ke' => 'nullable|required_if:uj_ditahan,0',
+            'bank'        => 'nullable|required_if:uj_ditahan,0',
+            'no_rekening' => 'nullable|required_if:uj_ditahan,0',
             'gps' => 'nullable',
             'tanggal_pajak_stnk' => 'required',
             'tanggal_kir' => 'required',
             'tanggal_kimper' => 'required',
             'tanggal_sim' => 'required',
             'lock_uj' => 'required|boolean',
+            'uj_ditahan'  => 'required|boolean',
+            'driver_id'   => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id',
         ]);
+
+        if ($data['uj_ditahan'] == 1) {
+            $data['transfer_ke'] = null;
+            $data['bank'] = null;
+            $data['no_rekening'] = null;
+        } else {
+            $data['driver_id'] = null;
+        }
 
         $data['tanggal_pajak_stnk'] = date('Y-m-d', strtotime($data['tanggal_pajak_stnk']));
         $data['tanggal_kir'] = date('Y-m-d', strtotime($data['tanggal_kir']));
@@ -219,9 +210,17 @@ class VehicleController extends Controller
                          ->orWhere('id', $vehicle->vendor_id)
                          ->get();
 
+        // Ambil ID Driver yang terpakai OLEH KENDARAAN LAIN (selain kendaraan yang sedang di-edit ini)
+        $assignedDriverIds = Vehicle::whereNotNull('driver_id')
+                                    ->where('id', '!=', $vehicle->id)
+                                    ->pluck('driver_id')->toArray();
+
+        $availableDrivers = Driver::whereNotIn('id', $assignedDriverIds)->get();
+
         return view('database.vehicle.edit', [
             'd' => $vehicle,
-            'vendors' => $vendors
+            'vendors' => $vendors,
+            'drivers' => $availableDrivers // Lempar ke view
         ]);
     }
 
@@ -230,7 +229,9 @@ class VehicleController extends Controller
      */
     public function update(Request $request, Vehicle $vehicle)
     {
-
+        if ($vehicle->status == 'proses') {
+            return redirect()->back()->with('error', 'Data tidak dapat diubah karena status sedang jalan');
+        }
 
         $data = $request->validate([
             'vendor_id' => 'required|exists:vendors,id',
@@ -243,9 +244,9 @@ class VehicleController extends Controller
             'tahun' => 'required',
             'no_kartu_gps' => 'required',
             'status' => 'required',
-            'transfer_ke' => 'required',
-            'bank' => 'required',
-            'no_rekening' => 'required',
+            'transfer_ke' => 'nullable|required_if:uj_ditahan,0',
+            'bank'        => 'nullable|required_if:uj_ditahan,0',
+            'no_rekening' => 'nullable|required_if:uj_ditahan,0',
             'support_operational'=> 'nullable',
             'gps' => 'nullable',
             'tanggal_pajak_stnk' => 'required',
@@ -253,10 +254,17 @@ class VehicleController extends Controller
             'tanggal_kimper' => 'required',
             'tanggal_sim' => 'required',
             'lock_uj' => 'required|boolean',
+            'uj_ditahan'  => 'required|boolean',
+            'driver_id'   => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id,' . $vehicle->id,
         ]);
 
-        if ($vehicle->status == 'proses') {
-            return redirect()->back()->with('error', 'Data tidak dapat diubah karena status sedang jalan');
+        // Bersihkan data sesuai kondisi
+        if ($data['uj_ditahan'] == 1) {
+            // $data['transfer_ke'] = null;
+            // $data['bank'] = null;
+            // $data['no_rekening'] = null;
+        } else {
+            $data['driver_id'] = null;
         }
 
         $checker = KasUangJalan::where('vehicle_id', $vehicle->id)->first();
@@ -317,8 +325,15 @@ class VehicleController extends Controller
 
     public function editRekening(Vehicle $vehicle)
     {
+        // Logika sama seperti edit
+        $assignedDriverIds = Vehicle::whereNotNull('driver_id')
+                                    ->where('id', '!=', $vehicle->id)
+                                    ->pluck('driver_id')->toArray();
+        $availableDrivers = Driver::whereNotIn('id', $assignedDriverIds)->get();
+
         return view('database.vehicle.edit-rekening', [
-            'd' => $vehicle
+            'd' => $vehicle,
+            'drivers' => $availableDrivers
         ]);
     }
 
@@ -329,12 +344,22 @@ class VehicleController extends Controller
     {
         // Validasi input
         $data = $request->validate([
-            'transfer_ke' => 'required|string',
-            'bank'        => 'required|string',
-            'no_rekening' => 'required|string',
+            'uj_ditahan'  => 'required|boolean',
+            'driver_id'   => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id,' . $vehicle->id,
+            'transfer_ke' => 'nullable|required_if:uj_ditahan,0|string',
+            'bank'        => 'nullable|required_if:uj_ditahan,0|string',
+            'no_rekening' => 'nullable|required_if:uj_ditahan,0|string',
         ]);
 
         $data['updated_by'] = Auth::user()->id;
+
+        if ($data['uj_ditahan'] == 1) {
+            $data['transfer_ke'] = null;
+            $data['bank'] = null;
+            $data['no_rekening'] = null;
+        } else {
+            $data['driver_id'] = null;
+        }
 
         // Update hanya data rekening
         try {

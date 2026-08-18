@@ -103,6 +103,7 @@ class VendorController extends Controller
             'message' => 'Limit Tonase Muat berhasil diperbarui!'
         ]);
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -274,6 +275,15 @@ class VendorController extends Controller
             $data['ppn'] = 0;
         }
 
+        if($data['status'] == 'nonaktif'){
+            $vendor = Vendor::findOrFail($id);
+            // check apakah ada vehicle dengan status selain aktif dan nonaktif
+            $vehicle = $vendor->vehicle()->whereNotIn('status', ['aktif', 'nonaktif'])->first();
+            if($vehicle){
+                return redirect()->back()->withInput()->withErrors(['status' => 'Vendor tidak bisa dinonaktifkan karena ada kendaraan yang masih dalam proses!!']);
+            }
+        }
+
         if (array_key_exists('pph', $data)) {
             $data['pph'] = 1;
             $data['pph_val'] = str_replace(',', '.', $data['pph_val']);
@@ -303,9 +313,10 @@ class VendorController extends Controller
                 'status' => 'nonaktif',
             ]);
         } elseif($data['status'] == 'aktif'){
-            $vendor->vehicle()->update([
-                'status' => 'aktif',
-            ]);
+            // Permintaan admin, untuk saat vendor di aktifkan kembali, kendaraan tidak otomatis di aktifkan. Jadi kode ini di comment dulu.
+            // $vendor->vehicle()->update([
+            //     'status' => 'aktif',
+            // ]);
         }
 
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');

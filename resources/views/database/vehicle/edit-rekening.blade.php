@@ -14,30 +14,51 @@
                     @csrf
                     @method('PATCH')
 
-                    <div class="mb-3">
-                        <label for="transfer_ke_{{$d->id}}" class="form-label small fw-bold">TRANSFER KE (NAMA)</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fa fa-user"></i></span>
-                            <input type="text" class="form-control" name="transfer_ke" id="transfer_ke_{{$d->id}}" value="{{$d->transfer_ke}}" required>
-                        </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">APAKAH UJ DITAHAN?</label>
+                        <select class="form-select border-info" name="uj_ditahan" id="uj_ditahan_{{$d->id}}" onchange="toggleUjEdit('{{$d->id}}')" required>
+                            <option value="1" {{$d->uj_ditahan == 1 ? 'selected' : ''}}>Ya (Potong via Driver)</option>
+                            <option value="0" {{$d->uj_ditahan == 0 ? 'selected' : ''}}>Tidak (Transfer Rekening)</option>
+                        </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="bank_{{$d->id}}" class="form-label small fw-bold">BANK</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fa fa-building"></i></span>
-                            <input type="text" class="form-control" name="bank" id="bank_{{$d->id}}" value="{{$d->bank}}" required>
-                        </div>
+                    <!-- Input Driver -->
+                    <div id="driver_section_{{$d->id}}" class="mb-3 p-3 bg-light border rounded" style="display: none;">
+                        <label for="driver_id_{{$d->id}}" class="form-label small fw-bold text-danger">PILIH DRIVER</label>
+                        <select class="form-select" name="driver_id" id="driver_id_{{$d->id}}">
+                            <option value="">-- Pilih Driver --</option>
+                            @foreach ($drivers as $dr)
+                                <option value="{{ $dr->id }}" {{$d->driver_id == $dr->id ? 'selected' : ''}}>{{ $dr->nama }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="no_rekening_{{$d->id}}" class="form-label small fw-bold">NOMOR REKENING</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fa fa-credit-card"></i></span>
-                            <input type="text" class="form-control" name="no_rekening" id="no_rekening_{{$d->id}}" value="{{$d->no_rekening}}" required>
+                    <!-- Input Rekening -->
+                    <div id="banking_section_{{$d->id}}" style="display: none;">
+                        <div class="p-3 bg-light border rounded">
+                            <div class="mb-3">
+                                <label for="transfer_ke_{{$d->id}}" class="form-label small fw-bold">TRANSFER KE (NAMA)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa fa-user"></i></span>
+                                    <input type="text" class="form-control banking-input-{{$d->id}}" name="transfer_ke" id="transfer_ke_{{$d->id}}" value="{{$d->transfer_ke}}">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bank_{{$d->id}}" class="form-label small fw-bold">BANK</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa fa-building"></i></span>
+                                    <input type="text" class="form-control banking-input-{{$d->id}}" name="bank" id="bank_{{$d->id}}" value="{{$d->bank}}">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="no_rekening_{{$d->id}}" class="form-label small fw-bold">NOMOR REKENING</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa fa-credit-card"></i></span>
+                                    <input type="text" class="form-control banking-input-{{$d->id}}" name="no_rekening" id="no_rekening_{{$d->id}}" value="{{$d->no_rekening}}">
+                                </div>
+                            </div>
                         </div>
                     </div>
-
                 </form>
             </div>
 
@@ -53,6 +74,29 @@
 </div>
 
 <script>
+    function toggleUjEdit(id) {
+        let val = $('#uj_ditahan_' + id).val();
+
+        if (val == '1') {
+            $('#banking_section_' + id).hide();
+            $('.banking-input-' + id).removeAttr('required');
+
+            $('#driver_section_' + id).show();
+            $('#driver_id_' + id).attr('required', true);
+        } else {
+            $('#driver_section_' + id).hide();
+            $('#driver_id_' + id).removeAttr('required');
+
+            $('#banking_section_' + id).show();
+            $('.banking-input-' + id).attr('required', true);
+        }
+    }
+
+    // Eksekusi fungsi saat modal baru dimuat agar tampilan sesuai dengan isi database
+    $(document).ready(function() {
+        toggleUjEdit('{{$d->id}}');
+    });
+    
     $('#formEditRekening{{$d->id}}').submit(function(e){
         e.preventDefault();
         Swal.fire({
