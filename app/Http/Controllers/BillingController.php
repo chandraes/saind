@@ -103,7 +103,7 @@ class BillingController extends Controller
         $data = UjDitahan::with(['vehicle.driver'])
             ->where('bulan', $bulan)
             ->where('tahun', $tahun)
-            ->where('saldo', '>', 0)
+            ->where('saldo', '!=', 0)
             ->get();
 
         // Hitung total dari data yang aktif saja
@@ -112,7 +112,7 @@ class BillingController extends Controller
         $totalKeluarBulanIni = $data->sum('total_keluar');
 
         // Cari tahu bulan & tahun mana saja yang saldonya belum 0 (untuk indikator filter)
-        $activeBalances = UjDitahan::where('saldo', '>', 0)
+        $activeBalances = UjDitahan::where('saldo', '!=', 0)
             ->select('bulan', 'tahun')
             ->distinct()
             ->get()
@@ -156,7 +156,7 @@ class BillingController extends Controller
             $master = UjDitahan::where('id', $id)->lockForUpdate()->firstOrFail();
 
             if ($master->saldo <= 0) {
-                return redirect()->back()->with('error', 'Data ini sudah tidak memiliki saldo atau sudah di-cutoff.');
+                return redirect()->back()->with('error', 'Fitur cutoff saldo minus sedang dalam pengembangan!.');
             }
 
             $nominalCutoff = $master->saldo;

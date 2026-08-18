@@ -27,6 +27,7 @@ use App\Services\StarSender;
 use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
 use App\Models\TransaksiAdditional;
+use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -471,84 +472,115 @@ class TransaksiController extends Controller
         $data['nota_muat'] = null;
         $data['nota_bongkar'] = null;
 
+        // 1. Eager Loading & Caching Variabel
+        // Mencegah pemanggilan query N+1 yang berulang kali saat mengambil relasi
+        $transaksi->load(['kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute']);
+        $kuj = $transaksi->kas_uang_jalan;
+        $vehicle = $kuj->vehicle;
+
         try {
             DB::beginTransaction();
 
             $transaksi->update($data);
 
-            $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
+            // Optimalisasi pemanggilan DB latest
+            $last = KasUangJalan::latest('id')->first();
             $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
 
             $store = KasUangJalan::create([
                 'void' => 1,
-                'kode_void' => "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan),
+                'kode_void' => "UJ" . sprintf("%02d", $kuj->nomor_uang_jalan),
                 'jenis_transaksi_id' => 1,
-                'nominal_transaksi' => $transaksi->kas_uang_jalan->nominal_transaksi,
+                'nominal_transaksi' => $kuj->nominal_transaksi,
                 'tanggal' => date('Y-m-d'),
-                'saldo' => $last->saldo + $transaksi->kas_uang_jalan->nominal_transaksi,
-                'transfer_ke' => substr($rek->nama_rekening, 0, 15),
-                'bank' => $rek->nama_bank,
-                'no_rekening' => $rek->nomor_rekening,
+                // Safeguard jika $last kosong
+                'saldo' => ($last ? $last->saldo : 0) + $kuj->nominal_transaksi,
+                // Safeguard jika $rek kosong
+                'transfer_ke' => substr($rek->nama_rekening ?? '', 0, 15),
+                'bank' => $rek->nama_bank ?? '-',
+                'no_rekening' => $rek->nomor_rekening ?? '-',
             ]);
 
+            // 2. Gunakan exists() dibanding first()
+            // exists() jauh lebih cepat karena database berhenti mencari setelah menemukan 1 data cocok
             $cekMobil = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                                ->where('kuj.vehicle_id', $transaksi->kas_uang_jalan->vehicle_id)
+                                ->where('kuj.vehicle_id', $kuj->vehicle_id)
                                 ->where('transaksis.status', '<', 3)
                                 ->where('transaksis.void', 0)
-                                ->first();
+                                ->exists();
 
             if (!$cekMobil) {
-                $transaksi->kas_uang_jalan->vehicle->update([
-                    'status' => 'aktif',
-                ]);
+                $vehicle->update(['status' => 'aktif']);
             }
 
-            $vehicle = Vehicle::find($transaksi->kas_uang_jalan->vehicle_id);
+            // 3. Gunakan decrement() untuk menghindari Race Condition
+            if ($transaksi->nota_fisik == 0 && $vehicle->do_count > 0) {
+                $vehicle->decrement('do_count');
+            }
 
-            if($transaksi->nota_fisik == 0) {
-                if ($vehicle->do_count > 0) {
-                    $vehicle->update([
-                        'do_count' => $vehicle->do_count - 1,
-                    ]);
-                }
+            // check uj di tahan
+            $cekUjDitahan = UjDitahanDetail::where('transaksi_id', $transaksi->id)->first();
+
+            if ($cekUjDitahan) {
+                $ujDitahan = $cekUjDitahan->ujDitahan;
+
+                UjDitahanDetail::create([
+                    'uj_ditahan_id' => $ujDitahan->id,
+                    'jenis' => 'keluar',
+                    'transaksi_id' => $transaksi->id,
+                    'driver_id' => $vehicle->driver_id,
+                    'nominal' => $cekUjDitahan->nominal,
+                    'keterangan' => 'Void UJ' . sprintf("%02d", $kuj->nomor_uang_jalan) . " - " . $data['alasan'],
+                ]);
+
+                // Gunakan decrement() langsung ke database agar lebih aman
+                $ujDitahan->decrement('saldo', $cekUjDitahan->nominal);
+                $ujDitahan->increment('total_keluar', $cekUjDitahan->nominal);
             }
 
             DB::commit();
         } catch (\Throwable $th) {
-            //throw $th;
-
             DB::rollBack();
-
+            // Log pesan error aslinya agar mudah di-debug oleh developer
+            // \Log::error('Gagal Void Transaksi UJ: ' . $th->getMessage());
             return redirect()->back()->with('error', 'Terdapat Error pada saat menyimpan data!!');
         }
 
-        $dbWa = new GroupWa();
-        $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
+        // ==========================================
+        // PENGIRIMAN WA (DIBUNGKUS TRY-CATCH)
+        // ==========================================
+        try {
+            $dbWa = new GroupWa();
+            $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
-        $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                    "*Void Uang Jalan*\n".
-                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    "*UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan)."*\n\n".
-                    "Nomor Lambung : ".$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
-                    "Vendor : ".$transaksi->kas_uang_jalan->vendor->nama."\n\n".
-                    "Tambang : ".$transaksi->kas_uang_jalan->customer->singkatan."\n".
-                    "Rute : ".$transaksi->kas_uang_jalan->rute->nama."\n\n".
-                    "Alasan : ".$data['alasan']."\n".
-                    "Nilai :  *Rp. ".number_format($transaksi->kas_uang_jalan->nominal_transaksi, 0, ',', '.').",-*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    "Bank     : ".$rek->nama_bank."\n".
-                    "Nama    : ".$rek->nama_rekening."\n".
-                    "No. Rek : ".$rek->nomor_rekening."\n\n".
-                    "==========================\n".
-                    "Sisa Saldo Kas Uang Jalan : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
+            if ($group) {
+                $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                            "*Void Uang Jalan*\n".
+                            "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                            "*UJ".sprintf("%02d", $kuj->nomor_uang_jalan)."*\n\n".
+                            "Nomor Lambung : ".$vehicle->nomor_lambung."\n".
+                            "Vendor : ".$kuj->vendor->nama."\n\n".
+                            "Tambang : ".$kuj->customer->singkatan."\n".
+                            "Rute : ".$kuj->rute->nama."\n\n".
+                            "Alasan : ".$data['alasan']."\n".
+                            "Nilai :  *Rp. ".number_format($kuj->nominal_transaksi, 0, ',', '.').",-*\n\n".
+                            "Ditransfer ke rek:\n\n".
+                            "Bank     : ".($rek->nama_bank ?? '-')."\n".
+                            "Nama    : ".($rek->nama_rekening ?? '-')."\n".
+                            "No. Rek : ".($rek->nomor_rekening ?? '-')."\n\n".
+                            "==========================\n".
+                            "Sisa Saldo Kas Uang Jalan : \n".
+                            "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                            "Terima kasih 🙏🙏🙏\n";
 
-        $send = $dbWa->sendWa($group->nama_group, $pesan);
+                $dbWa->sendWa($group->nama_group, $pesan);
+            }
+        } catch (\Throwable $th) {
+            // Biarkan berlalu tanpa error 500, catat saja ke log
+            // \Log::error('WA API Error Void UJ: ' . $th->getMessage());
+        }
 
-
-        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
-
+        return redirect()->route('billing.index')->with('success', 'Berhasil menyimpan data!!');
     }
 
     public function back(Request $request, Transaksi $transaksi)

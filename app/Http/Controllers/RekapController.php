@@ -1281,7 +1281,7 @@ class RekapController extends Controller
         // 1. Buat Query Dasar berdasarkan filter (tanpa eksekusi get/paginate dulu)
         $baseQuery = UjDitahan::where('bulan', $bulan)
             ->where('tahun', $tahun)
-            ->where('saldo', '<=', 0);
+            ->where('saldo', '=', 0);
 
         // 2. Hitung Total Masuk & Keluar dari seluruh data yang difilter
         $totalMasuk = $baseQuery->sum('total_masuk');
