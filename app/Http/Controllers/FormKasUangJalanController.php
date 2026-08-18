@@ -577,6 +577,8 @@ class FormKasUangJalanController extends Controller
                                 $additionalMessage.
                                 "Terima kasih 🙏🙏🙏\n";
 
+                $ujDitahanVehicle = UjDitahan::where('vehicle_id', $data['vehicle_id'])->where('saldo', '>', 0)->sum('saldo');
+
                 $pesanDriver2 =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Uang Jalan Ditahan*\n".
                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
@@ -593,8 +595,8 @@ class FormKasUangJalanController extends Controller
                     "==========================\n".
                     // "Sisa Saldo Kas Uang Jalan : \n".
                     // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    // "Grand Total UJ Ditahan : \n".
-                    // "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
+                    "Grand Total UJ Ditahan : \n".
+                    "Rp. ".number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
                     $additionalMessage.
                     "Terima kasih 🙏🙏🙏\n";
                 // delete all non numeric and space characters from $dbVehicle->driver->no_hp
