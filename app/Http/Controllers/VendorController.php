@@ -333,126 +333,246 @@ class VendorController extends Controller
         return redirect()->route('vendor.index')->with('success', 'Vendor berhasil dihapus');
     }
 
+    // public function uang_jalan($id)
+    // {
+    //     $rutes = Rute::all();
+
+    //     return view('database.vendor.create-uangjalan', [
+    //         'id' => $id,
+    //         'rutes' => $rutes,
+    //     ]);
+    // }
+
+    // public function uang_jalan_store(Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'vendor_id' => 'required|exists:vendors,id',
+    //         'rute_id' => 'required',
+    //         'rute_id.*' => 'required|exists:rutes,id',
+    //         'uang_jalan' => 'required',
+    //         'uang_jalan.*' => 'required',
+    //     ]);
+
+    //     $id = $data['vendor_id'];
+    //     $checkRole = Auth::user()->role;
+
+    //     $role = ['admin', 'su'];
+
+    //     if (!in_array($checkRole, $role)) {
+    //        for ($i=0; $i < count($data['hk_opname']); $i++) {
+    //             if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
+    //                 return redirect()->back()->with('error', 'Harga opname tidak sesuai');
+    //             }
+    //             if ($data['hk_titipan'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
+    //                 return redirect()->back()->with('error', 'Harga titipan tidak sesuai');
+    //             }
+    //        }
+    //     }
+
+    //     DB::beginTransaction();
+    //     try {
+    //         for ($i=0; $i < count($data['rute_id']); $i++) {
+    //             VendorUangJalan::create([
+    //                 'vendor_id' => $id,
+    //                 'rute_id' => $data['rute_id'][$i],
+    //                 'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
+    //                 'user_id' => Auth::user()->id,
+    //             ]);
+    //             DB::commit();
+    //         }
+    //     } catch (\Throwable $th) {
+    //         DB::rollback();
+    //         return redirect()->back()->with('error', $th->getMessage());
+    //     }
+
+
+
+    //     return redirect()->route('vendor.index')->with('success', 'Vendor berhasil ditambahkan');
+    // }
+
     public function uang_jalan($id)
     {
+        $vendor = Vendor::findOrFail($id);
         $rutes = Rute::all();
 
         return view('database.vendor.create-uangjalan', [
-            'id' => $id,
-            'rutes' => $rutes,
+            'vendor' => $vendor,
+            'rutes'  => $rutes,
         ]);
     }
 
     public function uang_jalan_store(Request $request)
     {
         $data = $request->validate([
-            'vendor_id' => 'required|exists:vendors,id',
-            'rute_id' => 'required',
-            'rute_id.*' => 'required|exists:rutes,id',
-            'uang_jalan' => 'required',
+            'vendor_id'    => 'required|exists:vendors,id',
+            'rute_id'      => 'required|array',
+            'rute_id.*'    => 'required|exists:rutes,id',
+            'uang_jalan'   => 'required|array',
             'uang_jalan.*' => 'required',
+            'uj_ditahan'   => 'nullable|array',
+            'uj_ditahan.*' => 'nullable',
         ]);
 
-        $id = $data['vendor_id'];
-        $checkRole = Auth::user()->role;
-
-        $role = ['admin', 'su'];
-
-        if (!in_array($checkRole, $role)) {
-           for ($i=0; $i < count($data['hk_opname']); $i++) {
-                if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
-                    return redirect()->back()->with('error', 'Harga opname tidak sesuai');
-                }
-                if ($data['hk_titipan'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
-                    return redirect()->back()->with('error', 'Harga titipan tidak sesuai');
-                }
-           }
-        }
+        $vendorId = $data['vendor_id'];
+        $userId = Auth::id();
+        $now = now();
 
         DB::beginTransaction();
         try {
-            for ($i=0; $i < count($data['rute_id']); $i++) {
-                VendorUangJalan::create([
-                    'vendor_id' => $id,
-                    'rute_id' => $data['rute_id'][$i],
-                    'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
-                    'user_id' => Auth::user()->id,
-                ]);
-                DB::commit();
+            $insertData = [];
+            foreach ($data['rute_id'] as $i => $ruteId) {
+                $ujVal = isset($data['uang_jalan'][$i]) ? (int) str_replace('.', '', $data['uang_jalan'][$i]) : 0;
+                $ditahanVal = isset($data['uj_ditahan'][$i]) ? (int) str_replace('.', '', $data['uj_ditahan'][$i]) : 0;
+
+                $insertData[] = [
+                    'vendor_id'     => $vendorId,
+                    'rute_id'       => $ruteId,
+                    'hk_uang_jalan' => $ujVal,
+                    'uj_ditahan'    => $ditahanVal,
+                    'created_at'    => $now,
+                    'updated_at'    => $now,
+                ];
             }
+
+            // Bulk insert sekaligus dalam 1 query
+            VendorUangJalan::insert($insertData);
+
+            DB::commit();
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->back()->with('error', $th->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data: ' . $th->getMessage());
         }
 
-
-
-        return redirect()->route('vendor.index')->with('success', 'Vendor berhasil ditambahkan');
+        return redirect()->route('vendor.index')->with('success', 'Kesepakatan Uang Jalan Vendor berhasil ditambahkan.');
     }
+
+    // public function uang_jalan_edit(Vendor $vendor)
+    // {
+
+    //     // $data = VendorUangJalan::findOrFail($id);
+    //     $vendor = $vendor->load('vendor_uang_jalan');
+    //     $rutes = Rute::all();
+
+    //     return view('database.vendor.edit-uangjalan', [
+    //         'data' => $vendor,
+    //         'rutes' => $rutes,
+    //     ]);
+    // }
+
+    // public function uang_jalan_update(Request $request, string $id)
+    // {
+    //     $data = $request->validate([
+    //         'vendor_id' => 'required|exists:vendors,id',
+    //         'rute_id' => 'required',
+    //         'rute_id.*' => 'required|exists:rutes,id',
+    //         'uang_jalan' => 'required',
+    //         'uang_jalan.*' => 'required',
+    //     ]);
+
+    //     $id = $data['vendor_id'];
+    //     $checkRole = Auth::user()->role;
+
+    //     // dd($checkRole);
+    //     $role = ['admin', 'su'];
+
+    //     if (!in_array($checkRole, $role)) {
+    //        for ($i=0; $i < count($data['hk_opname']); $i++) {
+    //             if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
+    //                 return redirect()->back()->with('error', 'Harga opname tidak sesuai');
+    //             }
+    //             if ($data['hk_titipan'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
+    //                 return redirect()->back()->with('error', 'Harga titipan tidak sesuai');
+    //             }
+    //        }
+    //     }
+    //     // dd($data);
+    //     DB::beginTransaction();
+    //     try {
+
+    //         VendorUangJalan::where('vendor_id', $id)->delete();
+
+    //         for ($i=0; $i < count($data['rute_id']); $i++) {
+    //             VendorUangJalan::create([
+    //                 'vendor_id' => $id,
+    //                 'rute_id' => $data['rute_id'][$i],
+    //                 'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
+    //                 'user_id' => Auth::user()->id,
+    //             ]);
+    //         }
+
+    //         DB::commit();
+
+    //     } catch (\Throwable $th) {
+    //         DB::rollback();
+    //         return redirect()->back()->with('error', $th->getMessage());
+    //     }
+    //         // delete vendor uang jalan
+
+    //     return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');
+    // }
 
     public function uang_jalan_edit(Vendor $vendor)
     {
+        $vendor->load('vendor_uang_jalan');
 
-        // $data = VendorUangJalan::findOrFail($id);
-        $vendor = $vendor->load('vendor_uang_jalan');
+        // KeyBy 'rute_id' untuk optimasi lookup di Blade menjadi O(1)
+        $vendorUjMap = $vendor->vendor_uang_jalan->keyBy('rute_id');
         $rutes = Rute::all();
 
         return view('database.vendor.edit-uangjalan', [
-            'data' => $vendor,
-            'rutes' => $rutes,
+            'data'        => $vendor,
+            'vendorUjMap' => $vendorUjMap,
+            'rutes'       => $rutes,
         ]);
     }
 
     public function uang_jalan_update(Request $request, string $id)
     {
         $data = $request->validate([
-            'vendor_id' => 'required|exists:vendors,id',
-            'rute_id' => 'required',
-            'rute_id.*' => 'required|exists:rutes,id',
-            'uang_jalan' => 'required',
+            'vendor_id'    => 'required|exists:vendors,id',
+            'rute_id'      => 'required|array',
+            'rute_id.*'    => 'required|exists:rutes,id',
+            'uang_jalan'   => 'required|array',
             'uang_jalan.*' => 'required',
+            'uj_ditahan'   => 'nullable|array',
+            'uj_ditahan.*' => 'nullable',
         ]);
 
-        $id = $data['vendor_id'];
-        $checkRole = Auth::user()->role;
+        $vendorId = $data['vendor_id'];
+        $userId = Auth::id();
+        $now = now();
 
-        // dd($checkRole);
-        $role = ['admin', 'su'];
-
-        if (!in_array($checkRole, $role)) {
-           for ($i=0; $i < count($data['hk_opname']); $i++) {
-                if ($data['hk_opname'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
-                    return redirect()->back()->with('error', 'Harga opname tidak sesuai');
-                }
-                if ($data['hk_titipan'][$i] != Rute::find($data['rute_id'][$i])->uang_jalan) {
-                    return redirect()->back()->with('error', 'Harga titipan tidak sesuai');
-                }
-           }
-        }
-        // dd($data);
         DB::beginTransaction();
         try {
+            // Hapus data lama untuk vendor ini
+            VendorUangJalan::where('vendor_id', $vendorId)->delete();
 
-            VendorUangJalan::where('vendor_id', $id)->delete();
+            // Buat batch array untuk bulk insert yang jauh lebih cepat
+            $insertData = [];
+            foreach ($data['rute_id'] as $i => $ruteId) {
+                $ujVal = isset($data['uang_jalan'][$i]) ? (int) str_replace('.', '', $data['uang_jalan'][$i]) : 0;
+                $ditahanVal = isset($data['uj_ditahan'][$i]) ? (int) str_replace('.', '', $data['uj_ditahan'][$i]) : 0;
 
-            for ($i=0; $i < count($data['rute_id']); $i++) {
-                VendorUangJalan::create([
-                    'vendor_id' => $id,
-                    'rute_id' => $data['rute_id'][$i],
-                    'hk_uang_jalan' => str_replace('.', '', $data['uang_jalan'][$i]),
-                    'user_id' => Auth::user()->id,
-                ]);
+                $insertData[] = [
+                    'vendor_id'     => $vendorId,
+                    'rute_id'       => $ruteId,
+                    'hk_uang_jalan' => $ujVal,
+                    'uj_ditahan'    => $ditahanVal,
+                    'created_at'    => $now,
+                    'updated_at'    => $now,
+                ];
             }
 
-            DB::commit();
+            // Eksekusi 1 query bulk insert
+            VendorUangJalan::insert($insertData);
 
+            DB::commit();
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->back()->with('error', $th->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data: ' . $th->getMessage());
         }
-            // delete vendor uang jalan
 
-        return redirect()->route('vendor.index')->with('success', 'Vendor berhasil diupdate');
+        return redirect()->route('vendor.index')->with('success', 'Kesepakatan Uang Jalan Vendor berhasil diperbarui.');
     }
 
 

@@ -302,17 +302,29 @@
 
     function loadCustomer(id, callback) {
         if (!id) return;
+
+        var vehicleId = $('#vehicle_id').val();
+        if (!vehicleId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Silahkan pilih Nomor Lambung terlebih dahulu sebelum memilih Tambang!',
+            });
+            $('#customer_id').val('').trigger('change.select2');
+            return;
+        }
+
         $.ajax({
             url: "{{route('kas-uang-jalan.get-rute')}}",
             method: "GET",
-            data: { id: id },
+            data: { id: id, vehicle_id: vehicleId },
             success: function (data) {
                 // Tambahkan data-uang-jalan pada opsi kosong
                 $('#rute_id').empty().append('<option value="" data-nominal="0" data-uang-jalan="0">-- Pilih Rute --</option>');
 
                 $.each(data.rute, function (index, value) {
                     let nominalUjDitahan = value.uj_ditahan || 0;
-                    let uangJalanKotor = value.uang_jalan || 0; // Ambil nilai uang_jalan dari tabel rutes
+                    let uangJalanKotor = value.hk_uang_jalan || 0; // Ambil nilai uang_jalan dari tabel rutes
 
                     // Sisipkan kedua nilai tersebut ke dalam tag option
                     $('#rute_id').append('<option value="' + value.id + '" data-nominal="' + nominalUjDitahan + '" data-uang-jalan="' + uangJalanKotor + '">' + value.nama + '</option>');
@@ -425,7 +437,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Validasi Gagal!',
-                        text: 'Nominal UJ ditahan pada rute ini belum di isi. silahkan hubungi admin!!',
+                        text: 'Nominal Kesepakan UJ ditahan pada rute ini belum di isi. silahkan hubungi admin!!',
                     });
 
                     $(this).val('').trigger('change.select2');
@@ -434,12 +446,12 @@
                 }
 
                 // Hitung netto dari rutes.uang_jalan - rutes.uj_ditahan
-                var nettoUangJalan = uangJalanKotor - nominalRute;
+                var nettoUangJalan = uangJalanKotor + nominalRute;
                 if (nettoUangJalan < 0) nettoUangJalan = 0;
 
-                $('#uang_jalan_kotor').val(parseFloat(uangJalanKotor).toLocaleString('id-ID'));
+                $('#uang_jalan_kotor').val(parseFloat(nettoUangJalan).toLocaleString('id-ID'));
                 $('#potongan_uj').val(parseFloat(nominalRute).toLocaleString('id-ID'));
-                $('#hk_uang_jalan').val(nettoUangJalan.toLocaleString('id-ID'));
+                $('#hk_uang_jalan').val(uangJalanKotor.toLocaleString('id-ID'));
 
             } else {
                 // JIKA TIDAK DITAHAN: Ambil uang jalan dari VendorUangJalan seperti biasa

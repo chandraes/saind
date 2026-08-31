@@ -13,6 +13,7 @@ class VendorUangJalan extends Model
         'vendor_id',
         'rute_id',
         'hk_uang_jalan',
+        'uj_ditahan',
     ];
 
     protected $appends = [
@@ -32,5 +33,10 @@ class VendorUangJalan extends Model
     public function getNfHkUangJalanAttribute()
     {
         return number_format($this->hk_uang_jalan, 0, ',', '.');
+    }
+
+    public function getNfUjDitahanAttribute()
+    {
+        return number_format($this->uj_ditahan, 0, ',', '.');
     }
 }

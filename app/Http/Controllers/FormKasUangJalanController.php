@@ -173,8 +173,19 @@ class FormKasUangJalanController extends Controller
     public function get_rute(Request $request)
     {
         $customer = Customer::find($request->id);
+
+        $customerRutes = $customer->rute()->select('rutes.id as id')->pluck('id')->toArray();
+
+        $vendor = Vehicle::find($request->vehicle_id)->vendor;
+
+        $rutes = VendorUangJalan::where('vendor_id', $vendor->id)
+                    ->join('rutes', 'rutes.id', 'vendor_uang_jalans.rute_id')
+                    ->select('rute_id as id', 'vendor_uang_jalans.uj_ditahan', 'vendor_uang_jalans.hk_uang_jalan', 'rutes.nama as nama')
+                    ->whereIn('rute_id', $customerRutes)
+                    ->get();
+
         $data = [
-                'rute' => $customer->rute,
+                'rute' => $rutes,
                 'gt_muat' => $customer->gt_muat,
             ];
         return response()->json($data);
@@ -211,7 +222,7 @@ class FormKasUangJalanController extends Controller
             'tarra_muat' => 'nullable|numeric',
         ]);
 
-        // dd($data);
+
 
 
         $data['tonase'] = str_replace(',', '.', $data['tonase']);
@@ -280,11 +291,27 @@ class FormKasUangJalanController extends Controller
         $vendor = $data['p_vendor'];
         $kendaraan = Vehicle::find($data['vehicle_id']);
 
+        $vendorKesepakatanUJ = VendorUangJalan::where('vendor_id', $vendor)
+                                ->where('rute_id', $data['rute_id'])
+                                ->first();
+
+
         $data['nominal_transaksi'] = str_replace('.', '', $data['nominal_transaksi']);
+
+        if($kendaraan->uj_ditahan == 1) {
+            if(!$vendorKesepakatanUJ || $vendorKesepakatanUJ->uj_ditahan <= 0) {
+                return redirect()->back()->with('error', 'Nominal UJ ditahan pada rute ini belum di isi. silahkan hubungi admin!!');
+            }
+
+            $data['nominal_transaksi'] = $data['nominal_transaksi'] + $vendorKesepakatanUJ->uj_ditahan;
+        }
+
         $data['transfer_ke'] = substr($data['transfer_ke'], 0, 15);
         $data['jenis_transaksi_id'] = 2;
         $data['tanggal'] = date('Y-m-d');
         $data['vendor_id'] = $vendor;
+
+
 
         $nominalDitahan = 0;
 
@@ -293,18 +320,14 @@ class FormKasUangJalanController extends Controller
         if (!in_array(Auth::user()->role, $auth)) {
 
             if ($kendaraan->uj_ditahan == 1) {
-                // Jika UJ Ditahan: Harga dari rutes.uang_jalan - rutes.uj_ditahan
-                $rute = Rute::find($data['rute_id']);
 
-                $uang_jalan_kotor = $rute->uang_jalan ?? 0;
-                $potongan = $rute->uj_ditahan ?? 0;
+                $uang_jalan_kotor = $vendorKesepakatanUJ->hk_uang_jalan ?? 0;
+                $potongan = $vendorKesepakatanUJ->uj_ditahan ?? 0;
 
-                $expectedNominal = $uang_jalan_kotor - $potongan;
+                $expectedNominal = $uang_jalan_kotor + $potongan;
             } else {
                 // Jika Normal: Harga dari VendorUangJalan
-                $expectedNominal = VendorUangJalan::where('vendor_id', $vendor)
-                                        ->where('rute_id', $data['rute_id'])
-                                        ->first()->hk_uang_jalan ?? 0;
+                $expectedNominal = $vendorKesepakatanUJ->hk_uang_jalan ?? 0;
             }
 
             if ($expectedNominal < 0) {
@@ -318,8 +341,10 @@ class FormKasUangJalanController extends Controller
         }
 
         if($kendaraan->uj_ditahan == 1){
-            $nominalDitahan = Rute::find($data['rute_id'])->uj_ditahan ?? 0;
+            $nominalDitahan = $vendorKesepakatanUJ->uj_ditahan ?? 0;
         }
+
+        // dd($nominalDitahan, $data['nominal_transaksi'], $kendaraan->uj_ditahan, $vendorKesepakatanUJ);
 
         unset($data['p_vendor']);
 
@@ -342,7 +367,7 @@ class FormKasUangJalanController extends Controller
         }
 
         // cek lock uj vehicle lalu cek tanggal kimper dan sim
-        $dbVehicle = Vehicle::find($data['vehicle_id']);
+        $dbVehicle = $kendaraan;
 
         if ($dbVehicle->lock_uj == 1) {
             $today = date('Y-m-d');
@@ -378,7 +403,7 @@ class FormKasUangJalanController extends Controller
                 'customer_id' => $data['customer_id'],
                 'rute_id' => $data['rute_id'],
                 'jenis_transaksi_id' => $data['jenis_transaksi_id'],
-                'nominal_transaksi' => $data['nominal_transaksi'] + $nominalDitahan,
+                'nominal_transaksi' => $data['nominal_transaksi'],
                 'saldo' => $data['saldo'],
                 'transfer_ke' => $data['transfer_ke'],
                 'bank' => $data['bank'],
@@ -511,7 +536,7 @@ class FormKasUangJalanController extends Controller
                     "Vendor : ".$store->vendor->nama."\n\n".
                     "Tambang : ".$store->customer->singkatan."\n".
                     "Rute : ".$store->rute->nama."\n\n".
-                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
+                    "Nilai :  *Rp. ".number_format($data['nominal_transaksi']-$nominalDitahan, 0, ',', '.').",-*\n\n".
                     "Ditransfer ke rek:\n\n".
                     "Bank     : ".$data['bank']."\n".
                     "Nama    : ".$data['transfer_ke']."\n".
@@ -555,8 +580,8 @@ class FormKasUangJalanController extends Controller
         $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         if($pesan2 != ''){
-
-            $send2 = $dbWa->sendWa($group->nama_group, $pesan2);
+            $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
+            $send2 = $dbWa->sendWa($groupUjDitahan->nama_group, $pesan2);
 
             if($dbVehicle->driver && $dbVehicle->driver->no_hp != null && $dbVehicle->driver->no_hp != '' && $dbVehicle->driver->no_hp != '-' && $dbVehicle->driver->no_hp != '0' && strlen($dbVehicle->driver->no_hp) >= 10){
 
@@ -568,7 +593,7 @@ class FormKasUangJalanController extends Controller
                                 "Vendor : ".$store->vendor->nama."\n\n".
                                 "Tambang : ".$store->customer->singkatan."\n".
                                 "Rute : ".$store->rute->nama."\n\n".
-                                "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
+                                "Nilai :  *Rp. ".number_format($data['nominal_transaksi']-$nominalDitahan, 0, ',', '.').",-*\n\n".
                                 "Ditransfer ke rek:\n\n".
                                 "Bank     : ".$data['bank']."\n".
                                 "Nama    : ".$data['transfer_ke']."\n".
@@ -620,7 +645,7 @@ class FormKasUangJalanController extends Controller
                             "Vendor : ".$store->vendor->nama."\n\n".
                             "Tambang : ".$store->customer->singkatan."\n".
                             "Rute : ".$store->rute->nama."\n\n".
-                            "Nilai :  *Rp. ".number_format($data['nominal_transaksi']+$nominalDitahan, 0, ',', '.').",-*\n\n".
+                            "Nilai :  *Rp. ".number_format($data['nominal_transaksi'], 0, ',', '.').",-*\n\n".
                             "Ditransfer ke rek:\n\n".
                             "Bank     : ".$data['bank']."\n".
                             "Nama    : ".$data['transfer_ke']."\n".
