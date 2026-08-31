@@ -60,7 +60,7 @@
                                                 <input type="text"
                                                        class="form-control number-format"
                                                        name="uj_ditahan[]"
-                                                       value="0"
+                                                       value="{{ number_format($v->uj_ditahan ?? 0, 0, ',', '.') }}"
                                                        required
                                                        @if(!$isAuthorized) readonly @endif>
                                             </td>
