@@ -478,6 +478,10 @@ class TransaksiController extends Controller
         $kuj = $transaksi->kas_uang_jalan;
         $vehicle = $kuj->vehicle;
 
+        if($transaksi->void == 1) {
+            return redirect()->back()->with('error', 'Transaksi sudah di void sebelumnya!!');
+        }
+
         try {
             DB::beginTransaction();
 
@@ -553,6 +557,12 @@ class TransaksiController extends Controller
             $dbWa = new GroupWa();
             $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
+            $nominalUjDitahan = 0;
+
+            if ($cekUjDitahan) {
+                $nominalUjDitahan = $cekUjDitahan->nominal;
+            }
+
             if ($group) {
                 $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*Void Uang Jalan*\n".
@@ -563,7 +573,7 @@ class TransaksiController extends Controller
                             "Tambang : ".$kuj->customer->singkatan."\n".
                             "Rute : ".$kuj->rute->nama."\n\n".
                             "Alasan : ".$data['alasan']."\n".
-                            "Nilai :  *Rp. ".number_format($kuj->nominal_transaksi, 0, ',', '.').",-*\n\n".
+                            "Nilai :  *Rp. ".number_format($kuj->nominal_transaksi-$nominalUjDitahan, 0, ',', '.').",-*\n\n".
                             "Ditransfer ke rek:\n\n".
                             "Bank     : ".($rek->nama_bank ?? '-')."\n".
                             "Nama    : ".($rek->nama_rekening ?? '-')."\n".
@@ -574,6 +584,33 @@ class TransaksiController extends Controller
                             "Terima kasih 🙏🙏🙏\n";
 
                 $dbWa->sendWa($group->nama_group, $pesan);
+
+                 if ($cekUjDitahan) {
+                    $pesan2 =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                                "*Void UJ Ditahan*\n".
+                                "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                                "*UJ".sprintf("%02d", $kuj->nomor_uang_jalan)."*\n\n".
+                                "Nomor Lambung : ".$vehicle->nomor_lambung."\n".
+                                "Vendor : ".$kuj->vendor->nama."\n\n".
+                                "Tambang : ".$kuj->customer->singkatan."\n".
+                                "Rute : ".$kuj->rute->nama."\n\n".
+                                "Alasan : ".$data['alasan']."\n".
+                                "Nilai :  *Rp. ".number_format($nominalUjDitahan, 0, ',', '.').",-*\n\n".
+                                "Ditransfer ke rek:\n\n".
+                                "Bank     : ".($rek->nama_bank ?? '-')."\n".
+                                "Nama    : ".($rek->nama_rekening ?? '-')."\n".
+                                "No. Rek : ".($rek->nomor_rekening ?? '-')."\n\n".
+                                "==========================\n".
+                                "Sisa Saldo Kas Uang Jalan : \n".
+                                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                                "Terima kasih 🙏🙏🙏\n";
+
+                    $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
+
+                    if ($groupUjDitahan) {
+                        $dbWa->sendWa($groupUjDitahan->nama_group, $pesan2);
+                    }
+                }
             }
         } catch (\Throwable $th) {
             // Biarkan berlalu tanpa error 500, catat saja ke log
