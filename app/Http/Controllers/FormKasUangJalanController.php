@@ -582,6 +582,9 @@ class FormKasUangJalanController extends Controller
         $send = $dbWa->sendWa($group->nama_group, $pesan);
 
         if($pesan2 != ''){
+
+            $dbWa->sendWa($group->nama_group, $pesan2);
+
             $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
             $send2 = $dbWa->sendWa($groupUjDitahan->nama_group, $pesan2);
 
