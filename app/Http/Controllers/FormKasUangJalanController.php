@@ -346,6 +346,7 @@ class FormKasUangJalanController extends Controller
 
         // dd($nominalDitahan, $data['nominal_transaksi'], $kendaraan->uj_ditahan, $vendorKesepakatanUJ);
 
+
         unset($data['p_vendor']);
 
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->orderBy('id', 'desc')->first();
@@ -554,6 +555,7 @@ class FormKasUangJalanController extends Controller
             $rekeningUjDitahan = Rekening::where('untuk', 'uang-jalan-ditahan')->first();
 
             $totalUjDitahan = UjDitahan::where('saldo', '>', '0')->sum('saldo');
+            $ujDitahanVehicle = UjDitahan::where('vehicle_id', $data['vehicle_id'])->where('saldo', '>', 0)->sum('saldo');
 
             $pesan2 =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Uang Jalan Ditahan*\n".
@@ -569,8 +571,8 @@ class FormKasUangJalanController extends Controller
                     "Nama    : ".$rekeningUjDitahan['nama_rekening']."\n".
                     "No. Rek : ".$rekeningUjDitahan['nomor_rekening']."\n\n".
                     "==========================\n".
-                    "Sisa Saldo Kas Uang Jalan : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    "Total Saldo UJ Ditahan : ".$kendaraan->nomor_lambung."\n".
+                    "Rp. ".number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
                     "Grand Total UJ Ditahan : \n".
                     "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
                     // $additionalMessage.
