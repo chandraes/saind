@@ -334,6 +334,33 @@
             </a>
         </div>
          @endif
+         <div class="col-md-2 text-center mt-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formMaintenanceNew">
+                <img src="{{asset('images/form-maintenance-new.svg')}}" alt="" width="70">
+                <h4 class="mt-3">FORM MAINTENANCE</h4>
+            </a>
+            <div class="modal fade" id="formMaintenanceNew" tabindex="-1" data-bs-backdrop="static"
+                data-bs-keyboard="false" role="dialog" aria-labelledby="fllTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="fllTitle">Form Maintenance</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <a href="{{route('billing.form-maintenance.ban-luar')}}" class="text-decoration-none">
+                                <img src="{{asset('images/db-ban.svg')}}" alt="" width="70">
+                                <h4 class="mt-3">BAN LUAR</h4>
+                            </a>
+                        </div>
+                        <div class="modal-footer">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     <hr>
     <br>

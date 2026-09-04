@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BanLog;
 use App\Models\Transaksi;
 use App\Models\Customer;
 use App\Models\Vendor;
@@ -505,6 +506,11 @@ class TransaksiController extends Controller
                 'no_rekening' => $rek->nomor_rekening ?? '-',
             ]);
 
+            // =========================================================
+            // ROLLBACK REALTIME RITASE BAN LUAR
+            // =========================================================
+            $this->rollbackRitaseBan($kuj->vehicle_id, $kuj->rute, $transaksi->id);
+
             // 2. Gunakan exists() dibanding first()
             // exists() jauh lebih cepat karena database berhenti mencari setelah menemukan 1 data cocok
             $cekMobil = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
@@ -618,6 +624,55 @@ class TransaksiController extends Controller
         }
 
         return redirect()->route('billing.index')->with('success', 'Berhasil menyimpan data!!');
+    }
+
+    /**
+    * Rollback ritase ban luar kendaraan berdasarkan transaksi
+    */
+    private function rollbackRitaseBan($vehicleId, $rute, $transaksiId)
+    {
+        if (!$transaksiId) {
+            return;
+        }
+
+        // 1. Cek apakah transaksi ini memiliki riwayat di tabel pivot
+        $pivotRecords = DB::table('ban_log_transaksi')->where('transaksi_id', $transaksiId)->get();
+
+        if ($pivotRecords->isNotEmpty()) {
+            // SKENARIO A: TRANSAKSI BARU (Ada di Pivot)
+            // Kurangi ritase tepat pada ban yang dulu terpasang saat transaksi ini dibuat
+            foreach ($pivotRecords as $record) {
+                BanLog::where('id', $record->ban_log_id)->update([
+                    'ritase' => DB::raw("GREATEST(0, ritase - {$record->nilai_ritase})")
+                ]);
+            }
+
+            // Hapus riwayat dari pivot agar tidak muncul di modal pop-up histori
+            DB::table('ban_log_transaksi')->where('transaksi_id', $transaksiId)->delete();
+
+        } else {
+            // SKENARIO B: TRANSAKSI LAMA (Belum tercatat di Pivot / Fallback)
+            if (!$rute || !$vehicleId) {
+                return;
+            }
+
+            $jarak = (float) $rute->jarak;
+            $penguranganRitase = ($jarak > 50) ? 1.0 : 0.5;
+
+            // Cari ID BanLog TERBARU untuk setiap posisi ban pada kendaraan tersebut
+            $activeBanLogIds = BanLog::where('vehicle_id', $vehicleId)
+                ->where('posisi_ban_id', '!=', 11) // Pastikan posisi ban bukan 11 (ban cadangan)
+                ->select(DB::raw('MAX(id) as id'))
+                ->groupBy('posisi_ban_id')
+                ->pluck('id');
+
+            // Kurangi ritase dengan proteksi GREATEST agar nilai tidak minus (< 0)
+            if ($activeBanLogIds->isNotEmpty()) {
+                BanLog::whereIn('id', $activeBanLogIds)->update([
+                    'ritase' => DB::raw("GREATEST(0, ritase - {$penguranganRitase})")
+                ]);
+            }
+        }
     }
 
     public function back(Request $request, Transaksi $transaksi)

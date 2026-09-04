@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BanLog;
 use App\Models\KasUangJalan;
 use App\Models\KasBesar;
 use App\Models\Rekening;
@@ -428,6 +429,11 @@ class FormKasUangJalanController extends Controller
             Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
 
             // =========================================================
+            // UPDATE REALTIME RITASE BAN LUAR
+            // =========================================================
+            $this->updateRitaseBan($data['vehicle_id'], $dbRute, $transaksi->id);
+
+            // =========================================================
             // PENCATATAN UJ DITAHAN (MASTER & DETAIL)
             // =========================================================
             if ($kendaraan->uj_ditahan == 1 && $nominalDitahan > 0) {
@@ -677,6 +683,42 @@ class FormKasUangJalanController extends Controller
             'saldo' => $saldo,
             'rekening' => $rekening,
         ]);
+    }
+
+    /**
+    * Update ritase ban luar kendaraan berdasarkan jarak rute transaksi
+    */
+    private function updateRitaseBan($vehicleId, $rute, $transaksiId)
+    {
+        if (!$rute || !$vehicleId || !$transaksiId) {
+            return;
+        }
+
+        $jarak = (float) $rute->jarak;
+        $tambahanRitase = ($jarak > 50) ? 1.0 : 0.5;
+
+        $activeBanLogIds = BanLog::where('vehicle_id', $vehicleId)->whereNot('posisi_ban_id', 11)
+            ->select(DB::raw('MAX(id) as id'))
+            ->groupBy('posisi_ban_id')
+            ->pluck('id');
+
+        if ($activeBanLogIds->isNotEmpty()) {
+            BanLog::whereIn('id', $activeBanLogIds)->increment('ritase', $tambahanRitase);
+
+            $pivotData = [];
+            $now = now();
+            foreach ($activeBanLogIds as $banLogId) {
+                $pivotData[] = [
+                    'ban_log_id'   => $banLogId,
+                    'transaksi_id' => $transaksiId, // ID Transaksi disimpan di sini
+                    'nilai_ritase' => $tambahanRitase,
+                    'created_at'   => $now,
+                    'updated_at'   => $now,
+                ];
+            }
+
+            DB::table('ban_log_transaksis')->insert($pivotData);
+        }
     }
 
     public function pengembalian_store(Request $request)

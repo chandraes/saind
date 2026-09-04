@@ -480,6 +480,7 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('statistik/ban-luar')->group(function(){
             Route::get('/', [App\Http\Controllers\BanController::class, 'index'])->name('statistik.ban-luar');
+            Route::get('/transaksi-ritase/{banLogId}', [App\Http\Controllers\BanController::class, 'get_transaksi_ritase'])->name('statistik.ban-luar.transaksi-ritase');
             Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\BanController::class, 'histori'])->name('statistik.ban-luar.histori');
             Route::get('/histori-data', [App\Http\Controllers\BanController::class, 'histori_data'])->name('statistik.ban-luar.histori-data');
             Route::post('/histori-destroy/{histori}', [App\Http\Controllers\BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
@@ -577,6 +578,8 @@ Route::group(['middleware' => ['auth']], function() {
         //Form maintenance
         Route::prefix('billing')->group(function(){
 
+
+
             Route::prefix('uj-ditahan')->group(function(){
                 Route::get('/', [BillingController::class, 'uj_ditahan'])->name('billing.uj-ditahan');
                 Route::get('/{id}', [BillingController::class, 'uj_ditahan_show'])->name('billing.uj-ditahan.show');
@@ -593,6 +596,14 @@ Route::group(['middleware' => ['auth']], function() {
             Route::post('/invoice-csr/{invoiceCsr}/lunas', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_lunas'])->name('invoice.csr.lunas');
 
             Route::prefix('form-maintenance')->group(function(){
+
+                Route::prefix('ban-luar')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'form_ganti_ban'])->name('billing.form-maintenance.ban-luar');
+                    Route::get('/get-vehicle-info', [App\Http\Controllers\BillingController::class, 'form_ganti_ban_get_vehicle_info'])->name('billing.form-maintenance.ban-luar.get-vehicle-info');
+                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'form_ganti_ban_store'])->name('billing.form-maintenance.ban-luar.store');
+                });
+
+
                 Route::get('/beli', [App\Http\Controllers\FormMaintenanceController::class, 'beli'])->name('billing.form-maintenance.beli');
                 Route::post('/barang-store', [App\Http\Controllers\FormMaintenanceController::class, 'beli_store'])->name('billing.form-maintenance.barang-store');
                 Route::post('/keranjang-store', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_store'])->name('billing.form-maintenance.keranjang-store');

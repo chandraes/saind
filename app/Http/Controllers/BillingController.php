@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AchievementHistory;
+use App\Models\BanLog;
 use App\Models\CostOperational;
 use App\Models\Customer;
 use App\Models\db\Kreditor;
@@ -14,6 +15,7 @@ use App\Models\InvoiceBonus;
 use App\Models\InvoiceCsr;
 use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
+use App\Models\PosisiBan;
 use App\Models\RekapGaji;
 use App\Models\Rekening;
 use App\Models\Sponsor;
@@ -21,6 +23,7 @@ use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use App\Models\UjDitahan;
 use App\Models\UjDitahanDetail;
+use App\Models\Vehicle;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -94,7 +97,155 @@ class BillingController extends Controller
         ]);
     }
 
-   public function uj_ditahan(Request $request)
+    public function form_ganti_ban()
+    {
+        $vehicles = Vehicle::whereNot('status', 'nonaktif')->orderBy('nomor_lambung', 'asc')->get();
+        $posisiBans = PosisiBan::all();
+
+        return view('billing.form-maintenance.ban-luar.index', [
+            'vehicles' => $vehicles,
+            'posisiBans' => $posisiBans,
+        ]);
+    }
+
+    public function form_ganti_ban_get_vehicle_info(Request $request)
+    {
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id'
+        ]);
+
+        $vehicleId = $request->vehicle_id;
+
+        // Ambil data kendaraan beserta relasi vendor/driver (sesuaikan query relasinya dengan database Anda)
+        $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
+                        ->leftJoin('vendors', 'vehicles.vendor_id', 'vendors.id') // Asumsi ada relasi ke vendor
+                        ->where('vehicles.id', $vehicleId)
+                        ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus', 'vendors.nama as nama_vendor')
+                        ->first();
+
+        // Ambil ban terbaru untuk setiap posisi di kendaraan tersebut
+        $banLogs = BanLog::where('vehicle_id', $vehicleId)
+                        ->orderBy('created_at', 'desc')
+                        ->get()
+                        ->unique('posisi_ban_id')
+                        ->keyBy('posisi_ban_id');
+
+        // Mapping posisi ban dengan data log ban saat ini
+        $statusBan = PosisiBan::all()->map(function($posisi) use ($banLogs) {
+            $log = $banLogs->get($posisi->id);
+            return [
+                'posisi'  => $posisi->nama,
+                'merk'    => $log ? $log->merk : '-',
+                'no_seri' => $log ? $log->no_seri : '-',
+                'kondisi' => $log ? $log->kondisi . '%' : '-',
+                'ritase'  => $log ? number_format($log->ritase, 1, ',', '.') : '-',
+            ];
+        });
+
+        return response()->json([
+            'vehicle' => [
+                'nomor_lambung' => $vehicle->nomor_lambung,
+                'vendor'        => $vehicle->nama_vendor ?? '-',
+                'pengurus'      => $vehicle->pengurus ?? '-',
+                'driver'        => $vehicle->nama_driver ?? '-'
+            ],
+            'tires' => $statusBan
+        ]);
+    }
+
+   public function form_ganti_ban_store(Request $request)
+    {
+        // Validasi dasar
+        $validated = $request->validate([
+            'vehicle_id'    => 'required|exists:vehicles,id',
+            'posisi_ban_id' => 'required|exists:posisi_bans,id',
+            'sumber_ban'    => 'required|in:baru,serep', // Tambahan parameter
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            if ($validated['sumber_ban'] === 'serep') {
+                // ==========================================
+                // LOGIKA 1: ROTASI DARI BAN SEREP
+                // ==========================================
+
+                // Pastikan user tidak merotasi ban serep ke posisi ban serep (11)
+                if ($validated['posisi_ban_id'] == 11) {
+                    throw new \Exception('Tidak bisa merotasi ban serep ke posisi ban serep itu sendiri.');
+                }
+
+                // Ambil data Ban Serep saat ini
+                $banSerep = BanLog::where('vehicle_id', $validated['vehicle_id'])
+                                  ->where('posisi_ban_id', 11)
+                                  ->orderBy('created_at', 'desc')
+                                  ->first();
+
+                if (!$banSerep || $banSerep->merk == '-') {
+                    throw new \Exception('Data Ban Serep tidak ditemukan / kosong pada unit ini.');
+                }
+
+                // Ambil data Ban Lama yang akan diganti (untuk dijadikan serep)
+                $banLama = BanLog::where('vehicle_id', $validated['vehicle_id'])
+                                 ->where('posisi_ban_id', $validated['posisi_ban_id'])
+                                 ->orderBy('created_at', 'desc')
+                                 ->first();
+
+                // A. Catat Ban Serep pindah ke Posisi Tujuan
+                BanLog::create([
+                    'vehicle_id'    => $validated['vehicle_id'],
+                    'posisi_ban_id' => $validated['posisi_ban_id'],
+                    'merk'          => $banSerep->merk,
+                    'no_seri'       => $banSerep->no_seri,
+                    'kondisi'       => $banSerep->kondisi,
+                    'ritase'        => $banSerep->ritase, // Bawa histori ritasenya
+                ]);
+
+                // B. Catat Ban Lama pindah ke Posisi Serep (11)
+                if ($banLama) {
+                    BanLog::create([
+                        'vehicle_id'    => $validated['vehicle_id'],
+                        'posisi_ban_id' => 11,
+                        'merk'          => $banLama->merk,
+                        'no_seri'       => $banLama->no_seri,
+                        'kondisi'       => $banLama->kondisi,
+                        'ritase'        => $banLama->ritase,
+                    ]);
+                }
+
+            } else {
+                // ==========================================
+                // LOGIKA 2: PASANG BAN BARU
+                // ==========================================
+
+                // Validasi input khusus ban baru
+                $request->validate([
+                    'merk'    => 'required|string|max:100',
+                    'no_seri' => 'required|string|max:100',
+                    'kondisi' => 'required|numeric|min:1|max:100',
+                ]);
+
+                BanLog::create([
+                    'vehicle_id'    => $validated['vehicle_id'],
+                    'posisi_ban_id' => $validated['posisi_ban_id'],
+                    'merk'          => strtoupper($request->merk),
+                    'no_seri'       => strtoupper($request->no_seri),
+                    'kondisi'       => $request->kondisi,
+                    'ritase'        => 0, // Ban baru mulai dari 0
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->back()
+                             ->with('success', 'Pemasangan ban berhasil dicatat.');
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->with('error', 'Gagal memproses ban: ' . $th->getMessage());
+        }
+    }
+
+    public function uj_ditahan(Request $request)
     {
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
