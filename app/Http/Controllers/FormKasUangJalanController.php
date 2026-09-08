@@ -697,7 +697,7 @@ class FormKasUangJalanController extends Controller
         $jarak = (float) $rute->jarak;
         $tambahanRitase = ($jarak > 50) ? 1.0 : 0.5;
 
-        $activeBanLogIds = BanLog::where('vehicle_id', $vehicleId)->whereNot('posisi_ban_id', 11)
+        $activeBanLogIds = BanLog::where('vehicle_id', $vehicleId)
             ->select(DB::raw('MAX(id) as id'))
             ->groupBy('posisi_ban_id')
             ->pluck('id');

@@ -661,7 +661,6 @@ class TransaksiController extends Controller
 
             // Cari ID BanLog TERBARU untuk setiap posisi ban pada kendaraan tersebut
             $activeBanLogIds = BanLog::where('vehicle_id', $vehicleId)
-                ->where('posisi_ban_id', '!=', 11) // Pastikan posisi ban bukan 11 (ban cadangan)
                 ->select(DB::raw('MAX(id) as id'))
                 ->groupBy('posisi_ban_id')
                 ->pluck('id');

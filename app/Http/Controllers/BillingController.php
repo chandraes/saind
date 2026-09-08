@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AchievementHistory;
+use App\Models\BanGantiCart;
+use App\Models\BanGantiInvoice;
+use App\Models\BanGantiInvoiceDetail;
 use App\Models\BanLog;
 use App\Models\CostOperational;
 use App\Models\Customer;
@@ -25,9 +28,12 @@ use App\Models\UjDitahan;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\KasBesarService;
+use App\Services\KasVendorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class BillingController extends Controller
 {
@@ -102,12 +108,20 @@ class BillingController extends Controller
         $vehicles = Vehicle::whereNot('status', 'nonaktif')->orderBy('nomor_lambung', 'asc')->get();
         $posisiBans = PosisiBan::all();
 
+        // Cek apakah ada keranjang aktif yang mengunci unit
+        $activeCart = BanGantiCart::first();
+        $lockedVehicleId = $activeCart ? $activeCart->vehicle_id : null;
+        $cartCount = BanGantiCart::count();
+
         return view('billing.form-maintenance.ban-luar.index', [
-            'vehicles' => $vehicles,
-            'posisiBans' => $posisiBans,
+            'vehicles'        => $vehicles,
+            'posisiBans'      => $posisiBans,
+            'lockedVehicleId' => $lockedVehicleId,
+            'cartCount'       => $cartCount,
         ]);
     }
 
+    // Get Informasi Kendaraan, Status Ban, & List Posisi Terpakai di Keranjang
     public function form_ganti_ban_get_vehicle_info(Request $request)
     {
         $request->validate([
@@ -116,21 +130,18 @@ class BillingController extends Controller
 
         $vehicleId = $request->vehicle_id;
 
-        // Ambil data kendaraan beserta relasi vendor/driver (sesuaikan query relasinya dengan database Anda)
         $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
-                        ->leftJoin('vendors', 'vehicles.vendor_id', 'vendors.id') // Asumsi ada relasi ke vendor
+                        ->leftJoin('vendors', 'vehicles.vendor_id', 'vendors.id')
                         ->where('vehicles.id', $vehicleId)
                         ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus', 'vendors.nama as nama_vendor')
                         ->first();
 
-        // Ambil ban terbaru untuk setiap posisi di kendaraan tersebut
         $banLogs = BanLog::where('vehicle_id', $vehicleId)
                         ->orderBy('created_at', 'desc')
                         ->get()
                         ->unique('posisi_ban_id')
                         ->keyBy('posisi_ban_id');
 
-        // Mapping posisi ban dengan data log ban saat ini
         $statusBan = PosisiBan::all()->map(function($posisi) use ($banLogs) {
             $log = $banLogs->get($posisi->id);
             return [
@@ -142,6 +153,14 @@ class BillingController extends Controller
             ];
         });
 
+        // Load item keranjang & ID posisi ban yang sudah digunakan
+        $cartItems = BanGantiCart::with('posisiBan')
+                    ->where('vehicle_id', $vehicleId)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+
+        $usedPosisiIds = $cartItems->pluck('posisi_ban_id')->toArray();
+
         return response()->json([
             'vehicle' => [
                 'nomor_lambung' => $vehicle->nomor_lambung,
@@ -149,100 +168,290 @@ class BillingController extends Controller
                 'pengurus'      => $vehicle->pengurus ?? '-',
                 'driver'        => $vehicle->nama_driver ?? '-'
             ],
-            'tires' => $statusBan
+            'tires'           => $statusBan,
+            'used_posisi_ids' => $usedPosisiIds,
+            'cart_count'      => $cartItems->count(),
         ]);
     }
 
-   public function form_ganti_ban_store(Request $request)
+    // 1. Tambah Ban ke Keranjang via AJAX
+    public function form_ganti_ban_cart_add(Request $request)
     {
-        // Validasi dasar
         $validated = $request->validate([
             'vehicle_id'    => 'required|exists:vehicles,id',
             'posisi_ban_id' => 'required|exists:posisi_bans,id',
-            'sumber_ban'    => 'required|in:baru,serep', // Tambahan parameter
+            'sumber_ban'    => 'required|in:baru,serep',
+            'merk'          => 'required_if:sumber_ban,baru|nullable|string|max:100',
+            'no_seri'       => 'required_if:sumber_ban,baru|nullable|string|max:100',
+            'kondisi'       => 'required_if:sumber_ban,baru|nullable|numeric|min:1|max:100',
         ]);
+
+        // Proteksi 1: Kunci kendaraan (Cek apakah ada keranjang unit lain yang menggantung)
+        $existingCart = BanGantiCart::first();
+        if ($existingCart && $existingCart->vehicle_id != $validated['vehicle_id']) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Selesaikan atau kosongkan keranjang unit sebelumnya terlebih dahulu!'
+            ], 422);
+        }
+
+        // Proteksi 2: Mencegah input posisi ban yang sama lebih dari sekali
+        $existsPosisi = BanGantiCart::where('vehicle_id', $validated['vehicle_id'])
+                                   ->where('posisi_ban_id', $validated['posisi_ban_id'])
+                                   ->exists();
+        if ($existsPosisi) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Posisi ban ini sudah ada di dalam keranjang!'
+            ], 422);
+        }
+
+        try {
+            BanGantiCart::create([
+                'vehicle_id'    => $validated['vehicle_id'],
+                'posisi_ban_id' => $validated['posisi_ban_id'],
+                'sumber_ban'    => $validated['sumber_ban'],
+                'merk'          => strtoupper($validated['merk'] ?? '-'),
+                'no_seri'       => strtoupper($validated['no_seri'] ?? '-'),
+                'kondisi'       => $validated['kondisi'] ?? 100,
+            ]);
+
+            $totalCart = BanGantiCart::where('vehicle_id', $validated['vehicle_id'])->count();
+
+            return response()->json([
+                'status'     => 'success',
+                'message'    => 'Ban berhasil ditambahkan ke keranjang.',
+                'cart_count' => $totalCart
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json(['status' => 'error', 'message' => $th->getMessage()], 500);
+        }
+    }
+
+    // 2. Hapus Item dari Keranjang via AJAX
+    public function form_ganti_ban_cart_delete($id)
+    {
+        $cart = BanGantiCart::find($id);
+        if ($cart) {
+            $vehicleId = $cart->vehicle_id;
+            $cart->delete();
+            $totalCart = BanGantiCart::where('vehicle_id', $vehicleId)->count();
+        } else {
+            $totalCart = 0;
+        }
+
+        return response()->json([
+            'status'     => 'success',
+            'message'    => 'Item keranjang berhasil dihapus.',
+            'cart_count' => $totalCart
+        ]);
+    }
+
+    // 3. Kosongkan Keranjang via AJAX
+    public function form_ganti_ban_cart_clear($vehicle_id)
+    {
+        BanGantiCart::where('vehicle_id', $vehicle_id)->delete();
+        return response()->json(['status' => 'success', 'message' => 'Keranjang berhasil dikosongkan.']);
+    }
+
+    // 4. Halaman Terpisah: Konfirmasi Invoice & Review Keranjang
+    public function form_ganti_ban_confirm()
+    {
+        $cartItems = BanGantiCart::with(['vehicle', 'posisiBan'])->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('billing.form-maintenance.ban-luar')
+                             ->with('error', 'Keranjang masih kosong. Silahkan pilih ban terlebih dahulu.');
+        }
+
+        $vehicle = $cartItems->first()->vehicle;
+        $vehicleInfo = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
+                            ->leftJoin('vendors', 'vehicles.vendor_id', 'vendors.id')
+                            ->where('vehicles.id', $vehicle->id)
+                            ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus', 'vendors.nama as nama_vendor')
+                            ->first();
+
+        return view('billing.form-maintenance.ban-luar.cart', [
+            'vehicle'   => $vehicleInfo,
+            'cartItems' => $cartItems,
+        ]);
+    }
+
+    // 5. Checkout Final Invoice
+    public function form_ganti_ban_checkout(
+        Request $request,
+        KasBesarService $kasBesarService,
+        KasVendorService $kasVendorService
+    )
+    {
+        // 1. Sanitasi Input Cleave.js
+        if ($request->filled('total_nominal')) {
+            $cleanedNominal = preg_replace('/[^0-9]/', '', $request->total_nominal);
+            $request->merge([
+                'total_nominal' => $cleanedNominal
+            ]);
+        }
+
+        // 2. Validasi Request
+        $validated = $request->validate([
+            'vehicle_id'    => 'required|exists:vehicles,id',
+            'pembayaran'    => ['required', \Illuminate\Validation\Rule::in(array_keys(BanGantiInvoice::getMetodePembayaranOptions()))],
+            'total_nominal' => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|numeric|min:1',
+            'nama_bank'      => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|string|max:50',
+            'nomor_rekening' => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|string|max:50',
+            'nama_rekening'  => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|string|max:100',
+        ]);
+
+        $vehicleId = $validated['vehicle_id'];
+
+        // --- PERBAIKAN: Ambil data Vehicle di sini agar $vehicleInfo dikenali di bawah ---
+        $vehicleInfo = \App\Models\Vehicle::findOrFail($vehicleId);
+
+        $cartItems = BanGantiCart::where('vehicle_id', $vehicleId)->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('billing.form-maintenance.ban-luar')->with('error', 'Keranjang masih kosong!');
+        }
 
         try {
             DB::beginTransaction();
 
-            if ($validated['sumber_ban'] === 'serep') {
-                // ==========================================
-                // LOGIKA 1: ROTASI DARI BAN SEREP
-                // ==========================================
+            $totalNominal = $validated['pembayaran'] === BanGantiInvoice::PEMBAYARAN_KAS_BESAR ? $validated['total_nominal'] : 0;
+            $noInvoice = 'INV-BAN-' . date('YmdHis') . '-' . $vehicleInfo->nomor_lambung;
 
-                // Pastikan user tidak merotasi ban serep ke posisi ban serep (11)
-                if ($validated['posisi_ban_id'] == 11) {
-                    throw new \Exception('Tidak bisa merotasi ban serep ke posisi ban serep itu sendiri.');
-                }
+            // A. Simpan Header Invoice
+            $invoice = BanGantiInvoice::create([
+                'no_invoice'    => $noInvoice,
+                'vehicle_id'    => $vehicleId,
+                'pembayaran'    => $validated['pembayaran'],
+                'total_nominal' => $totalNominal,
+                'tanggal'       => date('Y-m-d'),
+            ]);
 
-                // Ambil data Ban Serep saat ini
-                $banSerep = BanLog::where('vehicle_id', $validated['vehicle_id'])
-                                  ->where('posisi_ban_id', 11)
-                                  ->orderBy('created_at', 'desc')
-                                  ->first();
+            // B. Iterasi Detail Ban & Simpan Log
+            foreach ($cartItems as $item) {
+                if ($item->sumber_ban === 'serep') {
+                    $banSerep = BanLog::where('vehicle_id', $vehicleId)
+                                      ->where('posisi_ban_id', 11)
+                                      ->orderBy('created_at', 'desc')
+                                      ->first();
 
-                if (!$banSerep || $banSerep->merk == '-') {
-                    throw new \Exception('Data Ban Serep tidak ditemukan / kosong pada unit ini.');
-                }
+                    $banLama = BanLog::where('vehicle_id', $vehicleId)
+                                     ->where('posisi_ban_id', $item->posisi_ban_id)
+                                     ->orderBy('created_at', 'desc')
+                                     ->first();
 
-                // Ambil data Ban Lama yang akan diganti (untuk dijadikan serep)
-                $banLama = BanLog::where('vehicle_id', $validated['vehicle_id'])
-                                 ->where('posisi_ban_id', $validated['posisi_ban_id'])
-                                 ->orderBy('created_at', 'desc')
-                                 ->first();
+                    $banLogTujuan = BanLog::create([
+                        'vehicle_id'    => $vehicleId,
+                        'posisi_ban_id' => $item->posisi_ban_id,
+                        'merk'          => $banSerep->merk ?? '-',
+                        'no_seri'       => $banSerep->no_seri ?? '-',
+                        'kondisi'       => $banSerep->kondisi ?? 100,
+                        'ritase'        => $banSerep->ritase ?? 0,
+                    ]);
 
-                // A. Catat Ban Serep pindah ke Posisi Tujuan
-                BanLog::create([
-                    'vehicle_id'    => $validated['vehicle_id'],
-                    'posisi_ban_id' => $validated['posisi_ban_id'],
-                    'merk'          => $banSerep->merk,
-                    'no_seri'       => $banSerep->no_seri,
-                    'kondisi'       => $banSerep->kondisi,
-                    'ritase'        => $banSerep->ritase, // Bawa histori ritasenya
-                ]);
-
-                // B. Catat Ban Lama pindah ke Posisi Serep (11)
-                if ($banLama) {
-                    BanLog::create([
-                        'vehicle_id'    => $validated['vehicle_id'],
-                        'posisi_ban_id' => 11,
-                        'merk'          => $banLama->merk,
-                        'no_seri'       => $banLama->no_seri,
-                        'kondisi'       => $banLama->kondisi,
-                        'ritase'        => $banLama->ritase,
+                    if ($banLama) {
+                        BanLog::create([
+                            'vehicle_id'    => $vehicleId,
+                            'posisi_ban_id' => 11,
+                            'merk'          => $banLama->merk,
+                            'no_seri'       => $banLama->no_seri,
+                            'kondisi'       => $banLama->kondisi,
+                            'ritase'        => $banLama->ritase,
+                        ]);
+                    }
+                } else {
+                    $banLogTujuan = BanLog::create([
+                        'vehicle_id'    => $vehicleId,
+                        'posisi_ban_id' => $item->posisi_ban_id,
+                        'merk'          => $item->merk,
+                        'no_seri'       => $item->no_seri,
+                        'kondisi'       => $item->kondisi,
+                        'ritase'        => 0,
                     ]);
                 }
 
-            } else {
-                // ==========================================
-                // LOGIKA 2: PASANG BAN BARU
-                // ==========================================
-
-                // Validasi input khusus ban baru
-                $request->validate([
-                    'merk'    => 'required|string|max:100',
-                    'no_seri' => 'required|string|max:100',
-                    'kondisi' => 'required|numeric|min:1|max:100',
-                ]);
-
-                BanLog::create([
-                    'vehicle_id'    => $validated['vehicle_id'],
-                    'posisi_ban_id' => $validated['posisi_ban_id'],
-                    'merk'          => strtoupper($request->merk),
-                    'no_seri'       => strtoupper($request->no_seri),
-                    'kondisi'       => $request->kondisi,
-                    'ritase'        => 0, // Ban baru mulai dari 0
+                // Detail Invoice
+                BanGantiInvoiceDetail::create([
+                    'ban_ganti_invoice_id' => $invoice->id,
+                    'ban_log_id'           => $banLogTujuan->id ?? null,
+                    'posisi_ban_id'        => $item->posisi_ban_id,
+                    'sumber_ban'           => $item->sumber_ban,
+                    'merk'                 => $item->merk,
+                    'no_seri'              => $item->no_seri,
+                    'kondisi'              => $item->kondisi,
                 ]);
             }
 
+            // C. Pemotongan Kas Besar (Jika Kas Besar)
+            if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_KAS_BESAR && $totalNominal > 0) {
+
+                // Panggil KasBesarService yang di-inject di parameter
+                $kb = $kasBesarService->potongSaldo([
+                    'nominal_transaksi' => $totalNominal,
+                    'uraian'            => 'Penggantian Ban Luar Unit ' . $vehicleInfo->nomor_lambung,
+                    'bank'         => $request->nama_bank,
+                    'ban_ganti_invoice_id' => $invoice->id,
+                    'no_rekening'    => $request->nomor_rekening,
+                    'transfer_ke'     => $request->nama_rekening,
+                ]);
+
+                // Panggil KasVendorService jika unit memiliki relasi vendor
+                if ($vehicleInfo->vendor_id) {
+                    $kv = $kasVendorService->tambahHutang([
+                        'vendor_id'         => $vehicleInfo->vendor_id,
+                        'vehicle_id'        => $vehicleId,
+                        'nominal_transaksi' => $totalNominal,
+                        'ban_ganti_invoice_id' => $invoice->id,
+                        'uraian'            => 'Penggantian Ban '.' (' . $noInvoice . ')',
+                    ]);
+                }
+            }
+
+            // D. Bersihkan Keranjang
+            BanGantiCart::where('vehicle_id', $vehicleId)->delete();
+
             DB::commit();
-            return redirect()->back()
-                             ->with('success', 'Pemasangan ban berhasil dicatat.');
+
 
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->back()->withInput()->with('error', 'Gagal memproses ban: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Gagal memproses checkout: ' . $th->getMessage());
         }
+
+        if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_KAS_BESAR && $totalNominal > 0) {
+            try {
+                $dbWa = new GroupWa();
+
+                $group = $dbWa->where('untuk', 'kas-besar')->first();
+                $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "*FORM PENGGANTIAN BAN*\n".
+                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                        "Uraian :  ".$kb['uraian']."\n".
+                        "Nilai :  *Rp. ".number_format($kb['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        "Bank     : ".$kb['bank']."\n".
+                        "Nama    : ".$kb['transfer_ke']."\n".
+                        "No. Rek : ".$kb['no_rekening']."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Besar : \n".
+                        "Rp. ".number_format($kb->saldo, 0, ',', '.')."\n\n".
+                        "Total Modal Investor : \n".
+                        "Rp. ".number_format($kb->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                        "Terima kasih 🙏🙏🙏\n";
+
+                $dbWa->sendWa($group->nama_group, $pesan);
+
+            } catch (\Throwable $th) {
+                //throw $th;
+                return redirect()->route('billing.form-maintenance.ban-luar')
+                                 ->with('error', 'Penggantian ban berhasil diproses, namun gagal mengirim notifikasi WhatsApp: ' . $th->getMessage());
+            }
+        }
+
+
+        return redirect()->route('billing.form-maintenance.ban-luar')
+                             ->with('success', 'Penggantian ban berhasil diproses. Invoice ' . $noInvoice . ' diterbitkan.');
     }
 
     public function uj_ditahan(Request $request)
@@ -1507,7 +1716,7 @@ class BillingController extends Controller
     // ====================================================================
     // 3. FUNGSI WHATSAPP (REUSABLE / SATU FUNGSI)
     // ====================================================================
-    protected function sendWhatsAppNotification($store, $jenis)
+    protected function sendWhatsAppNotification($store, $jenis, $isTitle = '')
     {
         $dbWa = new GroupWa();
         $group = $dbWa->where('untuk', 'kas-besar')->first();
@@ -1515,7 +1724,7 @@ class BillingController extends Controller
         if ($group) {
             // Tentukan UI Notifikasi berdasarkan parameter $jenis
             $emoji = $jenis === 'masuk' ? "🔵🔵🔵🔵🔵🔵🔵🔵🔵" : "🔴🔴🔴🔴🔴🔴🔴🔴🔴";
-            $title = $jenis === 'masuk' ? "*FORM ACHIEVEMENT (MASUK)*" : "*FORM ACHIEVEMENT (KELUAR)*";
+            $title = $jenis === 'masuk' ? ($isTitle != '' ? $isTitle : "*FORM ACHIEVEMENT (MASUK)*") : ($isTitle != '' ? $isTitle : "*FORM ACHIEVEMENT (KELUAR)*");
 
             $pesan = "{$emoji}\n" .
                     "{$title}\n" .

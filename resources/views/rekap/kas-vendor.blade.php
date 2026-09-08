@@ -115,7 +115,11 @@
                             {{$d->uraian}}
                         </a>
                         @else
-                        {{$d->uraian}}
+                            @if ($d->ban_ganti_invoice_id)
+                                <a href="{{route('rekap.maintenance.ban-luar.show', ['id' => $d->ban_ganti_invoice_id])}}">
+
+                            @endif
+                            {{$d->uraian}}
                         @endif
                     </td>
                     <td class="text-center align-middle">{{$d->vehicle_id ? $d->vehicle->nomor_lambung : ''}}</td>

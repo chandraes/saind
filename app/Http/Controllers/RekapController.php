@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
+use App\Models\BanGantiInvoice;
 use App\Models\BarangMaintenance;
 use App\Models\KasKecil;
 use App\Models\KasBesar;
@@ -1301,5 +1302,47 @@ class RekapController extends Controller
         // Tambahkan variabel total ke compact()
         return view('rekap.uj-ditahan.index', compact('data', 'bulan', 'tahun', 'listTahun', 'totalMasuk', 'totalKeluar'));
     }
+
+    public function ban_luar(Request $request)
+    {
+        $startDate = $request->input('start_date', date('Y-m-01'));
+        $endDate   = $request->input('end_date', date('Y-m-t'));
+        $pembayaran = $request->input('pembayaran');
+
+        $query = BanGantiInvoice::with(['vehicle.vendor', 'details'])
+            ->whereBetween('tanggal', [$startDate, $endDate]);
+
+        if ($pembayaran) {
+            $query->where('pembayaran', $pembayaran);
+        }
+
+        $invoices = $query->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
+
+        // Ringkasan Statistik
+        $totalTransaksi      = $invoices->count();
+        $totalKasBesar       = $invoices->where('pembayaran', BanGantiInvoice::PEMBAYARAN_KAS_BESAR)->sum('total_nominal');
+        $countDibayarSendiri = $invoices->where('pembayaran', BanGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)->count();
+
+        return view('rekap.maintenance.ban-luar.index', compact(
+            'invoices',
+            'startDate',
+            'endDate',
+            'pembayaran',
+            'totalTransaksi',
+            'totalKasBesar',
+            'countDibayarSendiri'
+        ));
+    }
+
+    /**
+     * Halaman Detail Invoice Penggantian Ban
+     */
+    public function ban_luar_detail($id)
+    {
+        $invoice = BanGantiInvoice::with(['vehicle', 'details.posisiBan'])->findOrFail($id);
+
+        return view('rekap.maintenance.ban-luar.show', compact('invoice'));
+    }
+
 
 }

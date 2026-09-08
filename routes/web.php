@@ -600,7 +600,17 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::prefix('ban-luar')->group(function(){
                     Route::get('/', [App\Http\Controllers\BillingController::class, 'form_ganti_ban'])->name('billing.form-maintenance.ban-luar');
                     Route::get('/get-vehicle-info', [App\Http\Controllers\BillingController::class, 'form_ganti_ban_get_vehicle_info'])->name('billing.form-maintenance.ban-luar.get-vehicle-info');
-                    Route::post('/store', [App\Http\Controllers\BillingController::class, 'form_ganti_ban_store'])->name('billing.form-maintenance.ban-luar.store');
+
+                    // 2. Operasi Keranjang AJAX
+                    Route::post('/cart/add', [BillingController::class, 'form_ganti_ban_cart_add'])->name('billing.form-maintenance.ban-luar.cart.add');
+                    Route::delete('/cart/delete/{id}', [BillingController::class, 'form_ganti_ban_cart_delete'])->name('billing.form-maintenance.ban-luar.cart.delete');
+                    Route::delete('/cart/clear/{vehicle_id}', [BillingController::class, 'form_ganti_ban_cart_clear'])->name('billing.form-maintenance.ban-luar.cart.clear');
+
+                    // 3. Halaman Terpisah Konfirmasi Invoice
+                    Route::get('/confirm', [BillingController::class, 'form_ganti_ban_confirm'])->name('billing.form-maintenance.ban-luar.confirm');
+
+                    // 4. Final Checkout Invoice
+                    Route::post('/checkout', [BillingController::class, 'form_ganti_ban_checkout'])->name('billing.form-maintenance.ban-luar.checkout');
                 });
 
 
@@ -792,6 +802,13 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/maintenance-vehicle', [App\Http\Controllers\RekapController::class, 'maintenance_vehicle'])->name('rekap.maintenance-vehicle');
             Route::get('/maintenance-vehicle/print', [App\Http\Controllers\RekapController::class, 'maintenance_vehicle_print'])->name('rekap.maintenance-vehicle.print');
             Route::post('/maintenance-vehicle/store-odometer', [App\Http\Controllers\RekapController::class, 'store_odo'])->name('rekap.maintenance-vehicle.store-odometer');
+
+            Route::prefix('maintenance')->group(function(){
+                Route::prefix('ban-luar')->group(function(){
+                    Route::get('/', [App\Http\Controllers\RekapController::class, 'ban_luar'])->name('rekap.maintenance.ban-luar');
+                    Route::get('/{id}', [App\Http\Controllers\RekapController::class, 'ban_luar_detail'])->name('rekap.maintenance.ban-luar.show');
+                });
+            });
         });
 
         Route::prefix('statistik')->group(function(){

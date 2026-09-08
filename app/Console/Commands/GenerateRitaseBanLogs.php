@@ -15,8 +15,7 @@ class GenerateRitaseBanLogs extends Command
     public function handle()
     {
         $this->info('Memulai kalkulasi ritase data ban...');
-        BanLog::where('posisi_ban_id', 11)->update(['ritase' => 0]); // Reset ritase untuk ban luar (posisi_ban_id = 11)
-        $banLogs = BanLog::orderBy('created_at', 'asc')->whereNot('posisi_ban_id', 11)->get();
+        $banLogs = BanLog::orderBy('created_at', 'asc')->get();
         $bar = $this->output->createProgressBar(count($banLogs));
 
         foreach ($banLogs as $banLog) {
