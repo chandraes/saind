@@ -480,6 +480,7 @@ Route::group(['middleware' => ['auth']], function() {
 
         Route::prefix('statistik/ban-luar')->group(function(){
             Route::get('/', [App\Http\Controllers\BanController::class, 'index'])->name('statistik.ban-luar');
+            Route::get('/transaksi-ritase/{banLogId}', [App\Http\Controllers\BanController::class, 'get_transaksi_ritase'])->name('statistik.ban-luar.transaksi-ritase');
             Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\BanController::class, 'histori'])->name('statistik.ban-luar.histori');
             Route::get('/histori-data', [App\Http\Controllers\BanController::class, 'histori_data'])->name('statistik.ban-luar.histori-data');
             Route::post('/histori-destroy/{histori}', [App\Http\Controllers\BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
@@ -577,6 +578,8 @@ Route::group(['middleware' => ['auth']], function() {
         //Form maintenance
         Route::prefix('billing')->group(function(){
 
+
+
             Route::prefix('uj-ditahan')->group(function(){
                 Route::get('/', [BillingController::class, 'uj_ditahan'])->name('billing.uj-ditahan');
                 Route::get('/{id}', [BillingController::class, 'uj_ditahan_show'])->name('billing.uj-ditahan.show');
@@ -593,6 +596,24 @@ Route::group(['middleware' => ['auth']], function() {
             Route::post('/invoice-csr/{invoiceCsr}/lunas', [App\Http\Controllers\InvoiceController::class, 'invoice_csr_lunas'])->name('invoice.csr.lunas');
 
             Route::prefix('form-maintenance')->group(function(){
+
+                Route::prefix('ban-luar')->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'form_ganti_ban'])->name('billing.form-maintenance.ban-luar');
+                    Route::get('/get-vehicle-info', [App\Http\Controllers\BillingController::class, 'form_ganti_ban_get_vehicle_info'])->name('billing.form-maintenance.ban-luar.get-vehicle-info');
+
+                    // 2. Operasi Keranjang AJAX
+                    Route::post('/cart/add', [BillingController::class, 'form_ganti_ban_cart_add'])->name('billing.form-maintenance.ban-luar.cart.add');
+                    Route::delete('/cart/delete/{id}', [BillingController::class, 'form_ganti_ban_cart_delete'])->name('billing.form-maintenance.ban-luar.cart.delete');
+                    Route::delete('/cart/clear/{vehicle_id}', [BillingController::class, 'form_ganti_ban_cart_clear'])->name('billing.form-maintenance.ban-luar.cart.clear');
+
+                    // 3. Halaman Terpisah Konfirmasi Invoice
+                    Route::get('/confirm', [BillingController::class, 'form_ganti_ban_confirm'])->name('billing.form-maintenance.ban-luar.confirm');
+
+                    // 4. Final Checkout Invoice
+                    Route::post('/checkout', [BillingController::class, 'form_ganti_ban_checkout'])->name('billing.form-maintenance.ban-luar.checkout');
+                });
+
+
                 Route::get('/beli', [App\Http\Controllers\FormMaintenanceController::class, 'beli'])->name('billing.form-maintenance.beli');
                 Route::post('/barang-store', [App\Http\Controllers\FormMaintenanceController::class, 'beli_store'])->name('billing.form-maintenance.barang-store');
                 Route::post('/keranjang-store', [App\Http\Controllers\FormMaintenanceController::class, 'keranjang_store'])->name('billing.form-maintenance.keranjang-store');
@@ -607,6 +628,12 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::get('/jual-umum', [App\Http\Controllers\FormMaintenanceController::class, 'jual_umum'])->name('billing.form-maintenance.jual-umum');
                 Route::post('/jual-umum/store', [App\Http\Controllers\FormMaintenanceController::class, 'jual_umum_store'])->name('billing.form-maintenance.jual-umum.store');
 
+            });
+
+            Route::prefix('otorisasi-maintenance')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance'])->name('billing.otorisasi-maintenance');
+                Route::post('/ban-luar/{id}/approve', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_ban_luar_approve'])->name('billing.otorisasi-maintenance.ban-luar.approve');
+                Route::post('/ban-luar/{id}/reject', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_ban_luar_reject'])->name('billing.otorisasi-maintenance.ban-luar.reject');
             });
 
             Route::prefix('form-barang')->group(function(){
@@ -781,6 +808,13 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/maintenance-vehicle', [App\Http\Controllers\RekapController::class, 'maintenance_vehicle'])->name('rekap.maintenance-vehicle');
             Route::get('/maintenance-vehicle/print', [App\Http\Controllers\RekapController::class, 'maintenance_vehicle_print'])->name('rekap.maintenance-vehicle.print');
             Route::post('/maintenance-vehicle/store-odometer', [App\Http\Controllers\RekapController::class, 'store_odo'])->name('rekap.maintenance-vehicle.store-odometer');
+
+            Route::prefix('maintenance')->group(function(){
+                Route::prefix('ban-luar')->group(function(){
+                    Route::get('/', [App\Http\Controllers\RekapController::class, 'ban_luar'])->name('rekap.maintenance.ban-luar');
+                    Route::get('/{id}', [App\Http\Controllers\RekapController::class, 'ban_luar_detail'])->name('rekap.maintenance.ban-luar.show');
+                });
+            });
         });
 
         Route::prefix('statistik')->group(function(){
