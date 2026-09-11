@@ -142,7 +142,7 @@
                                 <i class="fa fa-arrow-left me-1"></i> Kembali Tambah Item
                             </a>
                             <button type="submit" class="btn btn-success btn-lg fw-bold px-4">
-                                <i class="fa fa-check-circle me-1"></i> Terbitkan Invoice Sekarang
+                                <i class="fa fa-check-circle me-1"></i> Lanjutkan
                             </button>
                         </div>
                     </form>
@@ -231,13 +231,13 @@
             htmlContent += `</div>`;
 
             Swal.fire({
-                title: 'Konfirmasi Terbitkan Invoice?',
+                title: 'Konfirmasi',
                 html: htmlContent,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#198754',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Terbitkan Invoice!',
+                confirmButtonText: 'Ya, Lanjutkan!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {

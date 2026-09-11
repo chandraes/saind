@@ -390,7 +390,7 @@ class RekapController extends Controller
         $data = $invoiceBayar->load(['transaksi', 'transaksi.kas_uang_jalan',
                                     'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute',
                                     'transaksi.kas_uang_jalan.vehicle', 'transaksi.kas_uang_jalan.vendor'])
-                            ->transaksi;
+                            ->transaksi->where('void', 0);
 
         return view('rekap.kas-vendor-detail', [
             'data' => $data,
@@ -1305,32 +1305,51 @@ class RekapController extends Controller
 
     public function ban_luar(Request $request)
     {
-        $startDate = $request->input('start_date', date('Y-m-01'));
-        $endDate   = $request->input('end_date', date('Y-m-t'));
-        $pembayaran = $request->input('pembayaran');
+        $startDate    = $request->input('start_date', date('Y-m-01'));
+        $endDate      = $request->input('end_date', date('Y-m-t'));
+        $pembayaran   = $request->input('pembayaran');
+        $statusFilter = $request->input('status');
 
+        // Pastikan hanya memuat status Approved dan Rejected (Tidak termasuk Pending)
         $query = BanGantiInvoice::with(['vehicle.vendor', 'details'])
-            ->whereBetween('tanggal', [$startDate, $endDate]);
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->whereIn('status', [BanGantiInvoice::STATUS_APPROVED, BanGantiInvoice::STATUS_REJECTED]);
 
         if ($pembayaran) {
             $query->where('pembayaran', $pembayaran);
         }
 
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
         $invoices = $query->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
 
         // Ringkasan Statistik
-        $totalTransaksi      = $invoices->count();
-        $totalKasBesar       = $invoices->where('pembayaran', BanGantiInvoice::PEMBAYARAN_KAS_BESAR)->sum('total_nominal');
-        $countDibayarSendiri = $invoices->where('pembayaran', BanGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)->count();
+        $totalTransaksi = $invoices->count();
+
+        // Hanya hitung nominal kas besar untuk transaksi yang berstatus APPROVED
+        $totalKasBesar = $invoices->where('status', BanGantiInvoice::STATUS_APPROVED)
+                                  ->where('pembayaran', BanGantiInvoice::PEMBAYARAN_KAS_BESAR)
+                                  ->sum('total_nominal');
+
+        // Hanya hitung transaksi dibayar sendiri yang berstatus APPROVED
+        $countDibayarSendiri = $invoices->where('status', BanGantiInvoice::STATUS_APPROVED)
+                                        ->where('pembayaran', BanGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)
+                                        ->count();
+
+        $countRejected = $invoices->where('status', BanGantiInvoice::STATUS_REJECTED)->count();
 
         return view('rekap.maintenance.ban-luar.index', compact(
             'invoices',
             'startDate',
             'endDate',
             'pembayaran',
+            'statusFilter',
             'totalTransaksi',
             'totalKasBesar',
-            'countDibayarSendiri'
+            'countDibayarSendiri',
+            'countRejected'
         ));
     }
 

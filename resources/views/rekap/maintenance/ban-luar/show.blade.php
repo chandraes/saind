@@ -55,6 +55,18 @@
                 <div class="card-body">
                     <table class="table table-borderless table-sm mb-0">
                         <tr>
+                            <td class="text-muted">Status Otorisasi</td>
+                            <td class="text-end">
+                                @if($invoice->status === \App\Models\BanGantiInvoice::STATUS_APPROVED)
+                                    <span class="badge bg-success fs-7"><i class="fa fa-check-circle me-1"></i> Disetujui</span>
+                                @elseif($invoice->status === \App\Models\BanGantiInvoice::STATUS_REJECTED)
+                                    <span class="badge bg-danger fs-7"><i class="fa fa-times-circle me-1"></i> Ditolak / Dibatalkan</span>
+                                @else
+                                    <span class="badge bg-warning text-dark fs-7"><i class="fa fa-clock me-1"></i> Pending</span>
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
                             <td class="text-muted">Tanggal Transaksi</td>
                             <td class="fw-bold text-end">{{ date('d-m-Y', strtotime($invoice->tanggal)) }}</td>
                         </tr>

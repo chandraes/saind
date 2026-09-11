@@ -334,7 +334,8 @@
             </a>
         </div>
          @endif
-         <div class="col-md-2 text-center mt-5">
+          @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su' || auth()->user()->role === 'user')
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#formMaintenanceNew">
                 <img src="{{asset('images/form-maintenance-new.svg')}}" alt="" width="70">
                 <h4 class="mt-3">FORM MAINTENANCE</h4>
@@ -360,7 +361,15 @@
                 </div>
             </div>
         </div>
-
+        @endif
+        @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
+        <div class="col-md-2 text-center mt-5">
+            <a href="{{route('billing.otorisasi-maintenance')}}" class="text-decoration-none">
+                <img src="{{asset('images/otorisasi-maintenance.svg')}}" alt="" width="70">
+                <h4 class="mt-3">OTORISASI MAINTENANCE</h4>
+            </a>
+        </div>
+        @endif
     </div>
     <hr>
     <br>

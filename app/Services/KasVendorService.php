@@ -35,7 +35,7 @@ class KasVendorService
         $insertData = [
             'vendor_id'         => $data['vendor_id'],
             'vehicle_id'        => $data['vehicle_id'] ?? null,
-            'tanggal'           => date('Y-m-d H:i:s'),
+            'tanggal'           => date('Y-m-d'),
             'ban_ganti_invoice_id' => $data['ban_ganti_invoice_id'] ?? null,
             'uraian'            => $data['uraian'] ?? 'Penambahan hutang vendor',
             'pinjaman'          => $nominal, // Bertambah

@@ -630,6 +630,12 @@ Route::group(['middleware' => ['auth']], function() {
 
             });
 
+            Route::prefix('otorisasi-maintenance')->group(function(){
+                Route::get('/', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance'])->name('billing.otorisasi-maintenance');
+                Route::post('/ban-luar/{id}/approve', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_ban_luar_approve'])->name('billing.otorisasi-maintenance.ban-luar.approve');
+                Route::post('/ban-luar/{id}/reject', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_ban_luar_reject'])->name('billing.otorisasi-maintenance.ban-luar.reject');
+            });
+
             Route::prefix('form-barang')->group(function(){
                 Route::get('/beli', [App\Http\Controllers\FormBarangController::class, 'beli'])->name('billing.form-barang.beli');
                 Route::get('/get-barang', [App\Http\Controllers\FormBarangController::class, 'get_barang'])->name('billing.form-barang.get-barang');
