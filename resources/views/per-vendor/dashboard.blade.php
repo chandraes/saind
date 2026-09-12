@@ -118,7 +118,7 @@
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form action="{{route('per-vendor.ban-luar')}}" method="get">
+                        <form action="{{route('statistik.ban-luar')}}" method="get">
                             <div class="modal-body">
                                 <div class="col-md-12 mb-3">
                                     <select class="form-select" name="vehicle_id" id="vehicle_ban">

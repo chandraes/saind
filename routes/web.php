@@ -478,6 +478,15 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::post('{customer}/{jenis}/keranjang/{invoice}/back', [App\Http\Controllers\BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_back'])->name('billing.nota-tagihan.detail-jenis.keranjang.back');
             });
 
+
+    });
+
+    Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational'], function() {
+        Route::prefix('statistik/perform-unit')->group(function(){
+            Route::get('/', [App\Http\Controllers\StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
+            Route::get('/print', [App\Http\Controllers\StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
+        });
+
         Route::prefix('statistik/ban-luar')->group(function(){
             Route::get('/', [App\Http\Controllers\BanController::class, 'index'])->name('statistik.ban-luar');
             Route::get('/transaksi-ritase/{banLogId}', [App\Http\Controllers\BanController::class, 'get_transaksi_ritase'])->name('statistik.ban-luar.transaksi-ritase');
@@ -485,13 +494,6 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/histori-data', [App\Http\Controllers\BanController::class, 'histori_data'])->name('statistik.ban-luar.histori-data');
             Route::post('/histori-destroy/{histori}', [App\Http\Controllers\BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
             Route::patch('/histori-update/{histori}', [App\Http\Controllers\BanController::class, 'histori_update'])->name('statistik.ban-luar.histori-update');
-        });
-    });
-
-    Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational'], function() {
-        Route::prefix('statistik/perform-unit')->group(function(){
-            Route::get('/', [App\Http\Controllers\StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
-            Route::get('/print', [App\Http\Controllers\StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
         });
     });
 

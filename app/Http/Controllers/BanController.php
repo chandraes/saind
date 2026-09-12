@@ -8,6 +8,7 @@ use App\Models\PosisiBan;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BanController extends Controller
@@ -17,6 +18,17 @@ class BanController extends Controller
         $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
         ]);
+
+        if(Auth::user()->role === 'vendor') {
+            $vehicle = Vehicle::where('id', $request->vehicle_id)
+                        ->where('vendor_id', Auth::user()->vendor_id)
+                        ->first();
+
+            if (!$vehicle) {
+                return redirect()->back()->with('error', 'Kendaraan tidak ditemukan atau tidak sesuai dengan vendor Anda.');
+            }
+
+        } 
 
         $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
                         ->where('vehicles.id', $request->vehicle_id)
