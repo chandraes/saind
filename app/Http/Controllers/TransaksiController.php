@@ -35,6 +35,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class TransaksiController extends Controller
 {
@@ -465,22 +466,31 @@ class TransaksiController extends Controller
 
     public function void_store(Request $request, Transaksi $transaksi)
     {
-        $data = $request->validate([
+        // 1. Ubah request->validate menjadi Validator::make manual
+        $validator = Validator::make($request->all(), [
             'alasan' => 'required',
         ]);
 
+        if ($validator->fails()) {
+            // Ganti 'billing.index' dengan nama route GET tempat halaman form Anda berada
+            return redirect()->route('billing.index')
+                            ->withErrors($validator)
+                            ->withInput()
+                            ->with('error', 'Alasan harus diisi!');
+        }
+
+        $data = $validator->validated();
         $data['void'] = 1;
         $data['nota_muat'] = null;
         $data['nota_bongkar'] = null;
 
-        // 1. Eager Loading & Caching Variabel
-        // Mencegah pemanggilan query N+1 yang berulang kali saat mengambil relasi
         $transaksi->load(['kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute']);
         $kuj = $transaksi->kas_uang_jalan;
         $vehicle = $kuj->vehicle;
 
         if($transaksi->void == 1) {
-            return redirect()->back()->with('error', 'Transaksi sudah di void sebelumnya!!');
+            // 2. Ganti redirect()->back() menjadi redirect spesifik ke route GET
+            return redirect()->route('billing.index')->with('error', 'Transaksi sudah di void sebelumnya!!');
         }
 
         try {
@@ -488,7 +498,6 @@ class TransaksiController extends Controller
 
             $transaksi->update($data);
 
-            // Optimalisasi pemanggilan DB latest
             $last = KasUangJalan::latest('id')->first();
             $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
 
@@ -498,21 +507,14 @@ class TransaksiController extends Controller
                 'jenis_transaksi_id' => 1,
                 'nominal_transaksi' => $kuj->nominal_transaksi,
                 'tanggal' => date('Y-m-d'),
-                // Safeguard jika $last kosong
                 'saldo' => ($last ? $last->saldo : 0) + $kuj->nominal_transaksi,
-                // Safeguard jika $rek kosong
                 'transfer_ke' => substr($rek->nama_rekening ?? '', 0, 15),
                 'bank' => $rek->nama_bank ?? '-',
                 'no_rekening' => $rek->nomor_rekening ?? '-',
             ]);
 
-            // =========================================================
-            // ROLLBACK REALTIME RITASE BAN LUAR
-            // =========================================================
             $this->rollbackRitaseBan($kuj->vehicle_id, $kuj->rute, $transaksi->id);
 
-            // 2. Gunakan exists() dibanding first()
-            // exists() jauh lebih cepat karena database berhenti mencari setelah menemukan 1 data cocok
             $cekMobil = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
                                 ->where('kuj.vehicle_id', $kuj->vehicle_id)
                                 ->where('transaksis.status', '<', 3)
@@ -523,12 +525,10 @@ class TransaksiController extends Controller
                 $vehicle->update(['status' => 'aktif']);
             }
 
-            // 3. Gunakan decrement() untuk menghindari Race Condition
             if ($transaksi->nota_fisik == 0 && $vehicle->do_count > 0) {
                 $vehicle->decrement('do_count');
             }
 
-            // check uj di tahan
             $cekUjDitahan = UjDitahanDetail::where('transaksi_id', $transaksi->id)->first();
 
             if ($cekUjDitahan) {
@@ -543,7 +543,6 @@ class TransaksiController extends Controller
                     'keterangan' => 'Void UJ' . sprintf("%02d", $kuj->nomor_uang_jalan) . " - " . $data['alasan'],
                 ]);
 
-                // Gunakan decrement() langsung ke database agar lebih aman
                 $ujDitahan->decrement('saldo', $cekUjDitahan->nominal);
                 $ujDitahan->increment('total_keluar', $cekUjDitahan->nominal);
             }
@@ -551,13 +550,12 @@ class TransaksiController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
-            // Log pesan error aslinya agar mudah di-debug oleh developer
-            // \Log::error('Gagal Void Transaksi UJ: ' . $th->getMessage());
-            return redirect()->back()->with('error', 'Terdapat Error pada saat menyimpan data!!');
+            // 3. Ganti redirect()->back() di catch block
+            return redirect()->route('billing.index')->with('error', 'Terdapat Error pada saat menyimpan data!!' . $th->getMessage());
         }
 
         // ==========================================
-        // PENGIRIMAN WA (DIBUNGKUS TRY-CATCH)
+        // PENGIRIMAN WA
         // ==========================================
         try {
             $dbWa = new GroupWa();
@@ -591,7 +589,7 @@ class TransaksiController extends Controller
 
                 $dbWa->sendWa($group->nama_group, $pesan);
 
-                 if ($cekUjDitahan) {
+                if ($cekUjDitahan) {
                     $pesan2 =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                                 "*Void UJ Ditahan*\n".
                                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
@@ -620,7 +618,6 @@ class TransaksiController extends Controller
             }
         } catch (\Throwable $th) {
             // Biarkan berlalu tanpa error 500, catat saja ke log
-            // \Log::error('WA API Error Void UJ: ' . $th->getMessage());
         }
 
         return redirect()->route('billing.index')->with('success', 'Berhasil menyimpan data!!');
@@ -636,7 +633,7 @@ class TransaksiController extends Controller
         }
 
         // 1. Cek apakah transaksi ini memiliki riwayat di tabel pivot
-        $pivotRecords = DB::table('ban_log_transaksi')->where('transaksi_id', $transaksiId)->get();
+        $pivotRecords = DB::table('ban_log_transaksis')->where('transaksi_id', $transaksiId)->get();
 
         if ($pivotRecords->isNotEmpty()) {
             // SKENARIO A: TRANSAKSI BARU (Ada di Pivot)
@@ -648,7 +645,7 @@ class TransaksiController extends Controller
             }
 
             // Hapus riwayat dari pivot agar tidak muncul di modal pop-up histori
-            DB::table('ban_log_transaksi')->where('transaksi_id', $transaksiId)->delete();
+            DB::table('ban_log_transaksis')->where('transaksi_id', $transaksiId)->delete();
 
         } else {
             // SKENARIO B: TRANSAKSI LAMA (Belum tercatat di Pivot / Fallback)

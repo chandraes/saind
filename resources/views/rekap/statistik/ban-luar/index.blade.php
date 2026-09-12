@@ -12,7 +12,7 @@
             <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/dashboard.svg') }}" width="18" alt="Dashboard"> Dashboard
             </a>
-            @if (auth()->user()->role != 'asisten-user')
+            @if (!in_array(auth()->user()->role, ['asisten-user', 'operasional', 'vendor']) )
             <a href="{{ route('rekap.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/rekap.svg') }}" width="18" alt="Rekap"> Rekap
             </a>

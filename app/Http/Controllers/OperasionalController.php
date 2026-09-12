@@ -1013,6 +1013,7 @@ class OperasionalController extends Controller
                                  'merk' => $banLog->merk,
                                  'no_seri' => $banLog->no_seri,
                                  'kondisi' => $banLog->kondisi,
+                                 'ritase' => $banLog->ritase ?? 0,
                                  'tanggal_ganti' => \Carbon\Carbon::parse($banLog->created_at)->format('d-m-Y'),
                              ]];
                          });
