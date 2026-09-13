@@ -815,6 +815,7 @@ Route::group(['middleware' => ['auth']], function() {
                 Route::prefix('ban-luar')->group(function(){
                     Route::get('/', [App\Http\Controllers\RekapController::class, 'ban_luar'])->name('rekap.maintenance.ban-luar');
                     Route::get('/{id}', [App\Http\Controllers\RekapController::class, 'ban_luar_detail'])->name('rekap.maintenance.ban-luar.show');
+                    Route::post('/detail/{detailId}/update-tanggal', [App\Http\Controllers\RekapController::class, 'update_tanggal_detail_ban'])->name('rekap.maintenance.ban-luar.detail.update-tanggal');
                 });
             });
         });

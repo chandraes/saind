@@ -28,8 +28,6 @@ use App\Models\UjDitahan;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
-use App\Services\KasBesarService;
-use App\Services\KasVendorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +53,8 @@ class BillingController extends Controller
         $bayar = InvoiceBayar::where('lunas', 0)->count();
         $bonus = InvoiceBonus::where('lunas', 0)->count();
         $invoice_csr = InvoiceCsr::where('lunas', 0)->count();
+
+        $countOB = BanGantiInvoice::where('status', BanGantiInvoice::STATUS_PENDING)->count();
 
         // $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
         //         ->leftJoin('vehicles as v', 'kuj.vehicle_id', 'v.id')
@@ -99,6 +99,7 @@ class BillingController extends Controller
             'bayar' => $bayar,
             'bonus' => $bonus,
             // 'csr' => $csr,
+            'countOB' => $countOB,
             'invoice_csr' => $invoice_csr,
         ]);
     }
@@ -347,18 +348,40 @@ class BillingController extends Controller
 
     public function otorisasi_maintenance()
     {
-        $invoices = BanGantiInvoice::with(['vehicle.vendor', 'details'])
+        $invoices = BanGantiInvoice::with(['vehicle.vendor', 'details.posisiBan'])
                         ->where('status', BanGantiInvoice::STATUS_PENDING)
                         ->orderBy('created_at', 'asc')
                         ->get();
+
+        // Cek ritase ban lama yang sedang terpasang untuk tiap invoice
+        foreach ($invoices as $invoice) {
+            $lowRitaseWarnings = [];
+            foreach ($invoice->details as $detail) {
+                // Log ban aktif saat ini di posisi tersebut
+                $banAktif = BanLog::where('vehicle_id', $invoice->vehicle_id)
+                                  ->where('posisi_ban_id', $detail->posisi_ban_id)
+                                  ->orderBy('id', 'desc')
+                                  ->first();
+
+                if ($banAktif && $banAktif->ritase < 80) {
+                    $lowRitaseWarnings[] = [
+                        'posisi'  => $detail->posisiBan->nama ?? ('Posisi ' . $detail->posisi_ban_id),
+                        'merk'    => $banAktif->merk ?? '-',
+                        'no_seri' => $banAktif->no_seri ?? '-',
+                        'ritase'  => $banAktif->ritase ?? 0,
+                    ];
+                }
+            }
+            // Inject variabel temporer tanpa simpan ke DB
+            $invoice->low_ritase_warnings = $lowRitaseWarnings;
+        }
 
         return view('billing.otorisasi-maintenance.index', compact('invoices'));
     }
 
     public function otorisasi_maintenance_ban_luar_approve($id)
     {
-        // Panggil service secara manual di dalam fungsi menggunakan helper app()
-        $kasBesarService = app(\App\Services\KasBesarService::class);
+        $kasBesarService  = app(\App\Services\KasBesarService::class);
         $kasVendorService = app(\App\Services\KasVendorService::class);
 
         $invoice = BanGantiInvoice::with(['vehicle', 'details'])->findOrFail($id);
@@ -370,14 +393,17 @@ class BillingController extends Controller
         try {
             DB::beginTransaction();
 
-            $vehicleId = $invoice->vehicle_id;
+            $vehicleId   = $invoice->vehicle_id;
             $vehicleInfo = $invoice->vehicle;
 
-            // A. Update BanLog berdasarkan Detail Invoice
+            // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
             foreach ($invoice->details as $item) {
+                // Gunakan created_at dari detail invoice item
+                $tanggalGantiBan = $item->created_at;
+
                 if ($item->sumber_ban === 'serep') {
-                    $banSerep = BanLog::where('vehicle_id', $vehicleId)->where('posisi_ban_id', 11)->orderBy('created_at', 'desc')->first();
-                    $banLama = BanLog::where('vehicle_id', $vehicleId)->where('posisi_ban_id', $item->posisi_ban_id)->orderBy('created_at', 'desc')->first();
+                    $banSerep = BanLog::where('vehicle_id', $vehicleId)->where('posisi_ban_id', 11)->orderBy('id', 'desc')->first();
+                    $banLama  = BanLog::where('vehicle_id', $vehicleId)->where('posisi_ban_id', $item->posisi_ban_id)->orderBy('id', 'desc')->first();
 
                     $banLogTujuan = BanLog::create([
                         'vehicle_id'    => $vehicleId,
@@ -386,6 +412,7 @@ class BillingController extends Controller
                         'no_seri'       => $banSerep->no_seri ?? '-',
                         'kondisi'       => $banSerep->kondisi ?? 100,
                         'ritase'        => $banSerep->ritase ?? 0,
+                        'created_at'    => $tanggalGantiBan, // <-- Set created_at ban log dari detail item
                     ]);
 
                     if ($banLama) {
@@ -396,6 +423,7 @@ class BillingController extends Controller
                             'no_seri'       => $banLama->no_seri,
                             'kondisi'       => $banLama->kondisi,
                             'ritase'        => $banLama->ritase,
+                            'created_at'    => $tanggalGantiBan,
                         ]);
                     }
                 } else {
@@ -406,20 +434,20 @@ class BillingController extends Controller
                         'no_seri'       => $item->no_seri,
                         'kondisi'       => $item->kondisi,
                         'ritase'        => 0,
+                        'created_at'    => $tanggalGantiBan, // <-- Set created_at ban log dari detail item
                     ]);
                 }
 
-                // Update detail dengan ID BanLog yang baru dibuat
                 $item->update(['ban_log_id' => $banLogTujuan->id]);
             }
 
-            // B. Eksekusi Kas Besar & Hutang Vendor
+            // Eksekusi Pemotongan Kas & Vendor
+            $nominalBersih = intval($invoice->total_nominal);
             $kb = null;
-            if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_KAS_BESAR && $invoice->total_nominal > 0) {
-               $nominalBersih = intval($invoice->total_nominal);
 
+            if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_KAS_BESAR && $nominalBersih > 0) {
                 $kb = $kasBesarService->potongSaldo([
-                    'nominal_transaksi' => $nominalBersih, // <--- Ubah di sini
+                    'nominal_transaksi' => $nominalBersih,
                     'uraian'            => 'Penggantian Ban Luar Unit ' . $vehicleInfo->nomor_lambung,
                     'bank'              => $invoice->nama_bank,
                     'ban_ganti_invoice_id' => $invoice->id,
@@ -431,19 +459,17 @@ class BillingController extends Controller
                     $kasVendorService->tambahHutang([
                         'vendor_id'         => $vehicleInfo->vendor_id,
                         'vehicle_id'        => $vehicleId,
-                        'nominal_transaksi' => $nominalBersih, // <--- Ubah di sini juga
+                        'nominal_transaksi' => $nominalBersih,
                         'ban_ganti_invoice_id' => $invoice->id,
                         'uraian'            => 'Penggantian Ban '.' (' . $invoice->no_invoice . ')',
                     ]);
                 }
             }
 
-            // C. Ubah Status ke APPROVED
             $invoice->update(['status' => BanGantiInvoice::STATUS_APPROVED]);
 
             DB::commit();
 
-            // D. Kirim Notifikasi WA (Diluar DB transaction)
             if ($kb) {
                 $this->kirimWaNotifikasi($kb);
             }

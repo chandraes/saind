@@ -28,7 +28,7 @@ class BanController extends Controller
                 return redirect()->back()->with('error', 'Kendaraan tidak ditemukan atau tidak sesuai dengan vendor Anda.');
             }
 
-        } 
+        }
 
         $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
                         ->where('vehicles.id', $request->vehicle_id)

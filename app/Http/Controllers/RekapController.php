@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
 use App\Models\BanGantiInvoice;
+use App\Models\BanGantiInvoiceDetail;
+use App\Models\BanLog;
 use App\Models\BarangMaintenance;
 use App\Models\KasKecil;
 use App\Models\KasBesar;
@@ -1358,9 +1360,63 @@ class RekapController extends Controller
      */
     public function ban_luar_detail($id)
     {
-        $invoice = BanGantiInvoice::with(['vehicle', 'details.posisiBan'])->findOrFail($id);
+        $invoice = BanGantiInvoice::with(['vehicle.vendor', 'details.posisiBan'])->findOrFail($id);
+
+        foreach ($invoice->details as $detail) {
+            $queryLog = BanLog::where('vehicle_id', $invoice->vehicle_id)
+                              ->where('posisi_ban_id', $detail->posisi_ban_id);
+
+            if ($detail->ban_log_id) {
+                // Jika sudah APPROVED, cari BanLog tepat SEBELUM BanLog yang baru dibuat ini
+                $banLama = (clone $queryLog)->where('id', '<', $detail->ban_log_id)
+                                            ->orderBy('id', 'desc')
+                                            ->first();
+            } else {
+                // Jika PENDING / REJECTED, ambil BanLog terakhir yang saat ini terpasang
+                $banLama = (clone $queryLog)->orderBy('id', 'desc')->first();
+            }
+
+            // Inject properti temporer ke objek detail
+            $detail->merk_lama    = $banLama->merk ?? '-';
+            $detail->no_seri_lama = $banLama->no_seri ?? '-';
+            $detail->ritase_lama  = $banLama->ritase ?? 0;
+        }
 
         return view('rekap.maintenance.ban-luar.show', compact('invoice'));
+    }
+
+    /**
+     * Update Tanggal Ganti Ban (Khusus SU dan Admin)
+     */
+    public function update_tanggal_detail_ban(Request $request, $detailId)
+    {
+        $userRole = Auth::user()->role ?? '';
+        if (!in_array($userRole, ['su', 'admin'])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Hanya Role SU dan Admin yang dapat mengubah tanggal.');
+        }
+
+        // Load detail beserta invoice-nya
+        $detail = BanGantiInvoiceDetail::with('invoice')->findOrFail($detailId);
+
+        // Validasi: Pembatasan edit hanya untuk status PENDING
+        if ($detail->invoice->status !== BanGantiInvoice::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Gagal: Tanggal ganti ban hanya dapat diubah pada invoice yang berstatus PENDING.');
+        }
+
+        $request->validate([
+            'tanggal_ganti' => 'required|date',
+        ]);
+
+        // Buat format timestamp lengkap dengan jam awal pembuatan
+        $timePart     = date('H:i:s', strtotime($detail->created_at ?? now()));
+        $newTimestamp = $request->tanggal_ganti . ' ' . $timePart;
+
+        // Update created_at di tabel ban_ganti_invoice_details
+        $detail->update([
+            'created_at' => $newTimestamp,
+        ]);
+
+        return redirect()->back()->with('success', 'Tanggal ganti ban berhasil diperbarui.');
     }
 
 
