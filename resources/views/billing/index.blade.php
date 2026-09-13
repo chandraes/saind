@@ -366,7 +366,10 @@
         <div class="col-md-2 text-center mt-5">
             <a href="{{route('billing.otorisasi-maintenance')}}" class="text-decoration-none">
                 <img src="{{asset('images/otorisasi-maintenance.svg')}}" alt="" width="70">
-                <h4 class="mt-3">OTORISASI MAINTENANCE</h4>
+                <h4 class="mt-3">OTORISASI MAINTENANCE
+                     <span class="text-danger">{{$countOB > 0 ?
+                        "(".$countOB.")" : '' }}</span>
+                </h4>
             </a>
         </div>
         @endif
