@@ -43,7 +43,7 @@
         </div>
     </div>
     <div id="app">
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark shadow-sm">
+        <nav class="navbar navbar-expand-md navbar-dark shadow-sm" style="background-color: {{ $global_app_nav_bg }};">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
                     @if ($global_app_logo)

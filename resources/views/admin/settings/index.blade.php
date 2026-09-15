@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('styles')
+@section('css')
 <style>
     /* Card Modern */
     .settings-card {
@@ -139,6 +139,19 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="mb-3">
+                                    <label class="form-label fw-semibold text-secondary small">WARNA HEADER NAVBAR</label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <input type="color" name="app_nav_bg" class="form-control form-control-color border-0 p-1"
+                                            value="{{ $settings['app_nav_bg'] ?? '#212529' }}"
+                                            title="Pilih warna navigasi header"
+                                            style="width: 60px; height: 38px; cursor: pointer;">
+                                        <input type="text" class="form-control py-2"
+                                            value="{{ $settings['app_nav_bg'] ?? '#212529' }}" readonly style="max-width: 120px;">
+                                        <span class="text-muted small">*Pilih warna tema untuk navigasi utama aplikasi.</span>
+                                    </div>
+                                </div>
                         </div>
 
 

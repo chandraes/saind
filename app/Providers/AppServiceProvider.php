@@ -35,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
             $appPerusahaan = $settings['app_perusahaan'] ?? 'Nama Perusahaan Default';
             $appAlamat = $settings['app_alamat'] ?? 'Alamat Default';
             $appKeuangan = $settings['app_keuangan'] ?? 'Nama Manajer Keuangan Default';
+            $appNavBg      = $settings['app_nav_bg'] ?? '#212529'; // Default warna gelap Bootstrap
 
             $logoFilename = !empty($settings['app_logo'])
                 ? 'storage/' . $settings['app_logo']
@@ -73,6 +74,7 @@ class AppServiceProvider extends ServiceProvider
                 'global_app_logo_base64' => $base64,
                 'global_app_favicon' => $appFavicon,
                 'global_app_keuangan' => $appKeuangan,
+                'global_app_nav_bg'     => $appNavBg, // Variable baru untuk navbar
             ]);
         }
     }
