@@ -1011,6 +1011,7 @@ class BillingController extends Controller
 
         $totalUjDitahan = UjDitahan::where('saldo', '>', 0)
                             ->sum('saldo');
+        $ujDitahanVehicle = UjDitahan::where('vehicle_id', $master->vehicle_id)->where('saldo', '>', 0)->sum('saldo');
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pencairan UJ Ditahan*\n".
@@ -1023,6 +1024,8 @@ class BillingController extends Controller
                     "Nama    : ".$store['nama_rekening']."\n".
                     "No. Rek : ".$store['no_rekening']."\n\n".
                     "==========================\n".
+                     "Total Saldo UJ Ditahan : ".$master->vehicle->nomor_lambung."\n".
+                    "Rp. ".number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
                     // "Sisa Saldo Kas Uang Jalan : \n".
                     // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Grand Total UJ Ditahan : \n".
