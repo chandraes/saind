@@ -7,8 +7,6 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    {{-- change favicon to saind.ico --}}
-    {{-- <link rel="shortcut icon" href="{{asset('saind.ico')}}" type="image/x-icon"> --}}
     <link rel="icon" type="image/x-icon" href="{{ $global_app_favicon }}">
     <title>{{ $global_app_name }}</title>
 
@@ -16,13 +14,17 @@
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
     <link id="style" href="{{asset('assets/font-awesome/css/font-awesome.min.css')}}" rel="stylesheet" />
-    {{-- sweetalert --}}
+
+    {{-- Sweetalert & Scripts --}}
     <script src="{{asset('assets/js/jquery.min.js')}}"></script>
     <script src="{{asset('assets/js/sweetalert.js')}}"></script>
     <script src="{{asset('assets/js/jquery.maskMoney.js')}}"></script>
     <script src="{{asset('assets/js/cleave.min.js')}}"></script>
-    {{-- bootstrap 5 --}}
-    @stack('css')
+
+    <!-- Scripts & Styles Utama (Vite) -->
+    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+
+    <!-- Style Khusus & Stack CSS (Pindah ke bawah Vite agar CSS Coloris tidak tertimpa) -->
     <style>
         .centered {
             display: flex;
@@ -30,9 +32,7 @@
             align-items: center;
         }
     </style>
-
-    <!-- Scripts -->
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    @stack('css')
 </head>
 
 <body class="bg-white">
@@ -51,7 +51,6 @@
                     @else
                     <h3>{{ $global_app_name }}</h3>
                     @endif
-
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
@@ -61,13 +60,10 @@
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <!-- Left Side Of Navbar -->
-                    <ul class="navbar-nav me-auto">
-
-                    </ul>
+                    <ul class="navbar-nav me-auto"></ul>
 
                     <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ms-auto">
-                        <!-- Authentication Links -->
                         @guest
                         @if (Route::has('login'))
                         <li class="nav-item">
@@ -82,7 +78,6 @@
                         @endif
                         @else
                         <li class="nav-item dropdown">
-
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                 {{ Auth::user()->name }}
@@ -110,9 +105,6 @@
         </main>
     </div>
 
-
     @stack('js')
-
 </body>
-
 </html>
