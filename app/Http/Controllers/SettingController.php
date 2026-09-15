@@ -23,27 +23,23 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'app_name'    => 'nullable|string|max:255',
+            'app_name'       => 'nullable|string|max:255',
             'app_perusahaan' => 'nullable|string|max:255',
-            'app_alamat' => 'nullable|string|max:255',
-            'app_keuangan' => 'nullable|string|max:255',
-            'app_logo'    => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
-            'app_favicon' => 'nullable|image|mimes:ico,png|max:1024',
+            'app_alamat'     => 'nullable|string|max:255',
+            'app_keuangan'   => 'nullable|string|max:255',
+            'app_nav_bg'     => 'nullable|string|max:20', // Tambahan validasi warna hex/css
+            'app_logo'       => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+            'app_favicon'    => 'nullable|image|mimes:ico,png|max:1024',
         ]);
 
-        // 1. UPDATE NAMA APLIKASI
-        // Jika input kosong, simpan NULL ke database (agar fallback ke default config berjalan)
-        Setting::updateOrCreate(
-            ['key' => 'app_name'],
-            ['value' => $request->app_name ?? null]
-        );
-
+        // 1. UPDATE NAMA APLIKASI DAN IDENTITAS
+        Setting::updateOrCreate(['key' => 'app_name'], ['value' => $request->app_name ?? null]);
         Setting::updateOrCreate(['key' => 'app_perusahaan'], ['value' => $request->app_perusahaan ?? null]);
-
-        // TAMBAHKAN: Update Alamat
         Setting::updateOrCreate(['key' => 'app_alamat'], ['value' => $request->app_alamat ?? null]);
-
         Setting::updateOrCreate(['key' => 'app_keuangan'], ['value' => $request->app_keuangan ?? null]);
+
+        // TAMBAHKAN: Update Warna Navbar Header (Default jika kosong: #212529)
+        Setting::updateOrCreate(['key' => 'app_nav_bg'], ['value' => $request->app_nav_bg ?? '#212529']);
 
         // 2. UPDATE LOGO
         $this->handleFileUpload($request, 'app_logo', 'settings/logo');
@@ -51,7 +47,7 @@ class SettingController extends Controller
         // 3. UPDATE FAVICON
         $this->handleFileUpload($request, 'app_favicon', 'settings/favicon');
 
-        // 4. PENTING: Reset Cache agar data baru terbaca di AppServiceProvider
+        // 4. Reset Cache
         Cache::forget('app_settings');
 
         return redirect()->back()->with('success', 'Pengaturan berhasil disimpan!');

@@ -396,6 +396,8 @@ class BillingController extends Controller
             $vehicleId   = $invoice->vehicle_id;
             $vehicleInfo = $invoice->vehicle;
 
+
+
             // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
             foreach ($invoice->details as $item) {
                 // Gunakan created_at dari detail invoice item
@@ -436,9 +438,51 @@ class BillingController extends Controller
                         'ritase'        => 0,
                         'created_at'    => $tanggalGantiBan, // <-- Set created_at ban log dari detail item
                     ]);
+
+                    if($item->ritase > 0) {
+                        $transaksis = Transaksi::select('transaksis.id', 'rutes.jarak')
+                                ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
+                                ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
+                                ->where('kas_uang_jalans.vehicle_id', $invoice->vehicle_id)
+                                ->where('transaksis.void', 0)
+                                ->whereBetween('transaksis.created_at', [$tanggalGantiBan, now()])
+                                ->get();
+
+                        $totalRitase = 0;
+                        $now = now();
+
+                        foreach ($transaksis as $trx) {
+                            // Tentukan nilai ritase berdasarkan jarak
+                            $jarak = (float) $trx->jarak;
+                            $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
+
+                            $totalRitase += $nilaiRitase;
+
+                            // Siapkan data untuk riwayat ke tabel pivot
+                            $pivotData[] = [
+                                'ban_log_id'   => $banLogTujuan->id,
+                                'transaksi_id' => $trx->id,
+                                'nilai_ritase' => $nilaiRitase,
+                                'created_at'   => $now,
+                                'updated_at'   => $now,
+                            ];
+                        }
+
+                        if ($totalRitase > 0) {
+                            $banLogTujuan->ritase = $totalRitase;
+                            $banLogTujuan->save();
+
+                            if (!empty($pivotData)) {
+                                foreach (array_chunk($pivotData, 500) as $chunk) {
+                                    DB::table('ban_log_transaksis')->insert($chunk);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 $item->update(['ban_log_id' => $banLogTujuan->id]);
+
             }
 
             // Eksekusi Pemotongan Kas & Vendor
@@ -480,6 +524,35 @@ class BillingController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal memproses otorisasi: ' . $th->getMessage());
         }
+    }
+
+    public function update_detail_item(Request $request, $detailId)
+    {
+        $userRole = Auth::user()->role ?? '';
+        if (!in_array($userRole, ['su', 'admin'])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Hanya Role SU dan Admin yang dapat mengubah data.');
+        }
+
+        $detail = BanGantiInvoiceDetail::with('invoice')->findOrFail($detailId);
+
+        if ($detail->invoice->status !== BanGantiInvoice::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Gagal: Detail ban hanya dapat diubah pada invoice yang berstatus PENDING.');
+        }
+
+        // Validasi: Tambahkan min:1 dan max:100 pada kondisi
+        $request->validate([
+            'merk'    => 'required|string',
+            'no_seri' => 'required|string',
+            'kondisi' => 'required|integer|min:1|max:100',
+        ]);
+
+        $detail->update([
+            'merk'    => $request->merk,
+            'no_seri' => $request->no_seri,
+            'kondisi' => $request->kondisi,
+        ]);
+
+        return redirect()->back()->with('success', 'Detail ban baru berhasil diperbarui.');
     }
 
     private function kirimWaNotifikasi($kb)
@@ -938,6 +1011,7 @@ class BillingController extends Controller
 
         $totalUjDitahan = UjDitahan::where('saldo', '>', 0)
                             ->sum('saldo');
+        $ujDitahanVehicle = UjDitahan::where('vehicle_id', $master->vehicle_id)->where('saldo', '>', 0)->sum('saldo');
 
         $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                     "*Form Pencairan UJ Ditahan*\n".
@@ -950,6 +1024,8 @@ class BillingController extends Controller
                     "Nama    : ".$store['nama_rekening']."\n".
                     "No. Rek : ".$store['no_rekening']."\n\n".
                     "==========================\n".
+                     "Total Saldo UJ Ditahan : ".$master->vehicle->nomor_lambung."\n".
+                    "Rp. ".number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
                     // "Sisa Saldo Kas Uang Jalan : \n".
                     // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Grand Total UJ Ditahan : \n".

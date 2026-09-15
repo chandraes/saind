@@ -40,6 +40,7 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RekapController extends Controller
 {
@@ -1411,10 +1412,39 @@ class RekapController extends Controller
         $timePart     = date('H:i:s', strtotime($detail->created_at ?? now()));
         $newTimestamp = $request->tanggal_ganti . ' ' . $timePart;
 
-        // Update created_at di tabel ban_ganti_invoice_details
-        $detail->update([
-            'created_at' => $newTimestamp,
-        ]);
+        try {
+            DB::beginTransaction();
+
+            $transaksis = Transaksi::select('transaksis.id', 'rutes.jarak')
+                ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
+                ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
+                ->where('kas_uang_jalans.vehicle_id', $detail->invoice->vehicle_id)
+                ->where('transaksis.void', 0)
+                ->whereBetween('transaksis.created_at', [$newTimestamp, now()])
+                ->get();
+
+            $totalRitase = 0;
+
+             foreach ($transaksis as $trx) {
+                // Tentukan nilai ritase berdasarkan jarak
+                $jarak = (float) $trx->jarak;
+                $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
+
+                $totalRitase += $nilaiRitase;
+            }
+
+              // Update created_at di tabel ban_ganti_invoice_details
+            $detail->update([
+                'created_at' => $newTimestamp,
+                'ritase' => $totalRitase,
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui tanggal ganti ban: ' . $th->getMessage());
+        }
+
 
         return redirect()->back()->with('success', 'Tanggal ganti ban berhasil diperbarui.');
     }
