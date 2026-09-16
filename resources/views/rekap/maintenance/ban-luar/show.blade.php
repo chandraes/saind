@@ -161,11 +161,11 @@
                                     <td>
                                         @if($detail->ritase_lama < 80) <span class="badge bg-danger fs-8"
                                             title="Ritase di bawah 80">
-                                            {{ number_format($detail->ritase_lama, 0, ',', '.') }} Rit
+                                            {{ number_format($detail->ritase_lama, 2, ',', '.') }} Rit
                                             </span>
                                             @else
                                             <span class="fw-bold text-dark">
-                                                {{ number_format($detail->ritase_lama, 0, ',', '.') }} Rit
+                                                {{ number_format($detail->ritase_lama, 2, ',', '.') }} Rit
                                             </span>
                                             @endif
                                     </td>
