@@ -274,7 +274,27 @@
                     reverseButtons: true
                 }).then(function(result) {
                     if (result.isConfirmed) {
-                        formPencairan.submit(); // Eksekusi form jika user mengonfirmasi
+                        // 1. Kunci tombol submit agar tidak bisa diklik dua kali
+                        const submitBtn = formPencairan.querySelector('button[type="submit"]');
+                        if(submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Memproses...';
+                        }
+
+                        // 2. Munculkan SweetAlert Loading State & Kunci Layar
+                        Swal.fire({
+                            title: 'Memproses Transaksi...',
+                            html: 'Mohon tunggu sebentar, sedang mengirim pesan WhatsApp dan memproses data. <b>Jangan tutup atau refresh halaman ini.</b>',
+                            allowOutsideClick: false, // User tidak bisa klik diluar modal
+                            allowEscapeKey: false,    // User tidak bisa tekan ESC
+                            showConfirmButton: false, // Sembunyikan tombol OK
+                            didOpen: () => {
+                                Swal.showLoading();   // Tampilkan animasi loading
+                            }
+                        });
+
+                        // 3. Eksekusi form
+                        formPencairan.submit();
                     }
                 });
             });
