@@ -932,7 +932,7 @@ class BillingController extends Controller
         $nominalBersih = (int) str_replace('.', '', $request->nominal);
 
         // Sisipkan nilai bersih ke request agar bisa melewati validasi Laravel jika mau
-        $request->merge(['nominal_bersih' => $nominalBersih]);
+        $request->merge(['nominal' => $nominalBersih]);
 
         $request->validate([
             'uj_ditahan_id' => 'required|exists:uj_ditahans,id',
@@ -945,7 +945,7 @@ class BillingController extends Controller
         ]);
 
         // Bersihkan format nominal (misal jika ada titik/koma dari input form)
-        $nominalCair = str_replace('.', '', $request->nominal);
+        $nominalCair = $request->nominal;
 
         try {
             DB::beginTransaction();
