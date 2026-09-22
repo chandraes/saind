@@ -267,6 +267,7 @@ class VendorController extends Controller
             'plafon_lain' => 'required',
             'support_operational' => 'nullable',
             'pph_val' => 'nullable|required_if:pph,on',
+            'jatuh_tempo_hari' => 'required|integer|min:1',
         ]);
 
         if (array_key_exists('ppn', $data)) {

@@ -499,6 +499,13 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor'], function() {
         Route::get('transaksi/nota-bayar/{vendor}', [App\Http\Controllers\TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
+
+        Route::get('/transaksi/nota-bayar/{vendor}/keranjang', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_keranjang'])->name('transaksi.nota-bayar.keranjang');
+        Route::post('/transaksi/nota-bayar/{vendor}/masuk-keranjang', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_masuk_keranjang'])->name('transaksi.nota-bayar.masuk-keranjang');
+        Route::post('/transaksi/nota-bayar/{vendor}/keluar-keranjang', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_keluar_keranjang'])->name('transaksi.nota-bayar.keluar-keranjang');
+        Route::post('/transaksi/nota-bayar/{vendor}/keranjang-semua', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_keranjang_semua'])->name('transaksi.nota-bayar.keranjang-semua');
+        Route::post('/transaksi/nota-bayar/{vendor}/kosongkan-keranjang', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_kosongkan_keranjang'])->name('transaksi.nota-bayar.kosongkan-keranjang');
+
         Route::post('transaksi/nota-bayar/{vendor}/lanjut', [App\Http\Controllers\TransaksiController::class, 'nota_bayar_lanjut'])->name('transaksi.nota-bayar.lanjut');
 
          Route::prefix('billing/nota-bayar')->group(function() {
