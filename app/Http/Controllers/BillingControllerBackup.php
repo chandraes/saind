@@ -28,7 +28,6 @@ use App\Models\UjDitahan;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1584,7 +1583,7 @@ class BillingController extends Controller
 
     public function nota_bayar_detail_jenis(Request $request, Vendor $vendor, string $jenis)
     {
-        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+         if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
         }
 
@@ -1602,11 +1601,6 @@ class BillingController extends Controller
                 ->where('status', 3)
                 ->get();
 
-        // Ambil invoice keranjang aktif jika sudah ada transaksi sebelumnya
-        $existingInvoice = InvoiceAddVendor::where('vendor_id', $vendor->id)
-            ->where('jenis', $jenis)
-            ->where('status', 0)
-            ->first();
 
         $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
 
@@ -1616,7 +1610,6 @@ class BillingController extends Controller
             'data' => $data,
             'vendor' => $vendor,
             'keranjang' => $keranjang,
-            'existingInvoice' => $existingInvoice, // Kirim data invoice aktif
         ]);
     }
 
@@ -1691,9 +1684,6 @@ class BillingController extends Controller
         $totalAkhir = $totalKeseluruhan + $ppn - $pph;
         // ==================================================
 
-        $jatuhTempoHari = (int) ($vendor->jatuh_tempo_hari ?? 0);
-        $defaultTempo = $invoice->tempo ?? Carbon::now()->addDays($jatuhTempoHari)->format('Y-m-d');
-
         $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
 
         return view('billing.nota-bayar.keranjang', [
@@ -1708,40 +1698,28 @@ class BillingController extends Controller
             'ppn' => $ppn,
             'pph' => $pph,
             'totalAkhir' => $totalAkhir,
-            'defaultTempo' => $defaultTempo, // Dikirim ke view keranjang
         ]);
     }
 
     public function nota_bayar_detail_by_jenis_lanjut(Request $request, Vendor $vendor, $jenis)
     {
+
         if (!in_array(Auth::user()->role, ['su', 'admin'])){
             return redirect()->back()->with('error', "Anda tidak punya wewenang untuk aksi ini!!");
         }
 
-        // Validasi input DPP dan Checkbox transaksi yang dipilih
         $req = $request->validate([
             'dpp' => 'required',
-            'transaksi_additional_ids' => 'required|array|min:1',
-        ], [
-            'transaksi_additional_ids.required' => 'Pilih setidaknya satu transaksi terlebih dahulu.',
         ]);
 
         // 1. Sanitasi input DPP
         $dpp = (float) str_replace(['.', ','], ['', '.'], $req['dpp']);
 
-        // 2. Ambil hanya ID transaksi yang dicentang oleh user
-        $selectedIds = $req['transaksi_additional_ids'];
-
         $rekapJenis = TransaksiAdditional::with(['transaksi', 'customer'])
             ->where('jenis', $jenis)
             ->where('vendor_id', $vendor->id)
             ->where('status', 3)
-            ->whereIn('id', $selectedIds) // Filter hanya transaksi terpilih
             ->get();
-
-        if ($rekapJenis->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada data transaksi terpilih yang dapat diproses.');
-        }
 
         $rekapIds = $rekapJenis->pluck('id');
 
@@ -1752,36 +1730,45 @@ class BillingController extends Controller
                     })->max('dpp');
         }
 
-        // Validasi DPP Input terhadap Max DPP dari Database
+        // 4. Validasi DPP Input terhadap Max DPP dari Database
         if (!is_null($maxDpp)) {
+            // Gunakan (float) untuk memastikan perbandingan angka presisi
             if ($dpp > (float) $maxDpp) {
                 return redirect()->back()
-                    ->withInput()
+                    ->withInput() // Agar user tidak perlu mengetik ulang nominal jika gagal
                     ->with('error', 'DPP vendor (Rp '.number_format($dpp, 0, ',', '.').') tidak boleh lebih besar dari DPP tagihan (Rp '.number_format($maxDpp, 0, ',', '.').')!');
             }
         }
-
+        // 2. Mulai Transaksi Database LEbih AWAL (untuk lock yang efektif)
         DB::beginTransaction();
 
         try {
+            // 3. Lock untuk mencegah race condition
             $existingInvoice = InvoiceAddVendor::where('vendor_id', $vendor->id)
                 ->where('jenis', $jenis)
                 ->where('status', 0)
                 ->lockForUpdate()
                 ->first();
 
-            // Validasi duplikasi
+            // 4. Ambil data transaksi
+
+            if ($rekapJenis->isEmpty()) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Tidak ada data transaksi yang tersedia.');
+            }
+
+            // 5. Validasi duplikasi
             $existingDetailIds = DB::table('invoice_add_vendor_details')
-                ->whereIn('transaksi_additional_id', $rekapIds)
+                ->whereIn('transaksi_additional_id', $rekapJenis->pluck('id'))
                 ->pluck('transaksi_additional_id')
                 ->toArray();
 
             if (!empty($existingDetailIds)) {
                 DB::rollBack();
-                return redirect()->back()->with('error', 'Beberapa transaksi yang dipilih sudah ada di keranjang/invoice lain.');
+                return redirect()->back()->with('error', 'Beberapa transaksi sudah ada di invoice lain.');
             }
 
-            // Kalkulasi Total DPP khusus item terpilih
+            // 6. Kalkulasi Total DPP
             $totalKeseluruhan = $rekapJenis->sum(function ($item) use ($dpp) {
                 if (!$item->customer || !$item->transaksi) return 0;
 
@@ -1795,21 +1782,24 @@ class BillingController extends Controller
             });
             $totalKeseluruhan = (int) round($totalKeseluruhan);
 
-            // Perhitungan Pajak
+            // === TAMBAHAN PERHITUNGAN PAJAK ===
             $ppn = $vendor->ppn == 1 ? (int) round($totalKeseluruhan * 0.11) : 0;
             $pph = $vendor->pph == 1 ? (int) round($totalKeseluruhan * ($vendor->pph_val / 100)) : 0;
             $totalAkhir = $totalKeseluruhan + $ppn - $pph;
+            // =================================
 
-            // Proses Invoice
+            // 7. Proses Invoice
             if ($existingInvoice) {
                 if (bccomp((string) $existingInvoice->dpp, (string) $dpp, 4) !== 0) {
-                    throw new \Exception('DPP berbeda dengan yang sudah ada di keranjang. Silahkan gunakan DPP yang sama.');
+                    throw new \Exception('DPP berbeda dengan yang sudah ada di keranjang. Silahkan gunakan DPP yang sama atau selesaikan transaksi sebelumnya.');
                 }
 
+                // Increment DPP, PPN, dan PPH
                 $existingInvoice->increment('nominal', $totalKeseluruhan);
                 $existingInvoice->increment('ppn', $ppn);
                 $existingInvoice->increment('pph', $pph);
 
+                // Update Total Akhir
                 $existingInvoice->update([
                     'total' => $existingInvoice->nominal + $existingInvoice->ppn - $existingInvoice->pph
                 ]);
@@ -1829,7 +1819,7 @@ class BillingController extends Controller
                 ]);
             }
 
-            // Insert Detail
+            // 8. Insert Detail (Tidak berubah)
             $detailData = $rekapJenis->map(fn($item) => [
                 'invoice_add_vendor_id'   => $invoice->id,
                 'transaksi_additional_id' => $item->id,
@@ -1840,12 +1830,15 @@ class BillingController extends Controller
 
             DB::table('invoice_add_vendor_details')->insert($detailData);
 
-            // Update Status HANYA transaksi yang dicentang
-            TransaksiAdditional::whereIn('id', $rekapIds)->update(['status' => 4]);
+            // 9. Update Status (Tidak berubah)
+            TransaksiAdditional::where('jenis', $jenis)
+                ->where('vendor_id', $vendor->id)
+                ->where('status', 3)
+                ->update(['status' => 4]);
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Transaksi terpilih berhasil dimasukkan ke keranjang.');
+            return redirect()->back()->with('success', 'Perhitungan berhasil disimpan. Total: Rp ' . number_format($totalAkhir, 0, ',', '.'));
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1869,29 +1862,25 @@ class BillingController extends Controller
 
 
 
-    public function nota_bayar_detail_by_jenis_keranjang_lanjut(Request $request, Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
+    public function nota_bayar_detail_by_jenis_keranjang_lanjut(Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
     {
+        // Validasi bahwa invoice yang dimaksud benar-benar milik customer dan jenis yang sesuai
         if ($invoice->vendor_id !== $vendor->id || $invoice->jenis !== $jenis || $invoice->status !== 0) {
             return redirect()->back()->with('error', 'Invoice tidak valid untuk keranjang ini.');
         }
 
-        $req = $request->validate([
-            'tempo' => 'required|date',
-        ], [
-            'tempo.required' => 'Tanggal jatuh tempo wajib diisi.',
-        ]);
-
         try {
+            // 2. Database Transaction: Wajib digunakan jika ada lebih dari satu operasi UPDATE/DELETE
+            // Ini memastikan jika satu gagal, semua dibatalkan (mencegah data "nanggung")
             DB::beginTransaction();
 
+            // 3. Ambil ID detail transaksi
             $detailsId = $invoice->details()->pluck('transaksi_additional_id');
 
-            // Simpan tanggal tempo final dan selesaikan invoice
-            $invoice->update([
-                'tempo'  => $req['tempo'],
-                'status' => 1,
-            ]);
+            // 4. Update status Invoice (Hapus update status => 1 karena langsung ditimpa status => 5)
+            $invoice->update(['status' => 1]);
 
+            // 5. Bulk Update untuk TransaksiAdditional
             if ($detailsId->isNotEmpty()) {
                 TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 5]);
             }
@@ -1903,7 +1892,9 @@ class BillingController extends Controller
                 ->with('success', 'Transaksi berhasil diselesaikan menjadi invoice.');
 
         } catch (\Exception $e) {
+            // Jika terjadi error (DB mati, kolom hilang, dll), batalkan semua perubahan
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }

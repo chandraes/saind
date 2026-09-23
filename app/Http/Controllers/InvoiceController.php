@@ -330,6 +330,12 @@ class InvoiceController extends Controller
             ->when($vendorId, function ($q) use ($vendorId) {
                 return $q->where('vendor_id', $vendorId);
             })
+            ->when($startDate, function ($q) use ($startDate) {
+                return $q->whereDate('tempo', '>=', $startDate);
+            })
+            ->when($endDate, function ($q) use ($endDate) {
+                return $q->whereDate('tempo', '<=', $endDate);
+            })
             ->get();
 
         return view('billing.transaksi.invoice.invoice-bayar', [
@@ -727,6 +733,12 @@ class InvoiceController extends Controller
 
     public function invoice_bayar_back(InvoiceBayar $invoice)
     {
+        $roleApprove = ['su','admin'];
+
+        if (!in_array(Auth::user()->role, $roleApprove)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan invoice ini');
+        }
+
         if ($invoice->lunas != 0) {
             return redirect()->back()->with('error', 'Invoice sudah ada pembayaran');
         }

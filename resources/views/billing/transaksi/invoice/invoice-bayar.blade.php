@@ -80,7 +80,7 @@
                         <th class="text-center" style="width: 160px;">Invoice</th>
                         <th class="text-end" style="width: 180px;">Total Bayar</th>
                         <th class="text-center" style="width: 120px;">Pembayaran</th>
-                        @if (Auth::user()->role == 'su')
+                         @if (Auth::user()->role == 'su' || Auth::user()->role == 'admin')
                         <th class="text-center" style="width: 100px;">Aksi</th>
                         @endif
                     </tr>
@@ -116,7 +116,7 @@
                                 </button>
                             </form>
                         </td>
-                        @if (Auth::user()->role == 'su')
+                        @if (Auth::user()->role == 'su' || Auth::user()->role == 'admin')
                         <td class="text-center">
                             <form action="{{route('invoice.bayar-back.execute', ['invoice' => $d->id])}}" method="post" class="d-inline form-back">
                                 @csrf
@@ -130,9 +130,21 @@
                     @endforeach
 
                     @foreach ($addInvoice as $item)
+                    @php
+                        $isOverdue = $item->tempo && $item->tempo < $today;
+                    @endphp
                     <tr>
                         <td class="text-center text-muted">{{ $item->tanggal }}</td>
-                        <td class="text-center text-muted">-</td>
+                        <   <td class="text-center">
+                            @if ($item->tempo)
+                                <span class="badge {{ $isOverdue ? 'bg-danger' : 'bg-info text-dark' }} px-2 py-1">
+                                    <i class="fa {{ $isOverdue ? 'fa-exclamation-triangle' : 'fa-clock' }} me-1"></i>
+                                    {{ $item->tempo }}
+                                </span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
                         <td class="text-center fw-semibold">{{ $item->vendor->nama }}</td>
                         <td class="text-center">
                             <a href="{{route('invoice.bayar.detail-jenis', $item->id)}}" class="text-primary fw-bold text-decoration-none">{{ $item->periode_invoice }}</a>
@@ -146,7 +158,7 @@
                                 </button>
                             </form>
                         </td>
-                        @if (Auth::user()->role == 'su')
+                        @if (Auth::user()->role == 'su' || Auth::user()->role == 'admin')
                         <td class="text-center">
                             <span class="badge bg-light text-secondary border px-3 py-2">
                                 <i class="fa fa-cog me-1"></i> N/A
@@ -160,7 +172,7 @@
                 <tr>
                     <td colspan="4" class="text-end fw-bold align-middle">Grand Total:</td>
                     <td class="text-end fw-bold text-success fs-6 align-middle" id="tableGrandTotal">Rp 0</td>
-                    <td colspan="{{ Auth::user()->role == 'su' ? 2 : 1 }}"></td>
+                    <td colspan="{{ Auth::user()->role == 'su' || Auth::user()->role == 'admin' ? 2 : 1 }}"></td>
                 </tr>
             </tfoot>
             </table>

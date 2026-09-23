@@ -506,7 +506,7 @@
                                     <select class="form-select border-primary shadow-sm" id="vendorSelect" required>
                                         <option value="" selected disabled>-- Pilih Vendor --</option>
                                         @foreach ($vendor as $v)
-                                        <option value="{{$v->id}}">{{$v->nama}}</option>
+                                        <option value="{{$v->id}}">{{$v->nama}} ({{$v->nickname}})</option>
                                         @endforeach
                                     </select>
                                 </div>
