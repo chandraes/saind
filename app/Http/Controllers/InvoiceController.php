@@ -293,15 +293,49 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', 'Invoice berhasil di cicil');
     }
 
-    public function invoice_bayar()
+    public function invoice_bayar(Request $request)
     {
-        $invoice = InvoiceBayar::with('vendor')->where('lunas', 0)->get();
-        $addInvoice = InvoiceAddVendor::with(['vendor'])->where('status', 1)->where('is_finished', 0)->get();
+        $vendorId = $request->vendor_id;
+        $startDate = $request->start_date;
+        $endDate = $request->end_date;
 
+        // 1. Ambil ID vendor yang HANYA memiliki invoice aktif untuk diproses
+        $vendorIdsFromInvoice = InvoiceBayar::where('lunas', 0)->pluck('vendor_id');
+        $vendorIdsFromAddInvoice = InvoiceAddVendor::where('status', 1)->where('is_finished', 0)->pluck('vendor_id');
+
+        // Gabungkan ID vendor dan hilangkan duplikasi
+        $activeVendorIds = $vendorIdsFromInvoice->merge($vendorIdsFromAddInvoice)->unique()->filter();
+
+        // Query vendor berdasarkan ID yang aktif saja
+        $vendors = Vendor::whereIn('id', $activeVendorIds)->orderBy('nama', 'asc')->get();
+
+        // 2. Query InvoiceBayar dengan Filter
+        $invoice = InvoiceBayar::with('vendor')
+            ->where('lunas', 0)
+            ->when($vendorId, function ($q) use ($vendorId) {
+                return $q->where('vendor_id', $vendorId);
+            })
+            ->when($startDate, function ($q) use ($startDate) {
+                return $q->whereDate('tempo', '>=', $startDate);
+            })
+            ->when($endDate, function ($q) use ($endDate) {
+                return $q->whereDate('tempo', '<=', $endDate);
+            })
+            ->get();
+
+        // 3. Query InvoiceAddVendor dengan Filter
+        $addInvoice = InvoiceAddVendor::with(['vendor'])
+            ->where('status', 1)
+            ->where('is_finished', 0)
+            ->when($vendorId, function ($q) use ($vendorId) {
+                return $q->where('vendor_id', $vendorId);
+            })
+            ->get();
 
         return view('billing.transaksi.invoice.invoice-bayar', [
             'data' => $invoice,
-            'addInvoice' => $addInvoice
+            'addInvoice' => $addInvoice,
+            'vendors' => $vendors,
         ]);
     }
 

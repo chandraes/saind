@@ -1371,8 +1371,8 @@ class TransaksiController extends Controller
     // 7. Proses pembayaran nota
     public function nota_bayar_lanjut(Request $request, Vendor $vendor)
     {
-        return redirect()->back()->with('error', 'Fitur ini sedang dalam pengembangan. Silakan hubungi admin untuk sementara.');
-        
+        // return redirect()->back()->with('error', 'Fitur ini sedang dalam pengembangan. Silakan hubungi admin untuk sementara.');
+
         $request->validate([
             'total_bayar' => 'required|numeric',
             'ppn' => 'required|numeric',
