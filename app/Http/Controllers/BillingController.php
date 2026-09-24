@@ -380,7 +380,7 @@ class BillingController extends Controller
         return view('billing.otorisasi-maintenance.index', compact('invoices'));
     }
 
-    public function otorisasi_maintenance_ban_luar_approve($id)
+   public function otorisasi_maintenance_ban_luar_approve($id)
     {
         $kasBesarService  = app(\App\Services\KasBesarService::class);
         $kasVendorService = app(\App\Services\KasVendorService::class);
@@ -397,11 +397,9 @@ class BillingController extends Controller
             $vehicleId   = $invoice->vehicle_id;
             $vehicleInfo = $invoice->vehicle;
 
-
-
+            // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
             // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
             foreach ($invoice->details as $item) {
-                // Gunakan created_at dari detail invoice item
                 $tanggalGantiBan = $item->created_at;
 
                 if ($item->sumber_ban === 'serep') {
@@ -415,7 +413,7 @@ class BillingController extends Controller
                         'no_seri'       => $banSerep->no_seri ?? '-',
                         'kondisi'       => $banSerep->kondisi ?? 100,
                         'ritase'        => $banSerep->ritase ?? 0,
-                        'created_at'    => $tanggalGantiBan, // <-- Set created_at ban log dari detail item
+                        'created_at'    => $tanggalGantiBan,
                     ]);
 
                     if ($banLama) {
@@ -430,60 +428,67 @@ class BillingController extends Controller
                         ]);
                     }
                 } else {
+                    // 1. Tarik transaksi riil dari tanggal ganti hingga saat ini
+                    $transaksis = Transaksi::select('transaksis.id', 'rutes.jarak')
+                        ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
+                        ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
+                        ->where('kas_uang_jalans.vehicle_id', $invoice->vehicle_id)
+                        ->where('transaksis.void', 0)
+                        ->whereBetween('transaksis.created_at', [$tanggalGantiBan, now()])
+                        ->get();
+
+                    $totalRitaseHitung = 0;
+                    $trxList = [];
+                    $now = now();
+
+                    foreach ($transaksis as $trx) {
+                        $jarak = (float) $trx->jarak;
+                        $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
+
+                        $totalRitaseHitung += $nilaiRitase;
+
+                        $trxList[] = [
+                            'transaksi_id' => $trx->id,
+                            'nilai_ritase' => $nilaiRitase,
+                        ];
+                    }
+
+                    // 2. Tentukan nilai ritase akhir (Mencegah Double Count)
+                    // Jika ada transaksi terhitung, gunakan $totalRitaseHitung.
+                    // Jika tidak ada transaksi (0), gunakan $item->ritase yang sudah tersimpan dari form/update tanggal.
+                    $ritaseFix = ($totalRitaseHitung > 0) ? $totalRitaseHitung : ($item->ritase ?? 0);
+
+                    // 3. Buat BanLog dengan ritase yang sudah akurat
                     $banLogTujuan = BanLog::create([
                         'vehicle_id'    => $vehicleId,
                         'posisi_ban_id' => $item->posisi_ban_id,
                         'merk'          => $item->merk,
                         'no_seri'       => $item->no_seri,
                         'kondisi'       => $item->kondisi,
-                        'ritase'        => 0,
-                        'created_at'    => $tanggalGantiBan, // <-- Set created_at ban log dari detail item
+                        'ritase'        => $ritaseFix,
+                        'created_at'    => $tanggalGantiBan,
                     ]);
 
-                    if($item->ritase > 0) {
-                        $transaksis = Transaksi::select('transaksis.id', 'rutes.jarak')
-                                ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
-                                ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
-                                ->where('kas_uang_jalans.vehicle_id', $invoice->vehicle_id)
-                                ->where('transaksis.void', 0)
-                                ->whereBetween('transaksis.created_at', [$tanggalGantiBan, now()])
-                                ->get();
-
-                        $totalRitase = 0;
-                        $now = now();
-
-                        foreach ($transaksis as $trx) {
-                            // Tentukan nilai ritase berdasarkan jarak
-                            $jarak = (float) $trx->jarak;
-                            $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
-
-                            $totalRitase += $nilaiRitase;
-
-                            // Siapkan data untuk riwayat ke tabel pivot
+                    // 4. Masukkan riwayat transaksi ke tabel pivot ban_log_transaksis
+                    if (!empty($trxList)) {
+                        $pivotData = [];
+                        foreach ($trxList as $t) {
                             $pivotData[] = [
                                 'ban_log_id'   => $banLogTujuan->id,
-                                'transaksi_id' => $trx->id,
-                                'nilai_ritase' => $nilaiRitase,
+                                'transaksi_id' => $t['transaksi_id'],
+                                'nilai_ritase' => $t['nilai_ritase'],
                                 'created_at'   => $now,
                                 'updated_at'   => $now,
                             ];
                         }
 
-                        if ($totalRitase > 0) {
-                            $banLogTujuan->ritase = $totalRitase;
-                            $banLogTujuan->save();
-
-                            if (!empty($pivotData)) {
-                                foreach (array_chunk($pivotData, 500) as $chunk) {
-                                    DB::table('ban_log_transaksis')->insert($chunk);
-                                }
-                            }
+                        foreach (array_chunk($pivotData, 500) as $chunk) {
+                            DB::table('ban_log_transaksis')->insert($chunk);
                         }
                     }
                 }
 
                 $item->update(['ban_log_id' => $banLogTujuan->id]);
-
             }
 
             // Eksekusi Pemotongan Kas & Vendor
@@ -506,7 +511,7 @@ class BillingController extends Controller
                         'vehicle_id'        => $vehicleId,
                         'nominal_transaksi' => $nominalBersih,
                         'ban_ganti_invoice_id' => $invoice->id,
-                        'uraian'            => 'Penggantian Ban '.' (' . $invoice->no_invoice . ')',
+                        'uraian'            => 'Penggantian Ban (' . $invoice->no_invoice . ')',
                     ]);
                 }
             }
