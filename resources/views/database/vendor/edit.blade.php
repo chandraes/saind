@@ -87,14 +87,51 @@
                                 <label for="nama_rekening" class="form-label">Nama Pemilik</label>
                                 <input type="text" class="form-control shadow-none" name="nama_rekening" id="nama_rekening" value="{{$vendor->nama_rekening}}" required>
                             </div>
+
                             <div class="col-md-12">
                                 <hr class="text-muted opacity-25">
+                            </div>
+
+                            <!-- Dibagi menjadi dua: col-md-6 untuk Metode, col-md-6 untuk Jatuh Tempo -->
+                            <div class="col-md-12 mb-2">
                                 <label for="pembayaran" class="form-label fw-bold">Metode Pembayaran</label>
                                 <select class="form-select shadow-none" name="pembayaran" id="pembayaran">
                                     <option value="opname" {{$vendor->pembayaran == 'opname' ? 'selected' : ''}}>Opname</option>
                                     <option value="titipan" {{$vendor->pembayaran == 'titipan' ? 'selected' : ''}}>Khusus</option>
                                     <option value="titipan_khusus" {{$vendor->pembayaran == 'titipan_khusus' ? 'selected' : ''}}>Titipan Khusus</option>
                                 </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="jatuh_tempo_hari" class="form-label fw-bold">Jatuh Tempo Invoice <br><span class="text-danger">HPP</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control shadow-none text-end" name="jatuh_tempo_hari" id="jatuh_tempo_hari" value="{{ $vendor->jatuh_tempo_hari ?? 0 }}" required min="0" placeholder="0">
+                                    <span class="input-group-text bg-light text-muted fw-bold">Hari</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="jatuh_tempo_hari" class="form-label fw-bold">Jatuh Tempo Invoice <br><span class="text-danger">Kompensasi Jalan Rusak</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control shadow-none text-end" name="jatuh_tempo_kompensasi_jr" id="jatuh_tempo_kompensasi_jr" value="{{ $vendor->jatuh_tempo_kompensasi_jr ?? 0 }}" required min="0" placeholder="0">
+                                    <span class="input-group-text bg-light text-muted fw-bold">Hari</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="jatuh_tempo_hari" class="form-label fw-bold">Jatuh Tempo Invoice <span class="text-danger">Penyesuaian BBM</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control shadow-none text-end" name="jatuh_tempo_penyesuaian_bbm" id="jatuh_tempo_penyesuaian_bbm" value="{{ $vendor->jatuh_tempo_penyesuaian_bbm ?? 0 }}" required min="0" placeholder="0">
+                                    <span class="input-group-text bg-light text-muted fw-bold">Hari</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="jatuh_tempo_hari" class="form-label fw-bold">Jatuh Tempo Invoice <span class="text-danger">Achievement</span></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control shadow-none text-end" name="jatuh_tempo_achievement" id="jatuh_tempo_achievement" value="{{ $vendor->jatuh_tempo_achievement ?? 0 }}" required min="0" placeholder="0">
+                                    <span class="input-group-text bg-light text-muted fw-bold">Hari</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -121,7 +158,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label small">Email</label>
-                            <input type="email" class="form-control shadow-none" name="email" id="email" value="{{$vendor->email}}" required>
+                            <input type="text" class="form-control shadow-none" name="email" id="email" value="{{$vendor->email}}" >
                         </div>
                         <div class="mb-0">
                             <label class="form-label small">Sponsor</label>

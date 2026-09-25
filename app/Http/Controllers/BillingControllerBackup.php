@@ -28,7 +28,6 @@ use App\Models\UjDitahan;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -380,7 +379,7 @@ class BillingController extends Controller
         return view('billing.otorisasi-maintenance.index', compact('invoices'));
     }
 
-   public function otorisasi_maintenance_ban_luar_approve($id)
+    public function otorisasi_maintenance_ban_luar_approve($id)
     {
         $kasBesarService  = app(\App\Services\KasBesarService::class);
         $kasVendorService = app(\App\Services\KasVendorService::class);
@@ -397,9 +396,11 @@ class BillingController extends Controller
             $vehicleId   = $invoice->vehicle_id;
             $vehicleInfo = $invoice->vehicle;
 
-            // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
+
+
             // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
             foreach ($invoice->details as $item) {
+                // Gunakan created_at dari detail invoice item
                 $tanggalGantiBan = $item->created_at;
 
                 if ($item->sumber_ban === 'serep') {
@@ -413,7 +414,7 @@ class BillingController extends Controller
                         'no_seri'       => $banSerep->no_seri ?? '-',
                         'kondisi'       => $banSerep->kondisi ?? 100,
                         'ritase'        => $banSerep->ritase ?? 0,
-                        'created_at'    => $tanggalGantiBan,
+                        'created_at'    => $tanggalGantiBan, // <-- Set created_at ban log dari detail item
                     ]);
 
                     if ($banLama) {
@@ -428,67 +429,60 @@ class BillingController extends Controller
                         ]);
                     }
                 } else {
-                    // 1. Tarik transaksi riil dari tanggal ganti hingga saat ini
-                    $transaksis = Transaksi::select('transaksis.id', 'rutes.jarak')
-                        ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
-                        ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
-                        ->where('kas_uang_jalans.vehicle_id', $invoice->vehicle_id)
-                        ->where('transaksis.void', 0)
-                        ->whereBetween('transaksis.created_at', [$tanggalGantiBan, now()])
-                        ->get();
-
-                    $totalRitaseHitung = 0;
-                    $trxList = [];
-                    $now = now();
-
-                    foreach ($transaksis as $trx) {
-                        $jarak = (float) $trx->jarak;
-                        $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
-
-                        $totalRitaseHitung += $nilaiRitase;
-
-                        $trxList[] = [
-                            'transaksi_id' => $trx->id,
-                            'nilai_ritase' => $nilaiRitase,
-                        ];
-                    }
-
-                    // 2. Tentukan nilai ritase akhir (Mencegah Double Count)
-                    // Jika ada transaksi terhitung, gunakan $totalRitaseHitung.
-                    // Jika tidak ada transaksi (0), gunakan $item->ritase yang sudah tersimpan dari form/update tanggal.
-                    $ritaseFix = ($totalRitaseHitung > 0) ? $totalRitaseHitung : ($item->ritase ?? 0);
-
-                    // 3. Buat BanLog dengan ritase yang sudah akurat
                     $banLogTujuan = BanLog::create([
                         'vehicle_id'    => $vehicleId,
                         'posisi_ban_id' => $item->posisi_ban_id,
                         'merk'          => $item->merk,
                         'no_seri'       => $item->no_seri,
                         'kondisi'       => $item->kondisi,
-                        'ritase'        => $ritaseFix,
-                        'created_at'    => $tanggalGantiBan,
+                        'ritase'        => 0,
+                        'created_at'    => $tanggalGantiBan, // <-- Set created_at ban log dari detail item
                     ]);
 
-                    // 4. Masukkan riwayat transaksi ke tabel pivot ban_log_transaksis
-                    if (!empty($trxList)) {
-                        $pivotData = [];
-                        foreach ($trxList as $t) {
+                    if($item->ritase > 0) {
+                        $transaksis = Transaksi::select('transaksis.id', 'rutes.jarak')
+                                ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
+                                ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
+                                ->where('kas_uang_jalans.vehicle_id', $invoice->vehicle_id)
+                                ->where('transaksis.void', 0)
+                                ->whereBetween('transaksis.created_at', [$tanggalGantiBan, now()])
+                                ->get();
+
+                        $totalRitase = 0;
+                        $now = now();
+
+                        foreach ($transaksis as $trx) {
+                            // Tentukan nilai ritase berdasarkan jarak
+                            $jarak = (float) $trx->jarak;
+                            $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
+
+                            $totalRitase += $nilaiRitase;
+
+                            // Siapkan data untuk riwayat ke tabel pivot
                             $pivotData[] = [
                                 'ban_log_id'   => $banLogTujuan->id,
-                                'transaksi_id' => $t['transaksi_id'],
-                                'nilai_ritase' => $t['nilai_ritase'],
+                                'transaksi_id' => $trx->id,
+                                'nilai_ritase' => $nilaiRitase,
                                 'created_at'   => $now,
                                 'updated_at'   => $now,
                             ];
                         }
 
-                        foreach (array_chunk($pivotData, 500) as $chunk) {
-                            DB::table('ban_log_transaksis')->insert($chunk);
+                        if ($totalRitase > 0) {
+                            $banLogTujuan->ritase = $totalRitase;
+                            $banLogTujuan->save();
+
+                            if (!empty($pivotData)) {
+                                foreach (array_chunk($pivotData, 500) as $chunk) {
+                                    DB::table('ban_log_transaksis')->insert($chunk);
+                                }
+                            }
                         }
                     }
                 }
 
                 $item->update(['ban_log_id' => $banLogTujuan->id]);
+
             }
 
             // Eksekusi Pemotongan Kas & Vendor
@@ -511,7 +505,7 @@ class BillingController extends Controller
                         'vehicle_id'        => $vehicleId,
                         'nominal_transaksi' => $nominalBersih,
                         'ban_ganti_invoice_id' => $invoice->id,
-                        'uraian'            => 'Penggantian Ban (' . $invoice->no_invoice . ')',
+                        'uraian'            => 'Penggantian Ban '.' (' . $invoice->no_invoice . ')',
                     ]);
                 }
             }
@@ -597,6 +591,182 @@ class BillingController extends Controller
 
         return redirect()->route('billing.otorisasi-maintenance')->with('success', 'Invoice penggantian ban berhasil ditolak/dibatalkan.');
     }
+    // 5. Checkout Final Invoice
+    // public function form_ganti_ban_checkout(
+    //     Request $request,
+    //     KasBesarService $kasBesarService,
+    //     KasVendorService $kasVendorService
+    // )
+    // {
+    //     // 1. Sanitasi Input Cleave.js
+    //     if ($request->filled('total_nominal')) {
+    //         $cleanedNominal = preg_replace('/[^0-9]/', '', $request->total_nominal);
+    //         $request->merge([
+    //             'total_nominal' => $cleanedNominal
+    //         ]);
+    //     }
+
+    //     // 2. Validasi Request
+    //     $validated = $request->validate([
+    //         'vehicle_id'    => 'required|exists:vehicles,id',
+    //         'pembayaran'    => ['required', \Illuminate\Validation\Rule::in(array_keys(BanGantiInvoice::getMetodePembayaranOptions()))],
+    //         'total_nominal' => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|numeric|min:1',
+    //         'nama_bank'      => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|string|max:50',
+    //         'nomor_rekening' => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|string|max:50',
+    //         'nama_rekening'  => 'required_if:pembayaran,' . BanGantiInvoice::PEMBAYARAN_KAS_BESAR . '|nullable|string|max:100',
+    //     ]);
+
+    //     $vehicleId = $validated['vehicle_id'];
+
+    //     // --- PERBAIKAN: Ambil data Vehicle di sini agar $vehicleInfo dikenali di bawah ---
+    //     $vehicleInfo = \App\Models\Vehicle::findOrFail($vehicleId);
+
+    //     $cartItems = BanGantiCart::where('vehicle_id', $vehicleId)->get();
+
+    //     if ($cartItems->isEmpty()) {
+    //         return redirect()->route('billing.form-maintenance.ban-luar')->with('error', 'Keranjang masih kosong!');
+    //     }
+
+    //     try {
+    //         DB::beginTransaction();
+
+    //         $totalNominal = $validated['pembayaran'] === BanGantiInvoice::PEMBAYARAN_KAS_BESAR ? $validated['total_nominal'] : 0;
+    //         $noInvoice = 'INV-BAN-' . date('YmdHis') . '-' . $vehicleInfo->nomor_lambung;
+
+    //         // A. Simpan Header Invoice
+    //         $invoice = BanGantiInvoice::create([
+    //             'no_invoice'    => $noInvoice,
+    //             'vehicle_id'    => $vehicleId,
+    //             'pembayaran'    => $validated['pembayaran'],
+    //             'total_nominal' => $totalNominal,
+    //             'tanggal'       => date('Y-m-d'),
+    //         ]);
+
+    //         // B. Iterasi Detail Ban & Simpan Log
+    //         foreach ($cartItems as $item) {
+    //             if ($item->sumber_ban === 'serep') {
+    //                 $banSerep = BanLog::where('vehicle_id', $vehicleId)
+    //                                   ->where('posisi_ban_id', 11)
+    //                                   ->orderBy('created_at', 'desc')
+    //                                   ->first();
+
+    //                 $banLama = BanLog::where('vehicle_id', $vehicleId)
+    //                                  ->where('posisi_ban_id', $item->posisi_ban_id)
+    //                                  ->orderBy('created_at', 'desc')
+    //                                  ->first();
+
+    //                 $banLogTujuan = BanLog::create([
+    //                     'vehicle_id'    => $vehicleId,
+    //                     'posisi_ban_id' => $item->posisi_ban_id,
+    //                     'merk'          => $banSerep->merk ?? '-',
+    //                     'no_seri'       => $banSerep->no_seri ?? '-',
+    //                     'kondisi'       => $banSerep->kondisi ?? 100,
+    //                     'ritase'        => $banSerep->ritase ?? 0,
+    //                 ]);
+
+    //                 if ($banLama) {
+    //                     BanLog::create([
+    //                         'vehicle_id'    => $vehicleId,
+    //                         'posisi_ban_id' => 11,
+    //                         'merk'          => $banLama->merk,
+    //                         'no_seri'       => $banLama->no_seri,
+    //                         'kondisi'       => $banLama->kondisi,
+    //                         'ritase'        => $banLama->ritase,
+    //                     ]);
+    //                 }
+    //             } else {
+    //                 $banLogTujuan = BanLog::create([
+    //                     'vehicle_id'    => $vehicleId,
+    //                     'posisi_ban_id' => $item->posisi_ban_id,
+    //                     'merk'          => $item->merk,
+    //                     'no_seri'       => $item->no_seri,
+    //                     'kondisi'       => $item->kondisi,
+    //                     'ritase'        => 0,
+    //                 ]);
+    //             }
+
+    //             // Detail Invoice
+    //             BanGantiInvoiceDetail::create([
+    //                 'ban_ganti_invoice_id' => $invoice->id,
+    //                 'ban_log_id'           => $banLogTujuan->id ?? null,
+    //                 'posisi_ban_id'        => $item->posisi_ban_id,
+    //                 'sumber_ban'           => $item->sumber_ban,
+    //                 'merk'                 => $item->merk,
+    //                 'no_seri'              => $item->no_seri,
+    //                 'kondisi'              => $item->kondisi,
+    //             ]);
+    //         }
+
+    //         // C. Pemotongan Kas Besar (Jika Kas Besar)
+    //         if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_KAS_BESAR && $totalNominal > 0) {
+
+    //             // Panggil KasBesarService yang di-inject di parameter
+    //             $kb = $kasBesarService->potongSaldo([
+    //                 'nominal_transaksi' => $totalNominal,
+    //                 'uraian'            => 'Penggantian Ban Luar Unit ' . $vehicleInfo->nomor_lambung,
+    //                 'bank'         => $request->nama_bank,
+    //                 'ban_ganti_invoice_id' => $invoice->id,
+    //                 'no_rekening'    => $request->nomor_rekening,
+    //                 'transfer_ke'     => $request->nama_rekening,
+    //             ]);
+
+    //             // Panggil KasVendorService jika unit memiliki relasi vendor
+    //             if ($vehicleInfo->vendor_id) {
+    //                 $kv = $kasVendorService->tambahHutang([
+    //                     'vendor_id'         => $vehicleInfo->vendor_id,
+    //                     'vehicle_id'        => $vehicleId,
+    //                     'nominal_transaksi' => $totalNominal,
+    //                     'ban_ganti_invoice_id' => $invoice->id,
+    //                     'uraian'            => 'Penggantian Ban '.' (' . $noInvoice . ')',
+    //                 ]);
+    //             }
+    //         }
+
+    //         // D. Bersihkan Keranjang
+    //         BanGantiCart::where('vehicle_id', $vehicleId)->delete();
+
+    //         DB::commit();
+
+
+    //     } catch (\Throwable $th) {
+    //         DB::rollBack();
+    //         return redirect()->back()->with('error', 'Gagal memproses checkout: ' . $th->getMessage());
+    //     }
+
+    //     if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_KAS_BESAR && $totalNominal > 0) {
+    //         try {
+    //             $dbWa = new GroupWa();
+
+    //             $group = $dbWa->where('untuk', 'kas-besar')->first();
+    //             $pesan ="🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+    //                     "*FORM PENGGANTIAN BAN*\n".
+    //                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+    //                     "Uraian :  ".$kb['uraian']."\n".
+    //                     "Nilai :  *Rp. ".number_format($kb['nominal_transaksi'], 0, ',', '.')."*\n\n".
+    //                     "Ditransfer ke rek:\n\n".
+    //                     "Bank     : ".$kb['bank']."\n".
+    //                     "Nama    : ".$kb['transfer_ke']."\n".
+    //                     "No. Rek : ".$kb['no_rekening']."\n\n".
+    //                     "==========================\n".
+    //                     "Sisa Saldo Kas Besar : \n".
+    //                     "Rp. ".number_format($kb->saldo, 0, ',', '.')."\n\n".
+    //                     "Total Modal Investor : \n".
+    //                     "Rp. ".number_format($kb->modal_investor_terakhir, 0, ',', '.')."\n\n".
+    //                     "Terima kasih 🙏🙏🙏\n";
+
+    //             $dbWa->sendWa($group->nama_group, $pesan);
+
+    //         } catch (\Throwable $th) {
+    //             //throw $th;
+    //             return redirect()->route('billing.form-maintenance.ban-luar')
+    //                              ->with('error', 'Penggantian ban berhasil diproses, namun gagal mengirim notifikasi WhatsApp: ' . $th->getMessage());
+    //         }
+    //     }
+
+
+    //     return redirect()->route('billing.form-maintenance.ban-luar')
+    //                          ->with('success', 'Penggantian ban berhasil diproses. Invoice ' . $noInvoice . ' diterbitkan.');
+    // }
 
     public function uj_ditahan(Request $request)
     {
@@ -1413,7 +1583,7 @@ class BillingController extends Controller
 
     public function nota_bayar_detail_jenis(Request $request, Vendor $vendor, string $jenis)
     {
-        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+         if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
         }
 
@@ -1431,11 +1601,6 @@ class BillingController extends Controller
                 ->where('status', 3)
                 ->get();
 
-        // Ambil invoice keranjang aktif jika sudah ada transaksi sebelumnya
-        $existingInvoice = InvoiceAddVendor::where('vendor_id', $vendor->id)
-            ->where('jenis', $jenis)
-            ->where('status', 0)
-            ->first();
 
         $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
 
@@ -1445,7 +1610,6 @@ class BillingController extends Controller
             'data' => $data,
             'vendor' => $vendor,
             'keranjang' => $keranjang,
-            'existingInvoice' => $existingInvoice, // Kirim data invoice aktif
         ]);
     }
 
@@ -1519,10 +1683,6 @@ class BillingController extends Controller
         $pph = $vendor->pph == 1 ? (int) round($totalKeseluruhan * ($vendor->pph_val / 100)) : 0;
         $totalAkhir = $totalKeseluruhan + $ppn - $pph;
         // ==================================================
-        $columnName = "jatuh_tempo_".$jenis;
-
-        $jatuhTempoHari = (int) ($vendor->$columnName ?? 0);
-        $defaultTempo = $invoice->tempo ?? Carbon::now()->addDays($jatuhTempoHari)->format('Y-m-d');
 
         $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
 
@@ -1538,41 +1698,28 @@ class BillingController extends Controller
             'ppn' => $ppn,
             'pph' => $pph,
             'totalAkhir' => $totalAkhir,
-            'defaultTempo' => $defaultTempo, // Dikirim ke view keranjang
-            'jatuhTempoHari' => $jatuhTempoHari, // Dikirim ke view keranjang
         ]);
     }
 
     public function nota_bayar_detail_by_jenis_lanjut(Request $request, Vendor $vendor, $jenis)
     {
+
         if (!in_array(Auth::user()->role, ['su', 'admin'])){
             return redirect()->back()->with('error', "Anda tidak punya wewenang untuk aksi ini!!");
         }
 
-        // Validasi input DPP dan Checkbox transaksi yang dipilih
         $req = $request->validate([
             'dpp' => 'required',
-            'transaksi_additional_ids' => 'required|array|min:1',
-        ], [
-            'transaksi_additional_ids.required' => 'Pilih setidaknya satu transaksi terlebih dahulu.',
         ]);
 
         // 1. Sanitasi input DPP
         $dpp = (float) str_replace(['.', ','], ['', '.'], $req['dpp']);
 
-        // 2. Ambil hanya ID transaksi yang dicentang oleh user
-        $selectedIds = $req['transaksi_additional_ids'];
-
         $rekapJenis = TransaksiAdditional::with(['transaksi', 'customer'])
             ->where('jenis', $jenis)
             ->where('vendor_id', $vendor->id)
             ->where('status', 3)
-            ->whereIn('id', $selectedIds) // Filter hanya transaksi terpilih
             ->get();
-
-        if ($rekapJenis->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada data transaksi terpilih yang dapat diproses.');
-        }
 
         $rekapIds = $rekapJenis->pluck('id');
 
@@ -1583,36 +1730,45 @@ class BillingController extends Controller
                     })->max('dpp');
         }
 
-        // Validasi DPP Input terhadap Max DPP dari Database
+        // 4. Validasi DPP Input terhadap Max DPP dari Database
         if (!is_null($maxDpp)) {
+            // Gunakan (float) untuk memastikan perbandingan angka presisi
             if ($dpp > (float) $maxDpp) {
                 return redirect()->back()
-                    ->withInput()
+                    ->withInput() // Agar user tidak perlu mengetik ulang nominal jika gagal
                     ->with('error', 'DPP vendor (Rp '.number_format($dpp, 0, ',', '.').') tidak boleh lebih besar dari DPP tagihan (Rp '.number_format($maxDpp, 0, ',', '.').')!');
             }
         }
-
+        // 2. Mulai Transaksi Database LEbih AWAL (untuk lock yang efektif)
         DB::beginTransaction();
 
         try {
+            // 3. Lock untuk mencegah race condition
             $existingInvoice = InvoiceAddVendor::where('vendor_id', $vendor->id)
                 ->where('jenis', $jenis)
                 ->where('status', 0)
                 ->lockForUpdate()
                 ->first();
 
-            // Validasi duplikasi
+            // 4. Ambil data transaksi
+
+            if ($rekapJenis->isEmpty()) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Tidak ada data transaksi yang tersedia.');
+            }
+
+            // 5. Validasi duplikasi
             $existingDetailIds = DB::table('invoice_add_vendor_details')
-                ->whereIn('transaksi_additional_id', $rekapIds)
+                ->whereIn('transaksi_additional_id', $rekapJenis->pluck('id'))
                 ->pluck('transaksi_additional_id')
                 ->toArray();
 
             if (!empty($existingDetailIds)) {
                 DB::rollBack();
-                return redirect()->back()->with('error', 'Beberapa transaksi yang dipilih sudah ada di keranjang/invoice lain.');
+                return redirect()->back()->with('error', 'Beberapa transaksi sudah ada di invoice lain.');
             }
 
-            // Kalkulasi Total DPP khusus item terpilih
+            // 6. Kalkulasi Total DPP
             $totalKeseluruhan = $rekapJenis->sum(function ($item) use ($dpp) {
                 if (!$item->customer || !$item->transaksi) return 0;
 
@@ -1626,21 +1782,24 @@ class BillingController extends Controller
             });
             $totalKeseluruhan = (int) round($totalKeseluruhan);
 
-            // Perhitungan Pajak
+            // === TAMBAHAN PERHITUNGAN PAJAK ===
             $ppn = $vendor->ppn == 1 ? (int) round($totalKeseluruhan * 0.11) : 0;
             $pph = $vendor->pph == 1 ? (int) round($totalKeseluruhan * ($vendor->pph_val / 100)) : 0;
             $totalAkhir = $totalKeseluruhan + $ppn - $pph;
+            // =================================
 
-            // Proses Invoice
+            // 7. Proses Invoice
             if ($existingInvoice) {
                 if (bccomp((string) $existingInvoice->dpp, (string) $dpp, 4) !== 0) {
-                    throw new \Exception('DPP berbeda dengan yang sudah ada di keranjang. Silahkan gunakan DPP yang sama.');
+                    throw new \Exception('DPP berbeda dengan yang sudah ada di keranjang. Silahkan gunakan DPP yang sama atau selesaikan transaksi sebelumnya.');
                 }
 
+                // Increment DPP, PPN, dan PPH
                 $existingInvoice->increment('nominal', $totalKeseluruhan);
                 $existingInvoice->increment('ppn', $ppn);
                 $existingInvoice->increment('pph', $pph);
 
+                // Update Total Akhir
                 $existingInvoice->update([
                     'total' => $existingInvoice->nominal + $existingInvoice->ppn - $existingInvoice->pph
                 ]);
@@ -1660,7 +1819,7 @@ class BillingController extends Controller
                 ]);
             }
 
-            // Insert Detail
+            // 8. Insert Detail (Tidak berubah)
             $detailData = $rekapJenis->map(fn($item) => [
                 'invoice_add_vendor_id'   => $invoice->id,
                 'transaksi_additional_id' => $item->id,
@@ -1671,12 +1830,15 @@ class BillingController extends Controller
 
             DB::table('invoice_add_vendor_details')->insert($detailData);
 
-            // Update Status HANYA transaksi yang dicentang
-            TransaksiAdditional::whereIn('id', $rekapIds)->update(['status' => 4]);
+            // 9. Update Status (Tidak berubah)
+            TransaksiAdditional::where('jenis', $jenis)
+                ->where('vendor_id', $vendor->id)
+                ->where('status', 3)
+                ->update(['status' => 4]);
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Transaksi terpilih berhasil dimasukkan ke keranjang.');
+            return redirect()->back()->with('success', 'Perhitungan berhasil disimpan. Total: Rp ' . number_format($totalAkhir, 0, ',', '.'));
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1700,29 +1862,25 @@ class BillingController extends Controller
 
 
 
-    public function nota_bayar_detail_by_jenis_keranjang_lanjut(Request $request, Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
+    public function nota_bayar_detail_by_jenis_keranjang_lanjut(Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
     {
+        // Validasi bahwa invoice yang dimaksud benar-benar milik customer dan jenis yang sesuai
         if ($invoice->vendor_id !== $vendor->id || $invoice->jenis !== $jenis || $invoice->status !== 0) {
             return redirect()->back()->with('error', 'Invoice tidak valid untuk keranjang ini.');
         }
 
-        $req = $request->validate([
-            'tempo' => 'required|date',
-        ], [
-            'tempo.required' => 'Tanggal jatuh tempo wajib diisi.',
-        ]);
-
         try {
+            // 2. Database Transaction: Wajib digunakan jika ada lebih dari satu operasi UPDATE/DELETE
+            // Ini memastikan jika satu gagal, semua dibatalkan (mencegah data "nanggung")
             DB::beginTransaction();
 
+            // 3. Ambil ID detail transaksi
             $detailsId = $invoice->details()->pluck('transaksi_additional_id');
 
-            // Simpan tanggal tempo final dan selesaikan invoice
-            $invoice->update([
-                'tempo'  => $req['tempo'],
-                'status' => 1,
-            ]);
+            // 4. Update status Invoice (Hapus update status => 1 karena langsung ditimpa status => 5)
+            $invoice->update(['status' => 1]);
 
+            // 5. Bulk Update untuk TransaksiAdditional
             if ($detailsId->isNotEmpty()) {
                 TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 5]);
             }
@@ -1734,7 +1892,9 @@ class BillingController extends Controller
                 ->with('success', 'Transaksi berhasil diselesaikan menjadi invoice.');
 
         } catch (\Exception $e) {
+            // Jika terjadi error (DB mati, kolom hilang, dll), batalkan semua perubahan
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }

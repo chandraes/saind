@@ -76,6 +76,12 @@ class VendorController extends Controller
                 ->addColumn('sponsor_nama', function ($d) {
                     return $d->sponsor ? $d->sponsor->nama : '';
                 })
+                ->addColumn('jatuh_tempo', function ($d) {
+                    return 'HPP: <strong>' . $d->jatuh_tempo_hari . ' Hari </strong><br>' .
+                           'Kompensasi JR: <strong>' . $d->jatuh_tempo_kompensasi_jr . ' Hari</strong><br>' .
+                           'Penyesuaian BBM: <strong>' . $d->jatuh_tempo_penyesuaian_bbm . ' Hari</strong><br>' .
+                           'Achievement: <strong>' . $d->jatuh_tempo_achievement . ' Hari</strong>';
+                })
                 ->addColumn('uang_jalan', function ($d) {
                     // Kita pindahkan tombol dan modal ke view parsial agar controller tetap bersih
                     return view('database.vendor.partials.uang_jalan_btn', compact('d'))->render();
@@ -83,7 +89,7 @@ class VendorController extends Controller
                 ->addColumn('action', function ($d) {
                     return view('database.vendor.partials.action_btn', compact('d'))->render();
                 })
-                ->rawColumns(['nama', 'pembayaran', 'support_operational', 'ppn', 'pph', 'plafon_titipan', 'plafon_lain', 'status', 'uang_jalan', 'action', 'limit_tonase'])
+                ->rawColumns(['nama', 'pembayaran', 'support_operational', 'ppn', 'pph', 'plafon_titipan', 'plafon_lain', 'status', 'uang_jalan', 'action', 'limit_tonase', 'jatuh_tempo'])
                 ->make(true);
         }
 
@@ -267,6 +273,10 @@ class VendorController extends Controller
             'plafon_lain' => 'required',
             'support_operational' => 'nullable',
             'pph_val' => 'nullable|required_if:pph,on',
+            'jatuh_tempo_hari' => 'required|integer|min:1',
+            'jatuh_tempo_kompensasi_jr' => 'required|integer|min:1',
+            'jatuh_tempo_penyesuaian_bbm' => 'required|integer|min:1',
+            'jatuh_tempo_achievement' => 'required|integer|min:1',
         ]);
 
         if (array_key_exists('ppn', $data)) {

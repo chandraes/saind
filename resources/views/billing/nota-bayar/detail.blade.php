@@ -18,29 +18,34 @@
         <div class="col-md-8">
             <table class="table">
                 <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                                 @if (auth()->user()->role != 'asisten-user' && auth()->user()->role != 'vendor')
-                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
-                                alt="dokumen" width="30"> Billing</a></td>
-                                @endif
-                                  <td><a href="{{route('billing.nota-bayar', $vendor->id)}}"><img src="{{asset('images/back.svg')}}"
-                                alt="dokumen" width="30"> Kembali</a>
-                            </td>
-                    <td class="align-middle"><a href="{{route('billing.nota-bayar.detail-jenis.keranjang', ['vendor' => $vendor->id, 'jenis' => $jenis])}}"><i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang @if ($keranjang > 0) <span
-                            class="badge bg-danger">{{$keranjang}}</span> @endif</a></td>
-
+                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30"> Dashboard</a></td>
+                    @if (auth()->user()->role != 'asisten-user' && auth()->user()->role != 'vendor')
+                    <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30"> Billing</a></td>
+                    @endif
+                    <td><a href="{{route('billing.nota-bayar', $vendor->id)}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30"> Kembali</a></td>
+                    <td class="align-middle">
+                        <a href="{{route('billing.nota-bayar.detail-jenis.keranjang', ['vendor' => $vendor->id, 'jenis' => $jenis])}}">
+                            <i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang
+                            @if ($keranjang > 0)
+                                <span class="badge bg-danger">{{$keranjang}}</span>
+                            @endif
+                        </a>
+                    </td>
                 </tr>
             </table>
         </div>
     </div>
 </div>
 
-
-<div class="container-fluid mt-3 table-responsive ">
-   <table class="table table-bordered table-hover" id="notaTable">
+<div class="container-fluid mt-3 table-responsive">
+    <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
+                @if (in_array(auth()->user()->role, ['admin', 'su']))
+                <th class="text-center align-middle" style="width: 40px;">
+                    <input type="checkbox" class="form-check-input" id="checkAll" autocomplete="off">
+                </th>
+                @endif
                 <th class="text-center align-middle">No</th>
                 <th class="text-center align-middle">Tanggal UJ</th>
                 <th class="text-center align-middle">Kode</th>
@@ -57,20 +62,23 @@
                 <th class="text-center align-middle">Tonase Bongkar</th>
                 <th class="text-center align-middle">Selisih (Ton)</th>
                 <th class="text-center align-middle">Selisih (%)</th>
-
             </tr>
         </thead>
         <tbody>
-            @foreach ($data as $d)
+            @foreach ($data as $item)
             @php
-                $d = $d->transaksi;
+                $d = $item->transaksi;
             @endphp
             <tr>
+                @if (in_array(auth()->user()->role, ['admin', 'su']))
+                <td class="text-center align-middle">
+                    <input type="checkbox" class="form-check-input check-item" value="{{ $item->id }}">
+                </td>
+                @endif
                 <td class="text-center align-middle">{{$loop->iteration}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->tanggal}}</td>
                 <td class="align-middle">
-                       <strong>UJ{{sprintf("%02d",
-                                $d->kas_uang_jalan->nomor_uang_jalan)}}</strong>
+                    <strong>UJ{{sprintf("%02d", $d->kas_uang_jalan->nomor_uang_jalan)}}</strong>
                 </td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vehicle->nomor_lambung}}</td>
                 <td class="text-center align-middle">{{$d->kas_uang_jalan->vendor->nickname}}</td>
@@ -83,23 +91,21 @@
                 <td class="text-center align-middle">{{$d->id_tanggal_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->nota_bongkar}}</td>
                 <td class="text-center align-middle">{{$d->timbangan_bongkar}}</td>
-                <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}
-                </td>
-                <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2,
-                    ',','.')}}</td>
-
+                <td class="text-center align-middle">{{number_format($d->tonase - $d->timbangan_bongkar, 2, ',','.')}}</td>
+                <td class="text-center align-middle">{{number_format(($d->tonase - $d->timbangan_bongkar)*0.1, 2, ',','.')}}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
 </div>
+
 @if (in_array(auth()->user()->role, ['admin', 'su']))
 <div class="container mt-4 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4">
-                    <form action="{{route('billing.nota-bayar.detail-jenis.lanjut', ['vendor' => $vendor->id, 'jenis' => $jenis])}}" method="post" id="lanjutForm">
+                    <form action="{{route('billing.nota-bayar.detail-jenis.lanjut', ['vendor' => $vendor->id, 'jenis' => $jenis])}}" method="post" id="lanjutForm" autocomplete="off">
                         @csrf
                         <div class="mb-4">
                             <label for="dpp" class="form-label fw-bold text-secondary">Nominal DPP</label>
@@ -110,18 +116,28 @@
                                        id="dpp"
                                        class="form-control border-start-0 fw-bold text-primary shadow-none"
                                        placeholder="xxx"
+                                       value="{{ $existingInvoice ? number_format($existingInvoice->dpp, 0, ',', '.') : old('dpp') }}"
+                                       {{ $existingInvoice ? 'readonly' : '' }}
                                        autocomplete="off"
                                        required>
                             </div>
-                            <div class="form-text mt-2 small italic text-muted">
+
+                            @if($existingInvoice)
+                            <div class="form-text mt-2 small text-warning fw-semibold">
+                                <i class="fa fa-lock me-1"></i> Nominal DPP dikunci mengikuti transaksi yang sudah ada di keranjang.
+                            </div>
+                            @else
+                            <div class="form-text mt-2 small text-muted">
                                 <i class="fa fa-info-circle me-1"></i> Pastikan nominal sudah benar sebelum melanjutkan.
                             </div>
+                            @endif
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button class="btn btn-primary btn-lg rounded-3 fw-bold shadow-sm" type="submit">
-                                Lanjutkan <i class="fa fa-arrow-right ms-2"></i>
+                            <button class="btn btn-primary btn-lg rounded-3 fw-bold shadow-sm" type="submit" id="btnSubmitLanjut" disabled>
+                                Lanjutkan (<span id="selectedCount">0</span> Diproses) <i class="fa fa-arrow-right ms-2"></i>
                             </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -130,67 +146,126 @@
 </div>
 @endif
 
-
 @endsection
+
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 <link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
 <link rel="stylesheet" href="{{asset('assets/js/dt/dt-button.css')}}">
 @endpush
+
 @push('js')
 <script src="{{asset('assets/js/flatpickr/flatpickr.js')}}"></script>
 <script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
 <script src="{{asset('assets/js/dt-font.js')}}"></script>
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.10.22/sorting/datetime-moment.js"></script>
+<script src="{{asset('assets/js/cleave.min.js')}}"></script>
 <script>
     $(document).ready(function() {
+    var role = "{{ auth()->user()->role }}";
+    var isDppReadonly = {{ $existingInvoice ? 'true' : 'false' }};
 
-        let role = "{{ auth()->user()->role }}";
-
-        var table = $('#notaTable').DataTable({
-             "paging": false,
-            "ordering": true,
-            "scrollCollapse": true,
-            "scrollY": "550px",
-            "scrollX": true,
-            "stateSave": true,
-            "order": [[ 2, "asc" ]],
-        });
-
-        if (role === 'admin' || role === 'su') {
-            var dpp = new Cleave('#dpp', {
-                    numeral: true,
-                    numeralThousandsGroupStyle: 'thousand',
-                    numeralDecimalMark: ',',
-                    delimiter: '.'
-                });
-        }
-
-
-
-
+    var table = $('#notaTable').DataTable({
+        "paging": false,
+        "ordering": true,
+        "scrollCollapse": true,
+        "scrollY": "550px",
+        "scrollX": true,
+        "stateSave": true,
+        "order": [[ (role === 'admin' || role === 'su') ? 3 : 2, "asc" ]],
     });
 
-
-    $('#lanjutForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah anda yakin?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    this.submit();
-                }
-            })
+    // Format Cleave.js untuk input DPP jika tidak readonly
+    if ((role === 'admin' || role === 'su') && !isDppReadonly) {
+        new Cleave('#dpp', {
+            numeral: true,
+            numeralThousandsGroupStyle: 'thousand',
+            numeralDecimalMark: ',',
+            delimiter: '.'
         });
+    }
 
+    // Toggle Checkbox All
+    $('#checkAll').on('click', function() {
+        var rows = table.rows({ 'search': 'applied' }).nodes();
+        $('input[type="checkbox"].check-item', rows).prop('checked', this.checked);
+        updateSelectedState();
+    });
 
-      </script>
+    // Toggle Checkbox Item
+    $('#notaTable tbody').on('change', 'input[type="checkbox"].check-item', function() {
+        if (!this.checked) {
+            var el = $('#checkAll').get(0);
+            if (el && el.checked && ('indeterminate' in el)) {
+                el.indeterminate = true;
+            }
+        }
+        updateSelectedState();
+    });
+
+    // Function update status button dan jumlah checklist
+    function updateSelectedState() {
+        var checkedBoxes = table.$('input[type="checkbox"].check-item:checked');
+        var count = checkedBoxes.length;
+
+        $('#selectedCount').text(count);
+        $('#btnSubmitLanjut').prop('disabled', count === 0);
+
+        var totalItems = table.$('input[type="checkbox"].check-item').length;
+        $('#checkAll').prop('checked', totalItems > 0 && count === totalItems);
+    }
+
+    // =========================================================================
+    // PERBAIKAN BUG: Reset paksa semua checkbox saat halaman di-load / refresh
+    // =========================================================================
+    $('#checkAll').prop('checked', false);
+    table.$('input[type="checkbox"].check-item').prop('checked', false);
+
+    // Hitung ulang status tombol & counter
+    updateSelectedState();
+
+    // Submit Form Handler
+    $('#lanjutForm').submit(function(e){
+        e.preventDefault();
+        var form = this;
+        var checkedBoxes = table.$('input[type="checkbox"].check-item:checked');
+        var count = checkedBoxes.length;
+
+        if (count === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Peringatan',
+                text: 'Silakan pilih setidaknya satu transaksi terlebih dahulu.'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Apakah anda yakin?',
+            text: count + " transaksi akan dimasukkan ke keranjang.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, simpan!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $(form).find('input[name="transaksi_additional_ids[]"]').remove();
+
+                checkedBoxes.each(function() {
+                    $(form).append(
+                        $('<input>')
+                            .attr('type', 'hidden')
+                            .attr('name', 'transaksi_additional_ids[]')
+                            .val($(this).val())
+                    );
+                });
+
+                $('#spinner').show();
+                form.submit();
+            }
+        });
+    });
+});
+</script>
 @endpush
