@@ -1297,6 +1297,7 @@ class TransaksiController extends Controller
             'data' => $dataKeranjang,
             'vendor' => $vendor,
             'defaultJatuhTempo' => $defaultJatuhTempo,
+            'hariJatuhTempo' => $hariJatuhTempo,
         ]);
     }
 

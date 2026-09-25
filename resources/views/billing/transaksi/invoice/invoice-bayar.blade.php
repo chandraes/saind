@@ -75,9 +75,9 @@
                 <thead class="table-success border-bottom">
                     <tr>
                         <th class="text-center" style="width: 110px;">Tanggal</th>
-                        <th class="text-center" style="width: 130px;">Jatuh Tempo</th>
                         <th class="text-center" style="width: 180px;">Vendor</th>
                         <th class="text-center" style="width: 160px;">Invoice</th>
+                        <th class="text-center" style="width: 130px;">Jatuh Tempo</th>
                         <th class="text-end" style="width: 180px;">Total Bayar</th>
                         <th class="text-center" style="width: 120px;">Pembayaran</th>
                          @if (Auth::user()->role == 'su' || Auth::user()->role == 'admin')
@@ -135,7 +135,11 @@
                     @endphp
                     <tr>
                         <td class="text-center text-muted">{{ $item->tanggal }}</td>
-                        <   <td class="text-center">
+                        <td class="text-center fw-semibold">{{ $item->vendor->nama }}</td>
+                        <td class="text-center">
+                            <a href="{{route('invoice.bayar.detail-jenis', $item->id)}}" class="text-primary fw-bold text-decoration-none">{{ $item->periode_invoice }}</a>
+                        </td>
+                        <td class="text-center">
                             @if ($item->tempo)
                                 <span class="badge {{ $isOverdue ? 'bg-danger' : 'bg-info text-dark' }} px-2 py-1">
                                     <i class="fa {{ $isOverdue ? 'fa-exclamation-triangle' : 'fa-clock' }} me-1"></i>
@@ -144,10 +148,6 @@
                             @else
                                 <span class="text-muted">-</span>
                             @endif
-                        </td>
-                        <td class="text-center fw-semibold">{{ $item->vendor->nama }}</td>
-                        <td class="text-center">
-                            <a href="{{route('invoice.bayar.detail-jenis', $item->id)}}" class="text-primary fw-bold text-decoration-none">{{ $item->periode_invoice }}</a>
                         </td>
                         <td class="text-end fw-semibold">Rp {{ $item->nf_total }}</td>
                         <td class="text-center">

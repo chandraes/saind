@@ -172,9 +172,9 @@
                 <div class="row align-items-end justify-content-center">
                     <div class="col-md-4 mb-3">
                         <label for="tempo" class="form-label font-weight-bold">
-                            Tanggal Jatuh Tempo
+                            Tanggal Jatuh Tempo<span class="badge bg-info text-dark ms-1"> {{ $hariJatuhTempo ?? 0 }} Hari</span>
                             @if(!$isAdminOrSu)
-                                <small class="text-muted">(Akses ubah hanya untuk Admin/SU)</small>
+                                <small class="text-muted">(Akses ubah hanya untuk Admin)</small>
                             @endif
                         </label>
                         <input type="date" class="form-control" id="tempo" name="tempo"

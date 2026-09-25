@@ -45,7 +45,7 @@
                     <div class="col-md-6 col-lg-5">
                         <label for="tempo" class="form-label fw-bold text-secondary small text-uppercase mb-2">
                             <i class="fa fa-calendar me-1"></i> Tanggal Jatuh Tempo
-                            <span class="badge bg-info text-dark ms-1">{{ $vendor->jatuh_tempo_hari ?? 0 }} Hari</span>
+                            <span class="badge bg-info text-dark ms-1">{{ $jatuhTempoHari ?? 0 }} Hari</span>
                         </label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-light text-secondary border-end-0">

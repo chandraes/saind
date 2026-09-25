@@ -90,7 +90,7 @@
                 { data: 'perusahaan', name: 'perusahaan', className: 'align-middle' },
                 { data: 'nickname', name: 'nickname', className: 'align-middle' },
                 { data: 'pembayaran', name: 'pembayaran', className: 'align-middle text-center' },
-                { data: 'jatuh_tempo_hari', name: 'jatuh_tempo_hari', className: 'align-middle text-center' },
+                { data: 'jatuh_tempo', name: 'jatuh_tempo', className: 'align-middle text-start text-nowrap', orderable: false, searchable: false },
                 { data: 'support_operational', name: 'support_operational', className: 'align-middle text-center' },
                 { data: 'ppn', name: 'ppn', className: 'align-middle text-center' },
                 { data: 'pph', name: 'pph', className: 'align-middle text-center' },

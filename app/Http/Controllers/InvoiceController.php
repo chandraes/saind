@@ -481,7 +481,7 @@ class InvoiceController extends Controller
 
         KasVendor::create($data);
 
-        return redirect()->route('invoice.bayar.index')->with('success', 'Invoice berhasil di lunasi');
+        return redirect()->back()->with('success', 'Invoice berhasil di lunasi');
 
     }
 
@@ -532,7 +532,7 @@ class InvoiceController extends Controller
                 $invoice->update(['is_finished' => true]);
 
                 return redirect()
-                    ->route('invoice.bayar.index')
+                    ->back()
                     ->with('success', 'Invoice berhasil dilunasi');
             });
         } catch (\Exception $e) {
