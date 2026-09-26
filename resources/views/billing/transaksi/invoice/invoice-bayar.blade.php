@@ -93,6 +93,10 @@
                     @endphp
                     <tr>
                         <td class="text-center text-muted">{{ $d->tanggal }}</td>
+                        <td class="text-center fw-semibold">{{ $d->vendor->nama }}</td>
+                        <td class="text-center">
+                            <a href="{{route('invoice.bayar.detail', $d)}}" class="text-primary fw-bold text-decoration-none">{{ $d->periode }}</a>
+                        </td>
                         <td class="text-center">
                             @if ($d->tempo)
                                 <span class="badge {{ $isOverdue ? 'bg-danger' : 'bg-info text-dark' }} px-2 py-1">
@@ -102,10 +106,6 @@
                             @else
                                 <span class="text-muted">-</span>
                             @endif
-                        </td>
-                        <td class="text-center fw-semibold">{{ $d->vendor->nama }}</td>
-                        <td class="text-center">
-                            <a href="{{route('invoice.bayar.detail', $d)}}" class="text-primary fw-bold text-decoration-none">{{ $d->periode }}</a>
                         </td>
                         <td class="text-end fw-semibold">Rp {{ number_format($d->total_bayar, 0, ',', '.') }}</td>
                         <td class="text-center">
