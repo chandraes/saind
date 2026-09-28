@@ -1,4 +1,17 @@
 <div class="row justify-content-left mt-5">
+     <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{route('billing.nota-bayar', ['vendor' => auth()->user()->vendor_id])}}" class="text-decoration-none">
+                <img src="{{asset('images/bayar.svg')}}" alt="Nota Bayar Vendor" width="80">
+                <h5 class="mt-3">NOTA BAYAR</h5>
+            </a>
+        </div>
+           <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{route('invoice.bayar.index')}}" class="text-decoration-none">
+                <img src="{{asset('images/invoice-bayar.svg')}}" alt="" width="70">
+                <h4 class="mt-3">INVOICE BAYAR VENDOR <span class="text-danger">{{$bayar > 0 ? "(".$bayar.")" :
+                        ''}}</span></h4>
+            </a>
+        </div>
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
                 <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="70">
@@ -17,19 +30,14 @@
                 <h5 class="mt-3">Perform All Unit</h5>
             </a>
         </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('billing.nota-bayar', ['vendor' => auth()->user()->vendor_id])}}" class="text-decoration-none">
-                <img src="{{asset('images/bayar.svg')}}" alt="Nota Bayar Vendor" width="80">
-                <h5 class="mt-3">NOTA BAYAR</h5>
-            </a>
-        </div>
+
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('statistik-pervendor.index')}}" class="text-decoration-none">
                 <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="70">
                 <h4 class="mt-3">Statistik Vendor</h4>
             </a>
         </div>
-         <div class="col-md-3 text-center mb-5 mt-3">
+         {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
                 <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="70">
                 <h4 class="mt-3">STATISTIK<br>UPAH GENDONG</h4>
@@ -64,8 +72,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
+        </div> --}}
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#maintenaceModal">
                 <img src="{{asset('images/rekap-maintenance.svg')}}" alt="" width="70">
                 <h4 class="mt-3">MAINTENANCE VEHICLE</h4>
@@ -102,8 +110,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
+        </div> --}}
+        {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ban_luar">
                 <img src="{{asset('images/db-ban.svg')}}" alt="" width="70">
                 <h4 class="mt-3">BAN LUAR</h4>
@@ -138,6 +146,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
 

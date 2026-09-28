@@ -299,6 +299,12 @@ class InvoiceController extends Controller
         $startDate = $request->start_date;
         $endDate = $request->end_date;
 
+        $user = Auth::user();
+
+        if ($user->role == 'vendor') {
+            $vendorId = $user->vendor_id;
+        }
+
         // 1. Ambil ID vendor yang HANYA memiliki invoice aktif untuk diproses
         $vendorIdsFromInvoice = InvoiceBayar::where('lunas', 0)->pluck('vendor_id');
         $vendorIdsFromAddInvoice = InvoiceAddVendor::where('status', 1)->where('is_finished', 0)->pluck('vendor_id');
@@ -307,7 +313,10 @@ class InvoiceController extends Controller
         $activeVendorIds = $vendorIdsFromInvoice->merge($vendorIdsFromAddInvoice)->unique()->filter();
 
         // Query vendor berdasarkan ID yang aktif saja
-        $vendors = Vendor::whereIn('id', $activeVendorIds)->orderBy('nama', 'asc')->get();
+        $vendors = Vendor::whereIn('id', $activeVendorIds)
+                      ->when($vendorId, function ($q) use ($vendorId) {
+                        return $q->where('id', $vendorId);
+                    })->orderBy('nama', 'asc')->get();
 
         // 2. Query InvoiceBayar dengan Filter
         $invoice = InvoiceBayar::with('vendor')
@@ -441,6 +450,13 @@ class InvoiceController extends Controller
 
     public function invoice_bayar_lunas(InvoiceBayar $invoice)
     {
+
+        $roleAllowed = ['admin', 'su'];
+
+        if(!in_array(Auth::user()->role, $roleAllowed)) {
+            return redirect()->back()->with('error', 'Anda Tidak Mempunyai Wewenang untuk Mengeksekusi Perintah Ini!!');
+        }
+
         $total_bayar = $invoice->sisa_bayar;
 
         $invoice->update([
