@@ -529,9 +529,9 @@ class StatistikController extends Controller
 
         $invoiceVendor = InvoiceAddVendor::with(['vendor'])
             ->where('jenis', 'achievement')
-            ->where('is_finished', 1)
-            ->whereMonth('updated_at', $bulan)
-            ->whereYear('updated_at', $tahun)
+            // ->where('is_finished', 1)
+            ->whereMonth('created_at', $bulan)
+            ->whereYear('created_at', $tahun)
             ->get();
 
         $achievementHistory = AchievementHistory::whereMonth('created_at', $bulan)
