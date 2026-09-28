@@ -705,9 +705,7 @@ Route::group(['middleware' => ['auth']], function() {
                     Route::get('/tagihan-export/{invoice}', [App\Http\Controllers\InvoiceController::class, 'invoice_tagihan_detail_export'])->name('invoice.tagihan-detail.export');
 
                     Route::prefix('bayar')->group(function(){
-                        Route::get('/', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar'])->name('invoice.bayar.index');
-                        Route::get('/{invoiceBayar}/detail', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_detail'])->name('invoice.bayar.detail');
-                        Route::get('/{invoice}/detail-jenis', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_detail_add'])->name('invoice.bayar.detail-jenis');
+
                         Route::post('/{invoice}/lunas', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_lunas'])->name('invoice.bayar.lunas');
                         Route::post('/{invoice}/jenis-lunas', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_jenis_lunas'])->name('invoice.bayar.jenis-lunas');
                     });
@@ -852,6 +850,8 @@ Route::group(['middleware' => ['auth']], function() {
 
     Route::group(['middleware' => 'role:admin,user,su,operasional,vendor'], function() {
         Route::prefix('billing/transaksi/invoice/bayar')->group(function(){
+            Route::get('/', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar'])->name('invoice.bayar.index');
+            Route::get('/{invoiceBayar}/detail', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_detail'])->name('invoice.bayar.detail');
             Route::get('/{invoice}/detail-jenis', [App\Http\Controllers\InvoiceController::class, 'invoice_bayar_detail_add'])->name('invoice.bayar.detail-jenis');
         });
 
@@ -859,6 +859,7 @@ Route::group(['middleware' => ['auth']], function() {
             Route::get('/all-vendor', [StatistikController::class, 'perform_unit_all_vendor'])->name('statistik.perform-unit.all-vendor');
             Route::get('/all-vendor/pdf', [StatistikController::class, 'perform_unit_all_vendor_pdf'])->name('statistik.perform-unit.all-vendor.pdf');
         });
+
     });
 
 
