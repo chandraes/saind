@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AchievementHistory;
+use App\Models\AkiGantiInvoice;
+use App\Models\AkiGantiInvoiceDetail;
+use App\Models\AkiLog;
 use App\Models\BanGantiCart;
 use App\Models\BanGantiInvoice;
 use App\Models\BanGantiInvoiceDetail;
@@ -54,8 +57,9 @@ class BillingController extends Controller
         $bayar = InvoiceBayar::where('lunas', 0)->count();
         $bonus = InvoiceBonus::where('lunas', 0)->count();
         $invoice_csr = InvoiceCsr::where('lunas', 0)->count();
+        $countOA = AkiGantiInvoice::where('status', AkiGantiInvoice::STATUS_PENDING)->count();
+        $countOB = BanGantiInvoice::where('status', BanGantiInvoice::STATUS_PENDING)->count() + $countOA;
 
-        $countOB = BanGantiInvoice::where('status', BanGantiInvoice::STATUS_PENDING)->count();
 
         // $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
         //         ->leftJoin('vehicles as v', 'kuj.vehicle_id', 'v.id')
@@ -561,6 +565,34 @@ class BillingController extends Controller
         return redirect()->back()->with('success', 'Detail ban baru berhasil diperbarui.');
     }
 
+    private function kirimWaNotifikasiAki($kb)
+    {
+        try {
+            $dbWa  = new GroupWa();
+            $group = $dbWa->where('untuk', 'kas-besar')->first();
+
+            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                     "*FORM PENGGANTIAN AKI*\n".
+                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                     "Uraian :  ".$kb['uraian']."\n".
+                     "Nilai :  *Rp. ".number_format($kb['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                     "Ditransfer ke rek:\n\n".
+                     "Bank     : ".$kb['bank']."\n".
+                     "Nama    : ".$kb['transfer_ke']."\n".
+                     "No. Rek : ".$kb['no_rekening']."\n\n".
+                     "==========================\n".
+                     "Sisa Saldo Kas Besar : \n".
+                     "Rp. ".number_format($kb->saldo, 0, ',', '.')."\n\n".
+                     "Total Modal Investor : \n".
+                     "Rp. ".number_format($kb->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                     "Terima kasih 🙏🙏🙏\n";
+
+            $dbWa->sendWa($group->nama_group, $pesan);
+        } catch (\Throwable $th) {
+            // Log error jika pengiriman WA bermasalah
+        }
+    }
+
     private function kirimWaNotifikasi($kb)
     {
         try {
@@ -641,6 +673,126 @@ class BillingController extends Controller
             'totalMasukBulanIni',
             'totalKeluarBulanIni'
         ));
+    }
+
+    public function otorisasi_maintenance_aki()
+    {
+        $invoices = AkiGantiInvoice::with(['vehicle.vendor', 'details.posisiAki'])
+                        ->where('status', AkiGantiInvoice::STATUS_PENDING)
+                        ->orderBy('created_at', 'asc')
+                        ->get();
+
+        return view('billing.otorisasi-maintenance.aki.index', compact('invoices'));
+    }
+
+    public function otorisasi_maintenance_aki_approve($id)
+    {
+        $kasBesarService  = app(\App\Services\KasBesarService::class);
+        $kasVendorService = app(\App\Services\KasVendorService::class);
+
+        $invoice = AkiGantiInvoice::with(['vehicle', 'details'])->findOrFail($id);
+
+        if ($invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Invoice ini sudah diproses sebelumnya.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $vehicleId   = $invoice->vehicle_id;
+            $vehicleInfo = $invoice->vehicle;
+
+            // Update AkiLog berdasarkan tanggal ganti (created_at) dari detail item
+            foreach ($invoice->details as $item) {
+                $tanggalGantiAki = $item->created_at;
+
+                $akiLogTujuan = AkiLog::create([
+                    'vehicle_id'    => $vehicleId,
+                    'posisi_aki_id' => $item->posisi_aki_id,
+                    'merk'          => $item->merk,
+                    'no_seri'       => $item->no_seri,
+                    'kondisi'       => $item->kondisi,
+                    'created_at'    => $tanggalGantiAki,
+                ]);
+
+                $item->update(['aki_log_id' => $akiLogTujuan->id]);
+            }
+
+            // Pemotongan Kas Besar & Hutang Vendor jika pembayaran via Kas Besar
+            $nominalBersih = intval($invoice->total_nominal);
+            $kb = null;
+
+            if ($invoice->pembayaran === AkiGantiInvoice::PEMBAYARAN_KAS_BESAR && $nominalBersih > 0) {
+                $kb = $kasBesarService->potongSaldo([
+                    'nominal_transaksi'    => $nominalBersih,
+                    'uraian'               => 'Penggantian Aki Unit ' . $vehicleInfo->nomor_lambung,
+                    'bank'                 => $invoice->nama_bank,
+                    'aki_ganti_invoice_id' => $invoice->id,
+                    'no_rekening'          => $invoice->nomor_rekening,
+                    'transfer_ke'          => $invoice->nama_rekening,
+                ]);
+
+                if ($vehicleInfo->vendor_id) {
+                    $kasVendorService->tambahHutang([
+                        'vendor_id'            => $vehicleInfo->vendor_id,
+                        'vehicle_id'           => $vehicleId,
+                        'nominal_transaksi'    => $nominalBersih,
+                        'aki_ganti_invoice_id' => $invoice->id,
+                        'uraian'               => 'Penggantian Aki (' . $invoice->no_invoice . ')',
+                    ]);
+                }
+            }
+
+            $invoice->update(['status' => AkiGantiInvoice::STATUS_APPROVED]);
+
+            DB::commit();
+
+            if ($kb) {
+                $this->kirimWaNotifikasiAki($kb);
+            }
+
+            return redirect()->back()->with('success', 'Otorisasi berhasil. Log Aki berhasil diperbarui.');
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal memproses otorisasi: ' . $th->getMessage());
+        }
+    }
+
+    public function otorisasi_maintenance_aki_reject($id)
+    {
+        $invoice = AkiGantiInvoice::findOrFail($id);
+        $invoice->update(['status' => AkiGantiInvoice::STATUS_REJECTED]);
+
+        return redirect()->back()->with('success', 'Invoice penggantian aki berhasil ditolak/dibatalkan.');
+    }
+
+    public function update_detail_item_aki(Request $request, $detailId)
+    {
+        $userRole = Auth::user()->role ?? '';
+        if (!in_array($userRole, ['su', 'admin'])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Hanya Role SU dan Admin yang dapat mengubah data.');
+        }
+
+        $detail = AkiGantiInvoiceDetail::with('invoice')->findOrFail($detailId);
+
+        if ($detail->invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Gagal: Detail aki hanya dapat diubah pada invoice yang berstatus PENDING.');
+        }
+
+        $request->validate([
+            'merk'    => 'required|string',
+            'no_seri' => 'required|string',
+            'kondisi' => 'required|integer|min:1|max:100',
+        ]);
+
+        $detail->update([
+            'merk'    => $request->merk,
+            'no_seri' => $request->no_seri,
+            'kondisi' => $request->kondisi,
+        ]);
+
+        return redirect()->back()->with('success', 'Detail aki baru berhasil diperbarui.');
     }
 
     // FUNGSI BARU UNTUK CUTOFF

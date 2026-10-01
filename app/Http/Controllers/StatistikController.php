@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AchievementHistory;
+use App\Models\AkiLog;
 use App\Models\Transaksi;
 use App\Models\Vehicle;
 use App\Models\Vendor;
@@ -12,6 +13,8 @@ use App\Models\InvoiceAddVendor;
 use App\Models\KasVendor;
 use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
+use App\Models\PasswordKonfirmasi;
+use App\Models\PosisiAki;
 use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
@@ -1505,6 +1508,125 @@ class StatistikController extends Controller
 
         return $pdf->stream('Perform Unit All Vendor.pdf');
 
+    }
+
+    public function aki_log(Request $request)
+    {
+        $validate = $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+        ]);
+
+        $vehicleId = $validate['vehicle_id'];
+        $vehicle   = Vehicle::findOrFail($vehicleId);
+
+        // 1. Ambil semua data posisi aki
+        $posisiAki = PosisiAki::orderBy('id', 'asc')->get();
+
+        // 2. Tempelkan log aki TERBARU untuk tiap posisi kendaraan ini
+        $aki = $posisiAki->map(function ($posisi) use ($vehicleId) {
+            $latestLog = AkiLog::where('vehicle_id', $vehicleId)
+                ->where('posisi_aki_id', $posisi->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Format array 'akiLog' agar sesuai dengan pemanggilan di Blade
+            if ($latestLog) {
+                $posisi->akiLog = [
+                    'merk'          => $latestLog->merk,
+                    'no_seri'       => $latestLog->no_seri,
+                    'kondisi'       => $latestLog->kondisi,
+                    'tanggal_ganti' => date('d-m-Y', strtotime($latestLog->created_at)),
+                ];
+            } else {
+                $posisi->akiLog = null;
+            }
+
+            return $posisi;
+        });
+
+        return view('rekap.statistik.aki.index', [
+            'vehicle' => $vehicle,
+            'aki'     => $aki,
+        ]);
+    }
+
+    public function aki_histori($vehicle, $posisi)
+    {
+        $vehicle = Vehicle::find($vehicle);
+
+        return view('rekap.statistik.aki.histori', [
+            'vehicle' => $vehicle,
+            'posisi' => PosisiAki::findOrFail($posisi),
+        ]);
+    }
+
+    public function aki_histori_data(Request $request)
+    {
+        if ($request->ajax()) {
+            $length = $request->get('length');
+
+            // Tambahkan ritase ke daftar kolom yang dapat di-sort
+            $columns = ['merk', 'no_seri', 'kondisi', 'ritase', 'created_at'];
+
+            $query = AkiLog::where('vehicle_id', $request->vehicle)
+                        ->where('posisi_aki_id', $request->posisi)
+                        ->orderBy('created_at', 'desc');
+
+            if ($request->has('order')) {
+                $columnIndex = $request->get('order')[0]['column'];
+                $sortDirection = $request->get('order')[0]['dir'];
+                $column = $columns[$columnIndex] ?? 'created_at';
+
+                $query->orderBy($column, $sortDirection);
+            }
+
+            $data = $query->paginate($length);
+
+            return response()->json([
+                'draw' => intval($request->draw),
+                'recordsTotal' => $data->total(),
+                'recordsFiltered' => $data->total(),
+                'data' => $data->items(),
+            ]);
+        }
+
+        return abort(404);
+    }
+
+    public function histori_delete($histori, Request $request)
+    {
+        $dbP = PasswordKonfirmasi::first();
+
+        if ($request->password != $dbP->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        $banLog = AkiLog::findOrFail($histori);
+        $banLog->delete();
+
+        return redirect()->back()->with('success', 'Berhasil menghapus data!!');
+    }
+
+    public function histori_update($histori, Request $request)
+    {
+        $data = $request->validate([
+            'created_at' => 'required',
+            'password' => 'required',
+        ]);
+
+        $dbP = PasswordKonfirmasi::first();
+
+        if ($data['password'] != $dbP->password) {
+            return redirect()->back()->with('error', 'Password salah!!');
+        }
+
+        unset($data['password']);
+
+        $banLog = AkiLog::findOrFail($histori);
+
+        $banLog->update($data);
+
+        return redirect()->back()->with('success', 'Berhasil mengubah data!!');
     }
 
 }

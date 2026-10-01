@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StatistikController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\AkiGantiController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -495,6 +496,14 @@ Route::group(['middleware' => ['auth']], function() {
             Route::post('/histori-destroy/{histori}', [App\Http\Controllers\BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
             Route::patch('/histori-update/{histori}', [App\Http\Controllers\BanController::class, 'histori_update'])->name('statistik.ban-luar.histori-update');
         });
+
+        Route::prefix('statistik/aki')->group(function(){
+            Route::get('/', [App\Http\Controllers\StatistikController::class, 'aki_log'])->name('statistik.aki');
+            Route::get('/histori-data', [App\Http\Controllers\StatistikController::class, 'aki_histori_data'])->name('statistik.aki.histori-data');
+            Route::get('/{vehicle}/{posisi}/histori', [App\Http\Controllers\StatistikController::class, 'aki_histori'])->name('statistik.aki.histori');
+            Route::post('/histori-destroy/{histori}', [App\Http\Controllers\StatistikController::class, 'aki_histori_delete'])->name('statistik.aki.histori-destroy');
+            Route::patch('/histori-update/{histori}', [App\Http\Controllers\StatistikController::class, 'aki_histori_update'])->name('statistik.aki.histori-update');
+        });
     });
 
     Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor'], function() {
@@ -622,6 +631,22 @@ Route::group(['middleware' => ['auth']], function() {
                     Route::post('/checkout', [BillingController::class, 'form_ganti_ban_checkout'])->name('billing.form-maintenance.ban-luar.checkout');
                 });
 
+                Route::prefix('aki')->group(function(){
+                    Route::get('/', [App\Http\Controllers\AkiGantiController::class, 'form_ganti_aki'])->name('billing.form-maintenance.aki');
+                    Route::get('/get-vehicle-info', [App\Http\Controllers\AkiGantiController::class, 'form_ganti_aki_get_vehicle_info'])->name('billing.form-maintenance.aki.get-vehicle-info');
+
+                    // 2. Operasi Keranjang AJAX
+                    Route::post('/cart/add', [AkiGantiController::class, 'form_ganti_aki_cart_add'])->name('billing.form-maintenance.aki.cart.add');
+                    Route::delete('/cart/delete/{id}', [AkiGantiController::class, 'form_ganti_aki_cart_delete'])->name('billing.form-maintenance.aki.cart.delete');
+                    Route::delete('/cart/clear/{vehicle_id}', [AkiGantiController::class, 'form_ganti_aki_cart_clear'])->name('billing.form-maintenance.aki.cart.clear');
+
+                    // 3. Halaman Terpisah Konfirmasi Invoice
+                    Route::get('/confirm', [AkiGantiController::class, 'form_ganti_aki_confirm'])->name('billing.form-maintenance.aki.confirm');
+
+                    // 4. Final Checkout Invoice
+                    Route::post('/checkout', [AkiGantiController::class, 'form_ganti_aki_checkout'])->name('billing.form-maintenance.aki.checkout');
+                });
+
 
                 Route::get('/beli', [App\Http\Controllers\FormMaintenanceController::class, 'beli'])->name('billing.form-maintenance.beli');
                 Route::post('/barang-store', [App\Http\Controllers\FormMaintenanceController::class, 'beli_store'])->name('billing.form-maintenance.barang-store');
@@ -641,8 +666,18 @@ Route::group(['middleware' => ['auth']], function() {
 
             Route::prefix('otorisasi-maintenance')->group(function(){
                 Route::get('/', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance'])->name('billing.otorisasi-maintenance');
+
+                Route::prefix('aki',)->group(function(){
+                    Route::get('/', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_aki'])->name('billing.otorisasi-maintenance.aki');
+                    Route::post('/{id}/approve', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_aki_approve'])->name('billing.otorisasi-maintenance.aki.approve');
+                    Route::post('/{id}/reject', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_aki_reject'])->name('billing.otorisasi-maintenance.aki.reject');
+                });
+
+
                 Route::post('/ban-luar/{id}/approve', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_ban_luar_approve'])->name('billing.otorisasi-maintenance.ban-luar.approve');
                 Route::post('/ban-luar/{id}/reject', [App\Http\Controllers\BillingController::class, 'otorisasi_maintenance_ban_luar_reject'])->name('billing.otorisasi-maintenance.ban-luar.reject');
+
+
             });
 
             Route::prefix('form-barang')->group(function(){
@@ -822,6 +857,13 @@ Route::group(['middleware' => ['auth']], function() {
                     Route::get('/{id}', [App\Http\Controllers\RekapController::class, 'ban_luar_detail'])->name('rekap.maintenance.ban-luar.show');
                     Route::post('/detail/{detailId}/update-tanggal', [App\Http\Controllers\RekapController::class, 'update_tanggal_detail_ban'])->name('rekap.maintenance.ban-luar.detail.update-tanggal');
                     Route::post('/detail/{id}/update', [App\Http\Controllers\BillingController::class, 'update_detail_item'])->name('rekap.maintenance.ban-luar.detail.update');
+                });
+
+                Route::prefix('aki')->group(function(){
+                    Route::get('/', [App\Http\Controllers\RekapController::class, 'aki'])->name('rekap.maintenance.aki');
+                    Route::get('/{id}', [App\Http\Controllers\RekapController::class, 'aki_detail'])->name('rekap.maintenance.aki.show');
+                    Route::post('/detail/{detailId}/update-tanggal', [App\Http\Controllers\RekapController::class, 'update_tanggal_detail_aki'])->name('rekap.maintenance.aki.detail.update-tanggal');
+                    Route::post('/detail/{id}/update', [App\Http\Controllers\BillingController::class, 'update_detail_item_aki'])->name('rekap.maintenance.aki.detail.update');
                 });
             });
         });

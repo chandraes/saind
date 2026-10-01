@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AkiGantiInvoice;
+use App\Models\AkiGantiInvoiceDetail;
+use App\Models\AkiLog;
 use App\Models\AktivasiMaintenance;
 use App\Models\BanGantiInvoice;
 use App\Models\BanGantiInvoiceDetail;
 use App\Models\BanLog;
-use App\Models\BarangMaintenance;
 use App\Models\KasKecil;
 use App\Models\KasBesar;
 use App\Models\Vendor;
@@ -1447,6 +1449,109 @@ class RekapController extends Controller
 
 
         return redirect()->back()->with('success', 'Tanggal ganti ban berhasil diperbarui.');
+    }
+
+    public function aki_detail($id)
+    {
+        $invoice = AkiGantiInvoice::with(['vehicle.vendor', 'details.posisiAki'])->findOrFail($id);
+
+        foreach ($invoice->details as $detail) {
+            $queryLog = AkiLog::where('vehicle_id', $invoice->vehicle_id)
+                              ->where('posisi_aki_id', $detail->posisi_aki_id);
+
+            // Cari AkiLog lama sebelum penambahan baru
+            $akiLama = (clone $queryLog)->where('created_at', '<', $detail->created_at)
+                                        ->orderBy('id', 'desc')
+                                        ->first();
+
+            if (!$akiLama) {
+                $akiLama = (clone $queryLog)->orderBy('id', 'desc')->first();
+            }
+
+            // Inject variabel temporer
+            $detail->merk_lama    = $akiLama->merk ?? '-';
+            $detail->no_seri_lama = $akiLama->no_seri ?? '-';
+            $detail->kondisi_lama = $akiLama->kondisi ?? '-';
+        }
+
+        return view('rekap.maintenance.aki.show', compact('invoice'));
+    }
+
+    public function update_tanggal_detail_aki(Request $request, $detailId)
+    {
+        $userRole = Auth::user()->role ?? '';
+        if (!in_array($userRole, ['su', 'admin'])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Hanya Role SU dan Admin yang dapat mengubah tanggal.');
+        }
+
+        $detail = AkiGantiInvoiceDetail::with('invoice')->findOrFail($detailId);
+
+        if ($detail->invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Gagal: Tanggal ganti aki hanya dapat diubah pada invoice yang berstatus PENDING.');
+        }
+
+        $request->validate([
+            'tanggal_ganti' => 'required|date',
+        ]);
+
+        $timePart     = date('H:i:s', strtotime($detail->created_at ?? now()));
+        $newTimestamp = $request->tanggal_ganti . ' ' . $timePart;
+
+        $detail->update([
+            'created_at' => $newTimestamp,
+        ]);
+
+        return redirect()->back()->with('success', 'Tanggal ganti aki berhasil diperbarui.');
+    }
+
+    public function aki(Request $request)
+    {
+        $startDate    = $request->input('start_date', date('Y-m-01'));
+        $endDate      = $request->input('end_date', date('Y-m-t'));
+        $pembayaran   = $request->input('pembayaran');
+        $statusFilter = $request->input('status');
+
+        // Pastikan hanya memuat status Approved dan Rejected (Tidak termasuk Pending)
+        $query = AkiGantiInvoice::with(['vehicle.vendor', 'details'])
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->whereIn('status', [AkiGantiInvoice::STATUS_APPROVED, AkiGantiInvoice::STATUS_REJECTED]);
+
+        if ($pembayaran) {
+            $query->where('pembayaran', $pembayaran);
+        }
+
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $invoices = $query->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
+
+        // Ringkasan Statistik
+        $totalTransaksi = $invoices->count();
+
+        // Hanya hitung nominal kas besar untuk transaksi yang berstatus APPROVED
+        $totalKasBesar = $invoices->where('status', AkiGantiInvoice::STATUS_APPROVED)
+                                  ->where('pembayaran', AkiGantiInvoice::PEMBAYARAN_KAS_BESAR)
+                                  ->sum('total_nominal');
+
+        // Hanya hitung transaksi dibayar sendiri yang berstatus APPROVED
+        $countDibayarSendiri = $invoices->where('status', AkiGantiInvoice::STATUS_APPROVED)
+                                        ->where('pembayaran', AkiGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)
+                                        ->count();
+
+        $countRejected = $invoices->where('status', AkiGantiInvoice::STATUS_REJECTED)->count();
+
+        return view('rekap.maintenance.aki.index', compact(
+            'invoices',
+            'startDate',
+            'endDate',
+            'pembayaran',
+            'statusFilter',
+            'totalTransaksi',
+            'totalKasBesar',
+            'countDibayarSendiri',
+            'countRejected'
+        ));
     }
 
 

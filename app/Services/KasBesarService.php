@@ -39,6 +39,7 @@ class KasBesarService
             'nominal_transaksi'       => $nominal,             // Simpan angka murni
             'saldo'                   => $saldoAwal - $nominal, // Ingat, dipotong artinya DIKURANGI
             'ban_ganti_invoice_id'    => $data['ban_ganti_invoice_id'] ?? null,
+            'aki_ganti_invoice_id'     => $data['aki_ganti_invoice_id'] ?? null,
             'modal_investor_terakhir' => $modalInvestorTerakhir,
             'transfer_ke'             => isset($data['transfer_ke']) ? substr($data['transfer_ke'], 0, 15) : null,
             'no_rekening'             => $data['no_rekening'] ?? null,

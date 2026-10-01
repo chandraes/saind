@@ -37,6 +37,7 @@ class KasVendorService
             'vehicle_id'        => $data['vehicle_id'] ?? null,
             'tanggal'           => date('Y-m-d'),
             'ban_ganti_invoice_id' => $data['ban_ganti_invoice_id'] ?? null,
+            'aki_ganti_invoice_id'  => $data['aki_ganti_invoice_id'] ?? null,
             'uraian'            => $data['uraian'] ?? 'Penambahan hutang vendor',
             'pinjaman'          => $nominal, // Bertambah
             'sisa'              => $sisaAwal + $nominal,     // Sisa hutang bertambah
