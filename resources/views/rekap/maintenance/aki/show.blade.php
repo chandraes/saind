@@ -115,24 +115,24 @@
                                 <tr class="table-light">
                                     <th rowspan="2" class="align-middle">NO</th>
                                     <th rowspan="2" class="align-middle">POSISI</th>
-                                    <th colspan="3" class="bg-warning bg-opacity-25 border-bottom-0 text-dark fw-bold">AKI LAMA (DILEPAS)</th>
-                                    <th colspan="3" class="bg-success bg-opacity-25 border-bottom-0 text-dark fw-bold">AKI BARU (DIPASANG)</th>
+                                    <th colspan="4" class="bg-warning bg-opacity-25 border-bottom-0 text-dark fw-bold">AKI LAMA (DILEPAS)</th>
+                                    <th colspan="2" class="bg-success bg-opacity-25 border-bottom-0 text-dark fw-bold">AKI BARU (DIPASANG)</th>
                                     <th rowspan="2" class="align-middle bg-light border-start">TGL GANTI AKI</th>
                                 </tr>
                                 <tr>
                                     <!-- Header Aki Lama -->
                                     <th class="bg-warning bg-opacity-10">MERK</th>
-                                    <th class="bg-warning bg-opacity-10">NO. SERI</th>
                                     <th class="bg-warning bg-opacity-10">KONDISI</th>
+                                    <th class="bg-warning bg-opacity-10">TANGGAL GANTI SEBELUMNYA</th>
+                                    <th class="bg-warning bg-opacity-10">UMUR SAAT DIGANTI</th>
                                     <!-- Header Aki Baru -->
                                     <th class="bg-success bg-opacity-10">MERK</th>
-                                    <th class="bg-success bg-opacity-10">NO. SERI</th>
                                     <th class="bg-success bg-opacity-10">KONDISI</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($invoice->details as $index => $detail)
-                                <tr>
+                                <tr class="{{ $detail->umur_aki_lama !== null && $detail->umur_aki_lama < 365 ? 'table-danger' : '' }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td class="fw-bold text-primary">
                                         {{ $detail->posisiAki->nama ?? ('Posisi '.$detail->posisi_aki_id) }}
@@ -147,16 +147,17 @@
 
                                     <!-- Data Aki Lama -->
                                     <td class="text-uppercase fw-semibold">{{ $detail->merk_lama }}</td>
-                                    <td class="text-uppercase">{{ $detail->no_seri_lama }}</td>
                                     <td>{{ is_numeric($detail->kondisi_lama) ? $detail->kondisi_lama.'%' : $detail->kondisi_lama }}</td>
+
+                                    <td>{{ $detail->tanggal_ganti_lama }}</td>
+                                    <td>{{ $detail->umur_aki_lama === null ? "-" : $detail->umur_aki_lama." hari" }}</td>
 
                                     <!-- Data Aki Baru -->
                                     <td class="fw-bold text-uppercase">{{ $detail->merk }}</td>
-                                    <td class="text-uppercase">{{ $detail->no_seri }}</td>
                                     <td><span class="badge bg-info text-dark">{{ $detail->kondisi }}%</span></td>
 
                                     <!-- Tanggal Ganti Aki -->
-                                    <td class="text-nowrap border-start bg-light bg-opacity-50 fw-semibold">
+                                    <td class="text-nowrap border-start fw-semibold">
                                         <span>{{ date('d-m-Y', strtotime($detail->created_at)) }}</span>
                                         @if($canEditDate)
                                         <button class="btn btn-link btn-sm text-primary p-0 ms-1" data-bs-toggle="modal"
@@ -222,10 +223,6 @@
                     <div class="mb-3">
                         <label class="form-label fs-7 fw-semibold">Merk Baru</label>
                         <input type="text" class="form-control form-control-sm text-uppercase" name="merk" value="{{ $detail->merk }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fs-7 fw-semibold">No. Seri Baru</label>
-                        <input type="text" class="form-control form-control-sm text-uppercase" name="no_seri" value="{{ $detail->no_seri }}" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fs-7 fw-semibold">Kondisi (%)</label>

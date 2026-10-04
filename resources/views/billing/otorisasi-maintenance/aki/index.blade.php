@@ -57,6 +57,31 @@
                                         </a>
                                         <form action="{{ route('billing.otorisasi-maintenance.aki.approve', $item->id) }}" method="POST" class="d-inline">
                                             @csrf
+                                            @if(count($item->aki_age_warning) > 0)
+                                                <template class="aki-age-warning">
+                                                    <p>Aki berikut berumur kurang dari 365 hari saat diganti:</p>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-bordered table-sm align-middle">
+                                                            <thead class="table-light">
+                                                                <tr><th>Posisi</th><th>Merek Aki Lama</th><th>Tanggal Ganti Sebelumnya</th><th>Tanggal Ganti</th><th>Umur</th></tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach($item->aki_age_warning as $warning)
+                                                                    <tr class="table-danger">
+                                                                        <td>{{ $warning['posisi'] }}</td>
+                                                                        <td>{{ $warning['merk'] }}</td>
+                                                                        <td class="text-nowrap">{{ $warning['tanggal_sebelumnya'] }}</td>
+                                                                        <td class="text-nowrap">{{ $warning['tanggal_ganti'] }}</td>
+                                                                        <td class="text-nowrap fw-bold">{{ $warning['umur'] }} hari</td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <p>Tetap setujui penggantian?</p>
+                                                    <p class="small text-muted">Saldo Kas Besar (jika ada) akan dipotong dan Log Aki akan diperbarui secara permanen.</p>
+                                                </template>
+                                            @endif
                                             <button type="button" class="btn btn-sm btn-success btn-approve">
                                                 <i class="fa fa-check"></i> Approve
                                             </button>
@@ -91,10 +116,12 @@
     $(document).ready(function(){
         $('.btn-approve').click(function() {
             let form = $(this).closest('form');
+            let warning = form.find('.aki-age-warning').html();
             Swal.fire({
-                title: 'Setujui Invoice?',
-                text: "Saldo Kas Besar (jika ada) akan dipotong dan Log Aki akan diperbarui secara permanen.",
-                icon: 'question',
+                title: warning ? 'Peringatan: Umur Aki Kurang dari 365 Hari' : 'Setujui Invoice?',
+                html: warning || '<p>Saldo Kas Besar (jika ada) akan dipotong dan Log Aki akan diperbarui secara permanen.</p>',
+                width: warning ? '900px' : '32em',
+                icon: warning ? 'warning' : 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#198754',
                 confirmButtonText: 'Ya, Approve!'

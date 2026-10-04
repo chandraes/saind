@@ -73,10 +73,6 @@
                                 <input type="text" class="form-control text-uppercase" name="merk" id="merk" required placeholder="Contoh: GS ASTRA" autocomplete="off" />
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">No. Seri Aki Baru <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control text-uppercase" name="no_seri" id="no_seri" required placeholder="Contoh: N70Z-12345" autocomplete="off" />
-                            </div>
 
                             <div class="mb-4">
                                 <label class="form-label fw-semibold">Kondisi Awal (%) <span class="text-danger">*</span></label>
@@ -142,8 +138,9 @@
                                     <tr>
                                         <th>POSISI AKI</th>
                                         <th class="text-center">MEREK</th>
-                                        <th class="text-center">NO. SERI</th>
                                         <th class="text-center">KONDISI</th>
+                                        <th class="text-center">TANGGAL GANTI</th>
+                                        <th class="text-center">JUMLAH HARI</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-batteries"></tbody>
@@ -213,8 +210,9 @@
                         tbodyBatteries += '<tr>';
                         tbodyBatteries += '  <td class="fw-semibold text-primary">' + battery.posisi + '</td>';
                         tbodyBatteries += '  <td class="text-center text-uppercase">' + battery.merk + '</td>';
-                        tbodyBatteries += '  <td class="text-center text-uppercase">' + battery.no_seri + '</td>';
                         tbodyBatteries += '  <td class="text-center">' + battery.kondisi + '</td>';
+                        tbodyBatteries += '  <td class="text-center">' + battery.tanggal_ganti + '</td>';
+                        tbodyBatteries += '  <td class="text-center">' + (battery.jumlah_hari === null ? '-' : battery.jumlah_hari + ' hari') + '</td>';
                         tbodyBatteries += '</tr>';
                     });
                     $('#tbody-batteries').html(tbodyBatteries);
@@ -267,7 +265,6 @@
 
             var posisiNama = $('#posisi_aki_id option:selected').text();
             var merk = $('#merk').val();
-            var noSeri = $('#no_seri').val();
 
             Swal.fire({
                 title: 'Tambahkan Aki ke Keranjang?',
@@ -275,7 +272,6 @@
                     <div class="text-start">
                         <p class="mb-1"><b>Posisi Aki:</b> ${posisiNama}</p>
                         <p class="mb-1"><b>Merek Aki:</b> ${merk.toUpperCase()}</p>
-                        <p class="mb-0"><b>No. Seri Aki:</b> ${noSeri.toUpperCase()}</p>
                     </div>
                 `,
                 icon: 'question',
@@ -297,7 +293,6 @@
                             vehicle_id: $('#hidden_vehicle_id').val(),
                             posisi_aki_id: $('#posisi_aki_id').val(),
                             merk: $('#merk').val(),
-                            no_seri: $('#no_seri').val(),
                             kondisi: $('#kondisi').val(),
                         },
                         success: function(response) {
@@ -305,7 +300,6 @@
 
                             $('#posisi_aki_id').val('').trigger('change');
                             $('#merk').val('');
-                            $('#no_seri').val('');
                             $('#kondisi').val('100');
 
                             loadVehicleData($('#hidden_vehicle_id').val());

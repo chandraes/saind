@@ -63,7 +63,6 @@
                                     <th>NO</th>
                                     <th>POSISI AKI</th>
                                     <th>MEREK AKI</th>
-                                    <th>NO. SERI AKI</th>
                                     <th>KONDISI AWAL</th>
                                     <th>AKSI</th>
                                 </tr>
@@ -74,7 +73,6 @@
                                         <td>{{ $index + 1 }}</td>
                                         <td class="fw-bold text-primary">{{ $item->posisiAki->nama }}</td>
                                         <td class="fw-bold text-uppercase">{{ $item->merk }}</td>
-                                        <td class="text-uppercase">{{ $item->no_seri }}</td>
                                         <td>
                                             <span class="badge bg-info text-dark fs-7">{{ $item->kondisi }}%</span>
                                         </td>
