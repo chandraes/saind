@@ -115,6 +115,12 @@
             </a>
         </div> --}}
         <div class="col-md-2 text-center mt-5">
+            <a href="{{ route('statistik.filter-oli') }}" class="text-decoration-none">
+                <img src="{{ asset('images/filter-oli-mesin.svg') }}" width="80" alt="">
+                <h5 class="mt-3">FILTER & OLI MESIN</h5>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ban_luar">
                 <img src="{{asset('images/db-ban.svg')}}" alt="" width="80">
                 <h5 class="mt-3">BAN LUAR</h5>

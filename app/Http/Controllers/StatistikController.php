@@ -4,26 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\AchievementHistory;
 use App\Models\AkiLog;
-use App\Models\Transaksi;
-use App\Models\Vehicle;
-use App\Models\Vendor;
 use App\Models\Customer;
 use App\Models\InvoiceAdditional;
 use App\Models\InvoiceAddVendor;
-use App\Models\KasVendor;
 use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
+use App\Models\KasVendor;
 use App\Models\PasswordKonfirmasi;
 use App\Models\PosisiAki;
-use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapGaji;
-use App\Models\RekapGajiDetail;
 use App\Models\Rute;
+use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use App\Models\UpahGendong;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
+use App\Models\Vehicle;
+use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -51,11 +49,11 @@ class StatistikController extends Controller
 
         $check = Vehicle::where('id', $vehicle)->first();
 
-        if($check == null){
+        if ($check == null) {
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
 
-        $db = new Transaksi();
+        $db = new Transaksi;
 
         $all = $db->upahGendong($vehicle, $bulan, $tahun, $tanggal_filter);
 
@@ -67,7 +65,7 @@ class StatistikController extends Controller
     {
         $tahun = $request->tahun ?? date('Y');
 
-        $db = new Transaksi();
+        $db = new Transaksi;
 
         $all = $db->performUnitTahunan($tahun);
 
@@ -81,9 +79,9 @@ class StatistikController extends Controller
         $vehicle = Vehicle::orderBy('nomor_lambung')->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
 
         $statistics = [];
 
@@ -96,32 +94,32 @@ class StatistikController extends Controller
 
         for ($bulan = 1; $bulan <= 12; $bulan++) {
             $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
-                                ->whereMonth('tanggal', $bulan)
-                                ->whereYear('tanggal', $tahun)
-                                ->where('transaksis.void', 0)
-                                ->get();
+                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                ->join('rutes as r', 'r.id', 'kuj.rute_id')
+                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun)
+                ->where('transaksis.void', 0)
+                ->get();
 
             foreach ($data as $transaction) {
                 $v = $transaction->kas_uang_jalan->vehicle;
 
                 $jarak = $transaction->jarak ?? 0;
 
-                if (!isset($statistics[$v->nomor_lambung])) {
+                if (! isset($statistics[$v->nomor_lambung])) {
                     continue;
                 }
 
                 if ($jarak > 50) {
                     $statistics[$v->nomor_lambung]['monthly'][$bulan]['long_route_count']++;
-                } else if ($jarak > 0 && $jarak <= 50) {
+                } elseif ($jarak > 0 && $jarak <= 50) {
                     $statistics[$v->nomor_lambung]['monthly'][$bulan]['short_route_count']++;
                 }
             }
         }
 
-        $pdf = PDF::loadview('rekap.statistik.perform-unit-tahunan-print', [
+        $pdf = Pdf::loadview('rekap.statistik.perform-unit-tahunan-print', [
             'statistics' => $statistics,
             'tahun' => $tahun,
             'vehicle' => $vehicle,
@@ -139,18 +137,18 @@ class StatistikController extends Controller
         $end_date = $request->end_date ?? date('Y-m-d');
         $vendor = $request->vendor ?? null;
 
-        if(Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
+        if (Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
             $vendor = Auth::user()->vendor_id;
         }
 
         // VALIDASI DI CONTROLLER
-        $start = \Carbon\Carbon::parse($start_date);
-        $end = \Carbon\Carbon::parse($end_date);
+        $start = Carbon::parse($start_date);
+        $end = Carbon::parse($end_date);
 
         // Tangani jika user tidak sengaja memasukkan tanggal terbalik
         if ($start->greaterThan($end)) {
             $end_date = $start_date;
-            $end = \Carbon\Carbon::parse($end_date);
+            $end = Carbon::parse($end_date);
         }
 
         // Batasi Maksimal Jarak 1 Bulan (31 Hari)
@@ -158,7 +156,7 @@ class StatistikController extends Controller
             $end_date = $start->copy()->addDays(31)->format('Y-m-d');
         }
 
-        $db = new Transaksi();
+        $db = new Transaksi;
         $all = $db->performUnitRange($start_date, $end_date, $vendor);
 
         return view('rekap.statistik.perform-unit', $all);
@@ -166,7 +164,7 @@ class StatistikController extends Controller
 
     public function perform_unit_print(Request $request)
     {
-        if(Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
+        if (Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
             $request->vendor = Auth::user()->vendor_id;
         }
 
@@ -179,12 +177,12 @@ class StatistikController extends Controller
         $vendor = $request->vendor;
 
         // 2. Validasi & Batasi Rentang Maksimal 1 Bulan (31 Hari)
-        $start = \Carbon\Carbon::parse($start_date);
-        $end = \Carbon\Carbon::parse($end_date);
+        $start = Carbon::parse($start_date);
+        $end = Carbon::parse($end_date);
 
         if ($start->greaterThan($end)) {
             $end_date = $start_date;
-            $end = \Carbon\Carbon::parse($end_date);
+            $end = Carbon::parse($end_date);
         }
 
         if ($start->diffInDays($end) > 31) {
@@ -192,11 +190,11 @@ class StatistikController extends Controller
         }
 
         // 3. Ambil Data Performa Unit dari DB
-        $db = new Transaksi();
+        $db = new Transaksi;
         $all = $db->performUnitRange($start_date, $end_date, $vendor);
 
         // Ambil Informasi Detail Vendor untuk Judul Kertas
-        $vendorData = \App\Models\Vendor::find($vendor);
+        $vendorData = Vendor::find($vendor);
         $all['nama_vendor'] = $vendorData ? $vendorData->nama : 'Vendor Tidak Ditemukan';
 
         // 4. Return ke blade view khusus Print
@@ -209,7 +207,7 @@ class StatistikController extends Controller
         $tahun = $request->tahun ?? date('Y');
         $offset = $request->offset ?? 0;
 
-        $db = new Transaksi();
+        $db = new Transaksi;
 
         $all = $db->profitHarian($bulan, $tahun, $offset);
         // nama bulan dalam indonesia berdasarkan $bulan
@@ -286,7 +284,7 @@ class StatistikController extends Controller
 
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
-         $dateRange = Carbon::createFromDate($tahun, $bulan);
+        $dateRange = Carbon::createFromDate($tahun, $bulan);
         $tanggalAwal = $dateRange->startOfMonth()->toDateTimeString(); // Hasil: '2025-09-01 00:00:00'
         $tanggalAkhir = $dateRange->endOfMonth()->toDateTimeString();   // Hasil: '2025-09-30 23:59:59'
 
@@ -301,13 +299,13 @@ class StatistikController extends Controller
         //             ->get()
         //             ->keyBy('tanggal');
 
-          $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
-                    ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
-                    ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
-                    ->where('transaksis.void', 0)
-                    ->groupBy('tanggal_bongkar')
-                    ->get()
-                    ->keyBy('tanggal_bongkar');
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+            ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
+            ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
+            ->where('transaksis.void', 0)
+            ->groupBy('tanggal_bongkar')
+            ->get()
+            ->keyBy('tanggal_bongkar');
 
         $profitHarian = [];
         $grandTotal = 0;
@@ -318,7 +316,7 @@ class StatistikController extends Controller
             $grandTotal += $profitHarian[$tanggal];
         }
 
-        $pdf = PDF::loadview('rekap.statistik.profit.harian-kotor-pdf', [
+        $pdf = Pdf::loadview('rekap.statistik.profit.harian-kotor-pdf', [
             'data' => $data,
             'bulan' => $bulan,
             'tahun' => $tahun,
@@ -344,41 +342,40 @@ class StatistikController extends Controller
         // get array list date vrom $bulan
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
-        $data = Transaksi::with(['kas_uang_jalan','kas_uang_jalan.vendor'])
-                            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->when($vendor, function ($query, $vendor) {
-                                return $query->where('v.vendor_id', $vendor);
-                            })
-                            ->get();
+        $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor'])
+            ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->where('transaksis.void', 0)
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('v.vendor_id', $vendor);
+            })
+            ->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
-
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
 
         $vehicle = Vehicle::with(['vendor'])->orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->whereNot('status', 'nonaktif')
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('vendor_id', $vendor);
+            })
+            ->whereNot('status', 'nonaktif')
+            ->limit(10)
+            ->offset($offset)
+            ->get();
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+                ->when($vendor, function ($query, $vendor) {
+                    return $query->where('vendor_id', $vendor);
+                })
+                ->limit(10)
+                ->offset($offset)
+                ->get();
         }
 
         $vendors = Vendor::all();
@@ -411,36 +408,36 @@ class StatistikController extends Controller
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
         $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->when($vendor, function ($query, $vendor) {
-                                return $query->where('v.vendor_id', $vendor);
-                            })
-                            ->get();
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->where('transaksis.void', 0)
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('v.vendor_id', $vendor);
+            })
+            ->get();
 
         $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->whereNot('status', 'nonaktif')
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('vendor_id', $vendor);
+            })
+            ->whereNot('status', 'nonaktif')
+            ->limit(10)
+            ->offset($offset)
+            ->get();
 
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+                ->when($vendor, function ($query, $vendor) {
+                    return $query->where('vendor_id', $vendor);
+                })
+                ->limit(10)
+                ->offset($offset)
+                ->get();
         }
-        $pdf = PDF::loadview('rekap.statistik.profit-bulanan-print', [
+        $pdf = Pdf::loadview('rekap.statistik.profit-bulanan-print', [
             'data' => $data,
             'bulan' => $bulan,
             'tahun' => $tahun,
@@ -454,12 +451,11 @@ class StatistikController extends Controller
         return $pdf->stream('Profit Bulan '.$nama_bulan.' '.$tahun.'.pdf');
     }
 
-
     public function profit_tahunan_bersih(Request $request)
     {
         $tahun = $request->tahun ?? date('Y');
 
-        $db = new Transaksi();
+        $db = new Transaksi;
 
         $all = $db->profitBulanan($tahun);
 
@@ -490,20 +486,20 @@ class StatistikController extends Controller
         $rawSelisih = $rawTotalTagihan - $rawTotalVendor;
 
         // Formatting dilakukan setelah kalkulasi selesai
-        $nama_bulan = \Carbon\Carbon::createFromDate($year, $month, 1)->locale('id')->monthName;
+        $nama_bulan = Carbon::createFromDate($year, $month, 1)->locale('id')->monthName;
         $stringJenis = TransaksiAdditional::JENIS[$jenis] ?? $jenis;
 
         return view('rekap.statistik.profit.detail.jenis', [
-            "tagihan"      => $invoiceTagihan,
-            "vendor"       => $invoiceVendor,
-            'stringJenis'  => $stringJenis,
-            'jenis'        => $jenis,
-            'nama_bulan'   => $nama_bulan,
-            'tahun'        => $year,
+            'tagihan' => $invoiceTagihan,
+            'vendor' => $invoiceVendor,
+            'stringJenis' => $stringJenis,
+            'jenis' => $jenis,
+            'nama_bulan' => $nama_bulan,
+            'tahun' => $year,
             'totalTagihan' => number_format($rawTotalTagihan, 0, ',', '.'),
-            'totalBayar'   => number_format($rawTotalVendor, 0, ',', '.'),
-            'selisih'      => number_format($rawSelisih, 0, ',', '.'),
-            'rawSelisih'   => $rawSelisih // Dikirim untuk logika warna di UI
+            'totalBayar' => number_format($rawTotalVendor, 0, ',', '.'),
+            'selisih' => number_format($rawSelisih, 0, ',', '.'),
+            'rawSelisih' => $rawSelisih, // Dikirim untuk logika warna di UI
         ]);
     }
 
@@ -538,7 +534,7 @@ class StatistikController extends Controller
             ->get();
 
         $achievementHistory = AchievementHistory::whereMonth('created_at', $bulan)
-                                ->whereYear('created_at', $tahun)->get();
+            ->whereYear('created_at', $tahun)->get();
 
         $historiKeluar = $achievementHistory->where('jenis', 0)->sum('nominal');
         $historiMasuk = $achievementHistory->where('jenis', 1)->sum('nominal');
@@ -548,20 +544,20 @@ class StatistikController extends Controller
         $rawTotalVendor = $invoiceVendor->sum('nominal') + $historiKeluar;
         $rawSelisih = $rawTotalTagihan - $rawTotalVendor;
 
-        $nama_bulan = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
+        $nama_bulan = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         return view('statistik.achievement', [
-            "tagihan"      => $invoiceTagihan,
-            "vendor"       => $invoiceVendor,
-            'nama_bulan'   => $nama_bulan,
-            'bulan'        => $bulan,
-            'tahun'        => $tahun,
-            'arrayBulan'   => $arrayBulan,
-            'dataTahun'    => $dataTahun,
+            'tagihan' => $invoiceTagihan,
+            'vendor' => $invoiceVendor,
+            'nama_bulan' => $nama_bulan,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'arrayBulan' => $arrayBulan,
+            'dataTahun' => $dataTahun,
             'totalTagihan' => $rawTotalTagihan, // Kirim raw agar diformat di Blade
-            'totalBayar'   => $rawTotalVendor,
-            'selisih'      => $rawSelisih,
-            'history'      => $achievementHistory
+            'totalBayar' => $rawTotalVendor,
+            'selisih' => $rawSelisih,
+            'history' => $achievementHistory,
         ]);
     }
 
@@ -592,25 +588,25 @@ class StatistikController extends Controller
         $vehicle = Vehicle::orderBy('nomor_lambung')->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
         // looping sum profit each vehicle for each month
         for ($bulan = 1; $bulan <= 12; $bulan++) {
             $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
-                                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                                ->whereMonth('tanggal', $bulan)
-                                ->whereYear('tanggal', $tahun)
-                                ->where('transaksis.void', 0)
-                                ->get();
+                ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun)
+                ->where('transaksis.void', 0)
+                ->get();
 
             foreach ($data as $transaction) {
                 $v = $transaction->kas_uang_jalan->vehicle;
                 $vendor = $transaction->kas_uang_jalan->vendor;
 
-                if (!isset($statistics[$v->nomor_lambung])) {
+                if (! isset($statistics[$v->nomor_lambung])) {
                     $statistics[$v->nomor_lambung] = [
                         'vehicle' => $v,
                         'vendor' => $vendor->nama,
@@ -624,7 +620,7 @@ class StatistikController extends Controller
 
         // dd($statistics);
 
-        uksort($statistics, function($a, $b) {
+        uksort($statistics, function ($a, $b) {
             return $a <=> $b;
         });
 
@@ -665,24 +661,24 @@ class StatistikController extends Controller
         $vehicle = Vehicle::orderBy('nomor_lambung')->get();
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
         // looping sum profit each vehicle for each month
         for ($bulan = 1; $bulan <= 12; $bulan++) {
             $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                                ->whereMonth('tanggal', $bulan)
-                                ->whereYear('tanggal', $tahun)
-                                ->where('transaksis.void', 0)
-                                ->get();
+                ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun)
+                ->where('transaksis.void', 0)
+                ->get();
 
             foreach ($data as $transaction) {
                 $v = $transaction->kas_uang_jalan->vehicle;
                 $vendor = $transaction->kas_uang_jalan->vendor;
 
-                if (!isset($statistics[$v->nomor_lambung])) {
+                if (! isset($statistics[$v->nomor_lambung])) {
                     $statistics[$v->nomor_lambung] = [
                         'vehicle' => $v,
                         'vendor' => $vendor->nama,
@@ -694,11 +690,11 @@ class StatistikController extends Controller
             }
         }
 
-        uksort($statistics, function($a, $b) {
+        uksort($statistics, function ($a, $b) {
             return $a <=> $b;
         });
 
-        $pdf = PDF::loadview('rekap.statistik.profit-tahunan-print', [
+        $pdf = Pdf::loadview('rekap.statistik.profit-tahunan-print', [
             'statistics' => $statistics,
             'tahun' => $tahun,
             'vehicle' => $vehicle,
@@ -724,45 +720,45 @@ class StatistikController extends Controller
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
         $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->when($vendor, function ($query, $vendor) {
-                                return $query->where('v.vendor_id', $vendor);
-                            })
-                            ->get();
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->where('transaksis.void', 0)
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('v.vendor_id', $vendor);
+            })
+            ->get();
 
         $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
-                                $tonase = $transaction->timbangan_bongkar ?? 0;
-                                return $carry + $tonase;
-                            }, 0);
+            $tonase = $transaction->timbangan_bongkar ?? 0;
+
+            return $carry + $tonase;
+        }, 0);
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
-
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
 
         $vehicle = Vehicle::orderBy('nomor_lambung')
-                    ->when($vendor, function ($query, $vendor) {
-                        return $query->where('vendor_id', $vendor);
-                    })
-                    ->limit(10)
-                    ->offset($offset)
-                    ->get();
+            ->when($vendor, function ($query, $vendor) {
+                return $query->where('vendor_id', $vendor);
+            })
+            ->limit(10)
+            ->offset($offset)
+            ->get();
 
         if ($vehicle->count() == 0) {
             $offset = 0;
             $vehicle = Vehicle::orderBy('nomor_lambung')
-                        ->when($vendor, function ($query, $vendor) {
-                            return $query->where('vendor_id', $vendor);
-                        })
-                        ->limit(10)
-                        ->offset($offset)
-                        ->get();
+                ->when($vendor, function ($query, $vendor) {
+                    return $query->where('vendor_id', $vendor);
+                })
+                ->limit(10)
+                ->offset($offset)
+                ->get();
         }
 
         $statistics = [];
@@ -801,7 +797,7 @@ class StatistikController extends Controller
 
                         if ($jarak > 50) {
                             $statistics[$v->nomor_lambung]['long_route_count']++;
-                        } else if ($jarak > 0 && $jarak <= 50) {
+                        } elseif ($jarak > 0 && $jarak <= 50) {
                             $statistics[$v->nomor_lambung]['short_route_count']++;
                         }
 
@@ -814,16 +810,14 @@ class StatistikController extends Controller
 
                     $statistics[$v->nomor_lambung]['data'][] = [
                         'day' => $i,
-                        'rute' => implode(",", $rutes),
-                        'tonase' => implode(",", $tonases),
+                        'rute' => implode(',', $rutes),
+                        'tonase' => implode(',', $tonases),
                     ];
                 }
 
                 $statistics[$v->nomor_lambung]['total_tonase'] = $total_tonase; // store total tonase for each vehicle
             }
         }
-
-
 
         foreach ($statistics as $nomor_lambung => $statistic) {
             $total_tonase = array_reduce($statistic['data'], function ($carry, $item) {
@@ -865,16 +859,16 @@ class StatistikController extends Controller
         $vendors = Vendor::all();
 
         $sum_nominal_bayar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                        ->where('transaksis.bayar', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
-                                        ->groupBy('kuj.vendor_id')
-                                        ->selectRaw('kuj.vendor_id, sum(nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_kas_uang_jalan')
-                                        ->get()
-                                        ->keyBy('vendor_id');
+            ->where('transaksis.bayar', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
+            ->groupBy('kuj.vendor_id')
+            ->selectRaw('kuj.vendor_id, sum(nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_kas_uang_jalan')
+            ->get()
+            ->keyBy('vendor_id');
         $statistics = [];
 
         foreach ($vendors as $v) {
-            $nominal_uang_jalan =  $sum_nominal_bayar[$v->id]->total_kas_uang_jalan ?? 0;
-            $nominal_bayar = $sum_nominal_bayar[$v->id]->total_nominal_bayar  ?? 0;
+            $nominal_uang_jalan = $sum_nominal_bayar[$v->id]->total_kas_uang_jalan ?? 0;
+            $nominal_bayar = $sum_nominal_bayar[$v->id]->total_nominal_bayar ?? 0;
             $sisa = KasVendor::where('vendor_id', $v->id)->latest()->orderBy('id', 'desc')->first()->sisa ?? 0;
             $total_bayar = $nominal_bayar - $nominal_uang_jalan;
 
@@ -882,10 +876,9 @@ class StatistikController extends Controller
                 'vendor' => $v,
                 'total_nominal_bayar' => $total_bayar,
                 'total_sisa' => $sisa,
-                'total' => $sisa-$total_bayar,
+                'total' => $sisa - $total_bayar,
             ];
         }
-
 
         return view('rekap.statistik.perform-vendor', [
             'vendors' => $vendors,
@@ -908,8 +901,8 @@ class StatistikController extends Controller
         $vendors = Vendor::all();
 
         $dataTahun = KasVendor::selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
+            ->groupBy('tahun')
+            ->get();
 
         $grand_total = 0;
 
@@ -952,7 +945,7 @@ class StatistikController extends Controller
             }
         }
 
-        $pdf = PDF::loadview('rekap.statistik.perform-vendor-print', [
+        $pdf = Pdf::loadview('rekap.statistik.perform-vendor-print', [
             'statistics' => $statistics,
             'date' => $date,
             'grand_total' => $grand_total,
@@ -967,24 +960,24 @@ class StatistikController extends Controller
     public function statistik_vendor(Request $request)
     {
         $sum_nominal_bayar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                    ->where('transaksis.bayar', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
-                                    ->groupBy('kuj.vendor_id')
-                                    ->selectRaw('kuj.vendor_id, sum(nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_kas_uang_jalan')
-                                    ->get()
-                                    ->keyBy('vendor_id');
+            ->where('transaksis.bayar', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
+            ->groupBy('kuj.vendor_id')
+            ->selectRaw('kuj.vendor_id, sum(nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_kas_uang_jalan')
+            ->get()
+            ->keyBy('vendor_id');
 
         $vendors = Vendor::with(['vehicle' => function ($query) {
             $query->whereNot('status', 'nonaktif');
         },
-        'kas_vendor' => function ($query) {
-            $query->orderBy('id', 'desc');
-        }])->withCount(['vehicle' => function ($query) {
-            $query->whereNot('status', 'nonaktif');
-        }])->get();
+            'kas_vendor' => function ($query) {
+                $query->orderBy('id', 'desc');
+            }])->withCount(['vehicle' => function ($query) {
+                $query->whereNot('status', 'nonaktif');
+            }])->get();
 
         $statistics = $vendors->mapWithKeys(function ($v) use ($sum_nominal_bayar) {
-            $nominal_uang_jalan =  $sum_nominal_bayar[$v->id]->total_kas_uang_jalan ?? 0;
-            $nominal_bayar = $sum_nominal_bayar[$v->id]->total_nominal_bayar  ?? 0;
+            $nominal_uang_jalan = $sum_nominal_bayar[$v->id]->total_kas_uang_jalan ?? 0;
+            $nominal_bayar = $sum_nominal_bayar[$v->id]->total_nominal_bayar ?? 0;
             $sisa = $v->kas_vendor->first()->sisa ?? 0;
             $total_bayar = $nominal_bayar - $nominal_uang_jalan;
 
@@ -992,7 +985,7 @@ class StatistikController extends Controller
                 'vendor' => $v,
                 'total_nominal_bayar' => $total_bayar,
                 'total_sisa' => $sisa,
-                'total' => $sisa-$total_bayar,
+                'total' => $sisa - $total_bayar,
                 'total_vehicle' => $v->vehicle_count,
             ]];
         });
@@ -1008,17 +1001,17 @@ class StatistikController extends Controller
         $customers = Customer::all();
 
         $sum_nominal_tagihan = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                        ->where('transaksis.tagihan', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
-                                        ->groupBy('kuj.customer_id')
-                                        ->selectRaw('kuj.customer_id, sum(nominal_tagihan) as total_nominal_tagihan')
-                                        ->get()
-                                        ->keyBy('customer_id');
+            ->where('transaksis.tagihan', 0)->where('transaksis.void', 0)->where('transaksis.status', 3)
+            ->groupBy('kuj.customer_id')
+            ->selectRaw('kuj.customer_id, sum(nominal_tagihan) as total_nominal_tagihan')
+            ->get()
+            ->keyBy('customer_id');
 
         $sum_sisa_tagihan = InvoiceTagihan::groupBy('customer_id')
-                                        ->where('lunas', 0)
-                                        ->selectRaw('customer_id, sum(sisa_tagihan) as total_sisa_tagihan')
-                                        ->get()
-                                        ->keyBy('customer_id');
+            ->where('lunas', 0)
+            ->selectRaw('customer_id, sum(sisa_tagihan) as total_sisa_tagihan')
+            ->get()
+            ->keyBy('customer_id');
         $statistics = [];
 
         foreach ($customers as $c) {
@@ -1044,7 +1037,6 @@ class StatistikController extends Controller
             ];
         }
 
-
         return view('rekap.statistik.statistik-customer', [
             'customers' => $customers,
             'statistics' => $statistics,
@@ -1056,18 +1048,18 @@ class StatistikController extends Controller
         $vendorId = Auth::user()->vendor_id;
 
         $sums = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                        ->where('kuj.vendor_id', $vendorId)
-                        ->where('transaksis.bayar', 0)
-                        ->where('transaksis.void', 0)
-                        ->where('transaksis.status', 3)
-                        ->selectRaw('sum(transaksis.nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_uang_jalan')
-                        ->first();
+            ->where('kuj.vendor_id', $vendorId)
+            ->where('transaksis.bayar', 0)
+            ->where('transaksis.void', 0)
+            ->where('transaksis.status', 3)
+            ->selectRaw('sum(transaksis.nominal_bayar) as total_nominal_bayar, sum(kuj.nominal_transaksi) as total_uang_jalan')
+            ->first();
 
         $latest_sisa = KasVendor::where('vendor_id', $vendorId)
-                                ->latest()
-                                ->orderBy('id', 'desc')
-                                ->first()
-                                ->sisa ?? 0;
+            ->latest()
+            ->orderBy('id', 'desc')
+            ->first()
+            ->sisa ?? 0;
         $total_bayar = $sums->total_nominal_bayar - $sums->total_uang_jalan;
         $statistics = [
             'total_nominal_bayar' => $total_bayar,
@@ -1106,9 +1098,9 @@ class StatistikController extends Controller
         // get all vehicle
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
         // looping sum profit each vehicle for each month
         $grand_total_profit = 0;
         $grand_total_pengeluaran = 0;
@@ -1119,25 +1111,25 @@ class StatistikController extends Controller
             for ($bulan = 1; $bulan <= 12; $bulan++) {
 
                 $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
-                                    ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                                    ->whereMonth('tanggal', $bulan)
-                                    ->whereYear('tanggal', $tahun->tahun)
-                                    ->where('transaksis.void', 0)
-                                    ->get();
+                    ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                    ->whereMonth('tanggal', $bulan)
+                    ->whereYear('tanggal', $tahun->tahun)
+                    ->where('transaksis.void', 0)
+                    ->get();
 
                 $pengeluaran_kas_kecil = KasBesar::whereMonth('tanggal', $bulan)
-                                    ->whereYear('tanggal', $tahun->tahun)
-                                    ->whereNotNull('nomor_kode_kas_kecil')
-                                    ->sum('nominal_transaksi');
+                    ->whereYear('tanggal', $tahun->tahun)
+                    ->whereNotNull('nomor_kode_kas_kecil')
+                    ->sum('nominal_transaksi');
 
                 $coTransactions = KasBesar::whereMonth('tanggal', $bulan)
-                                    ->whereYear('tanggal', $tahun->tahun)
-                                    ->where('cost_operational', 1)
-                                    ->whereIn('jenis_transaksi_id', [1, 2])
-                                    ->get()
-                                    ->groupBy('jenis_transaksi_id');
+                    ->whereYear('tanggal', $tahun->tahun)
+                    ->where('cost_operational', 1)
+                    ->whereIn('jenis_transaksi_id', [1, 2])
+                    ->get()
+                    ->groupBy('jenis_transaksi_id');
 
                 $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
                 $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
@@ -1145,18 +1137,18 @@ class StatistikController extends Controller
                 $total_co = $pengeluaran_co - $pemasukan_co;
 
                 $gaji = RekapGaji::where('bulan', $bulan)
-                                    ->where('tahun', $tahun->tahun)
-                                    ->first();
+                    ->where('tahun', $tahun->tahun)
+                    ->first();
 
                 $total_gaji_bersih = $gaji ? $gaji->rekap_gaji_detail->sum('pendapatan_bersih') : 0;
 
                 $grand_total_profit += $data->sum('profit');
-                $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co;
-                $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
-                $gt_peryear += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
+                $grand_total_pengeluaran += $pengeluaran_kas_kecil + $total_gaji_bersih + $total_co;
+                $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil + $total_gaji_bersih + $total_co);
+                $gt_peryear += $data->sum('profit') - ($pengeluaran_kas_kecil + $total_gaji_bersih + $total_co);
                 $statistics[$tahun->tahun]['data'][$bulan] = [
                     'nama_bulan' => $nama_bulan[$bulan],
-                    'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
+                    'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil + $total_gaji_bersih + $total_co),
 
                 ];
 
@@ -1164,7 +1156,6 @@ class StatistikController extends Controller
 
             $statistics[$tahun->tahun]['total'] = $gt_peryear;
         }
-
 
         // dd($statistics);
 
@@ -1199,9 +1190,9 @@ class StatistikController extends Controller
         // get all vehicle
 
         $dataTahun = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->selectRaw('YEAR(tanggal) tahun')
-                            ->groupBy('tahun')
-                            ->get();
+            ->selectRaw('YEAR(tanggal) tahun')
+            ->groupBy('tahun')
+            ->get();
         // looping sum profit each vehicle for each month
         $grand_total_profit = 0;
         $grand_total_pengeluaran = 0;
@@ -1212,25 +1203,25 @@ class StatistikController extends Controller
             for ($bulan = 1; $bulan <= 12; $bulan++) {
 
                 $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor'])
-                                    ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
-                                    ->whereMonth('tanggal', $bulan)
-                                    ->whereYear('tanggal', $tahun->tahun)
-                                    ->where('transaksis.void', 0)
-                                    ->get();
+                    ->join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
+                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung')
+                    ->whereMonth('tanggal', $bulan)
+                    ->whereYear('tanggal', $tahun->tahun)
+                    ->where('transaksis.void', 0)
+                    ->get();
 
                 $pengeluaran_kas_kecil = KasBesar::whereMonth('tanggal', $bulan)
-                                    ->whereYear('tanggal', $tahun->tahun)
-                                    ->whereNotNull('nomor_kode_kas_kecil')
-                                    ->sum('nominal_transaksi');
+                    ->whereYear('tanggal', $tahun->tahun)
+                    ->whereNotNull('nomor_kode_kas_kecil')
+                    ->sum('nominal_transaksi');
 
                 $coTransactions = KasBesar::whereMonth('tanggal', $bulan)
-                                    ->whereYear('tanggal', $tahun->tahun)
-                                    ->where('cost_operational', 1)
-                                    ->whereIn('jenis_transaksi_id', [1, 2])
-                                    ->get()
-                                    ->groupBy('jenis_transaksi_id');
+                    ->whereYear('tanggal', $tahun->tahun)
+                    ->where('cost_operational', 1)
+                    ->whereIn('jenis_transaksi_id', [1, 2])
+                    ->get()
+                    ->groupBy('jenis_transaksi_id');
 
                 $pengeluaran_co = $coTransactions->has(2) ? $coTransactions[2]->sum('nominal_transaksi') : 0;
                 $pemasukan_co = $coTransactions->has(1) ? $coTransactions[1]->sum('nominal_transaksi') : 0;
@@ -1238,18 +1229,18 @@ class StatistikController extends Controller
                 $total_co = $pengeluaran_co - $pemasukan_co;
 
                 $gaji = RekapGaji::where('bulan', $bulan)
-                                    ->where('tahun', $tahun->tahun)
-                                    ->first();
+                    ->where('tahun', $tahun->tahun)
+                    ->first();
 
                 $total_gaji_bersih = $gaji ? $gaji->rekap_gaji_detail->sum('pendapatan_bersih') : 0;
 
                 $grand_total_profit += $data->sum('profit');
-                $grand_total_pengeluaran += $pengeluaran_kas_kecil+$total_gaji_bersih+$total_co;
-                $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
-                $gt_peryear += $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co);
+                $grand_total_pengeluaran += $pengeluaran_kas_kecil + $total_gaji_bersih + $total_co;
+                $grand_total_bersih += $data->sum('profit') - ($pengeluaran_kas_kecil + $total_gaji_bersih + $total_co);
+                $gt_peryear += $data->sum('profit') - ($pengeluaran_kas_kecil + $total_gaji_bersih + $total_co);
                 $statistics[$tahun->tahun]['data'][$bulan] = [
                     'nama_bulan' => $nama_bulan[$bulan],
-                    'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil+$total_gaji_bersih+$total_co),
+                    'bersih' => $data->sum('profit') - ($pengeluaran_kas_kecil + $total_gaji_bersih + $total_co),
 
                 ];
 
@@ -1258,7 +1249,7 @@ class StatistikController extends Controller
             $statistics[$tahun->tahun]['total'] = $gt_peryear;
         }
 
-        $pdf = PDF::loadview('rekap.statistik.profit.tahunan-bersih-pdf', [
+        $pdf = Pdf::loadview('rekap.statistik.profit.tahunan-bersih-pdf', [
             'statistics' => $statistics,
             'nama_bulan' => $nama_bulan,
             'grand_total_bersih' => $grand_total_bersih,
@@ -1266,7 +1257,6 @@ class StatistikController extends Controller
 
         return $pdf->stream('Grand Total Tahunan Bersih.pdf');
     }
-
 
     public function tonase_tambang(Request $request, Customer $customer)
     {
@@ -1280,41 +1270,41 @@ class StatistikController extends Controller
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
         $dataMuat = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                    ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
-                    ->whereMonth('transaksis.tanggal_muat', $bulan)
-                    ->whereYear('transaksis.tanggal_muat', $tahun)
-                    ->where('transaksis.void', 0)
-                    ->whereNull('transaksis.timbangan_bongkar')
-                    ->where('kuj.customer_id', $customer->id)
-                    ->get();
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+            ->whereMonth('transaksis.tanggal_muat', $bulan)
+            ->whereYear('transaksis.tanggal_muat', $tahun)
+            ->where('transaksis.void', 0)
+            ->whereNull('transaksis.timbangan_bongkar')
+            ->where('kuj.customer_id', $customer->id)
+            ->get();
 
         $dataBongkar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
-                            ->whereMonth('transaksis.tanggal_bongkar', $bulan)
-                            ->whereYear('transaksis.tanggal_bongkar', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->where('kuj.customer_id', $customer->id)
-                            ->get();
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+            ->whereMonth('transaksis.tanggal_bongkar', $bulan)
+            ->whereYear('transaksis.tanggal_bongkar', $tahun)
+            ->where('transaksis.void', 0)
+            ->where('kuj.customer_id', $customer->id)
+            ->get();
 
         $ruteIds = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->where('kuj.customer_id', $customer->id)
-                            ->pluck('r.id');
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->where('transaksis.void', 0)
+            ->where('kuj.customer_id', $customer->id)
+            ->pluck('r.id');
 
         $dbRute = Rute::whereIn('id', $ruteIds)->get();
 
         $statistics = [];
 
         for ($i = 1; $i <= $date; $i++) {
-            $day = sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun;
+            $day = sprintf('%02d', $i).'-'.$bulan.'-'.$tahun;
 
             foreach ($dbRute as $rute) {
                 $filteredDataMuat = $dataMuat->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
@@ -1340,7 +1330,7 @@ class StatistikController extends Controller
                     'rute_id' => $rute->id,
                     'rute' => $rute->nama,
                     'data' => [
-                        'ritase' => $ritaseMuat+$ritaseBongkar,
+                        'ritase' => $ritaseMuat + $ritaseBongkar,
                         'tonase_muat' => $tonase_muat,
                         'tonase_bongkar' => $tonase_bongkar,
                     ],
@@ -1378,41 +1368,41 @@ class StatistikController extends Controller
         $date = Carbon::createFromDate($tahun, $bulan)->daysInMonth;
 
         $dataMuat = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                    ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                    ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                    ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
-                    ->whereMonth('transaksis.tanggal_muat', $bulan)
-                    ->whereYear('transaksis.tanggal_muat', $tahun)
-                    ->where('transaksis.void', 0)
-                    ->whereNull('transaksis.timbangan_bongkar')
-                    ->where('kuj.customer_id', $customer->id)
-                    ->get();
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+            ->whereMonth('transaksis.tanggal_muat', $bulan)
+            ->whereYear('transaksis.tanggal_muat', $tahun)
+            ->where('transaksis.void', 0)
+            ->whereNull('transaksis.timbangan_bongkar')
+            ->where('kuj.customer_id', $customer->id)
+            ->get();
 
         $dataBongkar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
-                            ->whereMonth('transaksis.tanggal_bongkar', $bulan)
-                            ->whereYear('transaksis.tanggal_bongkar', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->where('kuj.customer_id', $customer->id)
-                            ->get();
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+            ->select('transaksis.*', 'kuj.tanggal as tanggal', 'r.nama as nama_rute', 'r.id as rute_id')
+            ->whereMonth('transaksis.tanggal_bongkar', $bulan)
+            ->whereYear('transaksis.tanggal_bongkar', $tahun)
+            ->where('transaksis.void', 0)
+            ->where('kuj.customer_id', $customer->id)
+            ->get();
 
         $ruteIds = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
-                            ->join('rutes as r', 'r.id', 'kuj.rute_id')
-                            ->whereMonth('tanggal', $bulan)
-                            ->whereYear('tanggal', $tahun)
-                            ->where('transaksis.void', 0)
-                            ->where('kuj.customer_id', $customer->id)
-                            ->pluck('r.id');
+            ->join('vehicles as v', 'v.id', 'kuj.vehicle_id')
+            ->join('rutes as r', 'r.id', 'kuj.rute_id')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->where('transaksis.void', 0)
+            ->where('kuj.customer_id', $customer->id)
+            ->pluck('r.id');
 
         $dbRute = Rute::whereIn('id', $ruteIds)->get();
 
         $statistics = [];
 
         for ($i = 1; $i <= $date; $i++) {
-            $day = sprintf('%02d', $i) . '-' . $bulan . '-' . $tahun;
+            $day = sprintf('%02d', $i).'-'.$bulan.'-'.$tahun;
 
             foreach ($dbRute as $rute) {
                 $filteredDataMuat = $dataMuat->filter(function ($item) use ($i, $bulan, $tahun, $rute) {
@@ -1438,7 +1428,7 @@ class StatistikController extends Controller
                     'rute_id' => $rute->id,
                     'rute' => $rute->nama,
                     'data' => [
-                        'ritase' => $ritaseMuat+$ritaseBongkar,
+                        'ritase' => $ritaseMuat + $ritaseBongkar,
                         'tonase_muat' => $tonase_muat,
                         'tonase_bongkar' => $tonase_bongkar,
                     ],
@@ -1446,7 +1436,7 @@ class StatistikController extends Controller
             }
         }
 
-        $pdf = PDF::loadview('statistik.tonase-tambang.pdf', [
+        $pdf = Pdf::loadview('statistik.tonase-tambang.pdf', [
             'statistics' => $statistics,
             'nama_bulan' => $nama_bulan,
             'date' => $date,
@@ -1459,20 +1449,19 @@ class StatistikController extends Controller
 
         return $pdf->stream('Statistik Tonase_'.$bulan.'_'.$tahun.'.pdf');
 
-
     }
 
     public function perform_unit_all_vendor(Request $request)
     {
         // 1. Ambil filter dari Request, berikan default value (Bulan/Tahun sekarang)
         $filters = [
-            'month'  => $request->input('bulan', date('n')), // Format 1-12
-            'year'   => $request->input('tahun', date('Y')),
+            'month' => $request->input('bulan', date('n')), // Format 1-12
+            'year' => $request->input('tahun', date('Y')),
             'vendor' => $request->input('vendor'),           // Bisa null
-            'offset' => $request->input('offset', 0)
+            'offset' => $request->input('offset', 0),
         ];
 
-        $transaksiModel = new Transaksi();
+        $transaksiModel = new Transaksi;
 
         if (Auth::user()->role === 'vendor') {
             $filters['vendor'] = Auth::user()->vendor_id;
@@ -1488,23 +1477,23 @@ class StatistikController extends Controller
 
     public function perform_unit_all_vendor_pdf(Request $request)
     {
-         $filters = [
-            'month'  => $request->input('bulan', date('n')), // Format 1-12
-            'year'   => $request->input('tahun', date('Y')),
+        $filters = [
+            'month' => $request->input('bulan', date('n')), // Format 1-12
+            'year' => $request->input('tahun', date('Y')),
             'vendor' => $request->input('vendor'),           // Bisa null
-            'offset' => $request->input('offset', 0)
+            'offset' => $request->input('offset', 0),
         ];
 
         if (Auth::user()->role === 'vendor') {
             $filters['vendor'] = Auth::user()->vendor_id;
         }
 
-        $transaksiModel = new Transaksi();
+        $transaksiModel = new Transaksi;
 
         // 2. Panggil function di Model yang akan mengembalikan array data lengkap
         $viewData = $transaksiModel->performUnitAllVendor($filters);
 
-         $pdf = PDF::loadview('statistik.all-vendor.pdf', $viewData)->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadview('statistik.all-vendor.pdf', $viewData)->setPaper('a4', 'portrait');
 
         return $pdf->stream('Perform Unit All Vendor.pdf');
 
@@ -1517,42 +1506,33 @@ class StatistikController extends Controller
         ]);
 
         $vehicleId = $validate['vehicle_id'];
-        $vehicle   = Vehicle::findOrFail($vehicleId);
+        $vehicle = Vehicle::findOrFail($vehicleId);
 
-        // 1. Ambil semua data posisi aki
-        $posisiAki = PosisiAki::orderBy('id', 'asc')->get();
-
-        // 2. Tempelkan log aki TERBARU untuk tiap posisi kendaraan ini
-        $aki = $posisiAki->map(function ($posisi) use ($vehicleId) {
-            $latestLog = AkiLog::where('vehicle_id', $vehicleId)
-                ->where('posisi_aki_id', $posisi->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            // Format array 'akiLog' agar sesuai dengan pemanggilan di Blade
-            if ($latestLog) {
-                $posisi->akiLog = [
-                    'merk'          => $latestLog->merk,
-                    'no_seri'       => $latestLog->no_seri,
-                    'kondisi'       => $latestLog->kondisi,
-                    'tanggal_ganti' => date('d-m-Y', strtotime($latestLog->created_at)),
-                ];
-            } else {
-                $posisi->akiLog = null;
-            }
+        $latestLogs = AkiLog::where('vehicle_id', $vehicleId)
+            ->orderByDesc('created_at')->orderByDesc('id')->get()
+            ->unique('posisi_aki_id')->keyBy('posisi_aki_id');
+        $today = today();
+        $aki = PosisiAki::orderBy('id')->get()->map(function ($posisi) use ($latestLogs, $today) {
+            $latestLog = $latestLogs->get($posisi->id);
+            $posisi->akiLog = $latestLog ? [
+                'merk' => $latestLog->merk,
+                'kondisi' => $latestLog->kondisi,
+                'tanggal_ganti' => $latestLog->created_at->format('d-m-Y'),
+                'umur_hari' => max(0, (int) $latestLog->created_at->copy()->startOfDay()->diffInDays($today, false)),
+            ] : null;
 
             return $posisi;
         });
 
         return view('rekap.statistik.aki.index', [
             'vehicle' => $vehicle,
-            'aki'     => $aki,
+            'aki' => $aki,
         ]);
     }
 
     public function aki_histori($vehicle, $posisi)
     {
-        $vehicle = Vehicle::find($vehicle);
+        $vehicle = Vehicle::findOrFail($vehicle);
 
         return view('rekap.statistik.aki.histori', [
             'vehicle' => $vehicle,
@@ -1562,38 +1542,61 @@ class StatistikController extends Controller
 
     public function aki_histori_data(Request $request)
     {
-        if ($request->ajax()) {
-            $length = $request->get('length');
+        abort_unless($request->ajax(), 404);
+        $validated = $request->validate([
+            'vehicle' => 'required|integer|exists:vehicles,id',
+            'posisi' => 'required|integer|exists:posisi_akis,id',
+            'start' => 'nullable|integer|min:0',
+            'length' => 'nullable|integer|min:1|max:100',
+            'search.value' => 'nullable|string|max:100',
+            'order.0.column' => 'nullable|integer|min:0',
+            'order.0.dir' => 'nullable|in:asc,desc',
+        ]);
 
-            // Tambahkan ritase ke daftar kolom yang dapat di-sort
-            $columns = ['merk', 'no_seri', 'kondisi', 'ritase', 'created_at'];
-
-            $query = AkiLog::where('vehicle_id', $request->vehicle)
-                        ->where('posisi_aki_id', $request->posisi)
-                        ->orderBy('created_at', 'desc');
-
-            if ($request->has('order')) {
-                $columnIndex = $request->get('order')[0]['column'];
-                $sortDirection = $request->get('order')[0]['dir'];
-                $column = $columns[$columnIndex] ?? 'created_at';
-
-                $query->orderBy($column, $sortDirection);
-            }
-
-            $data = $query->paginate($length);
-
-            return response()->json([
-                'draw' => intval($request->draw),
-                'recordsTotal' => $data->total(),
-                'recordsFiltered' => $data->total(),
-                'data' => $data->items(),
-            ]);
+        $nextReplacement = DB::table('aki_logs as next_log')
+            ->select('next_log.created_at')
+            ->whereColumn('next_log.vehicle_id', 'aki_logs.vehicle_id')
+            ->whereColumn('next_log.posisi_aki_id', 'aki_logs.posisi_aki_id')
+            ->where(function ($query) {
+                $query->whereColumn('next_log.created_at', '>', 'aki_logs.created_at')
+                    ->orWhere(function ($query) {
+                        $query->whereColumn('next_log.created_at', 'aki_logs.created_at')
+                            ->whereColumn('next_log.id', '>', 'aki_logs.id');
+                    });
+            })
+            ->orderBy('next_log.created_at')->orderBy('next_log.id')->limit(1);
+        $query = AkiLog::where('vehicle_id', $validated['vehicle'])
+            ->where('posisi_aki_id', $validated['posisi']);
+        $total = (clone $query)->count();
+        $search = $request->input('search.value');
+        if ($search !== null && $search !== '') {
+            $query->where('merk', 'like', '%'.$search.'%');
         }
+        $filtered = (clone $query)->count();
+        $columns = [0 => 'merk', 1 => 'kondisi', 2 => 'created_at'];
+        $column = $columns[$request->input('order.0.column', 2)] ?? 'created_at';
+        $direction = $request->input('order.0.dir', 'desc');
+        $today = today();
+        $data = $query->select('aki_logs.*')->addSelect(['tanggal_selesai' => $nextReplacement])
+            ->orderBy($column, $direction)->orderByDesc('id')
+            ->offset($request->integer('start'))->limit($request->integer('length', 10))
+            ->get()->map(function ($log) use ($today) {
+                $endDate = $log->tanggal_selesai ? Carbon::parse($log->tanggal_selesai) : $today;
+                $log->umur_hari = max(0, (int) $log->created_at->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay(), false));
+                $log->masih_digunakan = $log->tanggal_selesai === null;
 
-        return abort(404);
+                return $log;
+            });
+
+        return response()->json([
+            'draw' => $request->integer('draw'),
+            'recordsTotal' => $total,
+            'recordsFiltered' => $filtered,
+            'data' => $data,
+        ]);
     }
 
-    public function histori_delete($histori, Request $request)
+    public function aki_histori_delete($histori, Request $request)
     {
         $dbP = PasswordKonfirmasi::first();
 
@@ -1607,10 +1610,10 @@ class StatistikController extends Controller
         return redirect()->back()->with('success', 'Berhasil menghapus data!!');
     }
 
-    public function histori_update($histori, Request $request)
+    public function aki_histori_update($histori, Request $request)
     {
         $data = $request->validate([
-            'created_at' => 'required',
+            'created_at' => 'required|date_format:d-m-Y|before_or_equal:today',
             'password' => 'required',
         ]);
 
@@ -1624,9 +1627,9 @@ class StatistikController extends Controller
 
         $banLog = AkiLog::findOrFail($histori);
 
+        $data['created_at'] = Carbon::createFromFormat('d-m-Y', $data['created_at'])->startOfDay();
         $banLog->update($data);
 
         return redirect()->back()->with('success', 'Berhasil mengubah data!!');
     }
-
 }

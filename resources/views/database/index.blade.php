@@ -93,6 +93,12 @@
     <div class="row justify-content-left">
         <h2>Data Kategori</h2>
         <div class="col-md-2 text-center mt-3 mb-3">
+            <a href="{{ route('database.kategori-filter-oli-mesin.index') }}" class="text-decoration-none">
+                <img src="{{ asset('images/filter-oli-mesin.svg') }}" alt="" width="70">
+                <h4 class="mt-3">KATEGORI FILTER & OLI MESIN</h4>
+            </a>
+        </div>
+        <div class="col-md-2 text-center mt-3 mb-3">
             <a href="{{route('database.cost-operational')}}" class="text-decoration-none">
                 <img src="{{asset('images/cost-operational.svg')}}" alt="" width="70">
                 <h4 class="mt-3">KATEGORI COST OPERATIONAL</h4>
