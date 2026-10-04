@@ -367,6 +367,7 @@ Route::group(['middleware' => ['auth']], function () {
             'store', 'update', 'destroy',
         ]);
 
+        Route::patch('vehicle/{vehicle}/pembatasan-filter-oli', [VehicleController::class, 'updateFilterOliRestriction'])->name('vehicle.pembatasan-filter-oli.update');
         Route::resource('vehicle', VehicleController::class);
         // Rute untuk memanggil modal form rekening via AJAX
         Route::get('vehicle/{vehicle}/edit-rekening', [VehicleController::class, 'editRekening'])->name('vehicle.edit-rekening');
