@@ -2,49 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AkiGantiInvoice;
+use App\Models\AkiGantiInvoiceDetail;
 use App\Models\AktivasiMaintenance;
 use App\Models\BanGantiInvoice;
 use App\Models\BanGantiInvoiceDetail;
 use App\Models\BanLog;
-use App\Models\BarangMaintenance;
-use App\Models\KasKecil;
-use App\Models\KasBesar;
-use App\Models\Vendor;
+use App\Models\Customer;
 use App\Models\Direksi;
+use App\Models\GroupWa;
+use App\Models\InvoiceBayar;
+use App\Models\InvoiceBonus;
+use App\Models\InvoiceCsr;
+use App\Models\InvoiceTagihan;
+use App\Models\KasBesar;
 use App\Models\KasBon;
 use App\Models\KasBonCicilan;
 use App\Models\KasDireksi;
+use App\Models\KasKecil;
 use App\Models\KasUangJalan;
-use App\Models\InvoiceBonus;
-use App\Models\InvoiceBayar;
-use App\Models\Customer;
-use App\Models\InvoiceTagihan;
-use App\Models\InvoiceCsr;
 use App\Models\KasVendor;
-use App\Models\Transaksi;
-use App\Models\Rekening;
-use App\Models\RekapGaji;
-use App\Models\Sponsor;
-use App\Models\GroupWa;
 use App\Models\KategoriBarangMaintenance;
 use App\Models\MaintenanceLog;
 use App\Models\OdoLog;
-use App\Services\StarSender;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Rekap\BungaInvestor;
 use App\Models\RekapBarang;
+use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
+use App\Models\Rekening;
+use App\Models\Sponsor;
+use App\Models\Transaksi;
 use App\Models\UjDitahan;
 use App\Models\Vehicle;
-use Illuminate\Http\Request;
+use App\Models\Vendor;
+use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class RekapController extends Controller
 {
-
     public function index()
     {
         $vendor = Vendor::all();
@@ -68,7 +68,7 @@ class RekapController extends Controller
     public function kas_besar(Request $request)
     {
         // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
-       $bulan = $request->bulan ?? date('m');
+        $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
 
         // Gunakan str_pad agar $bulan selalu 2 digit (contoh: '05'), berguna untuk query database
@@ -78,30 +78,30 @@ class RekapController extends Controller
 
         // Data bulan ini
         $data = KasBesar::with('jenis_transaksi')
-                        ->whereMonth('tanggal', $bulan)
-                        ->whereYear('tanggal', $tahun)
-                        ->get();
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->get();
 
         // Hitung string bulan untuk View
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
 
         // Perbaikan: Ambil tanggal awal bulan yang direquest (Misal: 2024-03-01)
-        $tanggalAwalBulan = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
+        $tanggalAwalBulan = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
 
         // Perbaikan: Ambil 1 transaksi paling akhir yang tanggalnya SEBELUM bulan yang direquest
         $dataSebelumnya = KasBesar::where('tanggal', '<', $tanggalAwalBulan)
-                                ->orderBy('tanggal', 'desc')
-                                ->orderBy('id', 'desc')
-                                ->first();
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
 
         // Set bulan & tahun sebelumnya berdasarkan dataSebelumnya jika ada, jika tidak ada mundur 1 bulan manual
         if ($dataSebelumnya) {
-            $waktuSebelumnya = \Carbon\Carbon::parse($dataSebelumnya->tanggal);
+            $waktuSebelumnya = Carbon::parse($dataSebelumnya->tanggal);
             $bulanSebelumnya = $waktuSebelumnya->format('m');
             $tahunSebelumnya = $waktuSebelumnya->format('Y');
             $stringBulan = $waktuSebelumnya->locale('id')->monthName;
         } else {
-            $waktuMundur = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->subMonth();
+            $waktuMundur = Carbon::createFromDate($tahun, $bulan, 1)->subMonth();
             $bulanSebelumnya = $waktuMundur->format('m');
             $tahunSebelumnya = $waktuMundur->format('Y');
             $stringBulan = $waktuMundur->locale('id')->monthName;
@@ -125,16 +125,16 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
-        if (!$dataSebelumnya) {
-            # code...
+        if (! $dataSebelumnya) {
+            // code...
             $dataSebelumnya = KasBesar::latest()->orderBy('id', 'desc')->first();
         }
         // dd($bulan);
-        $pdf = PDF::loadview('rekap.preview-kas-besar', [
+        $pdf = Pdf::loadview('rekap.preview-kas-besar', [
             'data' => $data,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
@@ -158,10 +158,11 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasKecil::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
+
         // dd($bulan);
         return view('rekap.kas-kecil', [
             'data' => $data,
@@ -184,12 +185,12 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasKecil::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
         // dd($bulan);
-        $pdf = PDF::loadview('rekap.preview-kas-kecil', [
+        $pdf = Pdf::loadview('rekap.preview-kas-kecil', [
             'data' => $data,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
@@ -216,8 +217,8 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = $db->getLatest($bulanSebelumnya, $tahunSebelumnya);
 
@@ -244,12 +245,12 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
         $dataSebelumnya = $db->getLatest($bulanSebelumnya, $tahunSebelumnya);
 
-        $pdf = PDF::loadview('rekap.preview-kas-uang-jalan', [
+        $pdf = Pdf::loadview('rekap.preview-kas-uang-jalan', [
             'data' => $data,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
@@ -276,8 +277,8 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
         return view('rekap.nota-void', [
             'data' => $data,
@@ -296,16 +297,16 @@ class RekapController extends Controller
         $tahun = $request->tahun ?? date('Y');
 
         $data = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
-                            ->select('transaksis.*')
-                            ->whereMonth('kuj.tanggal', $bulan)->whereYear('kuj.tanggal', $tahun)->where('transaksis.void', 1)->get();
+            ->select('transaksis.*')
+            ->whereMonth('kuj.tanggal', $bulan)->whereYear('kuj.tanggal', $tahun)->where('transaksis.void', 1)->get();
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
 
-        $pdf = PDF::loadview('rekap.preview-nota-void', [
+        $pdf = Pdf::loadview('rekap.preview-nota-void', [
             'data' => $data,
             'stringBulan' => $stringBulan,
             'tahun' => $tahun,
@@ -319,7 +320,7 @@ class RekapController extends Controller
 
     public function stock_barang(Request $request)
     {
-         // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
+        // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
 
@@ -332,8 +333,9 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
         // get latest data from month before current month
         // dd($bulan);
         return view('rekap.stock-barang', [
@@ -363,8 +365,8 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = $db->getLatest($vendor->id, $bulanSebelumnya, $tahunSebelumnya);
 
@@ -391,15 +393,15 @@ class RekapController extends Controller
         $vendor = Vendor::find($invoiceBayar->vendor_id);
 
         $data = $invoiceBayar->load(['transaksi', 'transaksi.kas_uang_jalan',
-                                    'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute',
-                                    'transaksi.kas_uang_jalan.vehicle', 'transaksi.kas_uang_jalan.vendor'])
-                            ->transaksi->where('void', 0);
+            'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute',
+            'transaksi.kas_uang_jalan.vehicle', 'transaksi.kas_uang_jalan.vendor'])
+            ->transaksi->where('void', 0);
 
         return view('rekap.kas-vendor-detail', [
             'data' => $data,
             'vendor' => $vendor,
             'periode' => $periode,
-            'invoice_id' => $invoiceBayar->id
+            'invoice_id' => $invoiceBayar->id,
         ]);
     }
 
@@ -418,14 +420,14 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = $db->getLatest($vendor->id, $bulanSebelumnya, $tahunSebelumnya);
 
         $sisaTerakhir = $data->last()->sisa ?? 0;
 
-        $pdf = PDF::loadview('rekap.preview-kas-vendor', [
+        $pdf = Pdf::loadview('rekap.preview-kas-vendor', [
             'data' => $data,
             'vendor' => $vendor,
             'dataTahun' => $dataTahun,
@@ -438,7 +440,7 @@ class RekapController extends Controller
             'sisaTerakhir' => $sisaTerakhir,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->stream('Rekap Kas Vendor '.$vendor->nama." ".$stringBulanNow.' '.$tahun.'.pdf');
+        return $pdf->stream('Rekap Kas Vendor '.$vendor->nama.' '.$stringBulanNow.' '.$tahun.'.pdf');
     }
 
     public function kas_vendor_void(Request $request, KasVendor $kas_vendor)
@@ -449,7 +451,7 @@ class RekapController extends Controller
 
         $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
+        if (! $password) {
             return redirect()->back()->with('error', 'Password belum diatur!!');
         }
 
@@ -492,34 +494,34 @@ class RekapController extends Controller
             $store = KasBesar::create($kas);
 
             $group = GroupWa::where('untuk', 'kas-besar')->first();
-            $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+            $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Form Void BBM Storing*\n".
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    "No. Lambung : ".$kas_vendor->vehicle->nomor_lambung."\n".
-                    "Vendor : ".$kas_vendor->vendor->nama."\n\n".
-                    "Lokasi : ".$kas_vendor->bbm_storing->km."\n".
-                    "Nilai :  *Rp. ".number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                    'No. Lambung : '.$kas_vendor->vehicle->nomor_lambung."\n".
+                    'Vendor : '.$kas_vendor->vendor->nama."\n\n".
+                    'Lokasi : '.$kas_vendor->bbm_storing->km."\n".
+                    'Nilai :  *Rp. '.number_format($kas['nominal_transaksi'], 0, ',', '.')."*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank     : ".$kas['bank']."\n".
-                    "Nama    : ".$kas['transfer_ke']."\n".
-                    "No. Rek : ".$kas['no_rekening']."\n\n".
+                    'Bank     : '.$kas['bank']."\n".
+                    'Nama    : '.$kas['transfer_ke']."\n".
+                    'No. Rek : '.$kas['no_rekening']."\n\n".
                     "==========================\n".
                     "Sisa Saldo Kas Besar : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Total Modal Investor : \n".
-                    "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                    'Rp. '.number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
             $send = new StarSender($group->nama_group, $pesan);
             $res = $send->sendGroup();
         } else {
             $group = GroupWa::where('untuk', 'team')->first();
-            $pesan ="==========================\n".
+            $pesan = "==========================\n".
                     "*Form Void Jasa Mekanik*\n".
                     "==========================\n\n".
-                    "No. Lambung : ".$kas_vendor->vehicle->nomor_lambung."\n".
-                    "Vendor : ".$kas_vendor->vendor->nama."\n\n".
-                    "Lokasi : ".$kas_vendor->bbm_storing->km."\n".
-                    "Nilai :  *Rp. ".number_format($data['bayar'], 0, ',', '.')."*\n\n".
+                    'No. Lambung : '.$kas_vendor->vehicle->nomor_lambung."\n".
+                    'Vendor : '.$kas_vendor->vendor->nama."\n\n".
+                    'Lokasi : '.$kas_vendor->bbm_storing->km."\n".
+                    'Nilai :  *Rp. '.number_format($data['bayar'], 0, ',', '.')."*\n\n".
                     "==========================\n\n".
                     "Terima kasih 🙏🙏🙏\n";
             $send = new StarSender($group->nama_group, $pesan);
@@ -544,10 +546,11 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasBon::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+
         // dd($bulan);
         return view('rekap.kas-bon', [
             'data' => $data,
@@ -573,12 +576,12 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasBon::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
 
-        $pdf = PDF::loadview('rekap.preview-kas-bon', [
+        $pdf = Pdf::loadview('rekap.preview-kas-bon', [
             'data' => $data,
             'dataSebelumnya' => $dataSebelumnya,
             'stringBulan' => $stringBulan,
@@ -599,7 +602,7 @@ class RekapController extends Controller
 
         $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
+        if (! $password) {
             return redirect()->back()->with('error', 'Password belum diatur!!');
         }
 
@@ -624,21 +627,21 @@ class RekapController extends Controller
 
         $group = GroupWa::where('untuk', 'kas-besar')->first();
 
-        $pesan ="🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+        $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                 "*Form Void Kasbon Staff*\n".
                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                "Nama : ".$kas->karyawan->nama."\n".
-                "Uraian : ".$k['uraian']."\n\n".
-                "Nilai :  *Rp. ".number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
+                'Nama : '.$kas->karyawan->nama."\n".
+                'Uraian : '.$k['uraian']."\n\n".
+                'Nilai :  *Rp. '.number_format($k['nominal_transaksi'], 0, ',', '.')."*\n\n".
                 "Ditransfer ke rek:\n\n".
-                "Bank     : ".$k['bank']."\n".
-                "Nama    : ".$k['transfer_ke']."\n".
-                "No. Rek : ".$k['no_rekening']."\n\n".
+                'Bank     : '.$k['bank']."\n".
+                'Nama    : '.$k['transfer_ke']."\n".
+                'No. Rek : '.$k['no_rekening']."\n\n".
                 "==========================\n".
                 "Sisa Saldo Kas Besar : \n".
-                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                 "Total Modal Investor : \n".
-                "Rp. ".number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                'Rp. '.number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
                 "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
@@ -665,12 +668,13 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = $db->lastKas($request->direksi_id, $bulanSebelumnya, $tahunSebelumnya);
 
         $sisa = $db->total_kas($request->direksi_id, $bulan, $tahun);
+
         // dd($sisa);
         return view('rekap.kas-bon-direksi', [
             'data' => $data,
@@ -697,10 +701,11 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = InvoiceBonus::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+
         // dd($bulan);
         return view('rekap.rekap-bonus', [
             'data' => $data,
@@ -719,8 +724,8 @@ class RekapController extends Controller
         $periode = $invoiceBonus->periode;
         $sponsor = Sponsor::find($invoiceBonus->sponsor_id);
         $data = $invoiceBonus->load(['transaksi', 'transaksi.kas_uang_jalan',
-                                    'transaksi.kas_uang_jalan.vehicle', 'transaksi.kas_uang_jalan.vendor',
-                                    'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute'])->transaksi;
+            'transaksi.kas_uang_jalan.vehicle', 'transaksi.kas_uang_jalan.vendor',
+            'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute'])->transaksi;
 
         return view('rekap.rekap-bonus-detail', [
             'data' => $data,
@@ -741,10 +746,11 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = InvoiceTagihan::whereMonth('updated_at', $bulanSebelumnya)->whereYear('updated_at', $tahun)->latest()->orderBy('id', 'desc')->first();
+
         // dd($bulan);
         return view('rekap.nota-lunas', [
             'data' => $data,
@@ -763,27 +769,27 @@ class RekapController extends Controller
         $periode = $invoice->periode;
         $customer = Customer::find($invoice->customer_id);
         $data = $invoice->load(['transaksi', 'transaksi.kas_uang_jalan', 'transaksi.kas_uang_jalan.vehicle',
-                                'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute'])->transaksi;
+            'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute'])->transaksi;
 
         return view('rekap.nota-lunas-detail', [
             'data' => $invoice->transaksi,
             'customer' => $customer,
             'invoice' => $invoice,
             'periode' => $periode,
-            'invoice_id' => $invoice->id
+            'invoice_id' => $invoice->id,
         ]);
     }
 
     public function rekap_gaji_detail(Request $request)
     {
         $v = $request->validate([
-                'bulan' => 'required',
-                'tahun' => 'required',
-            ]);
+            'bulan' => 'required',
+            'tahun' => 'required',
+        ]);
 
         $data = RekapGaji::where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->with('rekap_gaji_detail')->first();
 
-        if (!$data) {
+        if (! $data) {
             return redirect()->back()->with('error', 'Data tidak ditemukan!!');
         }
 
@@ -816,9 +822,9 @@ class RekapController extends Controller
         $pdf->setPaper('a4', 'portrait');
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled'      => true,
-            'defaultPaperSize'     => 'a4',
-            'dpi'                  => 72, // Menggunakan DPI standar web agar ukuran cm lebih akurat
+            'isRemoteEnabled' => true,
+            'defaultPaperSize' => 'a4',
+            'dpi' => 72, // Menggunakan DPI standar web agar ukuran cm lebih akurat
         ]);
 
         return $pdf->stream('Slip_'.$detail->nama.'.pdf');
@@ -827,16 +833,16 @@ class RekapController extends Controller
     public function print_rekap_gaji(Request $request)
     {
         $v = $request->validate([
-                'bulan' => 'required',
-                'tahun' => 'required',
-            ]);
+            'bulan' => 'required',
+            'tahun' => 'required',
+        ]);
 
         $data = RekapGaji::where('bulan', $v['bulan'])->where('tahun', $v['tahun'])->first();
 
         $bulan = Carbon::createFromDate($v['tahun'], $v['bulan'])->locale('id')->monthName;
         $tahun = $v['tahun'];
 
-        $pdf = PDF::loadview('rekap.print-rekap-gaji', [
+        $pdf = Pdf::loadview('rekap.print-rekap-gaji', [
             'data' => $data->rekap_gaji_detail,
             'bulan' => $bulan,
             'tahun' => $tahun,
@@ -847,7 +853,7 @@ class RekapController extends Controller
 
     public function kas_per_vendor(Request $request, Vendor $vendor)
     {
-        if($vendor->id != Auth::user()->vendor_id){
+        if ($vendor->id != Auth::user()->vendor_id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
         }
         $bulan = $request->bulan ?? date('m');
@@ -859,8 +865,8 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasVendor::where('vendor_id', $vendor->id)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
 
@@ -895,7 +901,7 @@ class RekapController extends Controller
             'data' => $invoiceBayar->transaksi,
             'vendor' => $vendor,
             'periode' => $periode,
-            'invoice_id' => $invoiceBayar->id
+            'invoice_id' => $invoiceBayar->id,
         ]);
     }
 
@@ -903,7 +909,7 @@ class RekapController extends Controller
     {
         $vendor = Vendor::find($request->vendor);
 
-        if($vendor->id != Auth::user()->vendor_id){
+        if ($vendor->id != Auth::user()->vendor_id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
         }
 
@@ -916,14 +922,14 @@ class RekapController extends Controller
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
         $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
         $dataSebelumnya = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
 
         $sisaTerakhir = $data->last()->sisa ?? 0;
 
-        $pdf = PDF::loadview('rekap.preview-kas-vendor', [
+        $pdf = Pdf::loadview('rekap.preview-kas-vendor', [
             'data' => $data,
             'vendor' => $vendor,
             'dataTahun' => $dataTahun,
@@ -936,7 +942,7 @@ class RekapController extends Controller
             'sisaTerakhir' => $sisaTerakhir,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->stream('Rekap Kas Vendor '.$vendor->nama." ".$stringBulanNow.' '.$tahun.'.pdf');
+        return $pdf->stream('Rekap Kas Vendor '.$vendor->nama.' '.$stringBulanNow.' '.$tahun.'.pdf');
     }
 
     public function rekap_csr()
@@ -953,14 +959,14 @@ class RekapController extends Controller
         $periode = $invoiceCsr->periode;
         $customer = Customer::find($invoiceCsr->customer_id);
         $data = $invoiceCsr->load(['transaksi', 'transaksi.kas_uang_jalan', 'transaksi.kas_uang_jalan.rute',
-                                    'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.vehicle',
-                                    'transaksi.kas_uang_jalan.customer'])->transaksi;
+            'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.vehicle',
+            'transaksi.kas_uang_jalan.customer'])->transaksi;
 
         return view('rekap.csr.detail', [
             'data' => $data,
             'customer' => $customer,
             'periode' => $periode,
-            'invoice_id' => $invoiceCsr->id
+            'invoice_id' => $invoiceCsr->id,
         ]);
     }
 
@@ -973,7 +979,7 @@ class RekapController extends Controller
         $tanggalNow = now();
         $odo = 0;
         $baut = '-';
-        $db = new MaintenanceLog();
+        $db = new MaintenanceLog;
         $tahun = $request->tahun ?? date('Y');
         $dataTahun = $db->dataTahun();
         // dd($dataTahun);
@@ -1015,7 +1021,7 @@ class RekapController extends Controller
             // Set the locale to Indonesian
             Carbon::setLocale('id');
 
-            $week = $startOfWeek->translatedFormat('d M') . ' - ' . $endOfWeek->translatedFormat('d M');
+            $week = $startOfWeek->translatedFormat('d M').' - '.$endOfWeek->translatedFormat('d M');
 
             foreach ($equipment as $eq) {
                 // Filter the maintenance logs in memory
@@ -1029,7 +1035,7 @@ class RekapController extends Controller
                     ->first()
                     ->odometer ?? 0;
 
-                if ($weekly[$week]['odometer'] !=0) {
+                if ($weekly[$week]['odometer'] != 0) {
                     $odo = $weekly[$week]['odometer'];
                 }
 
@@ -1038,10 +1044,10 @@ class RekapController extends Controller
                     ->first()
                     ->filter_strainer ?? '-';
 
-                if (Carbon::parse($tanggalNow)->between($startOfWeek, $endOfWeek)){
+                if (Carbon::parse($tanggalNow)->between($startOfWeek, $endOfWeek)) {
                     $state = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-                            ->sortByDesc('created_at')
-                            ->first() ? 1 : 0;
+                        ->sortByDesc('created_at')
+                        ->first() ? 1 : 0;
                 }
 
                 $weekly[$week]['filter_udara'] = $odoLogs->whereBetween('created_at', [$startOfWeek, $endOfWeek])
@@ -1069,7 +1075,7 @@ class RekapController extends Controller
             ->select('vehicles.*', 'upah_gendongs.nama_driver as driver', 'upah_gendongs.nama_pengurus as pengurus', 'upah_gendongs.tanggal_masuk_driver as tanggal_masuk_driver', 'upah_gendongs.tanggal_masuk_pengurus as tanggal_masuk_pengurus')
             ->first();
 
-            // dd($vehicle);
+        // dd($vehicle);
 
         return view('rekap.maintenance.index', [
             'weekly' => $weekly,
@@ -1094,7 +1100,7 @@ class RekapController extends Controller
 
         $tanggalNow = now();
 
-        $db = new MaintenanceLog();
+        $db = new MaintenanceLog;
         $tahun = $request->tahun ?? date('Y');
         $dataTahun = $db->dataTahun();
         // dd($dataTahun);
@@ -1136,7 +1142,7 @@ class RekapController extends Controller
             // Set the locale to Indonesian
             Carbon::setLocale('id');
 
-            $week = $startOfWeek->translatedFormat('d M') . ' - ' . $endOfWeek->translatedFormat('d M');
+            $week = $startOfWeek->translatedFormat('d M').' - '.$endOfWeek->translatedFormat('d M');
 
             foreach ($equipment as $eq) {
                 // Filter the maintenance logs in memory
@@ -1169,19 +1175,18 @@ class RekapController extends Controller
             $i++;
         }
 
-
         $vehicle = Vehicle::leftJoin('upah_gendongs', 'vehicles.id', '=', 'upah_gendongs.vehicle_id')
             ->where('vehicles.id', $data['vehicle_id'])
             ->select('vehicles.*', 'upah_gendongs.nama_driver as driver', 'upah_gendongs.nama_pengurus as pengurus', 'upah_gendongs.tanggal_masuk_driver as tanggal_masuk_driver', 'upah_gendongs.tanggal_masuk_pengurus as tanggal_masuk_pengurus')
             ->first();
 
-        $pdf = PDF::loadview('rekap.maintenance.print', [
-                    'weekly' => $weekly,
-                    'vehicle' => $vehicle,
-                    'equipment' => $equipment,
-                    'dataTahun' => $dataTahun,
-                    'tahun' => $tahun,
-                ])->setPaper('a4', 'landscape');
+        $pdf = Pdf::loadview('rekap.maintenance.print', [
+            'weekly' => $weekly,
+            'vehicle' => $vehicle,
+            'equipment' => $equipment,
+            'dataTahun' => $dataTahun,
+            'tahun' => $tahun,
+        ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Rekap Maintenance '.$tahun.'.pdf');
     }
@@ -1211,31 +1216,32 @@ class RekapController extends Controller
 
     public function cost_operational(Request $request)
     {
-           // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
-           $bulan = $request->bulan ?? date('m');
-           $tahun = $request->tahun ?? date('Y');
-           $dataTahun = KasBesar::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+        // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
+        $bulan = $request->bulan ?? date('m');
+        $tahun = $request->tahun ?? date('Y');
+        $dataTahun = KasBesar::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-           $data = KasBesar::with('jenis_transaksi')->where('cost_operational', 1)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $data = KasBesar::with('jenis_transaksi')->where('cost_operational', 1)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
 
-           $bulanSebelumnya = $bulan - 1;
-           $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
-           $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-           $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-           $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-           // get latest data from month before current month
+        $bulanSebelumnya = $bulan - 1;
+        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
+        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get latest data from month before current month
         //    $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
-           // dd($bulan);
-           return view('rekap.cost-operational.index', [
-               'data' => $data,
-               'dataTahun' => $dataTahun,
+        // dd($bulan);
+        return view('rekap.cost-operational.index', [
+            'data' => $data,
+            'dataTahun' => $dataTahun,
             //    'dataSebelumnya' => $dataSebelumnya,
-               'stringBulan' => $stringBulan,
-               'tahun' => $tahun,
-               'tahunSebelumnya' => $tahunSebelumnya,
-               'bulan' => $bulan,
-               'stringBulanNow' => $stringBulanNow,
-           ]);
+            'stringBulan' => $stringBulan,
+            'tahun' => $tahun,
+            'tahunSebelumnya' => $tahunSebelumnya,
+            'bulan' => $bulan,
+            'stringBulanNow' => $stringBulanNow,
+        ]);
     }
 
     public function tagihan_invoice()
@@ -1252,32 +1258,33 @@ class RekapController extends Controller
     public function bunga_investor(Request $request)
     {
         $bulan = $request->bulan ?? date('m');
-           $tahun = $request->tahun ?? date('Y');
-           $dataTahun = BungaInvestor::selectRaw('YEAR(created_at) tahun')->groupBy('tahun')->get();
+        $tahun = $request->tahun ?? date('Y');
+        $dataTahun = BungaInvestor::selectRaw('YEAR(created_at) tahun')->groupBy('tahun')->get();
 
-           $data = BungaInvestor::whereMonth('created_at', $bulan)->whereYear('created_at', $tahun)->get();
+        $data = BungaInvestor::whereMonth('created_at', $bulan)->whereYear('created_at', $tahun)->get();
 
-           $bulanSebelumnya = $bulan - 1;
-           $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
-           $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-           $stringBulan = \Carbon\Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-           $stringBulanNow = \Carbon\Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-           // get latest data from month before current month
+        $bulanSebelumnya = $bulan - 1;
+        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
+        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
+        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
+        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
+
+        // get latest data from month before current month
         //    $dataSebelumnya = KasBesar::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahunSebelumnya)->latest()->orderBy('id', 'desc')->first();
-           // dd($bulan);
-           return view('rekap.bunga-investor.index', [
-               'data' => $data,
-               'dataTahun' => $dataTahun,
+        // dd($bulan);
+        return view('rekap.bunga-investor.index', [
+            'data' => $data,
+            'dataTahun' => $dataTahun,
             //    'dataSebelumnya' => $dataSebelumnya,
-               'stringBulan' => $stringBulan,
-               'tahun' => $tahun,
-               'tahunSebelumnya' => $tahunSebelumnya,
-               'bulan' => $bulan,
-               'stringBulanNow' => $stringBulanNow,
-           ]);
+            'stringBulan' => $stringBulan,
+            'tahun' => $tahun,
+            'tahunSebelumnya' => $tahunSebelumnya,
+            'bulan' => $bulan,
+            'stringBulanNow' => $stringBulanNow,
+        ]);
     }
 
-   public function uj_ditahan(Request $request)
+    public function uj_ditahan(Request $request)
     {
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
@@ -1297,7 +1304,7 @@ class RekapController extends Controller
             ->paginate(50);
 
         $listTahun = UjDitahan::select('tahun')->distinct()->pluck('tahun')->toArray();
-        if (!in_array(date('Y'), $listTahun)) {
+        if (! in_array(date('Y'), $listTahun)) {
             $listTahun[] = date('Y');
         }
         sort($listTahun);
@@ -1308,9 +1315,9 @@ class RekapController extends Controller
 
     public function ban_luar(Request $request)
     {
-        $startDate    = $request->input('start_date', date('Y-m-01'));
-        $endDate      = $request->input('end_date', date('Y-m-t'));
-        $pembayaran   = $request->input('pembayaran');
+        $startDate = $request->input('start_date', date('Y-m-01'));
+        $endDate = $request->input('end_date', date('Y-m-t'));
+        $pembayaran = $request->input('pembayaran');
         $statusFilter = $request->input('status');
 
         // Pastikan hanya memuat status Approved dan Rejected (Tidak termasuk Pending)
@@ -1333,13 +1340,13 @@ class RekapController extends Controller
 
         // Hanya hitung nominal kas besar untuk transaksi yang berstatus APPROVED
         $totalKasBesar = $invoices->where('status', BanGantiInvoice::STATUS_APPROVED)
-                                  ->where('pembayaran', BanGantiInvoice::PEMBAYARAN_KAS_BESAR)
-                                  ->sum('total_nominal');
+            ->where('pembayaran', BanGantiInvoice::PEMBAYARAN_KAS_BESAR)
+            ->sum('total_nominal');
 
         // Hanya hitung transaksi dibayar sendiri yang berstatus APPROVED
         $countDibayarSendiri = $invoices->where('status', BanGantiInvoice::STATUS_APPROVED)
-                                        ->where('pembayaran', BanGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)
-                                        ->count();
+            ->where('pembayaran', BanGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)
+            ->count();
 
         $countRejected = $invoices->where('status', BanGantiInvoice::STATUS_REJECTED)->count();
 
@@ -1365,22 +1372,22 @@ class RekapController extends Controller
 
         foreach ($invoice->details as $detail) {
             $queryLog = BanLog::where('vehicle_id', $invoice->vehicle_id)
-                              ->where('posisi_ban_id', $detail->posisi_ban_id);
+                ->where('posisi_ban_id', $detail->posisi_ban_id);
 
             if ($detail->ban_log_id) {
                 // Jika sudah APPROVED, cari BanLog tepat SEBELUM BanLog yang baru dibuat ini
                 $banLama = (clone $queryLog)->where('id', '<', $detail->ban_log_id)
-                                            ->orderBy('id', 'desc')
-                                            ->first();
+                    ->orderBy('id', 'desc')
+                    ->first();
             } else {
                 // Jika PENDING / REJECTED, ambil BanLog terakhir yang saat ini terpasang
                 $banLama = (clone $queryLog)->orderBy('id', 'desc')->first();
             }
 
             // Inject properti temporer ke objek detail
-            $detail->merk_lama    = $banLama->merk ?? '-';
+            $detail->merk_lama = $banLama->merk ?? '-';
             $detail->no_seri_lama = $banLama->no_seri ?? '-';
-            $detail->ritase_lama  = $banLama->ritase ?? 0;
+            $detail->ritase_lama = $banLama->ritase ?? 0;
         }
 
         return view('rekap.maintenance.ban-luar.show', compact('invoice'));
@@ -1392,7 +1399,7 @@ class RekapController extends Controller
     public function update_tanggal_detail_ban(Request $request, $detailId)
     {
         $userRole = Auth::user()->role ?? '';
-        if (!in_array($userRole, ['su', 'admin'])) {
+        if (! in_array($userRole, ['su', 'admin'])) {
             return redirect()->back()->with('error', 'Akses ditolak. Hanya Role SU dan Admin yang dapat mengubah tanggal.');
         }
 
@@ -1409,8 +1416,8 @@ class RekapController extends Controller
         ]);
 
         // Buat format timestamp lengkap dengan jam awal pembuatan
-        $timePart     = date('H:i:s', strtotime($detail->created_at ?? now()));
-        $newTimestamp = $request->tanggal_ganti . ' ' . $timePart;
+        $timePart = date('H:i:s', strtotime($detail->created_at ?? now()));
+        $newTimestamp = $request->tanggal_ganti.' '.$timePart;
 
         try {
             DB::beginTransaction();
@@ -1425,7 +1432,7 @@ class RekapController extends Controller
 
             $totalRitase = 0;
 
-             foreach ($transaksis as $trx) {
+            foreach ($transaksis as $trx) {
                 // Tentukan nilai ritase berdasarkan jarak
                 $jarak = (float) $trx->jarak;
                 $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
@@ -1433,7 +1440,7 @@ class RekapController extends Controller
                 $totalRitase += $nilaiRitase;
             }
 
-              // Update created_at di tabel ban_ganti_invoice_details
+            // Update created_at di tabel ban_ganti_invoice_details
             $detail->update([
                 'created_at' => $newTimestamp,
                 'ritase' => $totalRitase,
@@ -1442,12 +1449,105 @@ class RekapController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui tanggal ganti ban: ' . $th->getMessage());
-        }
 
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui tanggal ganti ban: '.$th->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Tanggal ganti ban berhasil diperbarui.');
     }
 
+    public function aki_detail($id)
+    {
+        $invoice = AkiGantiInvoice::with(['vehicle.vendor', 'details.posisiAki'])->findOrFail($id);
 
+        foreach ($invoice->details as $detail) {
+            $akiLama = $detail->previousAkiLog($invoice->vehicle_id);
+            $detail->tanggal_ganti_lama = $akiLama?->created_at?->format('d-m-Y') ?? '-';
+            $detail->umur_aki_lama = AkiGantiInvoiceDetail::usageDays($akiLama?->created_at, $detail->created_at);
+
+            // Inject variabel temporer
+            $detail->merk_lama = $akiLama->merk ?? '-';
+            $detail->no_seri_lama = $akiLama->no_seri ?? '-';
+            $detail->kondisi_lama = $akiLama->kondisi ?? '-';
+        }
+
+        return view('rekap.maintenance.aki.show', compact('invoice'));
+    }
+
+    public function update_tanggal_detail_aki(Request $request, $detailId)
+    {
+        $userRole = Auth::user()->role ?? '';
+        if (! in_array($userRole, ['su', 'admin'])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Hanya Role SU dan Admin yang dapat mengubah tanggal.');
+        }
+
+        $detail = AkiGantiInvoiceDetail::with('invoice')->findOrFail($detailId);
+
+        if ($detail->invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'Gagal: Tanggal ganti aki hanya dapat diubah pada invoice yang berstatus PENDING.');
+        }
+
+        $request->validate([
+            'tanggal_ganti' => 'required|date',
+        ]);
+
+        $timePart = date('H:i:s', strtotime($detail->created_at ?? now()));
+        $newTimestamp = $request->tanggal_ganti.' '.$timePart;
+
+        $detail->update([
+            'created_at' => $newTimestamp,
+        ]);
+
+        return redirect()->back()->with('success', 'Tanggal ganti aki berhasil diperbarui.');
+    }
+
+    public function aki(Request $request)
+    {
+        $startDate = $request->input('start_date', date('Y-m-01'));
+        $endDate = $request->input('end_date', date('Y-m-t'));
+        $pembayaran = $request->input('pembayaran');
+        $statusFilter = $request->input('status');
+
+        // Pastikan hanya memuat status Approved dan Rejected (Tidak termasuk Pending)
+        $query = AkiGantiInvoice::with(['vehicle.vendor', 'details'])
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->whereIn('status', [AkiGantiInvoice::STATUS_APPROVED, AkiGantiInvoice::STATUS_REJECTED]);
+
+        if ($pembayaran) {
+            $query->where('pembayaran', $pembayaran);
+        }
+
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+
+        $invoices = $query->orderBy('tanggal', 'desc')->orderBy('id', 'desc')->get();
+
+        // Ringkasan Statistik
+        $totalTransaksi = $invoices->count();
+
+        // Hanya hitung nominal kas besar untuk transaksi yang berstatus APPROVED
+        $totalKasBesar = $invoices->where('status', AkiGantiInvoice::STATUS_APPROVED)
+            ->where('pembayaran', AkiGantiInvoice::PEMBAYARAN_KAS_BESAR)
+            ->sum('total_nominal');
+
+        // Hanya hitung transaksi dibayar sendiri yang berstatus APPROVED
+        $countDibayarSendiri = $invoices->where('status', AkiGantiInvoice::STATUS_APPROVED)
+            ->where('pembayaran', AkiGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)
+            ->count();
+
+        $countRejected = $invoices->where('status', AkiGantiInvoice::STATUS_REJECTED)->count();
+
+        return view('rekap.maintenance.aki.index', compact(
+            'invoices',
+            'startDate',
+            'endDate',
+            'pembayaran',
+            'statusFilter',
+            'totalTransaksi',
+            'totalKasBesar',
+            'countDibayarSendiri',
+            'countRejected'
+        ));
+    }
 }

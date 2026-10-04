@@ -1,0 +1,148 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="container px-4 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Otorisasi Penggantian Aki</h3>
+            <p class="text-muted mb-0">Review dan setujui penerbitan invoice penggantian aki yang masih pending.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('billing.index') }}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i> Kembali
+            </a>
+        </div>
+    </div>
+
+    @include('swal')
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center mb-0">
+                    <thead class="table-success">
+                        <tr>
+                            <th>NO</th>
+                            <th>NO. INVOICE</th>
+                            <th>TANGGAL INPUT</th>
+                            <th>NO. LAMBUNG</th>
+                            <th>METODE PEMBAYARAN</th>
+                            <th>TOTAL NOMINAL</th>
+                            <th>JUMLAH AKI</th>
+                            <th>AKSI OTORISASI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($invoices as $index => $item)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td class="fw-bold text-primary">{{ $item->no_invoice }}</td>
+                                <td>{{ date('d-m-Y', strtotime($item->tanggal ?? $item->created_at)) }}</td>
+                                <td><span class="badge bg-dark fs-7">{{ $item->vehicle->nomor_lambung ?? '-' }}</span></td>
+                                <td>
+                                    @if($item->pembayaran === \App\Models\AkiGantiInvoice::PEMBAYARAN_KAS_BESAR)
+                                        <span class="badge bg-primary fs-7">Kas Besar</span>
+                                    @else
+                                        <span class="badge bg-secondary fs-7">Dibayar Sendiri</span>
+                                    @endif
+                                </td>
+                                <td class="fw-bold text-end pe-3">
+                                    Rp {{ number_format($item->total_nominal, 0, ',', '.') }}
+                                </td>
+                                <td><span class="badge bg-info text-dark fs-7">{{ $item->details->count() }} Item</span></td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="{{ route('rekap.maintenance.aki.show', $item->id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa fa-eye"></i> Detail
+                                        </a>
+                                        <form action="{{ route('billing.otorisasi-maintenance.aki.approve', $item->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @if(count($item->aki_age_warning) > 0)
+                                                <template class="aki-age-warning">
+                                                    <p>Aki berikut berumur kurang dari 365 hari saat diganti:</p>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-bordered table-sm align-middle">
+                                                            <thead class="table-light">
+                                                                <tr><th>Posisi</th><th>Merek Aki Lama</th><th>Tanggal Ganti Sebelumnya</th><th>Tanggal Ganti</th><th>Umur</th></tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach($item->aki_age_warning as $warning)
+                                                                    <tr class="table-danger">
+                                                                        <td>{{ $warning['posisi'] }}</td>
+                                                                        <td>{{ $warning['merk'] }}</td>
+                                                                        <td class="text-nowrap">{{ $warning['tanggal_sebelumnya'] }}</td>
+                                                                        <td class="text-nowrap">{{ $warning['tanggal_ganti'] }}</td>
+                                                                        <td class="text-nowrap fw-bold">{{ $warning['umur'] }} hari</td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <p>Tetap setujui penggantian?</p>
+                                                    <p class="small text-muted">Saldo Kas Besar (jika ada) akan dipotong dan Log Aki akan diperbarui secara permanen.</p>
+                                                </template>
+                                            @endif
+                                            <button type="button" class="btn btn-sm btn-success btn-approve">
+                                                <i class="fa fa-check"></i> Approve
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('billing.otorisasi-maintenance.aki.reject', $item->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="button" class="btn btn-sm btn-danger btn-reject">
+                                                <i class="fa fa-times"></i> Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <i class="fa fa-check-circle fa-2x mb-2 d-block text-success"></i>
+                                    Tidak ada antrean invoice penggantian aki yang membutuhkan otorisasi.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('js')
+<script>
+    $(document).ready(function(){
+        $('.btn-approve').click(function() {
+            let form = $(this).closest('form');
+            let warning = form.find('.aki-age-warning').html();
+            Swal.fire({
+                title: warning ? 'Peringatan: Umur Aki Kurang dari 365 Hari' : 'Setujui Invoice?',
+                html: warning || '<p>Saldo Kas Besar (jika ada) akan dipotong dan Log Aki akan diperbarui secara permanen.</p>',
+                width: warning ? '900px' : '32em',
+                icon: warning ? 'warning' : 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                confirmButtonText: 'Ya, Approve!'
+            }).then((result) => {
+                if (result.isConfirmed) form.submit();
+            });
+        });
+
+        $('.btn-reject').click(function() {
+            let form = $(this).closest('form');
+            Swal.fire({
+                title: 'Tolak Invoice?',
+                text: "Invoice ini akan ditandai sebagai ditolak/dibatalkan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'Ya, Tolak'
+            }).then((result) => {
+                if (result.isConfirmed) form.submit();
+            });
+        });
+    });
+</script>
+@endpush
