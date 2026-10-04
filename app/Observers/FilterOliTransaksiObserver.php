@@ -11,13 +11,19 @@ class FilterOliTransaksiObserver
 
     public function created(Transaksi $transaksi): void
     {
-        $this->ritase->refreshForTransaction($transaksi);
+        $this->ritase->recordTransaction($transaksi);
     }
 
     public function updated(Transaksi $transaksi): void
     {
-        if ($transaksi->wasChanged(['void', 'created_at'])) {
+        if ($transaksi->wasChanged('created_at')) {
             $this->ritase->refreshForTransaction($transaksi);
+        } elseif ($transaksi->wasChanged('void')) {
+            if ($transaksi->void) {
+                $this->ritase->rollbackTransaction($transaksi);
+            } else {
+                $this->ritase->recordTransaction($transaksi);
+            }
         }
     }
 }

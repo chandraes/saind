@@ -9,6 +9,7 @@ use App\Models\FilterOliLog;
 use App\Models\KategoriFilterOliMesin;
 use App\Models\Transaksi;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Services\FilterOliRitaseService;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Schema\Blueprint;
@@ -45,6 +46,7 @@ class FilterOliGantiTest extends TestCase
             $table->string('nomor_lambung');
             $table->string('status')->default('aktif');
         });
+        (require database_path('migrations/2026_10_04_145713_add_pembatasan_filter_oli_to_vehicles_table.php'))->up();
         Schema::create('rutes', function (Blueprint $table): void {
             $table->id();
             $table->string('nama');
@@ -247,6 +249,277 @@ class FilterOliGantiTest extends TestCase
         $this->mock(FilterOliRitaseService::class, fn ($mock) => $mock->shouldReceive('refreshVehicle')->once()->andThrow(new \RuntimeException('Calculation failed')));
         $this->patch(route('statistik.filter-oli.histori.update', $log->id), ['tanggal_ganti' => today()->toDateString()])->assertRedirect()->assertSessionHas('error');
         $this->assertDatabaseHas('filter_oli_logs', ['id' => $log->id, 'created_at' => today()->subDays(3)->format('Y-m-d').' 00:00:00']);
+    }
+
+    public function test_uang_jalan_rejects_missing_category_logs_before_creating_any_transaction(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
+        KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Wajib']);
+        $this->from('/kas-uang-jalan/keluar')->post(route('kas-uang-jalan.keluar.store'), $this->uangJalanData($vehicle))
+            ->assertRedirect('/kas-uang-jalan/keluar')->assertSessionHas('error', fn ($message): bool => str_contains($message, 'Filter Wajib: log penggantian belum tersedia'))->assertSessionHasInput('vehicle_id', $vehicle);
+        $this->assertDatabaseCount('kas_uang_jalans', 0);
+        $this->assertDatabaseCount('transaksis', 0);
+        $this->assertDatabaseCount('filter_oli_log_transaksis', 0);
+    }
+
+    public function test_uang_jalan_restriction_uses_current_category_limit_and_latest_log(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
+        $category = KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Batas', 'limit_ritase' => 10]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 0, 'created_at' => today()->subDays(10)]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 10.5, 'limit_ritase' => 99, 'created_at' => today()->subDay()]);
+        $this->post(route('kas-uang-jalan.keluar.store'), $this->uangJalanData($vehicle))->assertSessionHas('error', fn ($message): bool => str_contains($message, 'Filter Batas: ritase 10,5 melebihi limit 10 rit'));
+        $this->assertDatabaseCount('kas_uang_jalans', 0);
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    public function test_missing_logs_are_checked_for_every_category_not_just_any_log(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'created_at' => today()->subDay()]);
+        KategoriFilterOliMesin::factory()->create(['nama' => 'Kategori Belum Lengkap']);
+        $this->post(route('kas-uang-jalan.keluar.store'), $this->uangJalanData($vehicle))->assertSessionHas('error', fn ($message): bool => str_contains($message, 'Kategori Belum Lengkap: log penggantian belum tersedia'));
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    public function test_restricted_vehicle_at_exact_limit_passes_and_transaction_is_recorded_once_per_latest_category(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
+        $category = KategoriFilterOliMesin::factory()->create(['limit_ritase' => 10]);
+        $old = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 100, 'created_at' => today()->subDays(10)]);
+        $latest = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 10, 'created_at' => today()->subDay()]);
+        $second = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'created_at' => today()->subDay()]);
+        $service = app(FilterOliRitaseService::class);
+        $service->assertWithinLimits(Vehicle::findOrFail($vehicle));
+        $transaction = $this->transaction($vehicle, 100, now());
+        $service->recordTransaction($transaction);
+        $service->recordTransaction($transaction);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $old->id, 'ritase' => 100]);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $latest->id, 'ritase' => 11]);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $second->id, 'ritase' => 1]);
+        $this->assertDatabaseCount('filter_oli_log_transaksis', 2);
+    }
+
+    public function test_unrestricted_vehicle_bypasses_log_completeness_and_limits_but_records_ritase(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'ritase' => 100, 'created_at' => today()->subDay()]);
+        KategoriFilterOliMesin::factory()->create(['nama' => 'Log Kosong']);
+        app(FilterOliRitaseService::class)->assertWithinLimits(Vehicle::findOrFail($vehicle));
+        $transaction = $this->transaction($vehicle, 50, now());
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $log->id, 'ritase' => 100.5]);
+        $this->assertDatabaseHas('filter_oli_log_transaksis', ['filter_oli_log_id' => $log->id, 'transaksi_id' => $transaction->id, 'nilai_ritase' => 0.5]);
+    }
+
+    public function test_ritase_and_audit_roll_back_when_parent_transaction_fails(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'created_at' => today()->subDay()]);
+        try {
+            DB::transaction(function () use ($vehicle): void {
+                $this->transaction($vehicle, 100, now());
+                throw new \RuntimeException('Simulated failure');
+            });
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Simulated failure', $exception->getMessage());
+        }
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $log->id, 'ritase' => 0]);
+        $this->assertDatabaseCount('filter_oli_log_transaksis', 0);
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    /** @return array<string, int|string> */
+    private function uangJalanData(int $vehicle): array
+    {
+        return ['vehicle_id' => $vehicle, 'customer_id' => 1, 'rute_id' => 1, 'p_vendor' => 1,
+            'nominal_transaksi' => '100000', 'transfer_ke' => 'Penerima', 'bank' => 'BCA', 'no_rekening' => '123',
+            'nota_muat' => 'NM001', 'tonase' => '30', 'tanggal_muat' => today()->toDateString()];
+    }
+
+    #[TestWith(['admin'])]
+    #[TestWith(['su'])]
+    public function test_admin_and_su_bypass_filter_limits_in_uang_jalan_endpoint(string $role): void
+    {
+        $this->loginAs($role);
+        $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
+        KategoriFilterOliMesin::factory()->create(['nama' => 'Kategori Tanpa Log']);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'ritase' => 100, 'created_at' => today()->subDay()]);
+        Schema::create('konfigurasis', function (Blueprint $table): void {
+            $table->id();
+            $table->string('kode');
+            $table->integer('status');
+        });
+        Schema::create('customer_tagihans', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('customer_id');
+            $table->unsignedBigInteger('rute_id');
+        });
+        $this->post(route('kas-uang-jalan.keluar.store'), $this->uangJalanData($vehicle))->assertRedirect()
+            ->assertSessionHas('error', 'Tagihan untuk Customer dan Rute ini belum diatur di database!');
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    public function test_replacement_warnings_loop_latest_categories_with_one_or_less_rit_remaining(): void
+    {
+        $this->loginAs('admin');
+        $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
+        $one = KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Satu', 'limit_ritase' => 10]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $one->id, 'ritase' => 10, 'created_at' => today()->subDays(3)]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $one->id, 'ritase' => 8, 'limit_ritase' => 100, 'created_at' => today()->subDay()]);
+        foreach ([['Filter Setengah', 8.5], ['Filter Nol', 9], ['Filter Lebih', 10], ['Filter Aman', 7.5]] as [$name, $ritase]) {
+            $category = KategoriFilterOliMesin::factory()->create(['nama' => $name, 'limit_ritase' => 10]);
+            FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => $ritase, 'created_at' => today()->subDay()]);
+        }
+        KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Belum Ada']);
+        $this->transaction($vehicle, 100, now());
+        $this->assertSame("Ganti *Filter Satu\nSisa 1 ritase*\n\nGanti *Filter Setengah\nSisa 0,5 ritase*\n\nGanti *Filter Nol\nSisa 0 ritase*\n\nGanti *Filter Lebih\nSisa 0 ritase*\n\n", app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
+    }
+
+    public function test_replacement_warning_is_empty_when_vehicle_restriction_is_off(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'ritase' => 100, 'created_at' => today()->subDay()]);
+        $this->assertSame('', app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
+    }
+
+    public function test_filter_limit_error_provides_all_problem_rows_and_escapes_category_names_in_swal_table(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
+        $missing = KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Tanpa Data', 'limit_ritase' => 20]);
+        $exceeded = KategoriFilterOliMesin::factory()->create(['nama' => '<img src=x onerror=alert(1)>', 'limit_ritase' => 10]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $exceeded->id, 'ritase' => 10.5, 'created_at' => today()->subDay()]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'ritase' => 0, 'created_at' => today()->subDay()]);
+        $this->post(route('kas-uang-jalan.keluar.store'), $this->uangJalanData($vehicle))->assertRedirect()->assertSessionHas('filter_oli_limit_issues', [
+            ['category' => $missing->nama, 'ritase' => null, 'limit' => 20, 'reason' => 'Belum ada data'],
+            ['category' => $exceeded->nama, 'ritase' => 10.5, 'limit' => 10, 'reason' => 'Melebihi limit'],
+        ]);
+        $this->view('billing.kas-uang-jalan.filter-oli-limit-alert')
+            ->assertSee('table-success')->assertSee('Filter Tanpa Data')->assertSee('Belum ada data')
+            ->assertSee('10,5 rit')->assertSee('20 rit')->assertSee('Melebihi limit')
+            ->assertSee($exceeded->nama)->assertDontSee($exceeded->nama, false);
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    public function test_void_endpoint_subtracts_once_from_original_logs_preserves_latest_replacement_and_updates_invoice(): void
+    {
+        $user = $this->loginAs('admin');
+        $vehicle = $this->vehicle();
+        $this->prepareVoidTables();
+        $category = KategoriFilterOliMesin::factory()->create();
+        $old = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 100, 'created_at' => today()->subDays(10)]);
+        $latest = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'created_at' => today()->subDays(5)]);
+        $second = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'created_at' => today()->subDays(10)]);
+        $invoice = FilterOliGantiInvoice::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicle, 'status' => 'approved']);
+        $detail = FilterOliGantiInvoiceDetail::factory()->create(['filter_oli_ganti_invoice_id' => $invoice->id, 'filter_oli_log_id' => $old->id, 'kategori_filter_oli_mesin_id' => $category->id]);
+        $trip = $this->transaction($vehicle, 100, today()->subDays(7));
+        $this->post(route('transaksi.void.store', $trip->id), ['alasan' => 'Pembatalan'])->assertRedirect(route('billing.index'))->assertSessionHas('success');
+        $this->assertDatabaseHas('transaksis', ['id' => $trip->id, 'void' => 1]);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $old->id, 'ritase' => 100]);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $latest->id, 'ritase' => 0]);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $second->id, 'ritase' => 0]);
+        $this->assertDatabaseHas('filter_oli_ganti_invoice_details', ['id' => $detail->id, 'ritase' => 100]);
+        $this->assertDatabaseMissing('filter_oli_log_transaksis', ['transaksi_id' => $trip->id]);
+        $this->assertDatabaseCount('kas_uang_jalans', 2);
+        $this->post(route('transaksi.void.store', $trip->id), ['alasan' => 'Ulang'])->assertSessionHas('error', 'Transaksi sudah di void sebelumnya!!');
+        $this->assertDatabaseCount('kas_uang_jalans', 2);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $old->id, 'ritase' => 100]);
+    }
+
+    public function test_failed_void_rolls_back_transaction_ritase_and_audit(): void
+    {
+        $this->loginAs('admin');
+        $vehicle = $this->vehicle();
+        $this->prepareVoidTables();
+        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'created_at' => today()->subDay()]);
+        $trip = $this->transaction($vehicle, 50, now());
+        $this->mock(FilterOliRitaseService::class, fn ($mock) => $mock->shouldReceive('rollbackTransaction')->once()->andThrow(new \RuntimeException('Void failed')));
+        $this->post(route('transaksi.void.store', $trip->id), ['alasan' => 'Pembatalan'])->assertRedirect(route('billing.index'))->assertSessionHas('error');
+        $this->assertDatabaseHas('transaksis', ['id' => $trip->id, 'void' => 0]);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $log->id, 'ritase' => 0.5]);
+        $this->assertDatabaseHas('filter_oli_log_transaksis', ['transaksi_id' => $trip->id, 'filter_oli_log_id' => $log->id]);
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+    }
+
+    public function test_void_ritase_never_becomes_negative_and_repeated_rollback_is_safe(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'created_at' => today()->subDay()]);
+        $trip = $this->transaction($vehicle, 50, now());
+        $log->update(['ritase' => 0.2]);
+        $trip->update(['void' => true]);
+        app(FilterOliRitaseService::class)->rollbackTransaction($trip);
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $log->id, 'ritase' => 0]);
+        $this->assertDatabaseMissing('filter_oli_log_transaksis', ['transaksi_id' => $trip->id]);
+    }
+
+    private function prepareVoidTables(): void
+    {
+        Schema::table('kas_uang_jalans', function (Blueprint $table): void {
+            $table->unsignedBigInteger('vehicle_id')->nullable()->change();
+            $table->unsignedBigInteger('rute_id')->nullable()->change();
+            $table->integer('nomor_uang_jalan')->nullable()->change();
+            $table->unsignedBigInteger('vendor_id')->nullable();
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->integer('jenis_transaksi_id')->nullable();
+            $table->boolean('void')->default(false);
+            $table->decimal('saldo', 15, 2)->default(0);
+            $table->decimal('nominal_transaksi', 15, 2)->default(0);
+            foreach (['kode_void', 'tanggal', 'transfer_ke', 'bank', 'no_rekening'] as $column) {
+                $table->string($column)->nullable();
+            }
+            $table->timestamps();
+        });
+        Schema::table('transaksis', function (Blueprint $table): void {
+            foreach (['alasan', 'nota_muat', 'nota_bongkar'] as $column) {
+                $table->string($column)->nullable();
+            }
+            $table->boolean('nota_fisik')->default(false);
+        });
+        Schema::table('vehicles', function (Blueprint $table): void {
+            $table->integer('do_count')->default(0);
+            $table->timestamps();
+        });
+        Schema::create('customers', function (Blueprint $table): void {
+            $table->id();
+            $table->string('singkatan')->nullable();
+        });
+        foreach (['rekenings', 'group_was'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->string('untuk');
+            });
+        }
+        Schema::create('uj_ditahan_details', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('transaksi_id');
+        });
+        Schema::create('ban_logs', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vehicle_id');
+            $table->unsignedBigInteger('posisi_ban_id');
+        });
+        Schema::create('ban_log_transaksis', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('transaksi_id');
+            $table->unsignedBigInteger('ban_log_id');
+            $table->decimal('nilai_ritase', 4, 1);
+        });
     }
 
     private function loginAs(string $role = 'user'): User

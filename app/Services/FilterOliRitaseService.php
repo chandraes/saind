@@ -2,14 +2,18 @@
 
 namespace App\Services;
 
+use App\Exceptions\FilterOliLimitException;
 use App\Models\FilterOliGantiInvoiceDetail;
 use App\Models\FilterOliLog;
 use App\Models\FilterOliLogTransaksi;
+use App\Models\KategoriFilterOliMesin;
 use App\Models\Transaksi;
+use App\Models\User;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class FilterOliRitaseService
 {
@@ -37,6 +41,109 @@ class FilterOliRitaseService
             ->orderBy('created_at')->orderBy('id')->first();
 
         return $this->transactions($vehicleId, $from, $next?->created_at);
+    }
+
+    public function assertWithinLimits(Vehicle $vehicle, ?User $actor = null): void
+    {
+        if (! $vehicle->pembatasan_filter_oli || in_array($actor?->role, ['admin', 'su'], true)) {
+            return;
+        }
+        $categories = KategoriFilterOliMesin::orderBy('id')->get();
+        if ($categories->isEmpty()) {
+            throw ValidationException::withMessages(['vehicle_id' => 'Kategori filter & oli mesin belum diatur. Hubungi admin.']);
+        }
+        $latestLogs = FilterOliLog::where('vehicle_id', $vehicle->id)->where('created_at', '<=', now())
+            ->latest()->orderByDesc('id')->get()->unique('kategori_filter_oli_mesin_id')->keyBy('kategori_filter_oli_mesin_id');
+        $issues = [];
+        $messages = [];
+        foreach ($categories as $category) {
+            $log = $latestLogs->get($category->id);
+            if (! $log) {
+                $messages[] = $category->nama.': log penggantian belum tersedia';
+                $issues[] = ['category' => $category->nama, 'ritase' => null, 'limit' => (int) $category->limit_ritase, 'reason' => 'Belum ada data'];
+            } elseif ((float) $log->ritase > $category->limit_ritase) {
+                $messages[] = $category->nama.': ritase '.number_format((float) $log->ritase, 1, ',', '.').' melebihi limit '.$category->limit_ritase.' rit';
+                $issues[] = ['category' => $category->nama, 'ritase' => (float) $log->ritase, 'limit' => (int) $category->limit_ritase, 'reason' => 'Melebihi limit'];
+            }
+        }
+        if ($issues !== []) {
+            throw new FilterOliLimitException($issues, 'Pengeluaran Uang Jalan ditolak. '.implode('; ', $messages).'. Lakukan penggantian filter & oli mesin terlebih dahulu.');
+        }
+    }
+
+    public function replacementWarnings(Vehicle $vehicle): string
+    {
+        if (! $vehicle->pembatasan_filter_oli) {
+            return '';
+        }
+        $latestLogs = FilterOliLog::where('vehicle_id', $vehicle->id)->where('created_at', '<=', now())
+            ->latest()->orderByDesc('id')->get()->unique('kategori_filter_oli_mesin_id')->keyBy('kategori_filter_oli_mesin_id');
+        $message = '';
+        foreach (KategoriFilterOliMesin::orderBy('id')->get() as $category) {
+            $log = $latestLogs->get($category->id);
+            if (! $log) {
+                continue;
+            }
+            $remaining = $category->limit_ritase - (float) $log->ritase;
+            if ($remaining <= 1) {
+                $remaining = rtrim(rtrim(number_format(max(0, $remaining), 1, ',', ''), '0'), ',');
+                $message .= "Ganti *{$category->nama}\nSisa {$remaining} ritase*\n\n";
+            }
+        }
+
+        return $message;
+    }
+
+    public function recordTransaction(Transaksi $transaction): void
+    {
+        if ($transaction->void || $transaction->created_at->isFuture()) {
+            return;
+        }
+        $vehicleId = DB::table('kas_uang_jalans')->where('id', $transaction->kas_uang_jalan_id)->value('vehicle_id');
+        if (! $vehicleId) {
+            return;
+        }
+        DB::transaction(function () use ($vehicleId, $transaction): void {
+            Vehicle::whereKey($vehicleId)->lockForUpdate()->firstOrFail();
+            $route = DB::table('kas_uang_jalans')->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
+                ->where('kas_uang_jalans.id', $transaction->kas_uang_jalan_id)->select('rutes.jarak')->first();
+            if (! $route) {
+                return;
+            }
+            $logs = FilterOliLog::where('vehicle_id', $vehicleId)->where('created_at', '<=', $transaction->created_at)
+                ->lockForUpdate()->orderByDesc('created_at')->orderByDesc('id')->get()->unique('kategori_filter_oli_mesin_id');
+            $additionalRitase = (float) $route->jarak > 50 ? 1.0 : 0.5;
+            foreach ($logs as $log) {
+                $audit = FilterOliLogTransaksi::firstOrCreate([
+                    'filter_oli_log_id' => $log->id, 'transaksi_id' => $transaction->id,
+                ], ['nilai_ritase' => $additionalRitase]);
+                if ($audit->wasRecentlyCreated) {
+                    $log->increment('ritase', $additionalRitase);
+                    FilterOliGantiInvoiceDetail::where('filter_oli_log_id', $log->id)->update(['ritase' => $log->ritase]);
+                }
+            }
+        });
+    }
+
+    public function rollbackTransaction(Transaksi $transaction): void
+    {
+        if (! $transaction->void) {
+            return;
+        }
+        $vehicleId = DB::table('kas_uang_jalans')->where('id', $transaction->kas_uang_jalan_id)->value('vehicle_id');
+        if (! $vehicleId) {
+            return;
+        }
+        DB::transaction(function () use ($vehicleId, $transaction): void {
+            Vehicle::whereKey($vehicleId)->lockForUpdate()->firstOrFail();
+            $audits = FilterOliLogTransaksi::where('transaksi_id', $transaction->id)->lockForUpdate()->get();
+            foreach ($audits as $audit) {
+                $log = FilterOliLog::whereKey($audit->filter_oli_log_id)->lockForUpdate()->firstOrFail();
+                $log->update(['ritase' => max(0, (float) $log->ritase - (float) $audit->nilai_ritase)]);
+                FilterOliGantiInvoiceDetail::where('filter_oli_log_id', $log->id)->update(['ritase' => $log->ritase]);
+                $audit->delete();
+            }
+        });
     }
 
     public function refreshVehicle(int $vehicleId): void

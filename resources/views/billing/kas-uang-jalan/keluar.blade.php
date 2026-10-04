@@ -11,7 +11,11 @@
         </div>
     </div>
 
-    @include('swal')
+    @if (session('filter_oli_limit_issues'))
+        @include('billing.kas-uang-jalan.filter-oli-limit-alert')
+    @else
+        @include('swal')
+    @endif
 
     <form action="{{route('kas-uang-jalan.keluar.store')}}" method="post" id="masukForm">
         @csrf
