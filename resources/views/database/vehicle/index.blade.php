@@ -45,7 +45,7 @@
                     <h5 class="mb-0 fw-bold"><i class="fa fa-list text-success me-2"></i> Daftar Kendaraan</h5>
                 </div>
                 <div class="card-body p-0">
-                    <p class="small text-muted px-4 pt-3 mb-0">Centang Limit Filter & Oli Mesin untuk menandai kendaraan yang mengikuti pembatasan limit ritase.</p>
+                    {{-- <p class="small text-muted px-4 pt-3 mb-0">Centang Limit Filter & Oli Mesin untuk menandai kendaraan yang mengikuti pembatasan limit ritase.</p> --}}
                     <div class="table-responsive">
                         <table class="table table-striped table-hover align-middle mb-0" id="data-table" >
                             <thead class="table-success text-center">
