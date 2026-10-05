@@ -138,6 +138,12 @@
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script>
     $(document).ready(function() {
+            $('.operasional-maintenance-select').each(function () {
+                $(this).select2({
+                    theme: 'bootstrap-5', placeholder: 'Cari nomor lambung kendaraan',
+                    width: '100%', dropdownParent: $(this).closest('.modal')
+                });
+            });
             $('#vendor_id').select2({
                 placeholder: 'Pilih Vendor',
                 width: '100%',
