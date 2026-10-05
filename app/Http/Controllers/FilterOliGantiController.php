@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
@@ -36,7 +37,7 @@ class FilterOliGantiController extends Controller
 
     public function index(Request $request): View
     {
-        $request->validate(['vehicle_id' => ['nullable', 'exists:vehicles,id']]);
+        $request->validate(['vehicle_id' => ['nullable', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true))]]);
         $cartItems = $this->cart($request)->get();
         $vehicleId = $cartItems->first()?->vehicle_id ?? $request->input('vehicle_id');
         $vehicle = $vehicleId ? Vehicle::with('vendor')->findOrFail($vehicleId) : null;
@@ -44,7 +45,7 @@ class FilterOliGantiController extends Controller
             ->orderByDesc('created_at')->orderByDesc('id')->get()->unique('kategori_filter_oli_mesin_id') : collect();
 
         return view('billing.form-maintenance.filter-oli.index', [
-            'vehicles' => Vehicle::where('status', '!=', 'nonaktif')->orderBy('nomor_lambung')->get(),
+            'vehicles' => Vehicle::where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true)->orderBy('nomor_lambung')->get(),
             'kategori' => KategoriFilterOliMesin::orderBy('id')->get(),
             'vehicle' => $vehicle, 'logs' => $logs, 'cartItems' => $cartItems,
         ]);

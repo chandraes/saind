@@ -312,6 +312,7 @@ class FilterOliGantiTest extends TestCase
     {
         $this->loginAs();
         $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => false]);
         $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'ritase' => 100, 'created_at' => today()->subDay()]);
         KategoriFilterOliMesin::factory()->create(['nama' => 'Log Kosong']);
         app(FilterOliRitaseService::class)->assertWithinLimits(Vehicle::findOrFail($vehicle));
@@ -391,6 +392,7 @@ class FilterOliGantiTest extends TestCase
     {
         $this->loginAs();
         $vehicle = $this->vehicle();
+        DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => false]);
         FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'ritase' => 100, 'created_at' => today()->subDay()]);
         $this->assertSame('', app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
     }
@@ -522,6 +524,30 @@ class FilterOliGantiTest extends TestCase
         });
     }
 
+    public function test_filter_forms_and_statistics_only_offer_flagged_non_inactive_vehicles(): void
+    {
+        $this->loginAs();
+        $eligible = $this->vehicle();
+        DB::table('vehicles')->where('id', $eligible)->update(['status' => 'proses']);
+        $unflagged = $this->vehicle();
+        DB::table('vehicles')->where('id', $unflagged)->update(['pembatasan_filter_oli' => false, 'nomor_lambung' => 'UNFLAGGED']);
+        $inactive = $this->vehicle();
+        DB::table('vehicles')->where('id', $inactive)->update(['status' => 'nonaktif', 'nomor_lambung' => 'INACTIVE']);
+        foreach (['billing.form-maintenance.filter-oli', 'statistik.filter-oli'] as $route) {
+            $this->get(route($route))->assertOk()->assertDontSee('UNFLAGGED')->assertDontSee('INACTIVE')
+                ->assertViewHas('vehicles', fn ($vehicles): bool => $vehicles->count() === 1 && $vehicles->first()->id === $eligible);
+            $this->get(route($route, ['vehicle_id' => $unflagged]))->assertSessionHasErrors('vehicle_id');
+            $this->get(route($route, ['vehicle_id' => $inactive]))->assertSessionHasErrors('vehicle_id');
+        }
+        $category = KategoriFilterOliMesin::factory()->create();
+        $data = ['kategori_filter_oli_mesin_id' => $category->id, 'merk' => 'Merek Uji', 'kondisi' => 100, 'tanggal_ganti' => today()->toDateString()];
+        $this->post(route('billing.form-maintenance.filter-oli.cart.add'), $data + ['vehicle_id' => $unflagged])->assertSessionHasErrors('vehicle_id');
+        $this->post(route('billing.form-maintenance.filter-oli.cart.add'), $data + ['vehicle_id' => $inactive])->assertSessionHasErrors('vehicle_id');
+        $this->assertDatabaseCount('filter_oli_ganti_carts', 0);
+        $this->post(route('billing.form-maintenance.filter-oli.cart.add'), $data + ['vehicle_id' => $eligible])->assertRedirect();
+        $this->assertDatabaseHas('filter_oli_ganti_carts', ['vehicle_id' => $eligible]);
+    }
+
     private function loginAs(string $role = 'user'): User
     {
         $user = User::factory()->create(['role' => $role, 'password' => 'password']);
@@ -534,7 +560,7 @@ class FilterOliGantiTest extends TestCase
     {
         $vendorId = DB::table('vendors')->insertGetId(['nama' => 'Vendor Uji']);
 
-        return DB::table('vehicles')->insertGetId(['vendor_id' => $vendorId, 'nomor_lambung' => '101', 'status' => 'aktif']);
+        return DB::table('vehicles')->insertGetId(['vendor_id' => $vendorId, 'nomor_lambung' => '101', 'status' => 'aktif', 'pembatasan_filter_oli' => true]);
     }
 
     private function cart(User $user, int $vehicleId): FilterOliGantiCart

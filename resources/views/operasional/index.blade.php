@@ -50,7 +50,7 @@
                             <label for="{{ $menu['id'] }}Vehicle" class="form-label fw-semibold">Nomor lambung</label>
                             <select class="form-select operasional-maintenance-select" name="vehicle_id" id="{{ $menu['id'] }}Vehicle" required>
                                 <option value="">Cari nomor lambung kendaraan</option>
-                                @foreach ($vehicle as $unit)<option value="{{ $unit->id }}">{{ $unit->nomor_lambung }}</option>@endforeach
+                                @foreach ($vehicle as $unit)@if ($menu['route'] !== 'statistik.filter-oli' || $unit->pembatasan_filter_oli)<option value="{{ $unit->id }}">{{ $unit->nomor_lambung }}</option>@endif @endforeach
                             </select>
                         </div>
                         <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Lihat statistik</button></div>

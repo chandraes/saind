@@ -57,8 +57,8 @@ class FilterOliReportController extends Controller
 
     public function statistics(Request $request): View
     {
-        $filters = $request->validate(['vehicle_id' => ['nullable', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif'))]]);
-        $vehicles = Vehicle::where('status', '!=', 'nonaktif')->orderBy('nomor_lambung')->get();
+        $filters = $request->validate(['vehicle_id' => ['nullable', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true))]]);
+        $vehicles = Vehicle::where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true)->orderBy('nomor_lambung')->get();
         $vehicle = isset($filters['vehicle_id']) ? $vehicles->firstWhere('id', $filters['vehicle_id']) : null;
         $categories = KategoriFilterOliMesin::orderBy('id')->get();
         $logs = collect();

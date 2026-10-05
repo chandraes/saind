@@ -598,9 +598,9 @@ class TransaksiController extends Controller
                 $dbWa->sendWa($group->nama_group, $pesan);
 
                 if ($cekUjDitahan) {
-                    $pesan2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                                 "*Void UJ Ditahan*\n".
-                                "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                                "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                                 '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n\n".
                                 'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
                                 'Vendor : '.$kuj->vendor->nama."\n\n".
