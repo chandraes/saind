@@ -1,0 +1,9 @@
+.filter-oil-page .category-icon { display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 54px; flex-shrink: 0; border-radius: 16px; background: #e8f1ff; color: #2563eb; font-size: 25px; }
+.filter-oil-page .category-card { border-radius: 18px; overflow: hidden; box-shadow: 0 6px 28px rgba(30, 55, 90, .08); }
+.filter-oil-page .category-count { background: #edf3ff; color: #2453a6; padding: 9px 14px; }
+.filter-oil-page .category-table thead th { font-size: .8rem; letter-spacing: .03em; padding: 15px 24px; border: 0; white-space: nowrap; }
+.filter-oil-page .category-table tbody td { padding: 19px 24px; border-color: #eef1f5; }
+.filter-oil-page .category-table tbody tr:last-child td { border: 0; }
+.filter-oil-page .category-table tbody tr:hover { background: #fafcff; }
+.filter-oil-page .ritase-badge { display: inline-block; padding: 6px 12px; border-radius: 8px; background: #ecf8f2; color: #18744a; font-weight: 600; white-space: nowrap; }
+@media (max-width: 576px) { .filter-oil-page .category-table tbody td, .filter-oil-page .category-table thead th { padding: 14px 12px; } .filter-oil-page h1 { font-size: 1.3rem; } }

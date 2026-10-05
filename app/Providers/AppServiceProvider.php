@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Setting;
+use App\Models\Transaksi;
+use App\Observers\FilterOliTransaksiObserver;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -23,7 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-       if (Schema::hasTable('settings')) {
+        Transaksi::observe(FilterOliTransaksiObserver::class);
+        if (Schema::hasTable('settings')) {
 
             // 1. Ambil dari Cache atau DB
             $settings = Cache::rememberForever('app_settings', function () {
@@ -35,10 +38,10 @@ class AppServiceProvider extends ServiceProvider
             $appPerusahaan = $settings['app_perusahaan'] ?? 'Nama Perusahaan Default';
             $appAlamat = $settings['app_alamat'] ?? 'Alamat Default';
             $appKeuangan = $settings['app_keuangan'] ?? 'Nama Manajer Keuangan Default';
-            $appNavBg      = $settings['app_nav_bg'] ?? '#212529'; // Default warna gelap Bootstrap
+            $appNavBg = $settings['app_nav_bg'] ?? '#212529'; // Default warna gelap Bootstrap
 
-            $logoFilename = !empty($settings['app_logo'])
-                ? 'storage/' . $settings['app_logo']
+            $logoFilename = ! empty($settings['app_logo'])
+                ? 'storage/'.$settings['app_logo']
                 : config('app.default_logo', 'assets/img/logo-default.png');
 
             // Versi URL untuk Web Browser
@@ -49,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
 
             // --- PERBAIKAN DI SINI: Cek file_exists SEBELUM file_get_contents ---
             // file_exists() otomatis mengembalikan false jika symlink rusak/corrupt
-            if (!file_exists($appLogoPath) || is_dir($appLogoPath)) {
+            if (! file_exists($appLogoPath) || is_dir($appLogoPath)) {
                 $appLogoPath = public_path('assets/img/no-image.png'); // Pastikan file fallback ini ada
             }
 
@@ -58,11 +61,11 @@ class AppServiceProvider extends ServiceProvider
             if (file_exists($appLogoPath)) {
                 $type = pathinfo($appLogoPath, PATHINFO_EXTENSION);
                 $data = file_get_contents($appLogoPath);
-                $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                $base64 = 'data:image/'.$type.';base64,'.base64_encode($data);
             }
 
-            $appFavicon = !empty($settings['app_favicon'])
-                ? asset('storage/' . $settings['app_favicon'])
+            $appFavicon = ! empty($settings['app_favicon'])
+                ? asset('storage/'.$settings['app_favicon'])
                 : asset(config('app.default_favicon', 'assets/img/favicon-default.png'));
 
             // 3. Bagikan variabel ke SEMUA view
@@ -74,7 +77,7 @@ class AppServiceProvider extends ServiceProvider
                 'global_app_logo_base64' => $base64,
                 'global_app_favicon' => $appFavicon,
                 'global_app_keuangan' => $appKeuangan,
-                'global_app_nav_bg'     => $appNavBg, // Variable baru untuk navbar
+                'global_app_nav_bg' => $appNavBg, // Variable baru untuk navbar
             ]);
         }
     }

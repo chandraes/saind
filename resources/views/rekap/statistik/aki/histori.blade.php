@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container px-4 py-3">
+<div class="container-fluid px-4 py-4">
     <!-- Header Page -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h3 class="fw-bold mb-1">Riwayat Aki</h3>
-            <p class="text-muted mb-0">Posisi: <strong class="text-primary">{{ $posisi->nama }}</strong> | Unit: <strong class="text-primary">SAI{{ $vehicle->nomor_lambung }}</strong></p>
+            <p class="text-muted mb-0">Posisi: <strong class="text-primary">{{ $posisi->nama }}</strong> | Unit: <strong class="text-primary">{{ $vehicle->nomor_lambung }}</strong></p>
         </div>
         <div>
             <form action="{{ route('statistik.aki') }}" method="get">
@@ -74,17 +74,20 @@
         </div>
     </div>
 
+    <div class="alert alert-light border shadow-sm mb-4"><i class="fa fa-info-circle text-primary me-2"></i>Umur aki dihitung dari tanggal pemasangan sampai penggantian berikutnya. Untuk aki yang masih digunakan, umur dihitung sampai hari ini.</div>
     <!-- Tabel Histori Data -->
     <div class="card border-0 shadow-sm">
-        <div class="card-body p-0">
+        <div class="card-header bg-white p-3"><h5 class="fw-bold mb-1">Riwayat penggantian</h5><p class="text-muted small mb-0">Urutan terbaru ditampilkan terlebih dahulu.</p></div>
+        <div class="card-body p-3">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
-                    <thead class="table-dark">
+                    <thead class="table-success">
                         <tr>
                             <th class="text-center">MEREK</th>
-                            <th class="text-center">NO. SERI AKI</th>
                             <th class="text-center">KONDISI AKI</th>
-                            <th class="text-center">TGL GANTI AKI</th>
+                            <th class="text-center">TANGGAL GANTI</th>
+                            <th class="text-center">UMUR AKI</th>
+                            <th class="text-center">STATUS / AKHIR PEMAKAIAN</th>
                             @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
                             <th class="text-center" style="width: 150px;">ACTION</th>
                             @endif
@@ -130,8 +133,7 @@
         var userRole = "{{ auth()->user()->role }}";
 
         var columns = [
-            { data: 'merk', name: 'merk', class: "text-center text-uppercase" },
-            { data: 'no_seri', name: 'no_seri', class: "text-center fw-semibold text-uppercase" },
+            { data: 'merk', name: 'merk', class: "text-center text-uppercase", render: $.fn.dataTable.render.text() },
             {
                 data: 'kondisi',
                 name: 'kondisi',
@@ -149,13 +151,21 @@
                 render: function (data) {
                     return moment(data).format('DD-MM-YYYY');
                 }
-            }
+            },
+            { data: 'umur_hari', class: 'text-center text-nowrap fw-semibold', orderable: false, searchable: false,
+                render: function (data) { return data + ' hari'; } },
+            { data: 'tanggal_selesai', class: 'text-center text-nowrap', orderable: false, searchable: false,
+                render: function (data) {
+                    return data ? '<span class="text-muted">Diganti ' + moment(data).format('DD-MM-YYYY') + '</span>' : '<span class="badge bg-primary">Masih digunakan</span>';
+                } }
         ];
 
         if (userRole === 'admin' || userRole === 'su') {
             columns.push({
                 data: null,
                 name: 'ACT',
+                orderable: false,
+                searchable: false,
                 class: "text-center",
                 render: function (data, type, row) {
                     return '<div class="btn-group btn-group-sm" role="group">' +
@@ -179,6 +189,8 @@
                 },
                 'type': 'GET',
             },
+            'order': [[2, 'desc']],
+            'language': { search: 'Cari merek:', lengthMenu: 'Tampilkan _MENU_ data', info: '_START_–_END_ dari _TOTAL_ riwayat', infoEmpty: 'Belum ada riwayat', infoFiltered: '(dari _MAX_ riwayat)', zeroRecords: 'Riwayat tidak ditemukan', emptyTable: 'Belum ada riwayat penggantian aki', processing: 'Memuat riwayat...', paginate: { next: 'Berikutnya', previous: 'Sebelumnya' } },
             'columns': columns
         });
     });

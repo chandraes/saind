@@ -14,6 +14,11 @@ class Vehicle extends Model
 
     protected $appends = ['id_tanggal_pajak_stnk', 'id_tanggal_kir', 'id_tanggal_kimper', 'id_tanggal_sim'];
 
+    protected function casts(): array
+    {
+        return ['pembatasan_filter_oli' => 'boolean'];
+    }
+
     public function driver()
     {
         return $this->belongsTo(Driver::class);
@@ -61,7 +66,7 @@ class Vehicle extends Model
 
     public function getIdTanggalKirAttribute()
     {
-        return $this->tanggal_kir != null ? Carbon::parse($this->tanggal_kir)->format('d-m-Y') : 00-00-0000;
+        return $this->tanggal_kir != null ? Carbon::parse($this->tanggal_kir)->format('d-m-Y') : 00 - 00 - 0000;
     }
 
     public function getIdTanggalKimperAttribute()
@@ -73,5 +78,4 @@ class Vehicle extends Model
     {
         return Carbon::parse($this->tanggal_sim)->format('d-m-Y');
     }
-
 }

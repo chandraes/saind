@@ -18,14 +18,14 @@ class KasVendorService
         $nominal = (float) preg_replace('/[^0-9]/', '', $nominalRaw);
 
         if ($nominal <= 0) {
-            throw new Exception("Nominal penambahan hutang harus lebih besar dari 0.");
+            throw new Exception('Nominal penambahan hutang harus lebih besar dari 0.');
         }
 
         // 2. LOCKING (Mencegah Race Condition)
         $kas = KasVendor::where('vendor_id', $data['vendor_id'])
-                        ->orderBy('id', 'desc')
-                        ->lockForUpdate()
-                        ->first();
+            ->orderBy('id', 'desc')
+            ->lockForUpdate()
+            ->first();
 
         // 3. KALKULASI SALDO SEBELUMNYA
         $pinjamanAwal = $data['nominal_transaksi'] ?? 0;
@@ -33,14 +33,15 @@ class KasVendorService
 
         // 4. SUSUN DATA BERSIH
         $insertData = [
-            'vendor_id'         => $data['vendor_id'],
-            'vehicle_id'        => $data['vehicle_id'] ?? null,
-            'tanggal'           => date('Y-m-d'),
+            'filter_oli_ganti_invoice_id' => $data['filter_oli_ganti_invoice_id'] ?? null,
+            'vendor_id' => $data['vendor_id'],
+            'vehicle_id' => $data['vehicle_id'] ?? null,
+            'tanggal' => date('Y-m-d'),
             'ban_ganti_invoice_id' => $data['ban_ganti_invoice_id'] ?? null,
-            'aki_ganti_invoice_id'  => $data['aki_ganti_invoice_id'] ?? null,
-            'uraian'            => $data['uraian'] ?? 'Penambahan hutang vendor',
-            'pinjaman'          => $nominal, // Bertambah
-            'sisa'              => $sisaAwal + $nominal,     // Sisa hutang bertambah
+            'aki_ganti_invoice_id' => $data['aki_ganti_invoice_id'] ?? null,
+            'uraian' => $data['uraian'] ?? 'Penambahan hutang vendor',
+            'pinjaman' => $nominal, // Bertambah
+            'sisa' => $sisaAwal + $nominal,     // Sisa hutang bertambah
         ];
 
         // 5. INSERT DATA

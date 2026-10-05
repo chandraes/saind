@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             RekeningSeeder::class,
             GroupWaSeeder::class,
             KategoriMaintenanceSeeder::class,
+            KategoriFilterOliMesinSeeder::class,
         ]);
     }
 }

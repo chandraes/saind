@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container px-4 py-3">
+<div class="container-fluid px-4 py-4">
     <!-- Header Page -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h3 class="fw-bold mb-1">Statistik Aki</h3>
-            <p class="text-muted mb-0">Kelola dan pantau pemakaian aki unit kendaraan</p>
+            <p class="text-muted mb-0">Pantau kondisi, tanggal pemasangan, dan umur aki pada setiap posisi kendaraan.</p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
@@ -43,7 +43,7 @@
             <div class="row align-items-center text-center text-md-start">
                 <div class="col-md-4 border-end-md mb-2 mb-md-0">
                     <span class="text-muted fs-7 d-block">Nomor Lambung</span>
-                    <span class="fw-bold fs-5 text-primary">SAI{{ $vehicle->nomor_lambung }}</span>
+                    <span class="fw-bold fs-5 text-primary">{{ $vehicle->nomor_lambung }}</span>
                 </div>
                 <div class="col-md-4 border-end-md mb-2 mb-md-0">
                     <span class="text-muted fs-7 d-block">Nama Driver</span>
@@ -57,9 +57,15 @@
         </div>
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><span class="text-muted small">Posisi aki</span><div class="fs-3 fw-bold">{{ $aki->count() }}</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><span class="text-muted small">Posisi terpasang</span><div class="fs-3 fw-bold text-primary">{{ $aki->filter(fn ($item) => $item->akiLog !== null)->count() }}</div></div></div></div>
+        <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><span class="text-muted small">Kondisi ≤ 40%</span><div class="fs-3 fw-bold text-danger">{{ $aki->filter(fn ($item) => $item->akiLog !== null && $item->akiLog['kondisi'] <= 40)->count() }}</div></div></div></div>
+    </div>
     <!-- Tabel Data Aki -->
     <div class="card border-0 shadow-sm">
-        <div class="card-body p-0">
+        <div class="card-header bg-white p-3"><h5 class="fw-bold mb-1">Aki saat ini</h5><p class="text-muted small mb-0">Umur dihitung dari tanggal ganti sampai hari ini. Data tanpa riwayat ditampilkan sebagai tanda pisah.</p></div>
+        <div class="card-body p-3">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" id="rekapTable">
                     <thead class="table-success">
@@ -67,9 +73,10 @@
                             <th class="text-center" style="width: 50px;">NO</th>
                             <th>POSISI AKI</th>
                             <th class="text-center">MEREK</th>
-                            <th class="text-center">NO. SERI AKI</th>
                             <th class="text-center">KONDISI</th>
-                            <th class="text-center">TGL GANTI AKI</th>
+                            <th class="text-center">TANGGAL GANTI</th>
+                            <th class="text-center">UMUR AKI</th>
+                            <th class="text-center">RIWAYAT</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,7 +87,6 @@
                                 <i class="fa fa-car-battery me-1 text-primary"></i>{{ $d->nama }}
                             </td>
                             <td class="text-center text-uppercase">{{ $d->akiLog['merk'] ?? '-' }}</td>
-                            <td class="text-center text-uppercase fw-semibold">{{ $d->akiLog['no_seri'] ?? '-' }}</td>
                             <td class="text-center">
                                 @if (isset($d->akiLog['kondisi']))
                                     @php
@@ -101,6 +107,8 @@
                                 -
                                 @endif
                             </td>
+                            <td class="text-center text-nowrap fw-semibold">{{ isset($d->akiLog['umur_hari']) ? $d->akiLog['umur_hari'].' hari' : '-' }}</td>
+                            <td class="text-center"><a href="{{ route('statistik.aki.histori', ['vehicle' => $vehicle->id, 'posisi' => $d->id]) }}" class="btn btn-sm btn-outline-primary"><i class="fa fa-history me-1"></i> Lihat histori</a></td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -126,7 +134,7 @@
             "paging": false,
             "ordering": false,
             "scrollCollapse": true,
-            "scrollY": "550px",
+            "language": { "search": "Cari posisi / merek:", "zeroRecords": "Data aki tidak ditemukan", "emptyTable": "Belum ada data aki" },
         });
     });
 </script>

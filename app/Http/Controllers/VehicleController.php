@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
+use App\Models\KasUangJalan;
 use App\Models\Vehicle;
 use App\Models\Vendor;
-use App\Models\KasUangJalan;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
@@ -34,9 +35,10 @@ class VehicleController extends Controller
                 // Kondisi: Teks merah dan link modal untuk Nomor Lambung
                 ->editColumn('nomor_lambung', function ($row) {
                     $textClass = ($row->no_index < 30 || $row->tahun < 2016) ? 'text-danger' : '';
+
                     // Nanti kita akan ubah cara panggil modalnya agar dinamis menggunakan class, bukan ID yang di-loop
-                    return '<a href="javascript:void(0)" class="btn-show-vehicle ' . $textClass . '" data-id="' . $row->id . '">
-                                <h5>' . $row->nomor_lambung . '</h5>
+                    return '<a href="javascript:void(0)" class="btn-show-vehicle '.$textClass.'" data-id="'.$row->id.'">
+                                <h5>'.$row->nomor_lambung.'</h5>
                             </a>';
                 })
 
@@ -51,13 +53,15 @@ class VehicleController extends Controller
                 // Kondisi: Teks merah untuk Index < 30
                 ->editColumn('no_index', function ($row) {
                     $textClass = ($row->no_index < 30) ? 'text-danger' : '';
-                    return '<span class="' . $textClass . '">' . $row->no_index . '</span>';
+
+                    return '<span class="'.$textClass.'">'.$row->no_index.'</span>';
                 })
 
                 // Kondisi: Teks merah untuk Tahun < 2016
                 ->editColumn('tahun', function ($row) {
                     $textClass = ($row->tahun < 2016) ? 'text-danger' : '';
-                    return '<span class="' . $textClass . '">' . $row->tahun . '</span>';
+
+                    return '<span class="'.$textClass.'">'.$row->tahun.'</span>';
                 })
 
                 // Kondisi: Ikon GPS
@@ -65,6 +69,7 @@ class VehicleController extends Controller
                     if ($row->gps == 1) {
                         return '<i class="fa fa-check-circle text-success" style="font-size: 25px"></i>';
                     }
+
                     return '';
                 })
 
@@ -77,30 +82,32 @@ class VehicleController extends Controller
                     } elseif ($row->status == 'proses') {
                         return '<h5><span class="badge bg-warning">Sedang Jalan</span></h5>';
                     }
+
                     return '-';
                 })
 
-                 ->addColumn('action', function ($row) {
+                ->editColumn('pembatasan_filter_oli', fn (Vehicle $row): string => view('database.vehicle.filter-oli-checkbox', ['vehicle' => $row])->render())
+                ->addColumn('action', function ($row) {
                     $deleteUrl = route('vehicle.destroy', $row->id);
                     $csrf = csrf_field();
                     $method = method_field('DELETE');
 
                     // Tombol diubah menjadi Info UJ
-                    $btnRekening = '<button type="button" class="btn btn-info m-1 btn-edit-rekening text-white" data-id="' . $row->id . '" title="Edit Rekening / UJ"><i class="fa fa-bank"></i> Info UJ</button>';
-                    $btnEdit = '<button type="button" class="btn btn-warning m-1 btn-edit-vehicle" data-id="' . $row->id . '"><i class="fa fa-edit"></i> Edit</button>';
+                    $btnRekening = '<button type="button" class="btn btn-info m-1 btn-edit-rekening text-white" data-id="'.$row->id.'" title="Edit Rekening / UJ"><i class="fa fa-bank"></i> Info UJ</button>';
+                    $btnEdit = '<button type="button" class="btn btn-warning m-1 btn-edit-vehicle" data-id="'.$row->id.'"><i class="fa fa-edit"></i> Edit</button>';
 
                     $btnDelete = '
-                        <form action="' . $deleteUrl . '" method="post" style="display:inline-block;">
-                            ' . $csrf . '
-                            ' . $method . '
+                        <form action="'.$deleteUrl.'" method="post" style="display:inline-block;">
+                            '.$csrf.'
+                            '.$method.'
                             <button type="submit" class="btn btn-danger m-1" onclick="return confirm(\'Apakah anda yakin ingin menghapus data ini?\')"><i class="fa fa-trash"></i> Hapus</button>
                         </form>
                     ';
 
-                    return '<div class="d-flex justify-content-center">' . $btnRekening . $btnEdit . $btnDelete . '</div>';
+                    return '<div class="d-flex justify-content-center">'.$btnRekening.$btnEdit.$btnDelete.'</div>';
                 })
                 // Beritahu Yajra kolom mana saja yang memuat tag HTML agar tidak di-escape
-                ->rawColumns(['nomor_lambung', 'no_index', 'tahun', 'gps', 'status', 'action'])
+                ->rawColumns(['nomor_lambung', 'no_index', 'tahun', 'gps', 'status', 'pembatasan_filter_oli', 'action'])
                 ->make(true);
         }
 
@@ -114,13 +121,36 @@ class VehicleController extends Controller
         return view('database.vehicle.index', [
             'vendors' => $vendors,
             'no_lambung' => $nomor_lambung,
-            'drivers' => $availableDrivers
+            'drivers' => $availableDrivers,
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
+    public function updateFilterOliRestriction(Request $request, Vehicle $vehicle): JsonResponse
+    {
+        $data = $request->validate(['pembatasan_filter_oli' => ['required', 'boolean']], [
+            'pembatasan_filter_oli.required' => 'Status pembatasan wajib diisi.',
+            'pembatasan_filter_oli.boolean' => 'Status pembatasan harus bernilai aktif atau nonaktif.',
+        ]);
+        try {
+            $vehicle->update([
+                'pembatasan_filter_oli' => (bool) $data['pembatasan_filter_oli'],
+                'updated_by' => $request->user()->id,
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json(['message' => 'Status pembatasan gagal disimpan. Silakan coba kembali.'], 500);
+        }
+
+        return response()->json([
+            'message' => 'Status pembatasan filter & oli mesin berhasil disimpan.',
+            'pembatasan_filter_oli' => $vehicle->pembatasan_filter_oli,
+        ]);
+    }
+
     public function create()
     {
         //
@@ -143,7 +173,7 @@ class VehicleController extends Controller
             'no_kartu_gps' => 'required',
             'status' => 'required',
             'transfer_ke' => 'nullable|required_if:uj_ditahan,0',
-            'bank'        => 'nullable|required_if:uj_ditahan,0',
+            'bank' => 'nullable|required_if:uj_ditahan,0',
             'no_rekening' => 'nullable|required_if:uj_ditahan,0',
             'gps' => 'nullable',
             'tanggal_pajak_stnk' => 'required',
@@ -151,8 +181,8 @@ class VehicleController extends Controller
             'tanggal_kimper' => 'required',
             'tanggal_sim' => 'required',
             'lock_uj' => 'required|boolean',
-            'uj_ditahan'  => 'required|boolean',
-            'driver_id'   => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id',
+            'uj_ditahan' => 'required|boolean',
+            'driver_id' => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id',
         ]);
 
         if ($data['uj_ditahan'] == 1) {
@@ -174,10 +204,9 @@ class VehicleController extends Controller
 
         if (array_key_exists('gps', $data)) {
             $data['gps'] = 1;
-        }   else {
+        } else {
             $data['gps'] = 0;
         }
-
 
         if ($data['nomor_lambung'] === 1) {
             $data['nomor_lambung'] = 101;
@@ -194,12 +223,12 @@ class VehicleController extends Controller
     {
         // Ambil vendor aktif ATAU vendor yang sedang dipakai oleh vehicle ini
         $vendors = Vendor::where('status', 'aktif')
-                         ->orWhere('id', $vehicle->vendor_id)
-                         ->get();
+            ->orWhere('id', $vehicle->vendor_id)
+            ->get();
 
         return view('database.vehicle.show', [
             'd' => $vehicle,
-            'vendors' => $vendors
+            'vendors' => $vendors,
         ]);
     }
 
@@ -207,20 +236,20 @@ class VehicleController extends Controller
     {
         // Ambil vendor aktif ATAU vendor yang sedang dipakai oleh vehicle ini
         $vendors = Vendor::where('status', 'aktif')
-                         ->orWhere('id', $vehicle->vendor_id)
-                         ->get();
+            ->orWhere('id', $vehicle->vendor_id)
+            ->get();
 
         // Ambil ID Driver yang terpakai OLEH KENDARAAN LAIN (selain kendaraan yang sedang di-edit ini)
         $assignedDriverIds = Vehicle::whereNotNull('driver_id')
-                                    ->where('id', '!=', $vehicle->id)
-                                    ->pluck('driver_id')->toArray();
+            ->where('id', '!=', $vehicle->id)
+            ->pluck('driver_id')->toArray();
 
         $availableDrivers = Driver::whereNotIn('id', $assignedDriverIds)->get();
 
         return view('database.vehicle.edit', [
             'd' => $vehicle,
             'vendors' => $vendors,
-            'drivers' => $availableDrivers // Lempar ke view
+            'drivers' => $availableDrivers, // Lempar ke view
         ]);
     }
 
@@ -245,17 +274,17 @@ class VehicleController extends Controller
             'no_kartu_gps' => 'required',
             'status' => 'required',
             'transfer_ke' => 'nullable|required_if:uj_ditahan,0',
-            'bank'        => 'nullable|required_if:uj_ditahan,0',
+            'bank' => 'nullable|required_if:uj_ditahan,0',
             'no_rekening' => 'nullable|required_if:uj_ditahan,0',
-            'support_operational'=> 'nullable',
+            'support_operational' => 'nullable',
             'gps' => 'nullable',
             'tanggal_pajak_stnk' => 'required',
             'tanggal_kir' => 'required',
             'tanggal_kimper' => 'required',
             'tanggal_sim' => 'required',
             'lock_uj' => 'required|boolean',
-            'uj_ditahan'  => 'required|boolean',
-            'driver_id'   => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id,' . $vehicle->id,
+            'uj_ditahan' => 'required|boolean',
+            'driver_id' => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id,'.$vehicle->id,
         ]);
 
         // Bersihkan data sesuai kondisi
@@ -279,7 +308,7 @@ class VehicleController extends Controller
         if (array_key_exists('gps', $data)) {
             $data['gps'] = 1;
 
-        }   else {
+        } else {
             $data['gps'] = 0;
         }
 
@@ -288,16 +317,14 @@ class VehicleController extends Controller
         $data['tanggal_kimper'] = date('Y-m-d', strtotime($data['tanggal_kimper']));
         $data['tanggal_sim'] = date('Y-m-d', strtotime($data['tanggal_sim']));
 
-
         $data['updated_by'] = Auth::user()->id;
         // update data vehicle and if database error, return to previous page with error message
         try {
             $vehicle->update($data);
         } catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'Terdapat nopol, no rangka, atau no mesin yang sama. '. $th->getMessage());
+            return redirect()->back()->with('error', 'Terdapat nopol, no rangka, atau no mesin yang sama. '.$th->getMessage());
         }
         // $vehicle->update($data);
-
 
         return redirect()->route('vehicle.index')->with('success', 'Data berhasil diubah');
     }
@@ -316,7 +343,7 @@ class VehicleController extends Controller
     {
         $data = Vehicle::all();
 
-        $pdf = PDF::loadview('database.vehicle.preview-vehicle', [
+        $pdf = Pdf::loadview('database.vehicle.preview-vehicle', [
             'data' => $data,
         ])->setPaper('a4', 'landscape');
 
@@ -327,13 +354,13 @@ class VehicleController extends Controller
     {
         // Logika sama seperti edit
         $assignedDriverIds = Vehicle::whereNotNull('driver_id')
-                                    ->where('id', '!=', $vehicle->id)
-                                    ->pluck('driver_id')->toArray();
+            ->where('id', '!=', $vehicle->id)
+            ->pluck('driver_id')->toArray();
         $availableDrivers = Driver::whereNotIn('id', $assignedDriverIds)->get();
 
         return view('database.vehicle.edit-rekening', [
             'd' => $vehicle,
-            'drivers' => $availableDrivers
+            'drivers' => $availableDrivers,
         ]);
     }
 
@@ -344,10 +371,10 @@ class VehicleController extends Controller
     {
         // Validasi input
         $data = $request->validate([
-            'uj_ditahan'  => 'required|boolean',
-            'driver_id'   => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id,' . $vehicle->id,
+            'uj_ditahan' => 'required|boolean',
+            'driver_id' => 'nullable|required_if:uj_ditahan,1|unique:vehicles,driver_id,'.$vehicle->id,
             'transfer_ke' => 'nullable|required_if:uj_ditahan,0|string',
-            'bank'        => 'nullable|required_if:uj_ditahan,0|string',
+            'bank' => 'nullable|required_if:uj_ditahan,0|string',
             'no_rekening' => 'nullable|required_if:uj_ditahan,0|string',
         ]);
 
@@ -365,7 +392,7 @@ class VehicleController extends Controller
         try {
             $vehicle->update($data);
         } catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data rekening. ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data rekening. '.$th->getMessage());
         }
 
         return redirect()->route('vehicle.index')->with('success', 'Data Rekening berhasil diperbarui!');

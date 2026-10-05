@@ -13,6 +13,7 @@ use App\Models\BanLog;
 use App\Models\CostOperational;
 use App\Models\Customer;
 use App\Models\db\Kreditor;
+use App\Models\FilterOliGantiInvoice;
 use App\Models\GroupWa;
 use App\Models\InvoiceAdditional;
 use App\Models\InvoiceAddVendor;
@@ -61,7 +62,9 @@ class BillingController extends Controller
         $bonus = InvoiceBonus::where('lunas', 0)->count();
         $invoice_csr = InvoiceCsr::where('lunas', 0)->count();
         $countOA = AkiGantiInvoice::where('status', AkiGantiInvoice::STATUS_PENDING)->count();
-        $countOB = BanGantiInvoice::where('status', BanGantiInvoice::STATUS_PENDING)->count() + $countOA;
+        $countBanPending = BanGantiInvoice::where('status', BanGantiInvoice::STATUS_PENDING)->count();
+        $countFilterOliPending = FilterOliGantiInvoice::where('status', FilterOliGantiInvoice::STATUS_PENDING)->count();
+        $countOB = $countBanPending + $countOA + $countFilterOliPending;
 
         // $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
         //         ->leftJoin('vehicles as v', 'kuj.vehicle_id', 'v.id')
@@ -107,6 +110,9 @@ class BillingController extends Controller
                 'bonus' => $bonus,
                 // 'csr' => $csr,
                 'countOB' => $countOB,
+                'countBanPending' => $countBanPending,
+                'countAkiPending' => $countOA,
+                'countFilterOliPending' => $countFilterOliPending,
                 'invoice_csr' => $invoice_csr,
             ]);
     }

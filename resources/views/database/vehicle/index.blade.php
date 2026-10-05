@@ -45,6 +45,7 @@
                     <h5 class="mb-0 fw-bold"><i class="fa fa-list text-success me-2"></i> Daftar Kendaraan</h5>
                 </div>
                 <div class="card-body p-0">
+                    {{-- <p class="small text-muted px-4 pt-3 mb-0">Centang Limit Filter & Oli Mesin untuk menandai kendaraan yang mengikuti pembatasan limit ritase.</p> --}}
                     <div class="table-responsive">
                         <table class="table table-striped table-hover align-middle mb-0" id="data-table" >
                             <thead class="table-success text-center">
@@ -61,6 +62,7 @@
                                     <th>INDEX</th>
                                     <th>TAHUN</th>
                                     <th>GPS</th>
+                                    <th class="text-wrap">Limit Filter & Oli Mesin</th>
                                     <th>STATUS</th>
                                     <th>AKSI</th>
                                 </tr>
@@ -83,6 +85,11 @@
 <link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
 
 <style>
+    .vehicle-filter-oli-restriction {
+        width: 1.5rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
     /* Kostumisasi UI Tabel */
     #data-table thead th {
         font-size: 0.85rem;
@@ -114,6 +121,7 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/scroller/2.2.0/js/dataTables.scroller.min.js"></script>
 <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
+<script src="{{ asset('assets/js/vehicle-filter-oli-restriction.js') }}" defer></script>
 
 <script>
     setTimeout(function() {
@@ -144,6 +152,7 @@
                 { data: 'no_index', name: 'no_index', className: 'text-center align-middle fw-bold' },
                 { data: 'tahun', name: 'tahun', className: 'text-center align-middle fw-bold' },
                 { data: 'gps', name: 'gps', className: 'text-center align-middle' },
+                { data: 'pembatasan_filter_oli', name: 'pembatasan_filter_oli', className: 'text-center align-middle', orderable: false, searchable: false },
                 { data: 'status', name: 'status', className: 'text-center align-middle' },
                 { data: 'action', name: 'action', className: 'text-center align-middle', orderable: false, searchable: false }
             ]

@@ -3,37 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\BanLog;
-use App\Models\Transaksi;
 use App\Models\Customer;
-use App\Models\Vendor;
-use App\Models\KasUangJalan;
-use App\Models\InvoiceTagihan;
-use App\Models\InvoiceTagihanDetail;
+use App\Models\GroupWa;
+use App\Models\InvoiceAdditional;
+use App\Models\InvoiceAdditionalDetail;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBayarDetail;
 use App\Models\InvoiceBonus;
 use App\Models\InvoiceBonusDetail;
 use App\Models\InvoiceCsr;
 use App\Models\InvoiceCsrDetail;
-use App\Models\Sponsor;
-use App\Models\GroupWa;
-use App\Models\InvoiceAdditional;
-use App\Models\InvoiceAdditionalDetail;
+use App\Models\InvoiceTagihan;
+use App\Models\InvoiceTagihanDetail;
+use App\Models\KasUangJalan;
 use App\Models\KeranjangNotaBayar;
 use App\Models\Konfigurasi;
 use App\Models\Pajak\PphPerusahaan;
 use App\Models\Pajak\PphSimpan;
 use App\Models\Pajak\PpnKeluaran;
 use App\Models\Pajak\PpnMasukan;
-use App\Services\StarSender;
-use App\Models\Rekening;
 use App\Models\PasswordKonfirmasi;
+use App\Models\Rekening;
+use App\Models\Sponsor;
+use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
-use Illuminate\Http\Request;
+use App\Models\Vendor;
+use App\Services\FilterOliRitaseService;
+use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\UrlGenerator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -43,9 +46,9 @@ class TransaksiController extends Controller
     public function index()
     {
         $data = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                            ->leftJoin('vehicles as v', 'kuj.vehicle_id', 'v.id')
-                            ->select('transaksis.*', 'kuj.customer_id as customer_id', 'v.vendor_id as vendor_id')
-                            ->where('transaksis.void', 0)->get();
+            ->leftJoin('vehicles as v', 'kuj.vehicle_id', 'v.id')
+            ->select('transaksis.*', 'kuj.customer_id as customer_id', 'v.vendor_id as vendor_id')
+            ->where('transaksis.void', 0)->get();
 
         $customer = Customer::all();
 
@@ -55,26 +58,26 @@ class TransaksiController extends Controller
         $invoice_csr = InvoiceCsr::where('lunas', 0)->count();
 
         $vendor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                                    ->where('status', 3)
-                                    ->where('transaksis.bayar', 0)
-                                    ->where('transaksis.void', 0)
-                                    ->get()->unique('vendor_id');
+            ->where('status', 3)
+            ->where('transaksis.bayar', 0)
+            ->where('transaksis.void', 0)
+            ->get()->unique('vendor_id');
 
         $sponsor = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                                    ->join('vendors as v', 'kuj.vendor_id', 'v.id')
-                                    ->join('sponsors as s', 'v.sponsor_id', 's.id')
-                                    ->where('transaksis.bonus', 0)
-                                    ->where('transaksis.status', 3)
-                                    ->where('transaksis.void', 0)
-                                    ->get()->unique('sponsor_id');
+            ->join('vendors as v', 'kuj.vendor_id', 'v.id')
+            ->join('sponsors as s', 'v.sponsor_id', 's.id')
+            ->where('transaksis.bonus', 0)
+            ->where('transaksis.status', 3)
+            ->where('transaksis.void', 0)
+            ->get()->unique('sponsor_id');
 
         $csr = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                                    ->join('customers as c', 'kuj.customer_id', 'c.id')
-                                    ->where('transaksis.csr', 0)
-                                    ->where('transaksis.status', 3)
-                                    ->where('transaksis.void', 0)
-                                    ->where('c.csr', 1)
-                                    ->get()->unique('customer_id');
+            ->join('customers as c', 'kuj.customer_id', 'c.id')
+            ->where('transaksis.csr', 0)
+            ->where('transaksis.status', 3)
+            ->where('transaksis.void', 0)
+            ->where('c.csr', 1)
+            ->get()->unique('customer_id');
 
         // dd($bayar);
         return view('billing.transaksi.index', [
@@ -94,6 +97,7 @@ class TransaksiController extends Controller
     {
         $data = Transaksi::with(['kas_uang_jalan', 'kas_uang_jalan.vendor', 'kas_uang_jalan.rute', 'kas_uang_jalan.customer', 'kas_uang_jalan.vehicle'])->where('status', 1)->where('void', 0)->get();
         $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
+
         return view('billing.transaksi.nota-muat.index', [
             'data' => $data,
             'konfigurasi' => $konfigurasi,
@@ -192,16 +196,16 @@ class TransaksiController extends Controller
             return redirect()->back()->with('error', 'Tanggal bongkar tidak boleh lebih kecil dari tanggal muat!!');
         }
 
-        $penalty=0;
+        $penalty = 0;
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
             $penalty = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
 
-        } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
+        } elseif ($transaksi->kas_uang_jalan->customer->tagihan_dari == 2) {
             $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
+            $data['nominal_bayar'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
             $penalty = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
 
         }
@@ -220,8 +224,7 @@ class TransaksiController extends Controller
 
         $data['nominal_csr'] = 0;
 
-        if($transaksi->kas_uang_jalan->customer->csr == 1)
-        {
+        if ($transaksi->kas_uang_jalan->customer->csr == 1) {
             $data['nominal_csr'] = $data['timbangan_bongkar'] * $transaksi->harga_csr;
         }
 
@@ -253,7 +256,6 @@ class TransaksiController extends Controller
             return redirect()->back()->with('error', $message);
         }
 
-
         return redirect()->back()->with('success', 'Berhasil menyimpan data!!');
     }
 
@@ -269,7 +271,7 @@ class TransaksiController extends Controller
         $filter_date = $req['filter_date'] ?? null;
         $tanggal_filter = $req['tanggal_filter'] ?? null;
 
-        /** @var \Illuminate\Routing\UrlGenerator */
+        /** @var UrlGenerator */
         $url = url();
 
         // Store current URL in session
@@ -308,7 +310,7 @@ class TransaksiController extends Controller
 
         $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
+        if (! $password) {
             return response()->json(['message' => 'Password not found'], 404);
         }
 
@@ -321,7 +323,6 @@ class TransaksiController extends Controller
         $db->changeStateNotaFisik($transaksi->id);
 
         return response()->json(['message' => 'Berhasil menyimpan data!!'], 200);
-
 
     }
 
@@ -342,17 +343,16 @@ class TransaksiController extends Controller
         // get latest data from month before current month
         // dd($bulan);
         if (Auth::user()->role == 'admin') {
-            $pdf = PDF::loadview('billing.transaksi.tagihan.export-admin', [
+            $pdf = Pdf::loadview('billing.transaksi.tagihan.export-admin', [
                 'data' => $data,
                 'customer' => $customer,
             ])->setPaper('a4', 'landscape');
-        } else{
-            $pdf = PDF::loadview('billing.transaksi.tagihan.export', [
+        } else {
+            $pdf = Pdf::loadview('billing.transaksi.tagihan.export', [
                 'data' => $data,
                 'customer' => $customer,
             ])->setPaper('a4', 'landscape');
         }
-
 
         return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
     }
@@ -365,7 +365,7 @@ class TransaksiController extends Controller
 
         $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
+        if (! $password) {
             return redirect()->back()->with('error', 'Password belum diatur!!');
         }
 
@@ -395,7 +395,7 @@ class TransaksiController extends Controller
 
         $store = KasUangJalan::create([
             'void' => 1,
-            'kode_void' => "UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan),
+            'kode_void' => 'UJ'.sprintf('%02d', $transaksi->kas_uang_jalan->nomor_uang_jalan),
             'jenis_transaksi_id' => 1,
             'nominal_transaksi' => $transaksi->kas_uang_jalan->nominal_transaksi,
             'tanggal' => date('Y-m-d'),
@@ -407,7 +407,7 @@ class TransaksiController extends Controller
 
         $vehicle = Vehicle::find($transaksi->kas_uang_jalan->vehicle_id);
 
-        if($transaksi->nota_fisik == 0) {
+        if ($transaksi->nota_fisik == 0) {
             if ($vehicle->do_count > 0) {
                 $vehicle->update([
                     'do_count' => $vehicle->do_count - 1,
@@ -417,32 +417,30 @@ class TransaksiController extends Controller
 
         $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
 
-        $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+        $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                     "*Void Uang Jalan*\n".
                     "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    "*UJ".sprintf("%02d",$transaksi->kas_uang_jalan->nomor_uang_jalan)."*\n\n".
-                    "Nomor Lambung : ".$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
-                    "Vendor : ".$transaksi->kas_uang_jalan->vendor->nama."\n\n".
-                    "Tambang : ".$transaksi->kas_uang_jalan->customer->singkatan."\n".
-                    "Rute : ".$transaksi->kas_uang_jalan->rute->nama."\n\n".
-                    "Alasan : ".$data['alasan']."\n".
-                    "Nilai :  *Rp. ".number_format($transaksi->kas_uang_jalan->nominal_transaksi, 0, ',', '.').",-*\n\n".
+                    '*UJ'.sprintf('%02d', $transaksi->kas_uang_jalan->nomor_uang_jalan)."*\n\n".
+                    'Nomor Lambung : '.$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
+                    'Vendor : '.$transaksi->kas_uang_jalan->vendor->nama."\n\n".
+                    'Tambang : '.$transaksi->kas_uang_jalan->customer->singkatan."\n".
+                    'Rute : '.$transaksi->kas_uang_jalan->rute->nama."\n\n".
+                    'Alasan : '.$data['alasan']."\n".
+                    'Nilai :  *Rp. '.number_format($transaksi->kas_uang_jalan->nominal_transaksi, 0, ',', '.').",-*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    "Bank     : ".$rek->nama_bank."\n".
-                    "Nama    : ".$rek->nama_rekening."\n".
-                    "No. Rek : ".$rek->nomor_rekening."\n\n".
+                    'Bank     : '.$rek->nama_bank."\n".
+                    'Nama    : '.$rek->nama_rekening."\n".
+                    'No. Rek : '.$rek->nomor_rekening."\n\n".
                     "==========================\n".
                     "Sisa Saldo Kas Uang Jalan : \n".
-                    "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                    'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                     "Terima kasih 🙏🙏🙏\n";
 
         $send = new StarSender($group->nama_group, $pesan);
         $res = $send->sendGroup();
 
-
         return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
     }
-
 
     public function void(Request $request, Transaksi $transaksi)
     {
@@ -452,7 +450,7 @@ class TransaksiController extends Controller
 
         $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
+        if (! $password) {
             return redirect()->back()->with('error', 'Password belum diatur!!');
         }
 
@@ -465,7 +463,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function void_store(Request $request, Transaksi $transaksi)
+    public function void_store(Request $request, Transaksi $transaksi, FilterOliRitaseService $filterOliRitase): RedirectResponse
     {
         // 1. Ubah request->validate menjadi Validator::make manual
         $validator = Validator::make($request->all(), [
@@ -475,9 +473,9 @@ class TransaksiController extends Controller
         if ($validator->fails()) {
             // Ganti 'billing.index' dengan nama route GET tempat halaman form Anda berada
             return redirect()->route('billing.index')
-                            ->withErrors($validator)
-                            ->withInput()
-                            ->with('error', 'Alasan harus diisi!');
+                ->withErrors($validator)
+                ->withInput()
+                ->with('error', 'Alasan harus diisi!');
         }
 
         $data = $validator->validated();
@@ -489,13 +487,20 @@ class TransaksiController extends Controller
         $kuj = $transaksi->kas_uang_jalan;
         $vehicle = $kuj->vehicle;
 
-        if($transaksi->void == 1) {
+        if ($transaksi->void == 1) {
             // 2. Ganti redirect()->back() menjadi redirect spesifik ke route GET
             return redirect()->route('billing.index')->with('error', 'Transaksi sudah di void sebelumnya!!');
         }
 
         try {
             DB::beginTransaction();
+            Vehicle::whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
+            $transaksi = Transaksi::whereKey($transaksi->id)->lockForUpdate()->firstOrFail();
+            if ($transaksi->void == 1) {
+                DB::rollBack();
+
+                return redirect()->route('billing.index')->with('error', 'Transaksi sudah di void sebelumnya!!');
+            }
 
             $transaksi->update($data);
 
@@ -504,7 +509,7 @@ class TransaksiController extends Controller
 
             $store = KasUangJalan::create([
                 'void' => 1,
-                'kode_void' => "UJ" . sprintf("%02d", $kuj->nomor_uang_jalan),
+                'kode_void' => 'UJ'.sprintf('%02d', $kuj->nomor_uang_jalan),
                 'jenis_transaksi_id' => 1,
                 'nominal_transaksi' => $kuj->nominal_transaksi,
                 'tanggal' => date('Y-m-d'),
@@ -515,14 +520,15 @@ class TransaksiController extends Controller
             ]);
 
             $this->rollbackRitaseBan($kuj->vehicle_id, $kuj->rute, $transaksi->id);
+            $filterOliRitase->rollbackTransaction($transaksi);
 
             $cekMobil = Transaksi::join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')
-                                ->where('kuj.vehicle_id', $kuj->vehicle_id)
-                                ->where('transaksis.status', '<', 3)
-                                ->where('transaksis.void', 0)
-                                ->exists();
+                ->where('kuj.vehicle_id', $kuj->vehicle_id)
+                ->where('transaksis.status', '<', 3)
+                ->where('transaksis.void', 0)
+                ->exists();
 
-            if (!$cekMobil) {
+            if (! $cekMobil) {
                 $vehicle->update(['status' => 'aktif']);
             }
 
@@ -541,7 +547,7 @@ class TransaksiController extends Controller
                     'transaksi_id' => $transaksi->id,
                     'driver_id' => $vehicle->driver_id,
                     'nominal' => $cekUjDitahan->nominal,
-                    'keterangan' => 'Void UJ' . sprintf("%02d", $kuj->nomor_uang_jalan) . " - " . $data['alasan'],
+                    'keterangan' => 'Void UJ'.sprintf('%02d', $kuj->nomor_uang_jalan).' - '.$data['alasan'],
                 ]);
 
                 $ujDitahan->decrement('saldo', $cekUjDitahan->nominal);
@@ -551,15 +557,16 @@ class TransaksiController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
+
             // 3. Ganti redirect()->back() di catch block
-            return redirect()->route('billing.index')->with('error', 'Terdapat Error pada saat menyimpan data!!' . $th->getMessage());
+            return redirect()->route('billing.index')->with('error', 'Terdapat Error pada saat menyimpan data!!'.$th->getMessage());
         }
 
         // ==========================================
         // PENGIRIMAN WA
         // ==========================================
         try {
-            $dbWa = new GroupWa();
+            $dbWa = new GroupWa;
             $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
             $nominalUjDitahan = 0;
@@ -569,45 +576,45 @@ class TransaksiController extends Controller
             }
 
             if ($group) {
-                $pesan =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                             "*Void Uang Jalan*\n".
                             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                            "*UJ".sprintf("%02d", $kuj->nomor_uang_jalan)."*\n\n".
-                            "Nomor Lambung : ".$vehicle->nomor_lambung."\n".
-                            "Vendor : ".$kuj->vendor->nama."\n\n".
-                            "Tambang : ".$kuj->customer->singkatan."\n".
-                            "Rute : ".$kuj->rute->nama."\n\n".
-                            "Alasan : ".$data['alasan']."\n".
-                            "Nilai :  *Rp. ".number_format($kuj->nominal_transaksi-$nominalUjDitahan, 0, ',', '.').",-*\n\n".
+                            '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n\n".
+                            'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
+                            'Vendor : '.$kuj->vendor->nama."\n\n".
+                            'Tambang : '.$kuj->customer->singkatan."\n".
+                            'Rute : '.$kuj->rute->nama."\n\n".
+                            'Alasan : '.$data['alasan']."\n".
+                            'Nilai :  *Rp. '.number_format($kuj->nominal_transaksi - $nominalUjDitahan, 0, ',', '.').",-*\n\n".
                             "Ditransfer ke rek:\n\n".
-                            "Bank     : ".($rek->nama_bank ?? '-')."\n".
-                            "Nama    : ".($rek->nama_rekening ?? '-')."\n".
-                            "No. Rek : ".($rek->nomor_rekening ?? '-')."\n\n".
+                            'Bank     : '.($rek->nama_bank ?? '-')."\n".
+                            'Nama    : '.($rek->nama_rekening ?? '-')."\n".
+                            'No. Rek : '.($rek->nomor_rekening ?? '-')."\n\n".
                             "==========================\n".
                             "Sisa Saldo Kas Uang Jalan : \n".
-                            "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                            'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
                 $dbWa->sendWa($group->nama_group, $pesan);
 
                 if ($cekUjDitahan) {
-                    $pesan2 =    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
+                    $pesan2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
                                 "*Void UJ Ditahan*\n".
                                 "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                                "*UJ".sprintf("%02d", $kuj->nomor_uang_jalan)."*\n\n".
-                                "Nomor Lambung : ".$vehicle->nomor_lambung."\n".
-                                "Vendor : ".$kuj->vendor->nama."\n\n".
-                                "Tambang : ".$kuj->customer->singkatan."\n".
-                                "Rute : ".$kuj->rute->nama."\n\n".
-                                "Alasan : ".$data['alasan']."\n".
-                                "Nilai :  *Rp. ".number_format($nominalUjDitahan, 0, ',', '.').",-*\n\n".
+                                '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n\n".
+                                'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
+                                'Vendor : '.$kuj->vendor->nama."\n\n".
+                                'Tambang : '.$kuj->customer->singkatan."\n".
+                                'Rute : '.$kuj->rute->nama."\n\n".
+                                'Alasan : '.$data['alasan']."\n".
+                                'Nilai :  *Rp. '.number_format($nominalUjDitahan, 0, ',', '.').",-*\n\n".
                                 "Ditransfer ke rek:\n\n".
-                                "Bank     : ".($rek->nama_bank ?? '-')."\n".
-                                "Nama    : ".($rek->nama_rekening ?? '-')."\n".
-                                "No. Rek : ".($rek->nomor_rekening ?? '-')."\n\n".
+                                'Bank     : '.($rek->nama_bank ?? '-')."\n".
+                                'Nama    : '.($rek->nama_rekening ?? '-')."\n".
+                                'No. Rek : '.($rek->nomor_rekening ?? '-')."\n\n".
                                 "==========================\n".
                                 "Sisa Saldo Kas Uang Jalan : \n".
-                                "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
+                                'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                                 "Terima kasih 🙏🙏🙏\n";
 
                     $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
@@ -625,11 +632,11 @@ class TransaksiController extends Controller
     }
 
     /**
-    * Rollback ritase ban luar kendaraan berdasarkan transaksi
-    */
+     * Rollback ritase ban luar kendaraan berdasarkan transaksi
+     */
     private function rollbackRitaseBan($vehicleId, $rute, $transaksiId)
     {
-        if (!$transaksiId) {
+        if (! $transaksiId) {
             return;
         }
 
@@ -641,7 +648,7 @@ class TransaksiController extends Controller
             // Kurangi ritase tepat pada ban yang dulu terpasang saat transaksi ini dibuat
             foreach ($pivotRecords as $record) {
                 BanLog::where('id', $record->ban_log_id)->update([
-                    'ritase' => DB::raw("GREATEST(0, ritase - {$record->nilai_ritase})")
+                    'ritase' => DB::raw("GREATEST(0, ritase - {$record->nilai_ritase})"),
                 ]);
             }
 
@@ -650,7 +657,7 @@ class TransaksiController extends Controller
 
         } else {
             // SKENARIO B: TRANSAKSI LAMA (Belum tercatat di Pivot / Fallback)
-            if (!$rute || !$vehicleId) {
+            if (! $rute || ! $vehicleId) {
                 return;
             }
 
@@ -666,7 +673,7 @@ class TransaksiController extends Controller
             // Kurangi ritase dengan proteksi GREATEST agar nilai tidak minus (< 0)
             if ($activeBanLogIds->isNotEmpty()) {
                 BanLog::whereIn('id', $activeBanLogIds)->update([
-                    'ritase' => DB::raw("GREATEST(0, ritase - {$penguranganRitase})")
+                    'ritase' => DB::raw("GREATEST(0, ritase - {$penguranganRitase})"),
                 ]);
             }
         }
@@ -680,7 +687,7 @@ class TransaksiController extends Controller
 
         $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
+        if (! $password) {
             return redirect()->back()->with('error', 'Password belum diatur!!');
         }
 
@@ -708,7 +715,7 @@ class TransaksiController extends Controller
 
         $password = PasswordKonfirmasi::first();
 
-        if (!$password) {
+        if (! $password) {
             return redirect()->back()->with('error', 'Password belum diatur!!');
         }
 
@@ -741,15 +748,15 @@ class TransaksiController extends Controller
 
         $data['tanggal_bongkar'] = date('Y-m-d', strtotime($data['tanggal_bongkar']));
 
-        $penalty=0;
+        $penalty = 0;
 
         if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
             $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
             $data['nominal_bayar'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
             $penalty = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
-        } elseif($transaksi->kas_uang_jalan->customer->tagihan_dari == 2){
+        } elseif ($transaksi->kas_uang_jalan->customer->tagihan_dari == 2) {
             $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
-            $data['nominal_bayar'] = $data['timbangan_bongkar']  * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
+            $data['nominal_bayar'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
             $penalty = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
         }
 
@@ -768,14 +775,13 @@ class TransaksiController extends Controller
 
         $data['nominal_csr'] = 0;
 
-        if($transaksi->kas_uang_jalan->customer->csr == 1)
-        {
+        if ($transaksi->kas_uang_jalan->customer->csr == 1) {
             $data['nominal_csr'] = $data['timbangan_bongkar'] * $transaksi->harga_csr;
         }
 
         $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
 
-        $data['profit'] = ($data['nominal_tagihan'] *0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'] - $penalty;
+        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'] - $penalty;
 
         try {
             $transaksi->update($data);
@@ -823,33 +829,41 @@ class TransaksiController extends Controller
 
             // 6. Evaluasi kondisi customer SEKALI di luar loop (Lebih efisien)
             $activeJenis = [];
-            if ($customer->is_kompensasi_jr) $activeJenis[] = 'kompensasi_jr';
-            if ($customer->is_penyesuaian_bbm) $activeJenis[] = 'penyesuaian_bbm';
-            if ($customer->is_achievement) $activeJenis[] = 'achievement';
+            if ($customer->is_kompensasi_jr) {
+                $activeJenis[] = 'kompensasi_jr';
+            }
+            if ($customer->is_penyesuaian_bbm) {
+                $activeJenis[] = 'penyesuaian_bbm';
+            }
+            if ($customer->is_achievement) {
+                $activeJenis[] = 'achievement';
+            }
 
             // 7. Bentuk array untuk insert jika ada jenis yang aktif
-            if (!empty($activeJenis)) {
-                foreach($selectedData as $d) {
+            if (! empty($activeJenis)) {
+                foreach ($selectedData as $d) {
                     $kasUangJalan = $d->kas_uang_jalan;
 
                     // Proteksi jika relasi kosong agar tidak error "Trying to get property of non-object"
-                    if (!$kasUangJalan || !$kasUangJalan->rute) continue;
+                    if (! $kasUangJalan || ! $kasUangJalan->rute) {
+                        continue;
+                    }
 
                     foreach ($activeJenis as $jenis) {
                         $dataAdd[] = [ // Perhatikan penggunaan [] untuk append data
-                            'customer_id'   => $customer->id,
+                            'customer_id' => $customer->id,
                             'transaksi_id' => $d->id,
-                            'jenis'        => $jenis,
-                            'vendor_id'    => $kasUangJalan->vendor_id,
-                            'rute_id'      => $kasUangJalan->rute_id,
-                            'jarak'        => $kasUangJalan->rute->jarak,
+                            'jenis' => $jenis,
+                            'vendor_id' => $kasUangJalan->vendor_id,
+                            'rute_id' => $kasUangJalan->rute_id,
+                            'jarak' => $kasUangJalan->rute->jarak,
                         ];
                     }
                 }
             }
 
             // 8. Eksekusi Upsert jika ada data
-            if (!empty($dataAdd)) {
+            if (! empty($dataAdd)) {
                 TransaksiAdditional::upsert(
                     $dataAdd,
                     ['transaksi_id', 'jenis'], // Array kolom kombinasi yg bersifat Unique di DB
@@ -866,7 +880,7 @@ class TransaksiController extends Controller
             DB::rollBack();
 
             // Kembalikan error agar mudah di-debug jika terjadi masalah
-            return back()->with('error', 'Terjadi kesalahan saat memproses data: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memproses data: '.$e->getMessage());
         }
     }
 
@@ -882,7 +896,7 @@ class TransaksiController extends Controller
         $filter_date = $req['filter_date'] ?? null;
         $tanggal_filter = $req['tanggal_filter'] ?? null;
 
-        /** @var \Illuminate\Routing\UrlGenerator */
+        /** @var UrlGenerator */
         $url = url();
 
         // Store current URL in session
@@ -900,9 +914,9 @@ class TransaksiController extends Controller
 
         // Susun array additionals dari koleksi yang sudah di-keyBy
         $additionals = [
-            'kompensasi_jr'   => $additionalsData->get('kompensasi_jr'),
+            'kompensasi_jr' => $additionalsData->get('kompensasi_jr'),
             'penyesuaian_bbm' => $additionalsData->get('penyesuaian_bbm'),
-            'achievement'     => $additionalsData->get('achievement'),
+            'achievement' => $additionalsData->get('achievement'),
         ];
 
         // dd($additionals);
@@ -955,9 +969,9 @@ class TransaksiController extends Controller
             ->keyBy('jenis');
 
         $additionals = [
-            'kompensasi_jr'   => $additionalsData->get('kompensasi_jr'),
+            'kompensasi_jr' => $additionalsData->get('kompensasi_jr'),
             'penyesuaian_bbm' => $additionalsData->get('penyesuaian_bbm'),
-            'achievement'     => $additionalsData->get('achievement'),
+            'achievement' => $additionalsData->get('achievement'),
         ];
 
         // Kalkulasi Total
@@ -1001,7 +1015,7 @@ class TransaksiController extends Controller
 
             // Pindah perhitungan no_invoice ke dalam try agar aman dari Race Condition
             $data['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->lockForUpdate()->max('no_invoice') + 1;
-            $data['periode'] = "Periode " . $data['no_invoice'];
+            $data['periode'] = 'Periode '.$data['no_invoice'];
 
             // 1. Buat Invoice
             $invoice = InvoiceTagihan::create($data);
@@ -1011,7 +1025,7 @@ class TransaksiController extends Controller
             $jenisAdditionals = ['kompensasi_jr', 'penyesuaian_bbm', 'achievement'];
 
             foreach ($jenisAdditionals as $jenis) {
-                if (!empty($additionals[$jenis])) {
+                if (! empty($additionals[$jenis])) {
                     // Kumpulkan semua ID transaksi_additional dari relasi details
                     $ids = $additionals[$jenis]->details->pluck('transaksi_additional_id')->toArray();
                     $allTransaksiAdditionalIds = array_merge($allTransaksiAdditionalIds, $ids);
@@ -1022,7 +1036,7 @@ class TransaksiController extends Controller
             }
 
             // Lakukan 1x Update saja untuk semua status TransaksiAdditional
-            if (!empty($allTransaksiAdditionalIds)) {
+            if (! empty($allTransaksiAdditionalIds)) {
                 TransaksiAdditional::whereIn('id', $allTransaksiAdditionalIds)->update(['status' => 3]);
             }
 
@@ -1030,7 +1044,7 @@ class TransaksiController extends Controller
             if ($ppn > 0) {
                 PpnKeluaran::create([
                     'invoice_tagihan_id' => $invoice->id,
-                    'uraian' => 'PPN ' . $invoice->periode,
+                    'uraian' => 'PPN '.$invoice->periode,
                     'nominal' => $ppn,
                     'dipungut' => $dipungut,
                 ]);
@@ -1039,15 +1053,15 @@ class TransaksiController extends Controller
             if ($pph > 0) {
                 PphPerusahaan::create([
                     'invoice_tagihan_id' => $invoice->id,
-                    'uraian' => 'PPh ' . $invoice->periode,
-                    'nominal' => $pph
+                    'uraian' => 'PPh '.$invoice->periode,
+                    'nominal' => $pph,
                 ]);
             }
 
             // 4. OPTIMASI: Bulk Update & Bulk Insert untuk Detail Tagihan
             $tagihanIds = $tagihan->pluck('id')->toArray();
 
-            if (!empty($tagihanIds)) {
+            if (! empty($tagihanIds)) {
                 // Bulk Update Transaksi (1 Query saja)
                 Transaksi::whereIn('id', $tagihanIds)->update([
                     'tagihan' => 1,
@@ -1060,9 +1074,9 @@ class TransaksiController extends Controller
                 foreach ($tagihanIds as $id) {
                     $detailData[] = [
                         'invoice_tagihan_id' => $invoice->id,
-                        'transaksi_id'       => $id,
-                        'created_at'         => $now,
-                        'updated_at'         => $now,
+                        'transaksi_id' => $id,
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ];
                 }
 
@@ -1071,13 +1085,15 @@ class TransaksiController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
 
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)
-                            ->withInput()
-                            ->with('error', 'Terdapat kesalahan!! ' . $th->getMessage());
+                ->withInput()
+                ->with('error', 'Terdapat kesalahan!! '.$th->getMessage());
         }
     }
 
@@ -1098,22 +1114,21 @@ class TransaksiController extends Controller
         // get latest data from month before current month
         // dd($bulan);
         if (Auth::user()->role == 'admin') {
-            $pdf = PDF::loadview('billing.transaksi.tagihan.export-admin', [
+            $pdf = Pdf::loadview('billing.transaksi.tagihan.export-admin', [
                 'data' => $data,
                 'customer' => $customer,
             ])->setPaper('a4', 'landscape');
-        } else{
-            $pdf = PDF::loadview('billing.transaksi.tagihan.export', [
+        } else {
+            $pdf = Pdf::loadview('billing.transaksi.tagihan.export', [
                 'data' => $data,
                 'customer' => $customer,
             ])->setPaper('a4', 'landscape');
         }
 
-
         return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
     }
 
-   public function keranjang_tagihan_delete(Customer $customer, Transaksi $transaksi)
+    public function keranjang_tagihan_delete(Customer $customer, Transaksi $transaksi)
     {
         DB::beginTransaction();
 
@@ -1132,7 +1147,7 @@ class TransaksiController extends Controller
                 foreach ($check as $c) {
                     $transactionIds = InvoiceAdditionalDetail::where('invoice_additional_id', $c->invoice_additional_id)->get()->pluck('transaksi_id')->toArray();
 
-                    if (count($transactionIds) > 0){
+                    if (count($transactionIds) > 0) {
                         TransaksiAdditional::whereIn('transaksi_id', $transactionIds)->update(
                             [
                                 'status' => 0,
@@ -1155,7 +1170,7 @@ class TransaksiController extends Controller
             DB::rollBack();
 
             // Mengembalikan pesan error jika terjadi kegagalan sistem
-            return back()->with('error', 'Terjadi kesalahan saat menghapus data: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menghapus data: '.$e->getMessage());
         }
     }
 
@@ -1185,7 +1200,7 @@ class TransaksiController extends Controller
             ->exists();
 
         if ($hasPendingCart) {
-            return redirect()->back()->with('error', 'Terdapat data keranjang pada '. $stringJenis.'. Silahkan hapus keranjang tersebut terlebih dahulu!!');
+            return redirect()->back()->with('error', 'Terdapat data keranjang pada '.$stringJenis.'. Silahkan hapus keranjang tersebut terlebih dahulu!!');
         }
 
         // Load relasi detail
@@ -1197,11 +1212,11 @@ class TransaksiController extends Controller
             DB::beginTransaction();
 
             $invoiceAdditional->update([
-                'status' => 0
+                'status' => 0,
             ]);
 
             // OPTIMASI 3: Hanya jalankan query update jika array $dataIds tidak kosong
-            if (!empty($dataIds)) {
+            if (! empty($dataIds)) {
                 TransaksiAdditional::whereIn('id', $dataIds)->update([
                     'status' => 1,
                 ]);
@@ -1210,10 +1225,11 @@ class TransaksiController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memproses data: ' . $th->getMessage());
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat memproses data: '.$th->getMessage());
         }
 
-        return redirect()->route('transaksi.nota-tagihan.keranjang', ['customer' => $customer])->with('success', 'Berhasil mengembalikan data '. $stringJenis .' ke keranjang!!');
+        return redirect()->route('transaksi.nota-tagihan.keranjang', ['customer' => $customer])->with('success', 'Berhasil mengembalikan data '.$stringJenis.' ke keranjang!!');
     }
 
     public function invoice_tagihan_detail_export(InvoiceTagihan $invoice, Customer $customer)
@@ -1222,7 +1238,7 @@ class TransaksiController extends Controller
 
         // get latest data from month before current month
         // dd($bulan);
-        $pdf = PDF::loadview('billing.transaksi.tagihan.export-detail', [
+        $pdf = Pdf::loadview('billing.transaksi.tagihan.export-detail', [
             'data' => $data,
             'invoice' => $invoice,
             'invoice_id' => $invoice->id,
@@ -1235,7 +1251,7 @@ class TransaksiController extends Controller
     public function nota_bayar(Vendor $vendor)
     {
         if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
-            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
+            return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
         }
 
         $cartTransaksiIds = KeranjangNotaBayar::where('user_id', Auth::id())
@@ -1251,7 +1267,7 @@ class TransaksiController extends Controller
             ->where('transaksis.void', 0)
             ->where('transaksis.bayar', 0)
             ->where('kuj.vendor_id', $vendor->id)
-            ->when(!empty($cartTransaksiIds), function ($query) use ($cartTransaksiIds) {
+            ->when(! empty($cartTransaksiIds), function ($query) use ($cartTransaksiIds) {
                 return $query->whereNotIn('transaksis.id', $cartTransaksiIds);
             })
             ->get();
@@ -1267,7 +1283,7 @@ class TransaksiController extends Controller
     public function nota_bayar_keranjang(Vendor $vendor)
     {
         if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
-            return redirect()->back()->with('error', "Anda tidak punya wewenang untuk melihat vendor ini!!");
+            return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
         }
 
         $cartTransaksiIds = KeranjangNotaBayar::where('user_id', Auth::id())
@@ -1317,7 +1333,7 @@ class TransaksiController extends Controller
             ]);
         }
 
-        return redirect()->route('transaksi.nota-bayar', $vendor)->with('success', count($request->transaksi_ids) . ' transaksi berhasil dimasukkan ke keranjang.');
+        return redirect()->route('transaksi.nota-bayar', $vendor)->with('success', count($request->transaksi_ids).' transaksi berhasil dimasukkan ke keranjang.');
     }
 
     // 4. Masukkan SEMUA transaksi ke keranjang
@@ -1417,13 +1433,13 @@ class TransaksiController extends Controller
                 'sisa_bayar' => $request->total_bayar,
                 'bayar' => 0,
                 'lunas' => 0,
-                'periode' => "Periode " . (InvoiceBayar::where('vendor_id', $vendor->id)->max('no_invoice') + 1),
+                'periode' => 'Periode '.(InvoiceBayar::where('vendor_id', $vendor->id)->max('no_invoice') + 1),
             ]);
 
             if ($request->ppn > 0) {
                 PpnMasukan::create([
                     'invoice_bayar_id' => $invoice->id,
-                    'uraian' => $vendor->nickname . ' PPN ' . $invoice->periode,
+                    'uraian' => $vendor->nickname.' PPN '.$invoice->periode,
                     'nominal' => $request->ppn,
                 ]);
             }
@@ -1431,7 +1447,7 @@ class TransaksiController extends Controller
             if ($request->pph > 0) {
                 PphSimpan::create([
                     'invoice_bayar_id' => $invoice->id,
-                    'uraian' => $vendor->nickname . ' PPh ' . $invoice->periode,
+                    'uraian' => $vendor->nickname.' PPh '.$invoice->periode,
                     'nominal' => $request->pph,
                 ]);
             }
@@ -1453,6 +1469,7 @@ class TransaksiController extends Controller
 
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data!!');
         }
 
@@ -1477,7 +1494,7 @@ class TransaksiController extends Controller
             'sponsor' => $sponsor,
             'bulan' => $bulan,
             'dataTahun' => $dataTahun,
-            'tahun' => $tahun
+            'tahun' => $tahun,
         ]);
     }
 
@@ -1503,7 +1520,7 @@ class TransaksiController extends Controller
         $data['total_bayar'] = 0;
         $data['sisa_bonus'] = $data['total_bonus'];
         $data['lunas'] = 0;
-        $data['periode'] = "Periode ".$data['no_invoice'];
+        $data['periode'] = 'Periode '.$data['no_invoice'];
 
         DB::beginTransaction();
 
@@ -1545,7 +1562,7 @@ class TransaksiController extends Controller
             'customer' => Customer::find($customerId),
             'bulan' => $bulan,
             'dataTahun' => $dataTahun,
-            'tahun' => $tahun
+            'tahun' => $tahun,
         ]);
 
     }
@@ -1560,27 +1577,26 @@ class TransaksiController extends Controller
         ]);
 
         $csr = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-                            ->where('kuj.customer_id', $data['customer_id'])
-                            ->whereMonth('transaksis.tanggal_bongkar', $data['bulan'])
-                            ->whereYear('transaksis.tanggal_bongkar', $data['tahun'])
-                            ->where('transaksis.status', 3)
-                            ->where('transaksis.void', 0)
-                            ->where('csr', 0)
-                            ->where('nominal_csr', '>', 0)
-                            ->select('transaksis.id')
-                            ->get();
+            ->where('kuj.customer_id', $data['customer_id'])
+            ->whereMonth('transaksis.tanggal_bongkar', $data['bulan'])
+            ->whereYear('transaksis.tanggal_bongkar', $data['tahun'])
+            ->where('transaksis.status', 3)
+            ->where('transaksis.void', 0)
+            ->where('csr', 0)
+            ->where('nominal_csr', '>', 0)
+            ->select('transaksis.id')
+            ->get();
 
         $d['tanggal'] = date('Y-m-d');
         $d['no_invoice'] = InvoiceCsr::where('customer_id', $data['customer_id'])->max('no_invoice') + 1;
         $d['customer_id'] = $data['customer_id'];
         $d['total_csr'] = $data['total_csr'];
-        $d['periode'] = "Periode ".$d['no_invoice'];
+        $d['periode'] = 'Periode '.$d['no_invoice'];
         $d['lunas'] = 0;
 
         $invoice = InvoiceCsr::create($d);
 
-        foreach($csr as $c)
-        {
+        foreach ($csr as $c) {
             $c->update([
                 'csr' => 1,
             ]);
@@ -1594,10 +1610,5 @@ class TransaksiController extends Controller
         return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
     }
 
-    public function sales_order(Request $request)
-    {
-
-    }
-
-
+    public function sales_order(Request $request) {}
 }
