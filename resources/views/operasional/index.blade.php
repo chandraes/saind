@@ -35,6 +35,30 @@
             </div>
         </div>
     </div>
+    @foreach ([['id' => 'operasionalAki', 'title' => 'AKI', 'icon' => 'aki.svg', 'route' => 'statistik.aki'], ['id' => 'operasionalFilterOli', 'title' => 'FILTER & OLI MESIN', 'icon' => 'filter-oli-mesin.svg', 'route' => 'statistik.filter-oli']] as $menu)
+        <div class="col-md-3 text-center mb-5">
+            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#{{ $menu['id'] }}">
+                <img src="{{ asset('images/'.$menu['icon']) }}" alt="" width="80">
+                <h5 class="mt-3">{{ $menu['title'] }}</h5>
+            </a>
+            <div class="modal fade" id="{{ $menu['id'] }}" tabindex="-1" aria-labelledby="{{ $menu['id'] }}Title" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4 shadow">
+                    <div class="modal-header"><h2 class="modal-title fs-5 fw-bold" id="{{ $menu['id'] }}Title">Statistik {{ $menu['title'] }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+                    <form action="{{ route($menu['route']) }}" method="get">
+                        <div class="modal-body text-start">
+                            <p class="small text-muted">Pilih kendaraan untuk melihat kondisi dan histori penggantian.</p>
+                            <label for="{{ $menu['id'] }}Vehicle" class="form-label fw-semibold">Nomor lambung</label>
+                            <select class="form-select operasional-maintenance-select" name="vehicle_id" id="{{ $menu['id'] }}Vehicle" required>
+                                <option value="">Cari nomor lambung kendaraan</option>
+                                @foreach ($vehicle as $unit)<option value="{{ $unit->id }}">{{ $unit->nomor_lambung }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Lihat statistik</button></div>
+                    </form>
+                </div></div>
+            </div>
+        </div>
+    @endforeach
     <div class="col-md-3 text-center mb-5">
         <a href="{{route('statistik.perform-unit')}}" class="text-decoration-none">
             <img src="{{asset('images/perform-unit.svg')}}" alt="" width="80">
