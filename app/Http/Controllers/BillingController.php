@@ -978,13 +978,16 @@ class BillingController extends Controller
                         });
                 })->sum('saldo');
 
-            // Jika jumlah saldo tertahan dari bulan sebelumnya > nominal yang ingin dicairkan
-            if ($sumSaldoSebelumnya > $nominalCair) {
+            if ($sumSaldoSebelumnya > 0) {
+                DB::rollBack();
+
                 return redirect()->back()->with('error', 'Silahkan gunakan Saldo UJ Ditahan pada bulan sebelumnya terlebih dahulu.');
             }
 
             // Validasi: Nominal tidak boleh melebihi saldo
             if ($nominalCair > $master->saldo) {
+                DB::rollBack();
+
                 return redirect()->back()->with('error', 'Nominal pencairan melebihi sisa saldo bulan ini!');
             }
 
