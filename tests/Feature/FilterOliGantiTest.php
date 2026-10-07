@@ -90,6 +90,7 @@ class FilterOliGantiTest extends TestCase
             '2026_10_04_103102_create_filter_oli_ganti_invoice_details_table.php',
             '2026_10_04_103103_add_filter_oli_ganti_invoice_id_to_maintenance_ledgers.php',
             '2026_10_04_113741_create_filter_oli_log_transaksis_table.php',
+            '2026_10_07_191623_drop_limit_ritase_from_filter_oli_logs_table.php',
         ] as $migration) {
             (require database_path('migrations/'.$migration))->up();
         }
@@ -120,13 +121,13 @@ class FilterOliGantiTest extends TestCase
         $this->get(route('rekap.maintenance.filter-oli', ['status' => 'pending', 'pembayaran' => 'invalid']))->assertSessionHasErrors(['status', 'pembayaran']);
     }
 
-    public function test_statistics_uses_latest_log_per_category_and_snapshot_limit(): void
+    public function test_statistics_uses_latest_log_per_category_and_current_category_limit(): void
     {
         $this->loginAs();
         $vehicle = $this->vehicle();
-        $category = KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Statistik', 'limit_ritase' => 99]);
+        $category = KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Statistik', 'limit_ritase' => 10]);
         FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'merk' => 'Merek Lama', 'created_at' => now()->subDays(10)]);
-        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'merk' => '<script>alert(1)</script>', 'limit_ritase' => 10, 'ritase' => 10, 'created_at' => now()->subDay()]);
+        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'merk' => '<script>alert(1)</script>', 'ritase' => 10, 'created_at' => now()->subDay()]);
         FilterOliLog::factory()->create(['vehicle_id' => $this->vehicle(), 'kategori_filter_oli_mesin_id' => $category->id, 'merk' => 'Kendaraan Lain']);
         $response = $this->get(route('statistik.filter-oli', ['vehicle_id' => $vehicle]));
         $response->assertOk()->assertSee('Mencapai limit')->assertSee('10 rit')->assertSee('<script>alert(1)</script>')->assertDontSee('<script>alert(1)</script>', false)->assertDontSee('Merek Lama')->assertDontSee('Kendaraan Lain')->assertViewHas('dueCount', 1)->assertViewHas('logs', fn ($logs): bool => $logs->count() === 1 && $logs->first()->id === $log->id);
@@ -271,7 +272,7 @@ class FilterOliGantiTest extends TestCase
         DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
         $category = KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Batas', 'limit_ritase' => 10]);
         FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 0, 'created_at' => today()->subDays(10)]);
-        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 10.5, 'limit_ritase' => 99, 'created_at' => today()->subDay()]);
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 10.5, 'created_at' => today()->subDay()]);
         $this->post(route('kas-uang-jalan.keluar.store'), $this->uangJalanData($vehicle))->assertSessionHas('error', fn ($message): bool => str_contains($message, 'Filter Batas: ritase 10,5 melebihi limit 10 rit'));
         $this->assertDatabaseCount('kas_uang_jalans', 0);
         $this->assertDatabaseCount('transaksis', 0);
@@ -378,14 +379,14 @@ class FilterOliGantiTest extends TestCase
         DB::table('vehicles')->where('id', $vehicle)->update(['pembatasan_filter_oli' => true]);
         $one = KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Satu', 'limit_ritase' => 10]);
         FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $one->id, 'ritase' => 10, 'created_at' => today()->subDays(3)]);
-        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $one->id, 'ritase' => 8, 'limit_ritase' => 100, 'created_at' => today()->subDay()]);
-        foreach ([['Filter Setengah', 8.5], ['Filter Nol', 9], ['Filter Lebih', 10], ['Filter Aman', 7.5]] as [$name, $ritase]) {
+        FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $one->id, 'ritase' => 8, 'created_at' => today()->subDay()]);
+        foreach ([['Filter Setengah', 8.5], ['Filter Nol', 9], ['Filter Lebih', 10], ['Filter Lebih Setengah', 10.5], ['Filter Aman', 7.5]] as [$name, $ritase]) {
             $category = KategoriFilterOliMesin::factory()->create(['nama' => $name, 'limit_ritase' => 10]);
             FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => $ritase, 'created_at' => today()->subDay()]);
         }
         KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Belum Ada']);
         $this->transaction($vehicle, 100, now());
-        $this->assertSame("Ganti *Filter Satu\nSisa 1 ritase*\n\nGanti *Filter Setengah\nSisa 0,5 ritase*\n\nGanti *Filter Nol\nSisa 0 ritase*\n\nGanti *Filter Lebih\nSisa 0 ritase*\n\n", app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
+        $this->assertSame("Ganti *Filter Satu\nSisa 1 ritase*\n\nGanti *Filter Setengah\nSisa 0,5 ritase*\n\nGanti *Filter Nol\nSisa 0 ritase*\n\nGanti *Filter Lebih\nSisa -1 ritase*\n\nGanti *Filter Lebih Setengah\nSisa -1,5 ritase*\n\n", app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
     }
 
     public function test_replacement_warning_is_empty_when_vehicle_restriction_is_off(): void
@@ -548,6 +549,44 @@ class FilterOliGantiTest extends TestCase
         $this->assertDatabaseHas('filter_oli_ganti_carts', ['vehicle_id' => $eligible]);
     }
 
+    public function test_category_limit_changes_immediately_update_statistics_history_and_restrictions(): void
+    {
+        $this->loginAs();
+        $vehicle = $this->vehicle();
+        $category = KategoriFilterOliMesin::factory()->create(['limit_ritase' => 10]);
+        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'kategori_filter_oli_mesin_id' => $category->id, 'ritase' => 11, 'created_at' => today()->subDay()]);
+        $this->get(route('statistik.filter-oli', ['vehicle_id' => $vehicle]))->assertOk()->assertViewHas('dueCount', 1)->assertSee('10 rit');
+        $this->post(route('kas-uang-jalan.keluar.store'), $this->uangJalanData($vehicle))->assertSessionHas('filter_oli_limit_issues', [['category' => $category->nama, 'ritase' => 11.0, 'limit' => 10, 'reason' => 'Melebihi limit']]);
+        $category->update(['limit_ritase' => 20]);
+        $this->get(route('statistik.filter-oli', ['vehicle_id' => $vehicle]))->assertOk()->assertViewHas('dueCount', 0)->assertSee('20 rit')->assertSee('Di bawah limit');
+        $this->get(route('statistik.filter-oli.histori', [$vehicle, $category->id]))->assertOk()->assertSee('20 rit')->assertSee('Limit kategori');
+        $this->assertDatabaseHas('filter_oli_logs', ['id' => $log->id, 'ritase' => 11]);
+        app(FilterOliRitaseService::class)->assertWithinLimits(Vehicle::findOrFail($vehicle), auth()->user());
+        $this->assertSame('', app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
+    }
+
+    public function test_dropping_log_limit_column_preserves_every_other_field_and_related_records(): void
+    {
+        $user = $this->loginAs();
+        $vehicle = $this->vehicle();
+        $log = FilterOliLog::factory()->create(['vehicle_id' => $vehicle, 'created_at' => today()->subDays(3)]);
+        $this->transaction($vehicle, 50, today()->subDay());
+        $invoice = FilterOliGantiInvoice::factory()->create(['user_id' => $user->id, 'vehicle_id' => $vehicle, 'status' => 'approved']);
+        FilterOliGantiInvoiceDetail::factory()->create(['filter_oli_ganti_invoice_id' => $invoice->id, 'filter_oli_log_id' => $log->id, 'kategori_filter_oli_mesin_id' => $log->kategori_filter_oli_mesin_id]);
+        $migration = require database_path('migrations/2026_10_07_191623_drop_limit_ritase_from_filter_oli_logs_table.php');
+        $migration->down();
+        DB::table('filter_oli_logs')->where('id', $log->id)->update(['limit_ritase' => 123]);
+        $before = collect((array) DB::table('filter_oli_logs')->where('id', $log->id)->first())->except('limit_ritase')->all();
+        $auditBefore = DB::table('filter_oli_log_transaksis')->get()->map(fn ($row): array => (array) $row)->all();
+        $detailBefore = DB::table('filter_oli_ganti_invoice_details')->get()->map(fn ($row): array => (array) $row)->all();
+        $migration->up();
+        $this->assertFalse(Schema::hasColumn('filter_oli_logs', 'limit_ritase'));
+        $this->assertDatabaseCount('filter_oli_logs', 1);
+        $this->assertSame($before, (array) DB::table('filter_oli_logs')->where('id', $log->id)->first());
+        $this->assertSame($auditBefore, DB::table('filter_oli_log_transaksis')->get()->map(fn ($row): array => (array) $row)->all());
+        $this->assertSame($detailBefore, DB::table('filter_oli_ganti_invoice_details')->get()->map(fn ($row): array => (array) $row)->all());
+    }
+
     private function loginAs(string $role = 'user'): User
     {
         $user = User::factory()->create(['role' => $role, 'password' => 'password']);
@@ -601,7 +640,8 @@ class FilterOliGantiTest extends TestCase
         $this->get(route('billing.otorisasi-maintenance.filter-oli'))->assertSee($invoice->no_invoice)->assertSee('table-success', false);
         $this->post(route('billing.otorisasi-maintenance.filter-oli.approve', $invoice->id))->assertSessionHas('success');
         $log = FilterOliLog::firstOrFail();
-        $this->assertSame($limit, $log->limit_ritase);
+        $this->assertSame(999, $log->kategori->limit_ritase);
+        $this->assertSame($limit, (int) $invoice->details->first()->limit_ritase);
         $this->assertSame($data['items'][$cart->id]['tanggal_ganti'], $log->created_at->format('Y-m-d'));
         $this->assertDatabaseHas('filter_oli_ganti_invoices', ['id' => $invoice->id, 'status' => 'approved', 'authorized_by' => $admin->id]);
         $this->post(route('billing.otorisasi-maintenance.filter-oli.approve', $invoice->id))->assertSessionHas('error');

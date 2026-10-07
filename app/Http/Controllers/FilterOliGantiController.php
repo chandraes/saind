@@ -155,8 +155,8 @@ class FilterOliGantiController extends Controller
             $warnings = [];
             foreach ($invoice->details as $detail) {
                 $previous = ($logs->get($invoice->vehicle_id) ?? collect())->first(fn ($log) => $log->kategori_filter_oli_mesin_id === $detail->kategori_filter_oli_mesin_id && $log->created_at <= $detail->created_at);
-                if ($previous && (float) $previous->ritase < $detail->limit_ritase) {
-                    $warnings[] = $detail->kategori->nama.': '.number_format((float) $previous->ritase, 1, ',', '.').' dari '.$detail->limit_ritase.' rit';
+                if ($previous && (float) $previous->ritase < $detail->kategori->limit_ritase) {
+                    $warnings[] = $detail->kategori->nama.': '.number_format((float) $previous->ritase, 1, ',', '.').' dari '.$detail->kategori->limit_ritase.' rit';
                 }
             }
             $invoice->setAttribute('ritase_warning', implode('; ', $warnings));
@@ -229,7 +229,7 @@ class FilterOliGantiController extends Controller
                     $log = FilterOliLog::create([
                         'vehicle_id' => $invoice->vehicle_id, 'kategori_filter_oli_mesin_id' => $detail->kategori_filter_oli_mesin_id,
                         'merk' => $detail->merk, 'kondisi' => $detail->kondisi, 'ritase' => $detail->ritase,
-                        'limit_ritase' => $detail->limit_ritase, 'created_at' => $detail->created_at,
+                        'created_at' => $detail->created_at,
                     ]);
                     $detail->update(['filter_oli_log_id' => $log->id]);
                 }

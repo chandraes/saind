@@ -63,11 +63,11 @@ class FilterOliReportController extends Controller
         $categories = KategoriFilterOliMesin::orderBy('id')->get();
         $logs = collect();
         if ($vehicle) {
-            $logs = FilterOliLog::where('vehicle_id', $vehicle->id)
+            $logs = FilterOliLog::with('kategori')->where('vehicle_id', $vehicle->id)
                 ->where('created_at', '<=', now())->latest()->orderByDesc('id')->get()
                 ->unique('kategori_filter_oli_mesin_id')->keyBy('kategori_filter_oli_mesin_id');
         }
-        $dueCount = $logs->filter(fn (FilterOliLog $log): bool => (float) $log->ritase >= $log->limit_ritase)->count();
+        $dueCount = $logs->filter(fn (FilterOliLog $log): bool => (float) $log->ritase >= $log->kategori->limit_ritase)->count();
 
         return view('rekap.statistik.filter-oli.index', compact('vehicles', 'vehicle', 'categories', 'logs', 'dueCount'));
     }
