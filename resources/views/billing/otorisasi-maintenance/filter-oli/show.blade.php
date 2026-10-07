@@ -107,7 +107,7 @@
                                 @if ($canEdit)<button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#editDetail{{ $detail->id }}" aria-label="Edit {{ $detail->kategori->nama }}"><i class="fa fa-edit" aria-hidden="true"></i></button>@endif
                             </td>
                             <td class="bg-warning bg-opacity-10">{{ $previous?->merk ?? '—' }}</td>
-                            <td class="bg-warning bg-opacity-10">@if ($previous)<span class="{{ (float) $previous->ritase < $detail->limit_ritase ? 'badge bg-danger' : 'fw-semibold' }}">{{ number_format((float) $previous->ritase, 1, ',', '.') }} rit</span>@else — @endif</td>
+                            <td class="bg-warning bg-opacity-10">@if ($previous)<span class="{{ (float) $previous->ritase < $detail->kategori->limit_ritase ? 'badge bg-danger' : 'fw-semibold' }}">{{ number_format((float) $previous->ritase, 1, ',', '.') }} rit</span>@else — @endif</td>
                             <td class="fw-semibold">{{ $detail->merk }}</td><td><span class="badge bg-info text-dark">{{ $detail->kondisi }}%</span></td><td><button type="button" class="btn btn-link btn-sm fw-semibold text-nowrap" data-bs-toggle="modal" data-bs-target="#ritaseDetail{{ $detail->id }}">{{ number_format((float) $detail->ritase, 1, ',', '.') }} rit <i class="fa fa-list-ul ms-1" aria-hidden="true"></i></button></td><td class="text-nowrap">{{ $detail->created_at->format('d-m-Y') }}</td>
                         </tr>
                     @endforeach

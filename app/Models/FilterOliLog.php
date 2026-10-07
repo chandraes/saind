@@ -11,7 +11,7 @@ class FilterOliLog extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['kategori_filter_oli_mesin_id', 'vehicle_id', 'merk', 'kondisi', 'ritase', 'limit_ritase', 'created_at'];
+    protected $fillable = ['kategori_filter_oli_mesin_id', 'vehicle_id', 'merk', 'kondisi', 'ritase', 'created_at'];
 
     protected $attributes = ['kondisi' => 100, 'ritase' => 0];
 

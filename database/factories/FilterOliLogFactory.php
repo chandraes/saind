@@ -23,7 +23,6 @@ class FilterOliLogFactory extends Factory
             'merk' => fake()->company(),
             'kondisi' => 100,
             'ritase' => 0,
-            'limit_ritase' => 10,
         ];
     }
 }
