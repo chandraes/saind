@@ -92,7 +92,7 @@
                         <div class="input-group">
                             <span class="input-group-text fw-bold text-success">Rp</span>
                             <input type="text" class="form-control fw-bold text-success @error('nominal_transaksi') is-invalid @enderror" name="nominal_transaksi" id="hk_uang_jalan" required
-                                @if(auth()->user()->role != 'admin') readonly @endif data-thousands="." value="{{ old('nominal_transaksi') }}">
+                                @if(!in_array(auth()->user()->role, ['admin', 'su'], true)) readonly @endif data-thousands="." value="{{ old('nominal_transaksi') }}">
                             @error('nominal_transaksi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
@@ -262,6 +262,7 @@
             method: "GET",
             data: { id: id },
             success: function (data) {
+                if (String($('#vehicle_id').val()) !== String(id)) return;
                 $('#vendor_id').val(data.nama_vendor);
                 $('#p_vendor').val(data.id_vendor);
                 $('#vendor_limit_status').val(data.limit_tonase);
@@ -323,6 +324,7 @@
             method: "GET",
             data: { id: id, vehicle_id: vehicleId },
             success: function (data) {
+                if (String($('#vehicle_id').val()) !== String(vehicleId) || String($('#customer_id').val()) !== String(id)) return;
                 // Tambahkan data-uang-jalan pada opsi kosong
                 $('#rute_id').empty().append('<option value="" data-nominal="0" data-uang-jalan="0">-- Pilih Rute --</option>');
 
@@ -364,6 +366,16 @@
             delimiter: '.'
         });
 
+        function updateUangJalanKotor() {
+            if ($('#status_uj_ditahan').val() != '1') return;
+
+            var transfer = parseFloat(nominal.getRawValue().replace(',', '.')) || 0;
+            var ditahan = parseFloat($('#rute_id').find(':selected').attr('data-nominal')) || 0;
+            $('#uang_jalan_kotor').val((transfer + ditahan).toLocaleString('id-ID'));
+        }
+
+        $('#hk_uang_jalan').on('input', updateUangJalanKotor);
+
         // Datepicker
         $( "#tanggal_muat" ).datepicker({
             dateFormat: "dd-mm-yy",
@@ -381,12 +393,13 @@
         var initVehicle = $('#vehicle_id').val();
         var initCustomer = $('#customer_id').val();
         var oldRute = $('#old_rute_id').val();
+        var oldNominal = $('#hk_uang_jalan').val();
 
         if (initVehicle && initCustomer) {
             loadVehicle(initVehicle, function() {
                 loadCustomer(initCustomer, function() {
                     if (oldRute) {
-                        $('#rute_id').val(oldRute).trigger('change');
+                        $('#rute_id').val(oldRute).trigger('change', [oldNominal]);
                         $('#old_rute_id').val('');
                     }
                 });
@@ -396,7 +409,7 @@
         } else if (initCustomer) {
             loadCustomer(initCustomer, function() {
                 if (oldRute) {
-                    $('#rute_id').val(oldRute).trigger('change');
+                    $('#rute_id').val(oldRute).trigger('change', [oldNominal]);
                     $('#old_rute_id').val('');
                 }
             });
@@ -406,9 +419,17 @@
         // EVENT ON CHANGE
         // ==========================================
         $('#vehicle_id').on('change', function () {
+            var previousRute = $('#rute_id').val();
+            $('#rute_id').empty().append('<option value="">-- Pilih Rute --</option>').trigger('change.select2');
+            $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
             loadVehicle($(this).val(), function() {
-                if ($('#rute_id').val()) {
-                    $('#rute_id').trigger('change');
+                if ($('#customer_id').val()) {
+                    loadCustomer($('#customer_id').val(), function() {
+                        var available = $('#rute_id option').filter(function() {
+                            return this.value === previousRute;
+                        }).length;
+                        $('#rute_id').val(available ? previousRute : '').trigger('change');
+                    });
                 }
             });
         });
@@ -420,7 +441,7 @@
             });
         });
 
-      $('#rute_id').on('change', function () {
+      $('#rute_id').on('change', function (event, restoredNominal) {
             var rute_id = $(this).val();
             var vendor_id = $('#p_vendor').val();
 
@@ -434,8 +455,8 @@
 
             if (statusUjDitahan == 1) {
                 // JIKA UJ DITAHAN: Ambil nilai langsung dari atribut opsi rute (tanpa AJAX VendorUangJalan)
-                var nominalRute = $(this).find(':selected').data('nominal') || 0;
-                var uangJalanKotor = $(this).find(':selected').data('uang-jalan') || 0;
+                var nominalRute = parseFloat($(this).find(':selected').attr('data-nominal')) || 0;
+                var uangJalanKotor = parseFloat($(this).find(':selected').attr('data-uang-jalan')) || 0;
 
                 if (nominalRute <= 0) {
                     Swal.fire({
@@ -449,13 +470,11 @@
                     return false;
                 }
 
-                // Hitung netto dari rutes.uang_jalan - rutes.uj_ditahan
-                var nettoUangJalan = uangJalanKotor + nominalRute;
-                if (nettoUangJalan < 0) nettoUangJalan = 0;
-
-                $('#uang_jalan_kotor').val(parseFloat(nettoUangJalan).toLocaleString('id-ID'));
-                $('#potongan_uj').val(parseFloat(nominalRute).toLocaleString('id-ID'));
-                $('#hk_uang_jalan').val(uangJalanKotor.toLocaleString('id-ID'));
+                $('#potongan_uj').val(nominalRute.toLocaleString('id-ID'));
+                nominal.setRawValue(restoredNominal !== undefined && restoredNominal !== ''
+                    ? restoredNominal.replace(/\./g, '')
+                    : String(uangJalanKotor));
+                updateUangJalanKotor();
 
             } else {
                 // JIKA TIDAK DITAHAN: Ambil uang jalan dari VendorUangJalan seperti biasa
@@ -468,8 +487,11 @@
                             vendor_id: vendor_id,
                         },
                         success: function (data) {
+                            if ($('#rute_id').val() !== rute_id || $('#p_vendor').val() !== vendor_id || $('#status_uj_ditahan').val() == '1') return;
                             var baseUangJalan = parseFloat(data.hk_uang_jalan) || 0;
-                            $('#hk_uang_jalan').val(baseUangJalan.toLocaleString('id-ID'));
+                            nominal.setRawValue(restoredNominal !== undefined && restoredNominal !== ''
+                                ? restoredNominal.replace(/\./g, '')
+                                : String(baseUangJalan));
                         }
                     });
                 }
