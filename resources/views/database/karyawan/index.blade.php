@@ -8,6 +8,7 @@
         </div>
     </div>
     @include('swal')
+    <div class="my-3"><a href="{{ route('attendance-integration.index') }}" class="btn btn-outline-primary">Integrasi absensi</a></div>
     <div class="row d-flex justify-content-between mt-3">
         <div class="col-md-6">
             <table class="table">

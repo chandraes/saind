@@ -11,6 +11,24 @@ class Karyawan extends Model
 
     protected $guarded = [];
 
+    public function save(array $options = []): bool
+    {
+        if (! config('attendance.enabled')) {
+            return parent::save($options);
+        }
+
+        return $this->getConnection()->transaction(fn (): bool => parent::save($options));
+    }
+
+    public function delete(): ?bool
+    {
+        if (! config('attendance.enabled')) {
+            return parent::delete();
+        }
+
+        return $this->getConnection()->transaction(fn (): ?bool => parent::delete());
+    }
+
     public function jabatan()
     {
         return $this->belongsTo(Jabatan::class);
@@ -40,9 +58,10 @@ class Karyawan extends Model
     public function getNomor()
     {
         $last = $this->latest()->orderBy('id', 'desc')->first();
-        if (!$last) {
+        if (! $last) {
             return 1;
         }
+
         return $last->nomor + 1;
     }
 }

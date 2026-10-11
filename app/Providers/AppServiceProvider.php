@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Karyawan;
 use App\Models\Setting;
 use App\Models\Transaksi;
 use App\Observers\FilterOliTransaksiObserver;
+use App\Observers\KaryawanAttendanceObserver;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Karyawan::observe(KaryawanAttendanceObserver::class);
         Transaksi::observe(FilterOliTransaksiObserver::class);
         if (Schema::hasTable('settings')) {
 
