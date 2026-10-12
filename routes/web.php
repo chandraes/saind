@@ -358,6 +358,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('/{customer}/ubah-status', [CustomerController::class, 'ubah_status'])->name('customer.ubah-status');
         });
 
+        Route::get('pengguna/pilihan', [UserController::class, 'options'])->name('pengguna.options');
         Route::resource('pengguna', UserController::class);
 
         Route::resource('sponsor', SponsorController::class)->only([

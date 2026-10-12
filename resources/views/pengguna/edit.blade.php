@@ -1,115 +1,40 @@
-<div class="modal fade" id="modal-edit-{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered " role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitleId">Ubah Pengguna</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-                <form action="{{route('pengguna.update', $d->id)}}" method="post">
-                    @csrf
-                    @method('PUT')
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="name" class="form-label">Nama</label>
-                                <input type="text" class="form-control" name="name" id="name" aria-describedby="name"
-                                    placeholder="" value="{{$d->name}}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" name="username" id="username" required
-                                    aria-describedby="username" placeholder="" value="{{$d->username}}">
-                            </div>
-                        </div>
-                        <div class="row mt-2">
-                            <div class="col-md-12">
-                                <label for="role" class="form-label">Role</label>
-                                <select class="form-select" name="role" id="role-{{$d->id}}" onchange="roleChangeEdit()">
-                                    <option value="admin" {{$d->role == 'admin' ? 'selected' : ''}}>Admin</option>
-                                    <option value="investor" {{$d->role == 'investor' ? 'selected' : ''}}>Investor</option>
-                                    <option value="vendor" {{$d->role == 'vendor' ? 'selected' : ''}}>Vendor</option>
-                                    <option value="vendor-operational" {{$d->role == 'vendor-operational' ? 'selected' : ''}}>Vendor Operational</option>
-                                    <option value="user" {{$d->role == 'user' ? 'selected' : ''}}>User</option>
-                                    <option value="asisten-user" {{$d->role == 'asisten-user' ? 'selected' : ''}}>Asisten User</option>
-                                    <option value="customer" {{$d->role == 'customer' ? 'selected' : ''}}>Customer</option>
-                                    <option value="customer-admin" {{$d->role == 'customer-admin' ? 'selected' : ''}}>Customer Admin</option>
-                                    <option value="operasional" {{$d->role == 'operasional' ? 'selected' : ''}}>Operasional</option>
-                                </select>
-                            </div>
-                            <div class="col-md-12 mt-3" id="divVendor-{{$d->id}}">
-                                <div class="mb-3">
-                                    <label for="vendor_id" class="form-label">Vendor</label>
-                                    <select class="form-select" name="vendor_id" id="vendor_id-{{$d->id}}">
-                                        <option value=""> -- Pilih Vendor -- </option>
-                                        @foreach ($vendor as $v)
-                                        <option value="{{$v->id}}" @if ($d->vendor_id == $v->id)
-                                            selected
-                                        @endif>{{$v->nama}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12 mt-3" id="divCustomer-{{$d->id}}">
-                                <div class="mb-3">
-                                    <label for="customer_id" class="form-label">Customer</label>
-                                    <select class="form-select" name="customer_id" id="customer_id-{{$d->id}}">
-                                        <option value=""> -- Pilih Customer -- </option>
-                                        @foreach ($customer as $c)
-                                        <option value="{{$c->id}}" {{$d->customer_id == $c->id ? 'selected' : ''}}>{{$c->nama}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12 mt-2">
-                                <label for="email" class="form-label">E-Mail</label>
-                                <input type="email" class="form-control" name="email" id="email"
-                                    aria-describedby="email" placeholder="boleh kosong">
-                                <div class="form-group mt-2">
-                                    <label for="passwordInput">Password</label>
-                                    <div class="input-group">
-                                        <input type="password" name="password" class="form-control" id="passwordInput{{$d->id}}" placeholder="Kosongkan Jika Tidak Mengganti">
-                                        <button class="btn btn-outline-secondary" type="button" id="togglePassword{{$d->id}}">
-                                            <i class="fa fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
+<div class="row g-3">
+    <div class="col-md-6">
+        <label for="user-name" class="form-label fw-bold">Nama <span class="text-danger">*</span></label>
+        <input id="user-name" name="name" class="form-control" required minlength="3" maxlength="255" autocomplete="name" placeholder="Nama lengkap">
+        <div class="invalid-feedback" data-error="name"></div>
+    </div>
+    <div class="col-md-6">
+        <label for="user-username" class="form-label fw-bold">Username <span class="text-danger">*</span></label>
+        <input id="user-username" name="username" class="form-control" required maxlength="255" autocomplete="off" placeholder="Username untuk login">
+        <div class="invalid-feedback" data-error="username"></div>
+    </div>
+    <div class="col-12">
+        <label for="user-role" class="form-label fw-bold">Role <span class="text-danger">*</span></label>
+        <select id="user-role" name="role" class="form-select" required>
+            @foreach ($roles as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach
+        </select>
+        <div class="invalid-feedback" data-error="role"></div>
+    </div>
+    @foreach (['vendor' => 'Vendor', 'customer' => 'Customer'] as $type => $label)
+        <div class="col-12" id="user-{{ $type }}-group" hidden>
+            <label for="user-{{ $type }}" class="form-label fw-bold">{{ $label }} <span class="text-danger">*</span></label>
+            <select id="user-{{ $type }}" name="{{ $type }}_id" class="form-select" disabled><option value=""></option></select>
+            <div class="invalid-feedback" data-error="{{ $type }}_id"></div>
         </div>
+    @endforeach
+    <div class="col-md-6">
+        <label for="user-email" class="form-label fw-bold">Email <span class="text-muted fw-normal small">(opsional)</span></label>
+        <input type="email" id="user-email" name="email" class="form-control" maxlength="255" autocomplete="email" placeholder="nama@contoh.com">
+        <div class="invalid-feedback" data-error="email"></div>
+    </div>
+    <div class="col-md-6">
+        <label for="user-password" class="form-label fw-bold">Password</label>
+        <div class="input-group">
+            <input type="password" id="user-password" name="password" class="form-control" minlength="6" maxlength="255" autocomplete="new-password" aria-describedby="user-password-help" required>
+            <button type="button" id="user-password-toggle" class="btn btn-outline-secondary" aria-label="Tampilkan password"><i class="fa fa-eye" aria-hidden="true"></i></button>
+        </div>
+        <div class="form-text" id="user-password-help">Gunakan minimal 6 karakter.</div>
+        <div class="invalid-feedback" data-error="password"></div>
     </div>
 </div>
-<script>
-   const passwordInput{{$d->id}} = document.getElementById("passwordInput{{$d->id}}");
-    const togglePasswordButton{{$d->id}} = document.getElementById("togglePassword{{$d->id}}");
-
-    togglePasswordButton{{$d->id}}.addEventListener("click", function () {
-    if (passwordInput{{$d->id}}.type === "password") {
-        passwordInput{{$d->id}}.type = "text";
-        togglePasswordButton{{$d->id}}.innerHTML = '<i class="fa fa-eye-slash"></i>';
-    } else {
-        passwordInput{{$d->id}}.type = "password";
-        togglePasswordButton{{$d->id}}.innerHTML = '<i class="fa fa-eye"></i>';
-    }
-    });
-
-    function roleChangeEdit() {
-
-        var role = document.getElementById('role-{{$d->id}}').value;
-        if (role === 'vendor') {
-            document.getElementById('divVendor-{{$d->id}}').hidden = false;
-            // vendor_id required
-            document.getElementById('vendor_id-{{$d->id}}').required = true;
-        } else {
-            document.getElementById('divVendor-{{$d->id}}').hidden = true;
-            // vendor_id not required
-            document.getElementById('vendor_id-{{$d->id}}').required = false;
-        }
-    }
-</script>
