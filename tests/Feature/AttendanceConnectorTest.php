@@ -253,4 +253,48 @@ class AttendanceConnectorTest extends TestCase
         Karyawan::factory()->create(['nama' => '<script>alert(1)</script>']);
         $this->get('/attendance-integration')->assertOk()->assertSee('Penghubung aktif')->assertSee('&lt;script&gt;', false)->assertDontSee('<script>alert(1)</script>', false);
     }
+
+    public function test_scroll_requests_return_bounded_sync_rows_without_internal_payload(): void
+    {
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        AttendanceEmployeeSync::factory()->count(115)->create();
+        $response = $this->getJson('/attendance-integration?table=syncs&start=25&length=25&draw=3', ['X-Requested-With' => 'XMLHttpRequest']);
+        $response->assertOk()->assertJsonPath('draw', 3)->assertJsonPath('recordsTotal', 115)
+            ->assertJsonCount(25, 'data')->assertJsonPath('data.0.number', 26);
+        $this->assertSame(['number', 'employee', 'status', 'delivery', 'last_synced', 'error'], array_keys($response->json('data.0')));
+        $this->getJson('/attendance-integration?table=syncs&length=999', ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()->assertJsonCount(100, 'data');
+        $this->getJson('/attendance-integration?table=syncs&start=114&length=25', ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.number', 115);
+        Http::assertNothingSent();
+    }
+
+    public function test_result_scroll_forwards_filters_and_next_page_without_syncing_employees(): void
+    {
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'su', 'password' => 'password']));
+        Http::fake(['attendance.test/*' => Http::response(['data' => [['employee' => ['source_employee_id' => '7', 'name' => 'Pegawai Uji'], 'work_date' => '2026-10-13']], 'current_page' => 2, 'last_page' => 3, 'total' => 51])]);
+        $this->getJson('/attendance-integration?table=results&resource=attendances&source_employee_id=7&to=2026-10-13&result_page=2', ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk()->assertJsonPath('current_page', 2)->assertJsonPath('total', 51)->assertJsonPath('data.0.employee.source_employee_id', '7');
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => $request->method() === 'GET' && $request['page'] === 2 && $request['source_employee_id'] === '7' && $request['to'] === '2026-10-13');
+    }
+
+    public function test_result_scroll_reports_connection_failure_and_rejects_invalid_filters(): void
+    {
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        Http::fake(['attendance.test/*' => Http::failedConnection()]);
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+        $this->getJson('/attendance-integration?table=results&resource=attendances&result_page=2', $headers)->assertStatus(503)->assertJsonPath('message', 'Koneksi ke aplikasi absensi gagal atau melewati batas waktu.');
+        $this->getJson('/attendance-integration?table=results&resource=users', $headers)->assertUnprocessable()->assertJsonValidationErrors('resource');
+        $this->getJson('/attendance-integration?table=results&resource=attendances&from=2026-10-13&to=2026-10-01', $headers)->assertUnprocessable()->assertJsonValidationErrors('to');
+        Http::assertSentCount(1);
+    }
+
+    public function test_scroll_endpoints_remain_restricted_to_authorized_roles(): void
+    {
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+        $this->getJson('/attendance-integration?table=syncs', $headers)->assertUnauthorized();
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'operasional', 'password' => 'password']));
+        $this->getJson('/attendance-integration?table=syncs', $headers)->assertForbidden();
+        $this->getJson('/attendance-integration?table=results&resource=attendances', $headers)->assertForbidden();
+        Http::assertNothingSent();
+    }
 }
