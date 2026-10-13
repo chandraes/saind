@@ -397,7 +397,7 @@ class FormKasUangJalanController extends Controller
         if ($dbVehicle->tanggal_pajak_stnk == null) {
             return redirect()->back()->with('error', 'Tanggal Pajak STNK belum diinput!');
         } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($nextMonth) && Auth::user()->role != 'admin') {
-            return redirect()->back()->withInput()->with('error', 'Pajak STNK kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').'! Silahkan hubungin Admin!');
+            return redirect()->back()->withInput()->with('error', 'Permintaan uang jalan ditolak. Pajak STNK jatuh tempo pada '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').' dan sudah masuk periode pembatasan, mulai satu bulan sebelum jatuh tempo. Silakan hubungi Admin.');
         }
 
         try {
