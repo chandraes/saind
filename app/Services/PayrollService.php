@@ -2,11 +2,18 @@
 
 namespace App\Services;
 
+use App\Models\Direksi;
+use App\Models\Karyawan;
+use App\Models\KasBon;
+use App\Models\KasBonCicilan;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PayrollService
 {
-    public function calculateComponent($person)
+    public function calculateComponent(Karyawan|Direksi $person): array
     {
         $gapokPlus = $person->gaji_pokok + $person->tunjangan_jabatan + $person->tunjangan_keluarga;
 
@@ -18,61 +25,118 @@ class PayrollService
         // sesuai aturan BPJS Tahun 2026
         if ($gapokPlus > 12000000) {
             $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? 12000000 * 0.04 : 0;
-            $pot_k = $person->apa_bpjs_kesehatan == 1 ? 12000000  * 0.01 : 0;
+            $pot_k = $person->apa_bpjs_kesehatan == 1 ? 12000000 * 0.01 : 0;
         } else {
             $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.04 : 0;
             $pot_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.01 : 0;
         }
 
+        $bpjs_tk = (int) round($bpjs_tk);
+        $bpjs_k = (int) round($bpjs_k);
+        $pot_tk = (int) round($pot_tk);
+        $pot_k = (int) round($pot_k);
         $pendapatan_kotor = $gapokPlus + $bpjs_tk + $bpjs_k;
-
-        // $ptkp = 4500000 * 12; // PTKP (penghasilan tidak kena pajak) untuk individu
-        // // jika punya keluarga tambah 4.5 juta
-        // $ptkp += $person->status_menikah == 1 ? 4500000 * 12 : 0;
-        // // jika punya anak max 3 anak, tiap anak tambah 4.5 juta
-
-        // // pendapatan kotor > 10 juta, maka pph 21 aktif = $pendapatan kotor * 5%
-        // $anak_count = min($person->jumlah_anak, 3);
-        // $ptkp += $anak_count * 4500000;
-
-        // $ptkp_final = $ptkp/12;
-
-        // $pph = $pendapatan_kotor > 10000000 ? ($pendapatan_kotor - ($pendapatan_kotor * 0.05)) - $ptkp_final : 0;
-
-        // $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k - $pph;
         $pendapatan_bersih = $gapokPlus - $pot_tk - $pot_k;
 
-        return [
+        return array_map(fn (int|float $amount): int => (int) round($amount), [
             'bpjs_tk' => $bpjs_tk,
             'bpjs_k' => $bpjs_k,
             'pot_tk' => $pot_tk,
             'pot_k' => $pot_k,
-            // 'pph' => $pph,
             'pendapatan_kotor' => $pendapatan_kotor,
             'pendapatan_bersih' => $pendapatan_bersih,
+        ]);
+    }
+
+    /** @return Collection<int, Karyawan> */
+    public function employeesForPeriod(int $bulan, int $tahun, bool $lock = false): Collection
+    {
+        return $this->employeesQueryForPeriod($bulan, $tahun, $lock)->get();
+    }
+
+    /** @return Builder<Karyawan> */
+    public function employeesQueryForPeriod(int $bulan, int $tahun, bool $lock = false): Builder
+    {
+        $end = Carbon::create($tahun, $bulan, 1)->endOfMonth()->toDateString();
+        $query = Karyawan::where('status', 'aktif')->where('mulai_bekerja', '<=', $end)
+            ->with(['jabatan', 'kas_bon' => function (HasMany $query) use ($lock): void {
+                $query->where('lunas', false)->where('void', false)->orderBy('tanggal')->orderBy('id');
+                if ($lock) {
+                    $query->lockForUpdate();
+                }
+            }, 'kas_bon_cicilan' => function (HasMany $query) use ($lock): void {
+                $query->where('lunas', false)->orderBy('mulai_tahun')->orderBy('mulai_bulan')->orderBy('id');
+                if ($lock) {
+                    $query->lockForUpdate();
+                }
+            }])->orderBy('id');
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query;
+    }
+
+    /** @return Collection<int, Direksi> */
+    public function directorsForPeriod(int $bulan, int $tahun, bool $lock = false): Collection
+    {
+        return $this->directorsQueryForPeriod($bulan, $tahun, $lock)->get();
+    }
+
+    /** @return Builder<Direksi> */
+    public function directorsQueryForPeriod(int $bulan, int $tahun, bool $lock = false): Builder
+    {
+        $query = Direksi::where('status', 'aktif')->where('mulai_bekerja', '<=', Carbon::create($tahun, $bulan, 1)->endOfMonth()->toDateString())->orderBy('id');
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query;
+    }
+
+    public function previewRow(Karyawan|Direksi $person, int $bulan, int $tahun): array
+    {
+        $calc = $this->calculateComponent($person);
+        $kasbon = $person instanceof Karyawan ? $this->calculateKasbon($person, $bulan, $tahun) : 0;
+
+        return [
+            'nama' => $person->nama, 'jabatan' => $person instanceof Karyawan ? ($person->jabatan?->nama ?? '—') : $person->jabatan,
+            'gp' => (int) $person->gaji_pokok, 'tj' => (int) $person->tunjangan_jabatan, 'tk' => (int) $person->tunjangan_keluarga,
+            'btk' => $calc['bpjs_tk'], 'bk' => $calc['bpjs_k'], 'ptk' => $calc['pot_tk'], 'pk' => $calc['pot_k'],
+            'pkotor' => $calc['pendapatan_kotor'], 'pbersih' => $calc['pendapatan_bersih'], 'kasbon' => $kasbon,
+            'total' => $calc['pendapatan_bersih'] - $kasbon,
         ];
     }
 
-    public function calculateKasbon($karyawan, $bulan, $tahun)
+    /** @return list<array{loan: KasBon|KasBonCicilan, amount: int}> */
+    public function kasbonPayments(Karyawan $karyawan, int $bulan, int $tahun): array
     {
-        $kasbon_cicil = 0;
-        $now = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
-
-        // Cicilan Aktif
-        $cicilan = $karyawan->kas_bon_cicilan->where('lunas', 0)->first();
-        if ($cicilan) {
-            // dd($cicilan);
-            $mulai = Carbon::createFromDate($cicilan->mulai_tahun, $cicilan->mulai_bulan, 1)->startOfDay();
-
-            if ($now->greaterThanOrEqualTo($mulai)) {
-
-                $kasbon_cicil = $cicilan->cicilan_nominal;
+        $period = Carbon::create($tahun, $bulan, 1)->startOfDay();
+        $end = $period->copy()->endOfMonth()->toDateString();
+        $payments = [];
+        foreach ($karyawan->kas_bon_cicilan as $loan) {
+            $start = Carbon::create($loan->mulai_tahun, $loan->mulai_bulan, 1)->startOfDay();
+            if (! $loan->lunas && $loan->getRawOriginal('tanggal') <= $end && $period->greaterThanOrEqualTo($start)) {
+                $amount = max(0, min((int) $loan->cicilan_nominal, (int) $loan->sisa_kas));
+                if ($amount > 0) {
+                    $payments[] = ['loan' => $loan, 'amount' => $amount];
+                }
+            }
+        }
+        foreach ($karyawan->kas_bon as $loan) {
+            if (! $loan->lunas && ! $loan->void && $loan->getRawOriginal('tanggal') <= $end) {
+                $amount = max(0, (int) $loan->sisa_kas);
+                if ($amount > 0) {
+                    $payments[] = ['loan' => $loan, 'amount' => $amount];
+                }
             }
         }
 
-        // Kasbon Biasa (Lunas Sekaligus)
-        $kasbon_biasa = $karyawan->kas_bon->where('lunas', 0)->sum('nominal');
+        return $payments;
+    }
 
-        return $kasbon_cicil + $kasbon_biasa;
+    public function calculateKasbon(Karyawan $karyawan, int $bulan, int $tahun): int
+    {
+        return array_sum(array_column($this->kasbonPayments($karyawan, $bulan, $tahun), 'amount'));
     }
 }

@@ -2,21 +2,14 @@
 
 namespace App\Exports;
 
-use App\Models\Karyawan;
-use App\Models\Direksi;
+use App\Services\PayrollService;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 
 class GajiPreviewExport implements FromView, WithColumnFormatting
 {
-    protected $bulan, $tahun, $payroll;
-
-    public function __construct($bulan, $tahun, $payroll) {
-        $this->bulan = $bulan;
-        $this->tahun = $tahun;
-        $this->payroll = $payroll;
-    }
+    public function __construct(protected int $bulan, protected int $tahun, protected PayrollService $payroll) {}
 
     public function columnFormats(): array
     {
@@ -39,13 +32,11 @@ class GajiPreviewExport implements FromView, WithColumnFormatting
     public function view(): View
     {
         return view('billing.gaji.export-excel', [
-            'data' => Karyawan::where('status', 'aktif')->with(['jabatan', 'kas_bon', 'kas_bon_cicilan'])->get(),
-            'direksi' => Direksi::where('status', 'aktif')->get(),
+            'data' => $this->payroll->employeesForPeriod($this->bulan, $this->tahun),
+            'direksi' => $this->payroll->directorsForPeriod($this->bulan, $this->tahun),
             'bulan' => $this->bulan, // Ini harus angka (misal: 1)
             'tahun' => $this->tahun,
-            'payroll' => $this->payroll
+            'payroll' => $this->payroll,
         ]);
     }
-
-
 }

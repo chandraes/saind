@@ -2,503 +2,233 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\GajiPreviewExport;
+use App\Models\GroupWa;
 use App\Models\Karyawan;
 use App\Models\KasBesar;
-use App\Models\Direksi;
 use App\Models\RekapGaji;
 use App\Models\RekapGajiDetail;
-use App\Models\GroupWa;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use App\Services\PayrollService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class FormGajiController extends Controller
 {
+    public function __construct(protected PayrollService $payroll) {}
 
-    protected $payroll;
-
-    public function __construct(PayrollService $payroll)
+    private function period(Request $request): Carbon
     {
-        $this->payroll = $payroll;
-    }
-
-    public function index(Request $request)
-    {
-        $request->validate([
-            'bulan' => 'required',
-            'tahun' => 'required',
-        ]);
-
-        $check = RekapGaji::where('bulan', $request->bulan)->where('tahun', $request->tahun)->first();
-
-        // dd($check, $request->bulan, $request->tahun);
-        if ($check) {
-            return redirect()->route('billing.index')->with('error', 'Form Gaji Bulan Ini Sudah Dibuat');
-        }
-        // Cek jika bulan yang dipilih lebih besar dari bulan sekarang di tahun yang sama
-        if ($request->tahun == date('Y') && $request->bulan > date('m')) {
-            return redirect()->route('billing.index')->with('error', 'Form Gaji bulan ini belum dapat dibuat!');
+        $data = $request->validate(['bulan' => ['required', 'integer', 'between:1,12'], 'tahun' => ['required', 'integer', 'between:1901,2155']]);
+        $period = Carbon::create((int) $data['tahun'], (int) $data['bulan'], 1)->startOfDay();
+        if ($period->greaterThan(now()->startOfMonth())) {
+            throw ValidationException::withMessages(['bulan' => 'Form gaji untuk periode mendatang belum dapat dibuat.']);
         }
 
-        $month = Carbon::createFromDate($request->tahun, $request->bulan, 1)->locale('id')->monthName;
+        return $period;
+    }
 
-        // Optimasi: Eager Loading relasi untuk menghindari N+1 Query
-        $data = Karyawan::where('status', 'aktif')->with(['jabatan', 'kas_bon', 'kas_bon_cicilan'])->get();
-        $direksi = Direksi::where('status', 'aktif')->get();
+    private function ensurePeriodAvailable(Carbon $period): void
+    {
+        if (RekapGaji::where('bulan', $period->month)->where('tahun', $period->year)->exists()) {
+            throw ValidationException::withMessages(['bulan' => 'Form gaji periode '.$period->copy()->locale('id')->translatedFormat('F Y').' sudah dibuat.']);
+        }
+        $later = RekapGaji::where(function (Builder $query) use ($period): void {
+            $query->where('tahun', '>', $period->year)->orWhere(function (Builder $query) use ($period): void {
+                $query->where('tahun', $period->year)->where('bulan', '>', $period->month);
+            });
+        })->orderByDesc('tahun')->orderByDesc('bulan')->first();
+        if ($later) {
+            $laterPeriod = Carbon::create($later->tahun, $later->bulan, 1)->locale('id')->translatedFormat('F Y');
+            throw ValidationException::withMessages(['bulan' => 'Gaji periode '.$laterPeriod.' sudah dibuat. Periode sebelumnya tidak dapat dibuat karena saldo kasbon telah berubah. Proses gaji sesuai urutan periode.']);
+        }
+    }
 
-        return view('billing.gaji.index', [
-            'data' => $data,
-            'direksi' => $direksi,
-            'monthName' => $month,
-            'bulan' => $request->bulan,
-            'tahun' => $request->tahun,
-            'payroll' => $this->payroll
+    private function previewData(Carbon $period): array
+    {
+        return [
+            'data' => $this->payroll->employeesForPeriod($period->month, $period->year),
+            'direksi' => $this->payroll->directorsForPeriod($period->month, $period->year),
+            'monthName' => $period->copy()->locale('id')->monthName,
+            'bulan' => $period->month, 'tahun' => $period->year, 'payroll' => $this->payroll,
+        ];
+    }
+
+    public function index(Request $request): View|JsonResponse
+    {
+        $period = $this->period($request);
+        $this->ensurePeriodAvailable($period);
+
+        if ($request->ajax()) {
+            return $this->previewTable($request, $period);
+        }
+        $preview = $this->previewData($period);
+        $rows = $preview['direksi']->concat($preview['data'])->map(fn ($person): array => $this->payroll->previewRow($person, $period->month, $period->year));
+        $totals = [];
+        foreach (['gp', 'tj', 'tk', 'btk', 'bk', 'ptk', 'pk', 'pkotor', 'pbersih', 'kasbon', 'total'] as $key) {
+            $totals[$key] = $rows->sum($key);
+        }
+
+        return view('billing.gaji.index', [...$preview, 'gt' => $totals, 'peopleCount' => $rows->count(), 'negativeCount' => $rows->where('total', '<', 0)->count()]);
+    }
+
+    private function previewTable(Request $request, Carbon $period): JsonResponse
+    {
+        $employees = $this->payroll->employeesQueryForPeriod($period->month, $period->year);
+        $directors = $this->payroll->directorsQueryForPeriod($period->month, $period->year);
+        $total = (clone $employees)->count() + (clone $directors)->count();
+        $search = mb_substr($request->string('search.value')->trim()->toString(), 0, 100);
+        if ($search !== '') {
+            $employees->where(function (Builder $query) use ($search): void {
+                $query->where('nama', 'like', '%'.$search.'%')->orWhereHas('jabatan', fn (Builder $query) => $query->where('nama', 'like', '%'.$search.'%'));
+            });
+            $directors->where(function (Builder $query) use ($search): void {
+                $query->where('nama', 'like', '%'.$search.'%')->orWhere('jabatan', 'like', '%'.$search.'%');
+            });
+        }
+        $directorCount = (clone $directors)->count();
+        $filtered = $directorCount + (clone $employees)->count();
+        $start = max(0, $request->integer('start'));
+        $length = min(100, max(1, $request->integer('length', 25)));
+        $people = collect();
+        if ($start < $directorCount) {
+            $people = $people->concat($directors->offset($start)->limit($length)->get());
+        }
+        $remaining = $length - $people->count();
+        if ($remaining > 0) {
+            $people = $people->concat($employees->offset(max(0, $start - $directorCount))->limit($remaining)->get());
+        }
+
+        return response()->json([
+            'draw' => max(0, $request->integer('draw')), 'recordsTotal' => $total, 'recordsFiltered' => $filtered,
+            'data' => $people->values()->map(fn ($person, int $index): array => ['number' => $start + $index + 1, ...$this->payroll->previewRow($person, $period->month, $period->year)])->all(),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $ds = $request->validate([
-            'bulan' => 'required',
-            'tahun' => 'required',
-        ]);
-
-        $data = Karyawan::where('status', 'aktif')->with(['jabatan', 'kas_bon', 'kas_bon_cicilan'])->get();
-        $direksi = Direksi::where('status', 'aktif')->get();
-
-        $kasBesar = KasBesar::orderBy('id', 'desc')->first();
-        $monthName = Carbon::createFromDate($ds['tahun'], $ds['bulan'], 1)->locale('id')->monthName;
-
-        $totalGajiSistem = 0;
-
+        $period = $this->period($request);
+        $this->ensurePeriodAvailable($period);
         try {
-            DB::beginTransaction();
+            $cash = Cache::lock('payroll-generation', 300)->get(function () use ($period): KasBesar {
+                return DB::transaction(function () use ($period): KasBesar {
+                    $this->ensurePeriodAvailable($period);
+                    $kasBesar = KasBesar::orderByDesc('id')->lockForUpdate()->first();
+                    $data = $this->payroll->employeesForPeriod($period->month, $period->year, true);
+                    $direksi = $this->payroll->directorsForPeriod($period->month, $period->year, true);
+                    if ($data->isEmpty() && $direksi->isEmpty()) {
+                        throw ValidationException::withMessages(['bulan' => 'Tidak ada pegawai atau direksi untuk periode gaji ini.']);
+                    }
+                    $rekap = RekapGaji::create([
+                        'uraian' => 'Gaji Bulan '.$period->copy()->locale('id')->monthName.' Tahun '.$period->year,
+                        'bulan' => $period->month, 'tahun' => $period->year, 'total' => 0,
+                    ]);
+                    $total = 0;
+                    foreach ($direksi->concat($data) as $person) {
+                        $calc = $this->payroll->calculateComponent($person);
+                        $payments = $person instanceof Karyawan ? $this->payroll->kasbonPayments($person, $period->month, $period->year) : [];
+                        $kasbon = array_sum(array_column($payments, 'amount'));
+                        $sisaGaji = $calc['pendapatan_bersih'] - $kasbon;
+                        if ($sisaGaji < 0) {
+                            throw ValidationException::withMessages(['bulan' => 'Potongan kasbon '.$person->nama.' melebihi pendapatan bersih. Periksa kasbon sebelum menyimpan gaji.']);
+                        }
+                        $total += $sisaGaji;
+                        RekapGajiDetail::create([
+                            'rekap_gaji_id' => $rekap->id,
+                            'nik' => $person instanceof Karyawan ? $person->kode.sprintf('%03d', $person->nomor) : 'Direksi',
+                            'nama' => $person->nama, 'jabatan' => $person instanceof Karyawan ? ($person->jabatan?->nama ?? '—') : $person->jabatan,
+                            'gaji_pokok' => $person->gaji_pokok, 'tunjangan_jabatan' => $person->tunjangan_jabatan, 'tunjangan_keluarga' => $person->tunjangan_keluarga,
+                            'bpjs_tk' => $calc['bpjs_tk'], 'bpjs_k' => $calc['bpjs_k'], 'potongan_bpjs_tk' => $calc['pot_tk'], 'potongan_bpjs_kesehatan' => $calc['pot_k'],
+                            'pendapatan_kotor' => $calc['pendapatan_kotor'], 'pendapatan_bersih' => $calc['pendapatan_bersih'], 'kasbon' => $kasbon, 'sisa_gaji_dibayar' => $sisaGaji,
+                            'transfer_ke' => $person->nama_rekening, 'bank' => $person->bank, 'no_rekening' => $person->no_rekening,
+                        ]);
+                        foreach ($payments as $payment) {
+                            $loan = $payment['loan'];
+                            $remaining = (int) $loan->sisa_kas - $payment['amount'];
+                            $loan->update(['total_bayar' => (int) $loan->total_bayar + $payment['amount'], 'sisa_kas' => $remaining, 'lunas' => $remaining === 0]);
+                        }
+                    }
+                    if (! $kasBesar || $kasBesar->saldo < $total) {
+                        throw ValidationException::withMessages(['bulan' => 'Saldo Kas Besar Tidak Cukup']);
+                    }
+                    $rekap->update(['total' => $total]);
 
-            // Simpan Header Rekap Gaji (Total diupdate setelah loop selesai)
-            $rekap = RekapGaji::create([
-                'uraian' => "Gaji Bulan ".$monthName." Tahun ".$ds['tahun'],
-                'bulan' => $ds['bulan'],
-                'tahun' => $ds['tahun'],
-                'total' => 0,
-            ]);
-
-            // 1. Proses Direksi
-            foreach ($direksi as $d) {
-                $calc = $this->payroll->calculateComponent($d);
-                $totalGajiSistem += $calc['pendapatan_bersih'];
-
-                RekapGajiDetail::create([
-                    'rekap_gaji_id' => $rekap->id,
-                    'nik' => "Direksi",
-                    'nama' => $d->nama,
-                    'jabatan' => $d->jabatan,
-                    'gaji_pokok' => $d->gaji_pokok,
-                    'tunjangan_jabatan' => $d->tunjangan_jabatan,
-                    'tunjangan_keluarga' => $d->tunjangan_keluarga,
-                    'bpjs_tk' => $calc['bpjs_tk'],
-                    'bpjs_k' => $calc['bpjs_k'],
-                    'potongan_bpjs_tk' => $calc['pot_tk'],
-                    'potongan_bpjs_kesehatan' => $calc['pot_k'],
-                    'pendapatan_kotor' => $calc['pendapatan_kotor'],
-                    'pendapatan_bersih' => $calc['pendapatan_bersih'],
-                    'kasbon' => 0,
-                    'sisa_gaji_dibayar' => $calc['pendapatan_bersih'],
-                    'transfer_ke' => $d->nama_rekening,
-                    'bank' => $d->bank,
-                    'no_rekening' => $d->no_rekening,
-                ]);
+                    return KasBesar::create([
+                        'uraian' => $rekap->uraian, 'tanggal' => now()->toDateString(), 'nominal_transaksi' => $total, 'jenis_transaksi_id' => 2,
+                        'saldo' => $kasBesar->saldo - $total, 'modal_investor_terakhir' => $kasBesar->modal_investor_terakhir,
+                        'transfer_ke' => 'Msng2 Karyawan', 'bank' => 'BCA', 'no_rekening' => '-',
+                    ]);
+                });
+            });
+            if (! $cash) {
+                return back()->with('error', 'Pembuatan gaji sedang diproses. Tunggu sebentar lalu muat ulang halaman.');
             }
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            report($exception);
 
-            // 2. Proses Karyawan
-            foreach ($data as $k) {
-                $calc = $this->payroll->calculateComponent($k);
-                $kasbon = $this->payroll->calculateKasbon($k, $ds['bulan'], $ds['tahun']);
-                $sisaGaji = $calc['pendapatan_bersih'] - $kasbon;
-                $totalGajiSistem += $sisaGaji;
-
-                RekapGajiDetail::create([
-                    'rekap_gaji_id' => $rekap->id,
-                    'nik' => $k->kode.sprintf("%03d", $k->nomor),
-                    'nama' => $k->nama,
-                    'jabatan' => $k->jabatan->nama,
-                    'gaji_pokok' => $k->gaji_pokok,
-                    'tunjangan_jabatan' => $k->tunjangan_jabatan,
-                    'tunjangan_keluarga' => $k->tunjangan_keluarga,
-                    'bpjs_tk' => $calc['bpjs_tk'],
-                    'bpjs_k' => $calc['bpjs_k'],
-                    'potongan_bpjs_tk' => $calc['pot_tk'],
-                    'potongan_bpjs_kesehatan' => $calc['pot_k'],
-                    'pendapatan_kotor' => $calc['pendapatan_kotor'],
-                    'pendapatan_bersih' => $calc['pendapatan_bersih'],
-                    'kasbon' => $kasbon,
-                    'sisa_gaji_dibayar' => $sisaGaji,
-                    'transfer_ke' => $k->nama_rekening,
-                    'bank' => $k->bank,
-                    'no_rekening' => $k->no_rekening,
-                ]);
-
-                // Update status pelunasan kasbon
-                $this->updateKasbonStatus($k, $ds['bulan'], $ds['tahun']);
-            }
-
-            // Validasi Saldo Kas Besar
-            if (!$kasBesar || $kasBesar->saldo < $totalGajiSistem) {
-                throw new \Exception('Saldo Kas Besar Tidak Cukup');
-            }
-
-            // Update Total di Header Rekap
-            $rekap->update(['total' => $totalGajiSistem]);
-
-            // Simpan Transaksi Kas Besar
-            $storeKasBesar = KasBesar::create([
-                'uraian' => $rekap->uraian,
-                'tanggal' => date('Y-m-d'),
-                'nominal_transaksi' => $totalGajiSistem,
-                'jenis_transaksi_id' => 2,
-                'saldo' => $kasBesar->saldo - $totalGajiSistem,
-                'modal_investor_terakhir' => $kasBesar->modal_investor_terakhir,
-                'transfer_ke' => "Msng2 Karyawan",
-                'bank' => 'BCA',
-                'no_rekening' => '-',
-            ]);
-
-            DB::commit();
-
-            // Kirim Notifikasi WA (di luar commit agar jika gagal tidak rollback data gaji)
-            $this->sendWaNotification($totalGajiSistem, $storeKasBesar);
-
-            return redirect()->route('billing.index')->with('success', 'Form Gaji Berhasil Dibuat');
-
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            Log::error("Payroll Error: " . $th->getMessage());
-            return redirect()->back()->with('error', $th->getMessage());
+            return back()->with('error', 'Gaji gagal disimpan. Tidak ada perubahan data; silakan coba kembali.');
         }
+        $this->sendWaNotification((int) $cash->nominal_transaksi, $cash);
+
+        return to_route('billing.index')->with('success', 'Form Gaji Berhasil Dibuat');
     }
 
-    private function updateKasbonStatus($karyawan, $bulan, $tahun)
-    {
-        // Update Kasbon Cicilan
-        $cicilan = $karyawan->kas_bon_cicilan->where('lunas', 0)->first();
-        if ($cicilan) {
-            $mulai = Carbon::createFromDate($cicilan->mulai_tahun, $cicilan->mulai_bulan, 1);
-            $sekarang = Carbon::createFromDate($tahun, $bulan, 1);
-
-            if ($sekarang->greaterThanOrEqualTo($mulai)) {
-                $nominal = $cicilan->cicilan_nominal;
-                $sisa = $cicilan->sisa_kas - $nominal;
-                $cicilan->update([
-                    'total_bayar' => $cicilan->total_bayar + $nominal,
-                    'sisa_kas' => $sisa,
-                    'lunas' => $sisa <= 0 ? 1 : 0
-                ]);
-            }
-        }
-
-        // Update Kasbon Biasa (Lunas Sekaligus)
-        $kasbons = $karyawan->kas_bon->where('lunas', 0);
-        foreach ($kasbons as $k) {
-            $k->update([
-                'total_bayar' => $k->total_bayar + $k->nominal,
-                'sisa_kas' => 0,
-                'lunas' => 1
-            ]);
-        }
-    }
-
-    private function sendWaNotification($total, $kasBesar)
+    private function sendWaNotification(int $total, KasBesar $kasBesar): void
     {
         try {
-            $dbWa = new GroupWa();
+            $dbWa = new GroupWa;
             $group = $dbWa->where('untuk', 'kas-besar')->first();
 
-            if (!$group) return;
+            if (! $group) {
+                return;
+            }
 
-            $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                         "*Form Gaji Karyawan*\n".
                         "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                        "Nilai :  *Rp. ".number_format($total, 0, ',', '.')."*\n\n".
+                        'Nilai :  *Rp. '.number_format($total, 0, ',', '.')."*\n\n".
                         "Ditransfer ke rek:\n\n".
                         "Nama     : Masing2 Karyawan\n\n".
                         "==========================\n".
                         "Sisa Saldo Kas Besar : \n".
-                        "Rp. ".number_format($kasBesar->saldo, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasBesar->saldo, 0, ',', '.')."\n\n".
                         "Total Modal Investor : \n".
-                        "Rp. ".number_format($kasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
+                        'Rp. '.number_format($kasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
                         "Terima kasih 🙏🙏🙏\n";
 
             $dbWa->sendWa($group->nama_group, $pesan);
-        } catch (\Exception $e) {
-            Log::warning("WA Notifikasi Gagal: " . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::warning('WA Notifikasi Gagal: '.$e->getMessage());
         }
     }
 
-    public function previewPdf(Request $request)
+    public function previewPdf(Request $request): Response
     {
-        // Ambil data yang sama dengan index
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
-        
-        $monthName = Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->monthName;
+        $period = $this->period($request);
+        $this->ensurePeriodAvailable($period);
 
-        $data = Karyawan::where('status', 'aktif')->with(['jabatan', 'kas_bon', 'kas_bon_cicilan'])->get();
-        $direksi = Direksi::where('status', 'aktif')->get();
-
-        $pdf = Pdf::loadview('billing.gaji.pdf', [
-            'data' => $data,
-            'direksi' => $direksi,
-            'bulan' => $bulan,
-            'monthName' => $monthName,
-            'tahun' => $tahun,
-            'payroll' => $this->payroll,
-            'is_preview' => true
-        ])->setPaper('a4', 'landscape'); // Format Landscape wajib karena tabel lebar
-
-        return $pdf->stream('Preview_Gaji_'.$monthName.'_'.$tahun.'.pdf');
+        return Pdf::loadView('billing.gaji.pdf', [...$this->previewData($period), 'is_preview' => true])
+            ->setPaper('a4', 'landscape')->stream('Preview_Gaji_'.$period->format('m_Y').'.pdf');
     }
 
-    public function previewExcel(Request $request)
+    public function previewExcel(Request $request): BinaryFileResponse
     {
-        // Ambil angka bulan dari request, jangan dikonversi ke nama bulan dulu
-        $bulanAngka = $request->bulan;
-        $tahun = $request->tahun;
+        $period = $this->period($request);
+        $this->ensurePeriodAvailable($period);
 
-        return Excel::download(
-            new \App\Exports\GajiPreviewExport($bulanAngka, $tahun, $this->payroll),
-            'Preview_Gaji_'.$bulanAngka.'_'.$tahun.'.xlsx'
-        );
+        return Excel::download(new GajiPreviewExport($period->month, $period->year, $this->payroll), 'Preview_Gaji_'.$period->format('m_Y').'.xlsx');
     }
-    // public function index(Request $request)
-    // {
-    //     $request->validate([
-    //         'bulan' => 'required',
-    //         'tahun' => 'required',
-    //     ]);
-
-    //     // check if bulan > month now
-    //     if ($request->bulan > date('m')) {
-    //         return redirect()->route('billing.index')->with('error', 'Form Gaji Bulan ini sudah di buat!!');
-    //     }
-
-    //     $check = RekapGaji::where('bulan', $request->bulan)->whereYear('tahun', $request->tahun)->first();
-
-    //     if ($check) {
-    //         return redirect()->route('billing.index')->with('error', 'Form Gaji Bulan Ini Sudah Dibuat');
-    //     }
-    //     // monthName from $request->bulan
-    //     $month = Carbon::create()->month($request->bulan)->locale('id')->monthName;
-
-    //     $data = Karyawan::where('status', 'aktif')->get();
-    //     $direksi = Direksi::where('status', 'aktif')->get();
-
-    //     return view('billing.gaji.index', [
-    //         'data' => $data,
-    //         'direksi' => $direksi,
-    //         'month' => $month,
-    //         'bulan' => $request->bulan,
-    //         'tahun' => $request->tahun,
-    //     ]);
-    // }
-
-    // public function store(Request $request)
-    // {
-
-    //     $ds = $request->validate([
-    //         'bulan' => 'required',
-    //         'tahun' => 'required',
-    //         'total' => 'required',
-    //     ]);
-
-    //     $data = Karyawan::where('status', 'aktif')->get();
-    //     $direksi = Direksi::where('status', 'aktif')->get();
-
-    //     $kasBesar = KasBesar::orderBy('id', 'desc')->first();
-    //     // dd($ds['total'], $kasBesar->saldo);
-    //     if ($kasBesar == null || $kasBesar->saldo < $ds['total']) {
-    //         return redirect()->back()->with('error', 'Saldo Kas Besar Tidak Cukup');
-    //     }
-    //     $month = Carbon::create()->month($ds['bulan'])->locale('id')->monthName;
-    //     $tahun = $ds['tahun'];
-
-    //     try {
-
-    //         DB::beginTransaction();
-
-    //         $rekap = RekapGaji::create([
-    //             'uraian' => "Gaji Bulan ".$month." Tahun ".$tahun,
-    //             'bulan' => $ds['bulan'],
-    //             'tahun' => $tahun,
-    //             'total' => $ds['total'],
-    //         ]);
-
-    //         foreach ($direksi as $d) {
-    //             $bpjs_tk_direksi = 0;
-    //             $bpjs_k_direksi = 0;
-    //             $potongan_bpjs_tk_direksi = 0;
-    //             $potongan_bpjs_kesehatan_direksi = 0;
-    //             $pendapatan_kotor_direksi = 0;
-    //             $pendapatan_bersih_direksi = 0;
-
-    //             $gapokPlusTunjanganDir = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga;
-    //             $bpjs_tk_direksi = $d->apa_bpjs_tk == 1 ? $gapokPlusTunjanganDir * 0.0489 : 0;
-    //             $potongan_bpjs_tk_direksi = $d->apa_bpjs_tk == 1 ? $gapokPlusTunjanganDir * 0.02 : 0;
-    //             $bpjs_k_direksi = $d->apa_bpjs_kesehatan == 1 ? $gapokPlusTunjanganDir * 0.04 : 0;
-    //             $potongan_bpjs_kesehatan_direksi = $d->apa_bpjs_kesehatan == 1 ? $gapokPlusTunjanganDir * 0.01 : 0;
-
-    //             $pendapatan_kotor_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga + $bpjs_tk_direksi + $bpjs_k_direksi;
-    //             $pendapatan_bersih_direksi = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga - $potongan_bpjs_tk_direksi - $potongan_bpjs_kesehatan_direksi;
-
-    //             RekapGajiDetail::create([
-    //                 'rekap_gaji_id' => $rekap->id,
-    //                 'nik' => "Direksi",
-    //                 'nama' => $d->nama,
-    //                 'jabatan' => $d->jabatan,
-    //                 'gaji_pokok' => $d->gaji_pokok,
-    //                 'tunjangan_jabatan' => $d->tunjangan_jabatan,
-    //                 'tunjangan_keluarga' => $d->tunjangan_keluarga,
-    //                 'bpjs_tk' => $bpjs_tk_direksi,
-    //                 'bpjs_k' => $bpjs_k_direksi,
-    //                 'potongan_bpjs_tk' => $potongan_bpjs_tk_direksi,
-    //                 'potongan_bpjs_kesehatan' => $potongan_bpjs_kesehatan_direksi,
-    //                 'pendapatan_kotor' => $pendapatan_kotor_direksi,
-    //                 'pendapatan_bersih' => $pendapatan_bersih_direksi,
-    //                 'kasbon' => 0,
-    //                 'sisa_gaji_dibayar' => $pendapatan_bersih_direksi,
-    //                 'transfer_ke' => $d->nama_rekening,
-    //                 'bank' => $d->bank,
-    //                 'no_rekening' => $d->no_rekening,
-    //             ]);
-    //         }
-
-    //         foreach ($data as $d) {
-
-    //             $bpjs_tk = 0;
-    //             $bpjs_k = 0;
-    //             $potongan_bpjs_tk = 0;
-    //             $potongan_bpjs_kesehatan = 0;
-    //             $pendapatan_kotor = 0;
-    //             $pendapatan_bersih = 0;
-
-    //             $gapokPlusTunjangan = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga;
-    //             $bpjs_tk = $d->apa_bpjs_tk == 1 ? $gapokPlusTunjangan * 0.0489 : 0;
-    //             $potongan_bpjs_tk = $d->apa_bpjs_tk == 1 ? $gapokPlusTunjangan * 0.02 : 0;
-    //             $bpjs_k = $d->apa_bpjs_kesehatan == 1 ? $gapokPlusTunjangan * 0.04 : 0;
-    //             $potongan_bpjs_kesehatan = $d->apa_bpjs_kesehatan == 1 ? $gapokPlusTunjangan* 0.01 : 0;
-
-    //             $pendapatan_kotor = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga + $bpjs_tk + $bpjs_k;
-    //             $pendapatan_bersih = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga - $potongan_bpjs_tk - $potongan_bpjs_kesehatan;
-
-    //             $kasbon_cicil = 0;
-
-    //             $cicilan = $d->kas_bon_cicilan->where('lunas', 0)->first();
-    //                 // create tanggal from $cicilan->mulai_bulan and $cicilan->mulai_tahun
-    //             if ($cicilan) {
-
-    //                 $mulai = $cicilan->mulai_tahun.'-'.$cicilan->mulai_bulan.'-01';
-
-    //                 $mulai = date('Y-m-d', strtotime($mulai));
-    //                 // check if $mulai month and year is > from now
-    //                 $now = date('Y-m-d');
-
-    //                 if($mulai < $now){
-    //                     $kasbon_cicil = $d->kas_bon_cicilan->where('lunas', 0)->first()->cicilan_nominal;
-    //                 }
-
-    //             }
-
-    //             $kasbon = $d->kas_bon->where('lunas', 0)->sum('nominal');
-
-    //             $total_kasbon = $kasbon_cicil + $kasbon;
-
-    //             RekapGajiDetail::create([
-    //                 'rekap_gaji_id' => $rekap->id,
-    //                 'nik' => $d->kode.sprintf("%03d", $d->nomor),
-    //                 'nama' => $d->nama,
-    //                 'jabatan' => $d->jabatan->nama,
-    //                 'gaji_pokok' => $d->gaji_pokok,
-    //                 'tunjangan_jabatan' => $d->tunjangan_jabatan,
-    //                 'tunjangan_keluarga' => $d->tunjangan_keluarga,
-    //                 'bpjs_tk' => $bpjs_tk,
-    //                 'bpjs_k' => $bpjs_k,
-    //                 'potongan_bpjs_tk' => $potongan_bpjs_tk,
-    //                 'potongan_bpjs_kesehatan' => $potongan_bpjs_kesehatan,
-    //                 'pendapatan_kotor' => $pendapatan_kotor,
-    //                 'pendapatan_bersih' => $pendapatan_bersih,
-    //                 'kasbon' => $total_kasbon,
-    //                 'sisa_gaji_dibayar' => $pendapatan_bersih-$total_kasbon,
-    //                 'transfer_ke' => $d->nama_rekening,
-    //                 'bank' => $d->bank,
-    //                 'no_rekening' => $d->no_rekening,
-    //             ]);
-
-    //             if ($kasbon_cicil > 0) {
-
-    //                 $rekapCicilan = KasBonCicilan::where('lunas', 0)->where('karyawan_id', $d->id)->first();
-
-    //                 $update = $rekapCicilan->update([
-    //                     'total_bayar' => $rekapCicilan->total_bayar + $kasbon_cicil,
-    //                     'sisa_kas' => $rekapCicilan->sisa_kas - $kasbon_cicil,
-    //                     'lunas' => $rekapCicilan->sisa_kas - $kasbon_cicil == 0 ? 1 : 0,
-    //                 ]);
-    //             }
-
-    //             // update kas bon where lunas = 0 and karyawan_id = $d->id and update total_bayar
-    //             $kasbon = KasBon::where('lunas', 0)->where('karyawan_id', $d->id)->get();
-
-    //             foreach ($kasbon as $k) {
-    //                 $update = $k->update([
-    //                     'total_bayar' => $k->total_bayar + $k->nominal,
-    //                     'sisa_kas' => $k->sisa_kas - $k->nominal,
-    //                     'lunas' => $k->sisa_kas - $k->nominal == 0 ? 1 : 0,
-    //                 ]);
-
-    //             }
-
-    //         }
-
-    //         $arrayKasBesar['uraian'] = "Gaji Bulan ".$month." ".$tahun;
-    //         $arrayKasBesar['tanggal'] = date('Y-m-d');
-    //         $arrayKasBesar['nominal_transaksi'] = $ds['total'];
-    //         $arrayKasBesar['jenis_transaksi_id'] = 2;
-    //         $arrayKasBesar['saldo'] = $kasBesar->saldo - $ds['total'];
-    //         $arrayKasBesar['modal_investor_terakhir'] = $kasBesar->modal_investor_terakhir;
-    //         $arrayKasBesar['transfer_ke'] = "Msng2 Karyawan";
-    //         $arrayKasBesar['bank'] = 'BCA';
-    //         $arrayKasBesar['no_rekening'] = '-';
-
-    //         $storeKasBesar = KasBesar::create($arrayKasBesar);
-
-    //         DB::commit();
-
-    //     } catch (\Throwable $th) {
-    //         DB::rollBack();
-    //         return redirect()->back()->with('error', 'Terjadi Kesalahan');
-    //     }
-
-    //     $dbWa = new GroupWa();
-
-    //     $group = $dbWa->where('untuk', 'kas-besar')->first();
-
-    //     $pesan =    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-    //                 "*Form Gaji Karyawan*\n".
-    //                 "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-    //                 "Nilai :  *Rp. ".number_format($ds['total'], 0, ',', '.')."*\n\n".
-    //                 "Ditransfer ke rek:\n\n".
-    //                 "Nama     : Masing2 Karyawan\n\n".
-    //                 "==========================\n".
-    //                 "Sisa Saldo Kas Besar : \n".
-    //                 "Rp. ".number_format($storeKasBesar->saldo, 0, ',', '.')."\n\n".
-    //                 "Total Modal Investor : \n".
-    //                 "Rp. ".number_format($storeKasBesar->modal_investor_terakhir, 0, ',', '.')."\n\n".
-    //                 "Terima kasih 🙏🙏🙏\n";
-
-    //     $send = $dbWa->sendWa($group->nama_group, $pesan);
-
-    //     return redirect()->route('billing.index')->with('success', 'Form Gaji Berhasil Dibuat');
-
-    // }
 }

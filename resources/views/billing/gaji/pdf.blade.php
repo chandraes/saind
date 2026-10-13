@@ -70,7 +70,7 @@
             @foreach(array_merge($direksi->all(), $data->all()) as $index => $item)
                 @php
                     $res = $payroll->calculateComponent($item);
-                    $kasbon = isset($item->kode) ? $payroll->calculateKasbon($item, $bulan, $tahun) : 0;
+                    $kasbon = $item instanceof \App\Models\Karyawan ? $payroll->calculateKasbon($item, $bulan, $tahun) : 0;
 
                     $pKotor = round($res['pendapatan_kotor']);
                     $pBersih = round($res['pendapatan_bersih']);
@@ -87,7 +87,7 @@
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>{{ $item->nama }}</td>
-                    <td>{{ $item->jabatan->nama ?? $item->jabatan }}</td>
+                    <td>{{ $item instanceof \App\Models\Karyawan ? ($item->jabatan?->nama ?? '—') : $item->jabatan }}</td>
                     <td class="text-end">{{ number_format($item->gaji_pokok, 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($item->tunjangan_jabatan, 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($item->tunjangan_keluarga, 0, ',', '.') }}</td>
