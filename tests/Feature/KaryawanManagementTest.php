@@ -53,6 +53,20 @@ class KaryawanManagementTest extends TestCase
         return $actor;
     }
 
+    #[TestWith([false])]
+    #[TestWith([true])]
+    public function test_attendance_integration_button_follows_enabled_configuration(bool $enabled): void
+    {
+        $this->login();
+        config(['attendance.enabled' => $enabled]);
+        $response = $this->get(route('karyawan.index'))->assertOk();
+        if ($enabled) {
+            $response->assertSee('Integrasi Absensi')->assertSee(route('attendance-integration.index'));
+        } else {
+            $response->assertDontSee('Integrasi Absensi')->assertDontSee(route('attendance-integration.index'));
+        }
+    }
+
     private function payload(array $attributes = []): array
     {
         return array_merge([
