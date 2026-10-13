@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AkiGantiController;
 use App\Http\Controllers\AsistenUserController;
+use App\Http\Controllers\AttendanceIntegrationController;
 use App\Http\Controllers\BanController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\BbmStoringController;
@@ -335,6 +336,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::resource('direksi', DireksiController::class);
 
+        Route::get('attendance-integration', [AttendanceIntegrationController::class, 'index'])->name('attendance-integration.index');
+        Route::post('attendance-integration/sync', [AttendanceIntegrationController::class, 'sync'])->middleware('throttle:6,1')->name('attendance-integration.sync');
         Route::resource('karyawan', KaryawanController::class);
         Route::post('karyawan/jabatan-store', [KaryawanController::class, 'jabatan_store'])->name('karyawan.jabatan-store');
         Route::patch('karyawan/jabatan-update/{jabatan}', [KaryawanController::class, 'jabatan_update'])->name('karyawan.jabatan-update');
@@ -355,6 +358,7 @@ Route::group(['middleware' => ['auth']], function () {
             Route::post('/{customer}/ubah-status', [CustomerController::class, 'ubah_status'])->name('customer.ubah-status');
         });
 
+        Route::get('pengguna/pilihan', [UserController::class, 'options'])->name('pengguna.options');
         Route::resource('pengguna', UserController::class);
 
         Route::resource('sponsor', SponsorController::class)->only([

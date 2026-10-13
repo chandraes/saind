@@ -7,7 +7,7 @@
         </tr>
         <tr>
             <th colspan="14" style="text-align: center; font-size: 12pt; font-weight: bold;">
-                Periode: {{ Carbon\Carbon::create()->month($bulan)->locale('id')->monthName }} {{ $tahun }}
+                Periode: {{ Carbon\Carbon::create($tahun, $bulan, 1)->locale('id')->monthName }} {{ $tahun }}
             </th>
         </tr>
         <tr></tr> {{-- Baris Kosong --}}
@@ -39,7 +39,7 @@
             @php
                 $res = $payroll->calculateComponent($item);
                 // Tetap menggunakan $bulan (integer) untuk kalkulasi agar tidak OutOfRangeException
-                $kasbon = isset($item->kode) ? $payroll->calculateKasbon($item, $bulan, $tahun) : 0;
+                $kasbon = $item instanceof \App\Models\Karyawan ? $payroll->calculateKasbon($item, $bulan, $tahun) : 0;
                 $sisa = $res['pendapatan_bersih'] - $kasbon;
 
                 // Akumulasi Grand Total
@@ -58,7 +58,7 @@
             <tr>
                 <td style="border: 1pt solid black; text-align: center;">{{ $index + 1 }}</td>
                 <td style="border: 1pt solid black;">{{ $item->nama }}</td>
-                <td style="border: 1pt solid black;">{{ $item->jabatan->nama ?? $item->jabatan }}</td>
+                <td style="border: 1pt solid black;">{{ $item instanceof \App\Models\Karyawan ? ($item->jabatan?->nama ?? '—') : $item->jabatan }}</td>
                 <td style="border: 1pt solid black; text-align: right;">{{ $item->gaji_pokok }}</td>
                 <td style="border: 1pt solid black; text-align: right;">{{ $item->tunjangan_jabatan }}</td>
                 <td style="border: 1pt solid black; text-align: right;">{{ $item->tunjangan_keluarga }}</td>

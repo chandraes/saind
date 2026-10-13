@@ -2,289 +2,254 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Karyawan;
+use App\Http\Requests\SaveKaryawanRequest;
 use App\Models\Jabatan;
+use App\Models\Karyawan;
 use App\Models\KasBon;
 use App\Models\KasBonCicilan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Ramsey\Uuid\Uuid;
+use App\Models\RekapGajiDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
+use Yajra\DataTables\Facades\DataTables;
 
 class KaryawanController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    public function index(Request $request): View|JsonResponse
     {
-        $status = $request->filled('status') ? $request->status : 'aktif';
-        $karyawans = Karyawan::with(['jabatan'])->where('status', $status)->get();
-        $jabatan = Jabatan::select('id', 'nama')->get();
+        $status = $request->input('status', 'aktif');
+        if (! in_array($status, ['aktif', 'nonaktif', 'semua'], true)) {
+            $status = 'aktif';
+        }
+        if (! $request->ajax()) {
+            return view('database.karyawan.index', ['jabatan' => Jabatan::orderBy('nama')->get(['id', 'nama']), 'status' => $status]);
+        }
+        $request->merge(['length' => min(100, max(1, $request->integer('length', 10))), 'start' => max(0, $request->integer('start')), 'columns' => []]);
+        $query = DB::table('karyawans')->leftJoin('jabatans', 'karyawans.jabatan_id', '=', 'jabatans.id')
+            ->select('karyawans.id', 'karyawans.nama', 'karyawans.nickname', 'karyawans.status', 'jabatans.nama as jabatan');
 
-        return view('database.karyawan.index', [
-            'karyawans' => $karyawans,
-            'jabatan' => $jabatan,
-            'status' => $status,
-        ]);
+        return DataTables::of($query)->filter(function (Builder $query) use ($request, $status): void {
+            if ($status !== 'semua') {
+                $query->where('karyawans.status', $status);
+            }
+            $search = mb_substr($request->string('search.value')->trim()->toString(), 0, 100);
+            if ($search !== '') {
+                $query->where(function (Builder $query) use ($search): void {
+                    foreach (['karyawans.nama', 'karyawans.nickname', 'jabatans.nama'] as $column) {
+                        $query->orWhere($column, 'like', '%'.$search.'%');
+                    }
+                });
+            }
+        })->order(function (Builder $query) use ($request): void {
+            $columns = [1 => 'karyawans.nama', 2 => 'karyawans.nickname', 3 => 'jabatans.nama', 4 => 'karyawans.status'];
+            $query->orderBy($columns[$request->integer('order.0.column', 1)] ?? 'karyawans.nama', $request->input('order.0.dir') === 'desc' ? 'desc' : 'asc')->orderBy('karyawans.id');
+        })->addIndexColumn()->addColumn('action', fn (object $employee): string => view('database.karyawan.actions', compact('employee'))->render())->rawColumns(['action'])->toJson();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View
     {
-        $jabatan = Jabatan::select('id', 'nama')->get();
-
-        return view('database.karyawan.create', [
-            'jabatan' => $jabatan,
-        ]);
+        return view('database.karyawan.create', ['jabatan' => Jabatan::orderBy('nama')->get(['id', 'nama']), 'karyawan' => new Karyawan, 'photos' => ['foto_ktp' => null, 'foto_diri' => null]]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(SaveKaryawanRequest $request): JsonResponse|RedirectResponse
     {
-        $data = $request->validate([
-            'nama' => 'required',
-            'gaji_pokok' => 'required',
-            'tunjangan_jabatan' => 'nullable',
-            'tunjangan_keluarga' => 'nullable',
-            'nickname' => 'required',
-            'jabatan_id' => 'required',
-            'nik' => 'required',
-            'npwp' => 'required',
-            'bpjs_tk' => 'required',
-            'bpjs_kesehatan' => 'required',
-            'tempat_lahir' => 'required',
-            'tanggal_lahir' => 'required',
-            'alamat' => 'required',
-            'no_hp' => 'required',
-            'no_wa' => 'required',
-            'bank' => 'required',
-            'no_rekening' => 'required',
-            'nama_rekening' => 'required',
-            'mulai_bekerja' => 'required',
-            'status' => 'required',
-            'apa_bpjs_tk' => 'nullable',
-            'apa_bpjs_kesehatan' => 'nullable',
-            'foto_ktp' => 'required|mimes:jpg,jpeg,png|max:10000',
-            'foto_diri' => 'required|mimes:jpg,jpeg,png|max:10000',
-        ]);
+        return $this->saveEmployee($request);
+    }
 
-        $last = Karyawan::latest()->orderBy('id', 'desc')->first();
+    public function show(Request $request, Karyawan $karyawan): View|Response
+    {
+        $karyawan->load('jabatan');
+        $dates = ['lahir' => $this->formatDate($karyawan->tanggal_lahir), 'mulai' => $this->formatDate($karyawan->mulai_bekerja)];
+        $photos = $this->photoPaths($karyawan);
+        if ($request->input('format') === 'html') {
+            return view('database.karyawan.detail', compact('karyawan', 'dates', 'photos'));
+        }
 
-        $data['nomor'] = $last ? $last->nomor + 1 : 1;
+        return Pdf::loadView('database.karyawan.show', compact('karyawan', 'dates', 'photos'))->setOption('isRemoteEnabled', false)->setPaper('a4', 'landscape')->stream('biodata-pegawai-'.$karyawan->id.'.pdf');
+    }
 
-        // $data['bank'] = "BCA";
-        $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
-        $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
-        $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
-        $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
-        $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
+    public function edit(Karyawan $karyawan): View
+    {
+        return view('database.karyawan.edit', ['karyawan' => $karyawan, 'jabatan' => Jabatan::orderBy('nama')->get(['id', 'nama']), 'photos' => $this->photoPaths($karyawan)]);
+    }
 
-        $data['created_by'] = auth()->user()->id;
+    public function update(SaveKaryawanRequest $request, Karyawan $karyawan): JsonResponse|RedirectResponse
+    {
+        return $this->saveEmployee($request, $karyawan);
+    }
 
-        DB::transaction(function () use ($data, $request) {
+    private function saveEmployee(SaveKaryawanRequest $request, ?Karyawan $employee = null): JsonResponse|RedirectResponse
+    {
+        $data = $request->validated();
+        foreach (['tunjangan_jabatan', 'tunjangan_keluarga'] as $field) {
+            $data[$field] = $data[$field] ?? 0;
+        }
+        foreach (['bpjs_tk', 'bpjs_kesehatan'] as $field) {
+            $data[$field] = $data[$field] ?? '-';
+        }
+        $newFiles = [];
+        $oldFiles = [];
+        try {
+            foreach (['foto_ktp', 'foto_diri'] as $field) {
+                unset($data[$field]);
+                if ($request->hasFile($field)) {
+                    $path = $request->file($field)->store('public/karyawan', 'local');
+                    if (! $path) {
+                        throw new RuntimeException('Penyimpanan foto pegawai gagal.');
+                    }
+                    $data[$field] = $path;
+                    $newFiles[] = $path;
+                }
+            }
+            DB::transaction(function () use ($data, $request, $employee, &$oldFiles): void {
+                $position = Jabatan::whereKey($data['jabatan_id'])->lockForUpdate()->first();
+                if (! $position) {
+                    throw ValidationException::withMessages(['jabatan_id' => 'Jabatan tidak tersedia. Pilih jabatan lainnya.']);
+                }
+                if ($employee) {
+                    $locked = Karyawan::whereKey($employee->id)->lockForUpdate()->firstOrFail();
+                    foreach (['foto_ktp', 'foto_diri'] as $field) {
+                        if (isset($data[$field]) && $locked->$field) {
+                            $oldFiles[] = $locked->$field;
+                        }
+                    }
+                    $locked->update(array_merge($data, ['updated_by' => $request->user()->id]));
+                } else {
+                    $last = Karyawan::orderByDesc('nomor')->lockForUpdate()->first(['nomor']);
+                    Karyawan::create(array_merge($data, ['nomor' => ($last?->nomor ?? 0) + 1, 'created_by' => $request->user()->id]));
+                }
+            });
+        } catch (Throwable $exception) {
+            $this->deletePhotos($newFiles);
+            if ($exception instanceof ValidationException) {
+                throw $exception;
+            }
+            report($exception);
 
+            return $this->failure($request, 'Data pegawai belum tersimpan. Silakan coba kembali.');
+        }
+        $this->deletePhotos($oldFiles);
 
-            $file_name_ktp = Uuid::uuid4().'- KTP - '. $data['nama']. '.' . $request->foto_ktp->extension();
-            $file_name_diri = Uuid::uuid4(). ' - Foto Diri '. $data['nama']. '.' . $request->foto_diri->extension();
+        return $this->success($request, $employee ? 'Pegawai berhasil diperbarui.' : 'Pegawai berhasil ditambahkan.');
+    }
 
-            $data['foto_ktp'] = $request->file('foto_ktp')->storeAs('public/karyawan', $file_name_ktp);
-            $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
+    public function destroy(Request $request, Karyawan $karyawan): JsonResponse|RedirectResponse
+    {
+        try {
+            DB::transaction(function () use ($karyawan): void {
+                $employee = Karyawan::whereKey($karyawan->id)->lockForUpdate()->firstOrFail();
+                if (KasBon::where('karyawan_id', $employee->id)->where('void', 0)->where('lunas', 0)->exists()) {
+                    throw ValidationException::withMessages(['karyawan' => 'Pegawai masih memiliki kasbon yang belum lunas.']);
+                }
+                if (KasBonCicilan::where('karyawan_id', $employee->id)->where('lunas', 0)->exists()) {
+                    throw ValidationException::withMessages(['karyawan' => 'Pegawai masih memiliki cicilan kasbon yang belum lunas.']);
+                }
+                if (KasBon::where('karyawan_id', $employee->id)->exists() || KasBonCicilan::where('karyawan_id', $employee->id)->exists() || RekapGajiDetail::where('karyawan_id', $employee->id)->exists()) {
+                    throw ValidationException::withMessages(['karyawan' => 'Pegawai memiliki riwayat keuangan. Ubah status menjadi nonaktif agar riwayat tetap tersimpan.']);
+                }
+                $employee->delete();
+                DB::afterCommit(fn () => $this->deletePhotos(array_filter([$employee->foto_ktp, $employee->foto_diri])));
+            });
+        } catch (ValidationException $exception) {
+            return $this->failure($request, $exception->validator->errors()->first());
+        } catch (Throwable $exception) {
+            report($exception);
 
-            Karyawan::create($data);
+            return $this->failure($request, 'Pegawai belum dapat dihapus. Silakan coba kembali.');
+        }
 
+        return $this->success($request, 'Pegawai berhasil dihapus.');
+    }
+
+    public function jabatan_store(Request $request): JsonResponse|RedirectResponse
+    {
+        $data = $request->validate(['nama_jabatan_tambah' => ['required', 'string', 'max:255', Rule::unique('jabatans', 'nama')]]);
+        Jabatan::create(['nama' => $data['nama_jabatan_tambah']]);
+
+        return $this->success($request, 'Jabatan berhasil ditambahkan.');
+    }
+
+    public function jabatan_update(Request $request, Jabatan $jabatan): JsonResponse|RedirectResponse
+    {
+        $data = $request->validate(['nama_jabatan' => ['required', 'string', 'max:255', Rule::unique('jabatans', 'nama')->ignore($jabatan->id)]]);
+        DB::transaction(function () use ($jabatan, $data): void {
+            $locked = Jabatan::whereKey($jabatan->id)->lockForUpdate()->firstOrFail();
+            $locked->update(['nama' => $data['nama_jabatan']]);
+            if (config('attendance.enabled')) {
+                Karyawan::where('jabatan_id', $locked->id)->chunkById(100, function ($employees): void {
+                    foreach ($employees as $employee) {
+                        $employee->save();
+                    }
+                });
+            }
         });
 
-        return redirect()->route('karyawan.index')->with('success', 'Karyawan berhasil ditambahkan');
-
+        return $this->success($request, 'Jabatan berhasil diperbarui.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Karyawan $karyawan)
+    public function jabatan_destroy(Request $request, Jabatan $jabatan): JsonResponse|RedirectResponse
     {
-        // make $karyawan->mulai_bekerja to Carbon ID
-        $karyawan->mulai_bekerja = Carbon::parse($karyawan->mulai_bekerja)->locale('id')->isoFormat('D MMMM YYYY');
-        $karyawan->tanggal_lahir = Carbon::parse($karyawan->tanggal_lahir)->locale('id')->isoFormat('D MMMM YYYY');
-
-
-
-        $pdf = PDF::loadview('database.karyawan.show', [
-            'karyawan' => $karyawan,
-        ])->setPaper('a4', 'landscape');
-
-        return $pdf->stream();
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Karyawan $karyawan)
-    {
-        $jabatan = Jabatan::select('id', 'nama')->get();
-
-        return view('database.karyawan.edit', [
-            'karyawan' => $karyawan,
-            'jabatan' => $jabatan,
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Karyawan $karyawan)
-    {
-        $data = $request->validate([
-            'nama' => 'required',
-            'nickname' => 'required',
-            'jabatan_id' => 'required',
-            'gaji_pokok' => 'required',
-            'tunjangan_jabatan' => 'required',
-            'tunjangan_keluarga' => 'required',
-            'nik' => 'required',
-            'npwp' => 'required',
-            'bpjs_tk' => 'required',
-            'bpjs_kesehatan' => 'required',
-            'tempat_lahir' => 'required',
-            'tanggal_lahir' => 'required',
-            'alamat' => 'required',
-            'no_hp' => 'required',
-            'no_wa' => 'required',
-            'bank' => 'required',
-            'no_rekening' => 'required',
-            'nama_rekening' => 'required',
-            'mulai_bekerja' => 'required',
-            'status' => 'required',
-            'apa_bpjs_tk' => 'nullable',
-            'apa_bpjs_kesehatan' => 'nullable',
-            'foto_ktp' => 'nullable|mimes:jpg,jpeg,png|max:10000',
-            'foto_diri' => 'nullable|mimes:jpg,jpeg,png|max:10000',
-        ]);
-
-        $data['bank'] = "BCA";
-
-        $data['updated_by'] = auth()->user()->id;
-        $data['apa_bpjs_tk'] = $request->filled('apa_bpjs_tk') ? 1 : 0;
-        $data['apa_bpjs_kesehatan'] = $request->filled('apa_bpjs_kesehatan') ? 1 : 0;
-        $data['gaji_pokok'] = str_replace('.', '', $data['gaji_pokok']);
-        $data['tunjangan_jabatan'] = str_replace('.', '', $data['tunjangan_jabatan']);
-        $data['tunjangan_keluarga'] = str_replace('.', '', $data['tunjangan_keluarga']);
-
-        DB::transaction(function () use ($data, $request, $karyawan) {
-
-            if ($request->hasFile('foto_ktp')) {
-                $file_name_ktp = Uuid::uuid4().'- KTP - '. $data['nama']. '.' . $request->foto_ktp->extension();
-                $data['foto_ktp'] = $request->file('foto_ktp')->storeAs('public/karyawan', $file_name_ktp);
-                $ktp_path = storage_path('app/'.$karyawan->foto_ktp);
-                unlink($ktp_path);
+        $deleted = DB::transaction(function () use ($jabatan): bool {
+            $locked = Jabatan::whereKey($jabatan->id)->lockForUpdate()->firstOrFail();
+            if ($locked->karyawan()->exists()) {
+                return false;
             }
+            $locked->delete();
 
-            if ($request->hasFile('foto_diri')) {
-                $file_name_diri = Uuid::uuid4(). ' - Foto Diri '. $data['nama']. '.' . $request->foto_diri->extension();
-                $data['foto_diri'] = $request->file('foto_diri')->storeAs('public/karyawan', $file_name_diri);
-                $diri_path = storage_path('app/'.$karyawan->foto_diri);
-                unlink($diri_path);
-            }
-
-            $karyawan->update($data);
-
+            return true;
         });
 
-        return redirect()->route('karyawan.index')->with('success', 'Karyawan berhasil diupdate');
+        return $deleted ? $this->success($request, 'Jabatan berhasil dihapus.') : $this->failure($request, 'Jabatan masih digunakan pegawai dan tidak dapat dihapus.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Karyawan $karyawan)
+    /** @param array<int, string> $paths */
+    private function deletePhotos(array $paths): void
     {
-       // Delete karyawan data and file
-       try {
-        DB::beginTransaction();
-
-        $ktp_path = storage_path('app/'.$karyawan->foto_ktp);
-        $diri_path = storage_path('app/'.$karyawan->foto_diri);
-
-
-
-        $kasbon = KasBon::where('karyawan_id', $karyawan->id)
-                ->where('void', 0)
-                ->where('lunas', 0)
-                ->first();
-
-        if ($kasbon) {
-            return redirect()->route('karyawan.index')->with('error', 'Karyawan gagal dihapus! Karyawan masih memiliki kasbon yang belum lunas');
+        foreach ($paths as $path) {
+            if (str_starts_with($path, 'public/karyawan/')) {
+                try {
+                    Storage::disk('local')->delete($path);
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+            }
         }
-
-        KasBon::where('karyawan_id', $karyawan->id)->delete();
-
-        $kasbonCicilan = KasBonCicilan::where('karyawan_id', $karyawan->id)
-                                    ->where('lunas', 0)
-                                    ->first();
-
-        if ($kasbonCicilan) {
-            return redirect()->route('karyawan.index')->with('error', 'Karyawan gagal dihapus! Karyawan masih memiliki cicilan kasbon yang belum lunas');
-        }
-
-        KasBonCicilan::where('karyawan_id', $karyawan->id)->delete();
-
-        if (file_exists($ktp_path)) {
-            unlink($ktp_path);
-        }
-
-        if (file_exists($diri_path)) {
-            unlink($diri_path);
-        }
-
-        $karyawan->delete();
-
-        DB::commit();
-
-       } catch (\Throwable $th) {
-              DB::rollBack();
-                return redirect()->route('karyawan.index')->with('error', 'Karyawan gagal dihapus! '.$th->getMessage());
-       }
-
-
-        return redirect()->route('karyawan.index')->with('success', 'Karyawan berhasil dihapus');
     }
 
-    public function jabatan_store(Request $request)
+    /** @return array<string, string|null> */
+    private function photoPaths(Karyawan $employee): array
     {
-        $data = $request->validate([
-            'nama_jabatan_tambah' => 'required',
-        ]);
+        $photos = [];
+        foreach (['foto_ktp', 'foto_diri'] as $field) {
+            $photos[$field] = $employee->$field && Storage::disk('local')->exists($employee->$field) ? Storage::disk('local')->path($employee->$field) : null;
+        }
 
-        Jabatan::create([
-            'nama' => $data['nama_jabatan_tambah'],
-        ]);
-
-        return redirect()->route('karyawan.index')->with('success', 'Jabatan berhasil ditambahkan');
+        return $photos;
     }
 
-    public function jabatan_update(Request $request, Jabatan $jabatan)
+    private function formatDate(?string $date): string
     {
-        $data = $request->validate([
-            'nama_jabatan' => 'required',
-        ]);
-
-        $jabatan->update([
-            'nama' => $data['nama_jabatan'],
-        ]);
-
-        return redirect()->route('karyawan.index')->with('success', 'Jabatan berhasil diupdate');
+        return $date ? Carbon::parse($date)->locale('id')->translatedFormat('d F Y') : '-';
     }
 
-    public function jabatan_destroy(Jabatan $jabatan)
+    private function success(Request $request, string $message): JsonResponse|RedirectResponse
     {
-        $jabatan->delete();
+        return $request->expectsJson() ? response()->json(['message' => $message, 'redirect' => route('karyawan.index')]) : redirect()->route('karyawan.index')->with('success', $message);
+    }
 
-        return redirect()->route('karyawan.index')->with('success', 'Jabatan berhasil dihapus');
+    private function failure(Request $request, string $message): JsonResponse|RedirectResponse
+    {
+        return $request->expectsJson() ? response()->json(['message' => $message], 422) : back()->withInput($request->except(['foto_ktp', 'foto_diri']))->with('error', $message);
     }
 }

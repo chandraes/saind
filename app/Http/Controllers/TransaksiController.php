@@ -31,7 +31,6 @@ use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\FilterOliRitaseService;
-use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -39,6 +38,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class TransaksiController extends Controller
@@ -378,68 +378,9 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function void_tagihan_store(Request $request, Transaksi $transaksi)
+    public function void_tagihan_store(Request $request, Transaksi $transaksi, FilterOliRitaseService $filterOliRitase): RedirectResponse
     {
-        $data = $request->validate([
-            'alasan' => 'required',
-        ]);
-
-        $data['void'] = 1;
-        $data['nota_muat'] = null;
-        $data['nota_bongkar'] = null;
-
-        $transaksi->update($data);
-
-        $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
-        $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
-
-        $store = KasUangJalan::create([
-            'void' => 1,
-            'kode_void' => 'UJ'.sprintf('%02d', $transaksi->kas_uang_jalan->nomor_uang_jalan),
-            'jenis_transaksi_id' => 1,
-            'nominal_transaksi' => $transaksi->kas_uang_jalan->nominal_transaksi,
-            'tanggal' => date('Y-m-d'),
-            'saldo' => $last->saldo + $transaksi->kas_uang_jalan->nominal_transaksi,
-            'transfer_ke' => substr($rek->nama_rekening, 0, 15),
-            'bank' => $rek->nama_bank,
-            'no_rekening' => $rek->nomor_rekening,
-        ]);
-
-        $vehicle = Vehicle::find($transaksi->kas_uang_jalan->vehicle_id);
-
-        if ($transaksi->nota_fisik == 0) {
-            if ($vehicle->do_count > 0) {
-                $vehicle->update([
-                    'do_count' => $vehicle->do_count - 1,
-                ]);
-            }
-        }
-
-        $group = GroupWa::where('untuk', 'kas-uang-jalan')->first();
-
-        $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                    "*Void Uang Jalan*\n".
-                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    '*UJ'.sprintf('%02d', $transaksi->kas_uang_jalan->nomor_uang_jalan)."*\n\n".
-                    'Nomor Lambung : '.$transaksi->kas_uang_jalan->vehicle->nomor_lambung."\n".
-                    'Vendor : '.$transaksi->kas_uang_jalan->vendor->nama."\n\n".
-                    'Tambang : '.$transaksi->kas_uang_jalan->customer->singkatan."\n".
-                    'Rute : '.$transaksi->kas_uang_jalan->rute->nama."\n\n".
-                    'Alasan : '.$data['alasan']."\n".
-                    'Nilai :  *Rp. '.number_format($transaksi->kas_uang_jalan->nominal_transaksi, 0, ',', '.').",-*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    'Bank     : '.$rek->nama_bank."\n".
-                    'Nama    : '.$rek->nama_rekening."\n".
-                    'No. Rek : '.$rek->nomor_rekening."\n\n".
-                    "==========================\n".
-                    "Sisa Saldo Kas Uang Jalan : \n".
-                    'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Terima kasih 🙏🙏🙏\n";
-
-        $send = new StarSender($group->nama_group, $pesan);
-        $res = $send->sendGroup();
-
-        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+        return $this->processVoid($request, $transaksi, $filterOliRitase);
     }
 
     public function void(Request $request, Transaksi $transaksi)
@@ -465,17 +406,20 @@ class TransaksiController extends Controller
 
     public function void_store(Request $request, Transaksi $transaksi, FilterOliRitaseService $filterOliRitase): RedirectResponse
     {
-        // 1. Ubah request->validate menjadi Validator::make manual
+        return $this->processVoid($request, $transaksi, $filterOliRitase);
+    }
+
+    private function processVoid(Request $request, Transaksi $transaksi, FilterOliRitaseService $filterOliRitase): RedirectResponse
+    {
         $validator = Validator::make($request->all(), [
-            'alasan' => 'required',
+            'alasan' => ['required', 'string', 'max:200'],
         ]);
 
         if ($validator->fails()) {
-            // Ganti 'billing.index' dengan nama route GET tempat halaman form Anda berada
             return redirect()->route('billing.index')
                 ->withErrors($validator)
                 ->withInput()
-                ->with('error', 'Alasan harus diisi!');
+                ->with('error', $validator->errors()->first('alasan'));
         }
 
         $data = $validator->validated();
@@ -488,13 +432,12 @@ class TransaksiController extends Controller
         $vehicle = $kuj->vehicle;
 
         if ($transaksi->void == 1) {
-            // 2. Ganti redirect()->back() menjadi redirect spesifik ke route GET
             return redirect()->route('billing.index')->with('error', 'Transaksi sudah di void sebelumnya!!');
         }
 
         try {
             DB::beginTransaction();
-            Vehicle::whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
+            $vehicle = Vehicle::whereKey($vehicle->id)->lockForUpdate()->firstOrFail();
             $transaksi = Transaksi::whereKey($transaksi->id)->lockForUpdate()->firstOrFail();
             if ($transaksi->void == 1) {
                 DB::rollBack();
@@ -504,8 +447,8 @@ class TransaksiController extends Controller
 
             $transaksi->update($data);
 
-            $last = KasUangJalan::latest('id')->first();
-            $rek = Rekening::where('untuk', 'kas-uang-jalan')->first();
+            $rek = Rekening::where('untuk', 'kas-uang-jalan')->lockForUpdate()->first();
+            $last = KasUangJalan::latest('id')->lockForUpdate()->first();
 
             $store = KasUangJalan::create([
                 'void' => 1,
@@ -536,16 +479,20 @@ class TransaksiController extends Controller
                 $vehicle->decrement('do_count');
             }
 
-            $cekUjDitahan = UjDitahanDetail::where('transaksi_id', $transaksi->id)->first();
+            $cekUjDitahan = UjDitahanDetail::where('transaksi_id', $transaksi->id)
+                ->where('jenis', 'masuk')->orderBy('id')->lockForUpdate()->first();
 
             if ($cekUjDitahan) {
-                $ujDitahan = $cekUjDitahan->ujDitahan;
+                $ujDitahan = $cekUjDitahan->ujDitahan()->lockForUpdate()->firstOrFail();
 
                 UjDitahanDetail::create([
                     'uj_ditahan_id' => $ujDitahan->id,
                     'jenis' => 'keluar',
                     'transaksi_id' => $transaksi->id,
-                    'driver_id' => $vehicle->driver_id,
+                    'driver_id' => $cekUjDitahan->driver_id,
+                    'bank' => $rek->nama_bank,
+                    'no_rekening' => $rek->nomor_rekening,
+                    'nama_rekening' => $rek->nama_rekening,
                     'nominal' => $cekUjDitahan->nominal,
                     'keterangan' => 'Void UJ'.sprintf('%02d', $kuj->nomor_uang_jalan).' - '.$data['alasan'],
                 ]);
@@ -558,7 +505,6 @@ class TransaksiController extends Controller
         } catch (\Throwable $th) {
             DB::rollBack();
 
-            // 3. Ganti redirect()->back() di catch block
             return redirect()->route('billing.index')->with('error', 'Terdapat Error pada saat menyimpan data!!'.$th->getMessage());
         }
 
@@ -566,7 +512,7 @@ class TransaksiController extends Controller
         // PENGIRIMAN WA
         // ==========================================
         try {
-            $dbWa = new GroupWa;
+            $dbWa = app(GroupWa::class);
             $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
             $nominalUjDitahan = 0;
@@ -595,37 +541,41 @@ class TransaksiController extends Controller
                             'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
                             "Terima kasih 🙏🙏🙏\n";
 
-                $dbWa->sendWa($group->nama_group, $pesan);
+                try {
+                    $dbWa->sendWa($group->nama_group, $pesan);
+                } catch (\Throwable $exception) {
+                    Log::warning('Notifikasi void kas uang jalan gagal.', ['transaksi_id' => $transaksi->id, 'error' => $exception->getMessage()]);
+                }
+            }
 
-                if ($cekUjDitahan) {
-                    $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                                "*Void UJ Ditahan*\n".
-                                "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                                '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n\n".
-                                'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
-                                'Vendor : '.$kuj->vendor->nama."\n\n".
-                                'Tambang : '.$kuj->customer->singkatan."\n".
-                                'Rute : '.$kuj->rute->nama."\n\n".
-                                'Alasan : '.$data['alasan']."\n".
-                                'Nilai :  *Rp. '.number_format($nominalUjDitahan, 0, ',', '.').",-*\n\n".
-                                "Ditransfer ke rek:\n\n".
-                                'Bank     : '.($rek->nama_bank ?? '-')."\n".
-                                'Nama    : '.($rek->nama_rekening ?? '-')."\n".
-                                'No. Rek : '.($rek->nomor_rekening ?? '-')."\n\n".
-                                "==========================\n".
-                                "Sisa Saldo Kas Uang Jalan : \n".
-                                'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
-                                "Terima kasih 🙏🙏🙏\n";
+            if ($cekUjDitahan) {
+                $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                            "*Void UJ Ditahan*\n".
+                            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                            '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n\n".
+                            'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
+                            'Vendor : '.$kuj->vendor->nama."\n\n".
+                            'Tambang : '.$kuj->customer->singkatan."\n".
+                            'Rute : '.$kuj->rute->nama."\n\n".
+                            'Alasan : '.$data['alasan']."\n".
+                            'Nilai :  *Rp. '.number_format($nominalUjDitahan, 0, ',', '.').",-*\n\n".
+                            "Ditransfer ke rek:\n\n".
+                            'Bank     : '.($rek->nama_bank ?? '-')."\n".
+                            'Nama    : '.($rek->nama_rekening ?? '-')."\n".
+                            'No. Rek : '.($rek->nomor_rekening ?? '-')."\n\n".
+                            "==========================\n".
+                            "Sisa Saldo Kas Uang Jalan : \n".
+                            'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
+                            "Terima kasih 🙏🙏🙏\n";
 
-                    $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
+                $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
 
-                    if ($groupUjDitahan) {
-                        $dbWa->sendWa($groupUjDitahan->nama_group, $pesan2);
-                    }
+                if ($groupUjDitahan) {
+                    $dbWa->sendWa($groupUjDitahan->nama_group, $pesan2);
                 }
             }
         } catch (\Throwable $th) {
-            // Biarkan berlalu tanpa error 500, catat saja ke log
+            Log::warning('Notifikasi void uang jalan gagal.', ['transaksi_id' => $transaksi->id, 'error' => $th->getMessage()]);
         }
 
         return redirect()->route('billing.index')->with('success', 'Berhasil menyimpan data!!');
