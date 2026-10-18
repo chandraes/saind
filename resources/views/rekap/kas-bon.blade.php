@@ -1,261 +1,65 @@
 @extends('layouts.app')
 @section('content')
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-12 text-center">
-            <h1><u>REKAP KASBON</u></h1>
-            <h1>{{$stringBulanNow}} {{$tahun}}</h1>
-        </div>
-    </div>
+@php($isCicilan = $filters['jenis'] === 'cicilan')
+<div class="container-fluid py-3" style="max-width:1600px">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4"><div><div class="small fw-bold text-success text-uppercase mb-1">Rekap · Pinjaman Pegawai</div><h2 class="fw-bold mb-1">Rekap Kasbon</h2><p class="text-muted mb-0">Pantau pinjaman, pembayaran, dan sisa utang pegawai.</p></div><div class="d-flex gap-2"><a href="{{ route('rekap.index') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Rekap</a>@unless($isCicilan)<a id="print-kasbon" href="{{ route('rekap.kas-bon.preview', $filters) }}" target="_blank" rel="noopener" class="btn btn-outline-success"><i class="fa fa-print me-1"></i> Cetak Potong Gaji</a>@endunless</div></div>
     @include('swal')
-    <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
-            <table class="table">
-                <tr class="text-center">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td><a href="{{route('rekap.index')}}"><img src="{{asset('images/rekap.svg')}}" alt="dokumen"
-                                width="30"> REKAP</a></td>
-                </tr>
-            </table>
-        </div>
+    <div class="d-flex flex-wrap gap-2 mb-4" aria-label="Jenis kasbon"><a class="btn {{ !$isCicilan ? 'btn-success' : 'btn-outline-success' }} rounded-pill px-4" href="{{ route('rekap.kas-bon', ['bulan' => $filters['bulan'], 'tahun' => $filters['tahun'], 'jenis' => 'potong']) }}" @if(!$isCicilan) aria-current="page" @endif>Potong Gaji</a><a class="btn {{ $isCicilan ? 'btn-success' : 'btn-outline-success' }} rounded-pill px-4" href="{{ route('rekap.kas-bon', ['bulan' => $filters['bulan'], 'tahun' => $filters['tahun'], 'jenis' => 'cicilan']) }}" @if($isCicilan) aria-current="page" @endif>Cicilan</a></div>
+    <div class="card border-0 shadow-sm rounded-4 mb-4"><div class="card-body p-4"><form method="get" action="{{ route('rekap.kas-bon') }}"><input type="hidden" name="jenis" value="{{ $filters['jenis'] }}"><div class="row g-3 align-items-end">
+        @unless($isCicilan)
+            <div class="col-sm-6 col-lg-2"><label for="bulan" class="form-label small fw-bold">Bulan transaksi</label><select class="form-select report-select" id="bulan" name="bulan">@foreach([1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $value => $label)<option value="{{ $value }}" @selected($filters['bulan'] === $value)>{{ $label }}</option>@endforeach</select></div>
+            <div class="col-sm-6 col-lg-2"><label for="tahun" class="form-label small fw-bold">Tahun</label><select class="form-select report-select" id="tahun" name="tahun">@foreach($years as $year)<option value="{{ $year }}" @selected($filters['tahun'] === (int) $year)>{{ $year }}</option>@endforeach</select></div>
+        @else
+            <input type="hidden" name="bulan" value="{{ $filters['bulan'] }}"><input type="hidden" name="tahun" value="{{ $filters['tahun'] }}">
+        @endunless
+        <div class="col-sm-6 {{ $isCicilan ? 'col-lg-5' : 'col-lg-3' }}"><label for="karyawan_id" class="form-label small fw-bold">Pegawai</label><select class="form-select" id="karyawan_id" name="karyawan_id"><option value="">Semua pegawai</option>@if($selectedEmployee)<option value="{{ $selectedEmployee->id }}" selected>{{ $selectedEmployee->nama }}</option>@endif</select></div>
+        <div class="col-sm-6 {{ $isCicilan ? 'col-lg-3' : 'col-lg-2' }}"><label for="status" class="form-label small fw-bold">Pelunasan</label><select class="form-select report-select" id="status" name="status">@foreach(['semua' => 'Semua status', 'belum' => 'Belum lunas', 'lunas' => 'Lunas'] as $value => $label)<option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>@endforeach</select></div>
+        <div class="{{ $isCicilan ? 'col-lg-4' : 'col-lg-3' }} d-flex gap-2"><button type="submit" class="btn btn-success flex-grow-1"><i class="fa fa-filter me-1"></i> Tampilkan</button><a class="btn btn-outline-secondary" href="{{ route('rekap.kas-bon', ['jenis' => $filters['jenis']]) }}">Reset</a></div>
+    </div></form></div></div>
+    <div class="row g-3 mb-4">
+        @foreach(['count' => 'Jumlah pinjaman', 'nominal' => 'Total pinjaman', 'paid' => 'Total dibayar', 'remaining' => 'Sisa kasbon'] as $key => $label)
+            <div class="col-6 col-xl-3"><div class="card border-0 shadow-sm rounded-4 h-100 {{ $key === 'remaining' ? 'bg-success text-white' : '' }}"><div class="card-body p-4"><div class="small mb-2 {{ $key === 'remaining' ? '' : 'text-muted' }}">{{ $label }}</div><div class="fs-4 fw-bold report-summary" data-summary="{{ $key }}">{{ $key === 'count' ? $summary[$key] : 'Rp '.number_format($summary[$key], 0, ',', '.') }}</div><div class="small mt-2 {{ $key === 'remaining' ? 'opacity-75' : 'text-muted' }}">{{ $isCicilan ? 'Semua periode · sesuai filter' : $periodLabel.' · sesuai filter' }}</div></div></div></div>
+        @endforeach
     </div>
-</div>
-<div class="container-fluid mt-5">
-    <form action="{{route('rekap.kas-bon')}}" method="get">
-        <div class="row">
-
-            <div class="col-md-3 mb-3">
-                <label for="bulan" class="form-label">Bulan</label>
-                <select class="form-select" name="bulan" id="bulan">
-                    <option value="1" {{$bulan=='01' ? 'selected' : '' }}>Januari</option>
-                    <option value="2" {{$bulan=='02' ? 'selected' : '' }}>Februari</option>
-                    <option value="3" {{$bulan=='03' ? 'selected' : '' }}>Maret</option>
-                    <option value="4" {{$bulan=='04' ? 'selected' : '' }}>April</option>
-                    <option value="5" {{$bulan=='05' ? 'selected' : '' }}>Mei</option>
-                    <option value="6" {{$bulan=='06' ? 'selected' : '' }}>Juni</option>
-                    <option value="7" {{$bulan=='07' ? 'selected' : '' }}>Juli</option>
-                    <option value="8" {{$bulan=='08' ? 'selected' : '' }}>Agustus</option>
-                    <option value="9" {{$bulan=='09' ? 'selected' : '' }}>September</option>
-                    <option value="10" {{$bulan=='10' ? 'selected' : '' }}>Oktober</option>
-                    <option value="11" {{$bulan=='11' ? 'selected' : '' }}>November</option>
-                    <option value="12" {{$bulan=='12' ? 'selected' : '' }}>Desember</option>
-                </select>
-            </div>
-            <div class="col-md-3 mb-3">
-                <label for="tahun" class="form-label">Tahun</label>
-                <select class="form-select" name="tahun" id="tahun">
-                    @foreach ($dataTahun as $d)
-                    <option value="{{$d->tahun}}" {{$d->tahun == $tahun ? 'selected' : ''}}>{{$d->tahun}}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3 mb-3">
-                <label for="tahun" class="form-label">&nbsp;</label>
-                <button type="submit" class="btn btn-primary form-control" id="btn-cari">Tampilkan</button>
-            </div>
-            <div class="col-md-3 mb-3">
-                <label for="showPrint" class="form-label">&nbsp;</label>
-                <a href="{{route('rekap.kas-bon.preview', ['bulan' => $bulan, 'tahun' => $tahun])}}" target="_blank"
-                    class="btn btn-secondary form-control" id="btn-cari">Print Preview</a>
-            </div>
-        </div>
-    </form>
-</div>
-<div class="container-fluid table-responsive ml-3">
-    <div class="row mt-3">
-        <div class="text-center">
-            <h1><u>REKAP KASBON POTONG GAJI</u></h1>
-        </div>
-        <table class="table table-hover table-bordered" id="rekapTable">
-            <thead class=" table-success">
-            <tr>
-                <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Nama Karyawan</th>
-                <th class="text-center align-middle">Nominal</th>
-                <th class="text-center align-middle">Status</th>
-                <th class="text-center align-middle">Keterangan</th>
-                <th class="text-center align-middle">Action</th>
-            </tr>
-            </thead>
-            <tbody>
-                @foreach ($data as $d)
-                <tr>
-                    <td class="text-center align-middle">{{$d->tanggal}}</td>
-                    <td class="text-center align-middle">{{$d->karyawan->nama}}</td>
-                    <td class="text-end align-middle">
-                        @if ($d->cicilan == 1)
-                            {{number_format($d->sisa_kas, 0,',','.')}}
-                        @else
-                            {{number_format($d->nominal, 0,',','.')}}
-                        @endif
-
-                    </td>
-                    <td class="text-center align-middle">
-                        <h5><span class="badge bg-primary badge-xl">Potong Gaji</span></h5>
-                    <td class="text-center align-middle">
-                        @if ($d->lunas == 1)
-                        <span class="badge bg-success">Lunas</span>
-                        @else
-                        <span class="badge bg-danger">Belum Lunas</span>
-                        @endif
-                    </td>
-                    <td>
-                        @if ($d->void == 0)
-                        <div class="text-center">
-                            <button class="btn btn-danger" data-bs-toggle="modal"
-                            data-bs-target="#void-{{$d->id}}">Void</button>
-                        </div>
-                        <div class="modal fade" id="void-{{$d->id}}" tabindex="-1" data-bs-backdrop="static"
-                            data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
-                                role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="modalTitleId">Void Storing</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <form action="{{route('rekap.kas-bon.void', $d)}}" method="post">
-                                        @csrf
-                                        <div class="modal-body">
-                                            <input type="password" class="form-control" id="password" name="password"
-                                                placeholder="Password" aria-label="Password" aria-describedby="password"
-                                                required>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Tutup</button>
-                                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-                    </td>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td class="text-center align-middle" colspan="2">Total</td>
-                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('total_bayar'),0,',','.')}}</th>
-                    <td class="text-center align-middle" colspan="3"></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    <div class="row mt-5">
-        <div class="text-center">
-            <h1><u>REKAP CICILAN KASBON</u></h1>
-        </div>
-        <table class="table table-bordered table-hover" id="tableCicilan">
-            <thead class="table-success">
-                <tr>
-                    <th class="text-center align-middle">Tanggal</th>
-                    <th class="text-center align-middle">Nama Karyawan</th>
-                    <th class="text-center align-middle">Nominal Kasbon</th>
-                    <th class="text-center align-middle">Nominal Cicilan / bulan</th>
-                    <th class="text-center align-middle">Total Bayar</th>
-                    <th class="text-center align-middle">Sisa Kasbon</th>
-                    <th class="text-center align-middle">Mulai</th>
-                    <th class="text-center align-middle">Selesai</th>
-                    <th class="text-center align-middle">ACT</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($dataCicilan as $c)
-                <tr>
-                    <td class="text-center align-middle">{{$c->id_tanggal}}</td>
-                    <td class="text-start align-middle">{{$c->karyawan->nama}}</td>
-                    <td class="text-end align-middle">{{number_format($c->nominal, 0,',','.')}}</td>
-                    <td class="text-end align-middle">{{$c->nf_cicilan_nominal}}</td>
-                    <td class="text-end align-middle">{{number_format($c->total_bayar, 0,',','.')}}</td>
-                    <td class="text-end align-middle">{{number_format($c->sisa_kas, 0,',','.')}}</td>
-                    <td class="text-center align-middle">{{$c->tanggal_mulai}}</td>
-                    <td class="text-center align-middle">{{$c->tanggal_selesai}}</td>
-                    <td>
-                        @if ($c->void == 0)
-                        <div class="text-center">
-                            <button class="btn btn-danger" data-bs-toggle="modal"
-                            data-bs-target="#void-{{$c->id}}">Void</button>
-                        </div>
-                        <div class="modal fade" id="void-{{$c->id}}" tabindex="-1" data-bs-backdrop="static"
-                            data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
-                                role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="modalTitleId">Void Storing</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <form action="{{route('billing.kasbon.kas-bon-cicil.void', $c)}}" method="post">
-                                        @csrf
-                                        <div class="modal-body">
-                                            <input type="password" class="form-control" id="password" name="password"
-                                                placeholder="Password" aria-label="Password" aria-describedby="password"
-                                                required>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Tutup</button>
-                                            <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th class="text-center align-middle" colspan="2">Total</th>
-                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('nominal'),0,',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('cicilan_nominal'),0,',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('total_bayar'),0,',','.')}}</th>
-                    <th class="text-end align-middle">{{number_format($dataCicilan->sum('sisa_kas'),0,',','.')}}</th>
-                    <th class="text-center align-middle" colspan="3"></th>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+    <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-3 p-md-4">
+        <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3"><div><h5 class="fw-bold mb-1">{{ $isCicilan ? 'Rincian Cicilan' : 'Rincian Potong Gaji' }}</h5><p class="small text-muted mb-0">{{ $isCicilan ? 'Semua periode transaksi. Status awal: belum lunas. Ubah filter untuk melihat yang lunas.' : 'Transaksi pada '.$periodLabel.'. Status dan sisa utang mengikuti kondisi terkini.' }}</p></div><div style="width:300px;max-width:100%"><label class="form-label small fw-bold" for="search-kasbon">Cari nama pegawai</label><input type="search" id="search-kasbon" class="form-control" placeholder="Ketik nama…" maxlength="100"></div></div>
+        <p class="small text-muted mb-3"><i class="fa fa-info-circle me-1"></i> Gulir tabel untuk memuat data berikutnya. Ringkasan dan total mencakup seluruh hasil filter dan pencarian.</p>
+        <div class="table-responsive"><table id="kasbon-report" class="table table-hover align-middle w-100"><thead class="table-success"><tr><th>No</th><th>Tanggal</th><th>Nama Pegawai</th><th>Nominal Pinjaman</th>@if($isCicilan)<th>Angsuran / Bulan</th>@endif<th>Total Dibayar</th><th>Sisa Kasbon</th>@if($isCicilan)<th>Mulai</th><th>Estimasi Selesai</th>@endif<th>Pelunasan</th><th>Aksi</th></tr></thead><tbody></tbody><tfoot class="table-light fw-bold"><tr><th colspan="3">Total hasil filter</th><th data-total="nominal" class="text-end"></th>@if($isCicilan)<th></th>@endif<th data-total="paid" class="text-end"></th><th data-total="remaining" class="text-end text-success"></th>@if($isCicilan)<th colspan="4"></th>@else<th colspan="2"></th>@endif</tr></tfoot></table></div>
+        <button type="button" id="retry-report" class="btn btn-outline-success mt-3 d-none">Muat Ulang Data</button>
+        <p class="small text-muted mt-3 mb-0">{{ $isCicilan ? 'Estimasi selesai mengasumsikan satu angsuran setiap bulan tanpa jeda.' : 'Void tersedia untuk pinjaman belum lunas yang belum memiliki pembayaran.' }}</p>
+    </div></div>
+    <div class="modal fade" id="void-kasbon-modal" tabindex="-1" aria-labelledby="void-kasbon-title" aria-hidden="true" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4"><div class="modal-header"><h5 class="modal-title fw-bold" id="void-kasbon-title">Konfirmasi Void Kasbon</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div><form method="post" id="void-kasbon-form">@csrf<div class="modal-body p-4"><div class="bg-light rounded-3 p-3 mb-3"><div id="void-person" class="fw-bold"></div><div id="void-info" class="small text-muted mt-1"></div></div><label class="form-label fw-bold" for="void-password">Password konfirmasi</label><input type="password" name="password" id="void-password" class="form-control" autocomplete="off" required><p class="small text-muted mt-2 mb-0">Periksa pegawai dan nominal sebelum melanjutkan pembatalan.</p></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-danger" id="confirm-void">Void Kasbon</button></div></form></div></div></div>
 </div>
 @endsection
 @push('css')
-<link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
+<link href="{{ asset('assets/css/dt.min.css') }}" rel="stylesheet"><link href="https://cdn.datatables.net/scroller/2.2.0/css/scroller.bootstrap5.min.css" rel="stylesheet">
+<link href="{{ asset('assets/plugins/select2/select2.min.css') }}" rel="stylesheet"><link href="{{ asset('assets/plugins/select2/select2.bootstrap5.css') }}" rel="stylesheet">
+<style>#kasbon-report{font-size:.85rem}#kasbon-report td,#kasbon-report th{padding:.85rem .6rem;white-space:nowrap}#kasbon-report td{font-variant-numeric:tabular-nums}.report-summary{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.dataTables_info{font-size:.85rem;color:#6c757d}</style>
 @endpush
 @push('js')
-<script src="{{asset('assets/plugins/date-picker/date-picker.js')}}"></script>
-<script src="{{asset('assets/js/dt5.min.js')}}"></script>
+<script src="{{ asset('assets/js/dt5.min.js') }}"></script><script src="https://cdn.datatables.net/scroller/2.2.0/js/dataTables.scroller.min.js"></script><script src="{{ asset('assets/plugins/select2/select2.full.min.js') }}"></script>
 <script>
-
-    $(document).ready(function() {
-
-        $('#rekapTable').DataTable({
-            "paging": false,
-            "info": false,
-            "ordering": true,
-            "searching": false,
-            "scrollCollapse": true,
-            "scrollY": "550px",
-        });
-
-        $('#tableCicilan').DataTable({
-            "paging": false,
-            "info": false,
-            "ordering": true,
-            "searching": false,
-            "scrollCollapse": true,
-            "scrollY": "550px",
-        });
-
-    } );
-
+$(function(){
+    const filters=@json($filters), isCicilan=@json($isCicilan), endpoint=@json(route('rekap.kas-bon'));
+    const money=value => new Intl.NumberFormat('id-ID',{maximumFractionDigits:0}).format(value);
+    const text=$.fn.dataTable.render.text(), amount=(value,type) => type==='display' ? money(value) : value;
+    $('.report-select').select2({theme:'bootstrap-5',width:'100%'});
+    $('#karyawan_id').select2({theme:'bootstrap-5',width:'100%',placeholder:'Semua pegawai',allowClear:true,ajax:{url:endpoint,dataType:'json',delay:300,data:params => ({lookup:'pegawai',q:params.term || '',page:params.page || 1}),processResults:data => data}});
+    const columns=[{data:'number',className:'text-center'},{data:'tanggal',render:text},{data:'nama',render:text},{data:'nominal',render:amount,className:'text-end'}];
+    if(isCicilan) columns.push({data:'cicilan_nominal',render:amount,className:'text-end'});
+    columns.push({data:'total_bayar',render:amount,className:'text-end'},{data:'sisa_kas',render:amount,className:'text-end text-success fw-bold'});
+    if(isCicilan) columns.push({data:'mulai',render:text},{data:'selesai',render:text});
+    columns.push({data:'lunas',render:(value,type) => type==='display' ? '<span class="badge rounded-pill '+(value ? 'bg-success' : 'bg-warning text-dark')+'">'+(value ? 'Lunas' : 'Belum lunas')+'</span>' : value},{data:'void_url',className:'text-center',render:(value,type) => type==='display' ? (value ? '<button type="button" class="btn btn-sm btn-outline-danger void-loan">Void</button>' : '<span class="text-muted">—</span>') : ''});
+    const table=$('#kasbon-report').DataTable({processing:true,serverSide:true,deferRender:true,ordering:false,dom:'rti',scrollY:'440px',scrollX:true,scrollCollapse:true,pageLength:25,scroller:{displayBuffer:3,serverWait:350},columns,
+        ajax:{url:endpoint,data:data => Object.assign(data,filters),error:xhr => {$('#retry-report').removeClass('d-none');Swal.fire({icon:'error',title:'Rekap belum dapat dimuat',text:xhr.responseJSON?.errors ? Object.values(xhr.responseJSON.errors).flat().join('\n') : 'Silakan muat ulang data atau periksa koneksi Anda.'});}},
+        language:{processing:'Memuat rekap…',emptyTable:'Tidak ada pinjaman sesuai filter.',zeroRecords:'Tidak ditemukan pegawai yang sesuai.',info:'Menampilkan _START_–_END_ dari _TOTAL_ pinjaman',infoEmpty:'Tidak ada pinjaman yang ditampilkan',infoFiltered:'(dari _MAX_ pinjaman)'},
+        drawCallback:function(){const data=this.api().ajax.json();if(data?.summary){Object.entries(data.summary).forEach(([key,value]) => {$('[data-summary="'+key+'"]').text(key==='count' ? money(value) : 'Rp '+money(value));$('[data-total="'+key+'"]').text(money(value));});}$('#retry-report').addClass('d-none');}
+    });
+    let timer; $('#search-kasbon').on('input',function(){clearTimeout(timer);const value=this.value;const print=document.getElementById('print-kasbon');if(print){const url=new URL(print.href);url.searchParams.set('q',value);print.href=url.toString();}timer=setTimeout(() => table.search(value).draw(),350);});$('#retry-report').on('click',() => table.ajax.reload());
+    const modal=document.getElementById('void-kasbon-modal'), form=document.getElementById('void-kasbon-form'); let selected=null, confirming=false, saving=false;
+    $('#kasbon-report').on('click','.void-loan',function(){selected=table.row($(this).closest('tr')).data();if(!selected?.void_url) return;form.action=selected.void_url;form.reset();$('#void-person').text(selected.nama);$('#void-info').text('Tanggal '+selected.tanggal+' · Pengembalian Rp '+money(selected.sisa_kas));bootstrap.Modal.getOrCreateInstance(modal).show();});
+    modal.addEventListener('shown.bs.modal',() => $('#void-password').trigger('focus'));
+    $(form).on('submit',async function(event){event.preventDefault();if(!selected?.void_url || confirming || saving) return;confirming=true;bootstrap.Modal.getInstance(modal)?.hide();const result=await Swal.fire({icon:'warning',title:'Void kasbon ini?',text:selected.nama+' · Rp '+money(selected.sisa_kas)+' akan dicatat kembali ke Kas Besar.',showCancelButton:true,confirmButtonText:'Ya, void kasbon',cancelButtonText:'Periksa kembali',confirmButtonColor:'#dc3545'});confirming=false;if(!result.isConfirmed){bootstrap.Modal.getOrCreateInstance(modal).show();return;}saving=true;$('#confirm-void').prop('disabled',true).text('Memproses…');this.submit();});
+});
 </script>
 @endpush

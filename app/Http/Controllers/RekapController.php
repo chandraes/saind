@@ -15,6 +15,7 @@ use App\Models\InvoiceBayar;
 use App\Models\InvoiceBonus;
 use App\Models\InvoiceCsr;
 use App\Models\InvoiceTagihan;
+use App\Models\Karyawan;
 use App\Models\KasBesar;
 use App\Models\KasBon;
 use App\Models\KasBonCicilan;
@@ -39,9 +40,13 @@ use App\Models\Vendor;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class RekapController extends Controller
 {
@@ -532,66 +537,102 @@ class RekapController extends Controller
 
     }
 
-    public function kas_bon(Request $request)
+    public function kas_bon(Request $request): View|JsonResponse
     {
-        // kas besar perbulan dan tahun, jika tidak ada request maka default bulan dan tahun saat ini
-        $bulan = $request->bulan ?? date('m');
-        $tahun = $request->tahun ?? date('Y');
+        if ($request->input('lookup') === 'pegawai') {
+            $search = mb_substr($request->string('q')->toString(), 0, 100);
+            $page = max(1, min(10000, $request->integer('page', 1)));
+            $people = Karyawan::select(['id', 'nama'])->where('nama', 'like', '%'.$search.'%')->orderBy('nama')->orderBy('id')->offset(($page - 1) * 25)->limit(26)->get();
 
-        $dataTahun = KasBon::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+            return response()->json(['results' => $people->take(25)->map(fn (Karyawan $person): array => ['id' => $person->id, 'text' => $person->nama])->values(), 'pagination' => ['more' => $people->count() > 25]]);
+        }
+        $filters = $this->kasbonFilters($request);
+        $query = $this->kasbonReportQuery($filters);
+        if ($request->ajax()) {
+            $total = (clone $query)->count();
+            $search = mb_substr($request->string('search.value')->trim()->toString(), 0, 100);
+            if ($search !== '') {
+                $query->whereHas('karyawan', fn (Builder $people) => $people->where('nama', 'like', '%'.$search.'%'));
+            }
+            $summary = $this->kasbonSummary($query);
+            $start = max(0, $request->integer('start'));
+            $length = min(100, max(1, $request->integer('length', 25)));
+            $rows = $query->with('karyawan:id,nama')->orderByDesc('tanggal')->orderByDesc('id')->offset($start)->limit($length)->get();
 
-        $data = KasBon::with('karyawan')->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
-        $dataCicilan = KasBonCicilan::with(['karyawan'])->where('lunas', 0)->get();
+            return response()->json([
+                'draw' => max(0, $request->integer('draw')), 'recordsTotal' => $total, 'recordsFiltered' => $summary['count'], 'summary' => $summary,
+                'data' => $rows->values()->map(function (KasBon|KasBonCicilan $loan, int $index) use ($filters, $start): array {
+                    $isCicilan = $filters['jenis'] === 'cicilan';
+                    $canVoid = ! $loan->lunas && (int) $loan->sisa_kas > 0 && ($isCicilan || (int) $loan->total_bayar === 0);
+                    $begin = $isCicilan ? Carbon::create((int) $loan->mulai_tahun, (int) $loan->mulai_bulan, 1)->locale('id') : null;
 
-        $bulanSebelumnya = $bulan - 1;
-        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
-        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-        // get latest data from month before current month
-        $dataSebelumnya = KasBon::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+                    return [
+                        'number' => $start + $index + 1, 'id' => $loan->id, 'tanggal' => Carbon::parse($loan->getRawOriginal('tanggal'))->format('d-m-Y'),
+                        'nama' => $loan->karyawan?->nama ?? 'Pegawai tidak tersedia', 'nominal' => (int) $loan->nominal, 'total_bayar' => (int) $loan->total_bayar, 'sisa_kas' => (int) $loan->sisa_kas,
+                        'cicilan_nominal' => $isCicilan ? (int) $loan->cicilan_nominal : 0, 'lunas' => (bool) $loan->lunas,
+                        'mulai' => $begin?->translatedFormat('F Y'), 'selesai' => $begin?->copy()->addMonths(max(0, (int) $loan->cicil_kali - 1))->translatedFormat('F Y'),
+                        'void_url' => $canVoid ? route($isCicilan ? 'billing.kasbon.kas-bon-cicil.void' : 'rekap.kas-bon.void', $loan->id) : null,
+                    ];
+                }),
+            ]);
+        }
+        $years = KasBon::selectRaw('YEAR(tanggal) as tahun')->union(KasBonCicilan::selectRaw('YEAR(tanggal) as tahun'))->pluck('tahun')->push($filters['tahun'])->unique()->sortDesc()->values();
 
-        // dd($bulan);
         return view('rekap.kas-bon', [
-            'data' => $data,
-            'dataCicilan' => $dataCicilan,
-            'dataTahun' => $dataTahun,
-            'dataSebelumnya' => $dataSebelumnya,
-            'stringBulan' => $stringBulan,
-            'tahun' => $tahun,
-            'tahunSebelumnya' => $tahunSebelumnya,
-            'bulan' => $bulan,
-            'stringBulanNow' => $stringBulanNow,
+            'filters' => $filters, 'years' => $years, 'summary' => $this->kasbonSummary($query),
+            'periodLabel' => Carbon::create($filters['tahun'], $filters['bulan'], 1)->locale('id')->translatedFormat('F Y'),
+            'selectedEmployee' => isset($filters['karyawan_id']) ? Karyawan::find($filters['karyawan_id']) : null,
         ]);
     }
 
-    public function preview_kas_bon(Request $request)
+    /** @return array{bulan: int, tahun: int, jenis: string, status: string, karyawan_id?: int|null} */
+    private function kasbonFilters(Request $request): array
     {
-        $bulan = $request->bulan ?? date('m');
-        $tahun = $request->tahun ?? date('Y');
-        $dataTahun = KasBon::selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+        $data = $request->validate([
+            'bulan' => ['nullable', 'integer', 'between:1,12'], 'tahun' => ['nullable', 'integer', 'between:1901,2155'],
+            'jenis' => ['nullable', 'in:potong,cicilan'], 'status' => ['nullable', 'in:semua,belum,lunas'], 'karyawan_id' => ['nullable', 'integer', 'exists:karyawans,id'],
+        ]);
+        $jenis = $data['jenis'] ?? 'potong';
 
-        $data = KasBon::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        return [...$data, 'bulan' => (int) ($data['bulan'] ?? now()->month), 'tahun' => (int) ($data['tahun'] ?? now()->year), 'jenis' => $jenis, 'status' => $data['status'] ?? ($jenis === 'cicilan' ? 'belum' : 'semua')];
+    }
 
-        $bulanSebelumnya = $bulan - 1;
-        $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
-        $tahunSebelumnya = $bulanSebelumnya == 12 ? $tahun - 1 : $tahun;
-        $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
-        $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
-        // get latest data from month before current month
-        $dataSebelumnya = KasBon::whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+    private function kasbonReportQuery(array $filters): Builder
+    {
+        $query = $filters['jenis'] === 'cicilan' ? KasBonCicilan::query() : KasBon::where('void', false)->whereMonth('tanggal', $filters['bulan'])->whereYear('tanggal', $filters['tahun']);
+        if ($filters['status'] !== 'semua') {
+            $query->where('lunas', $filters['status'] === 'lunas');
+        }
+        if (! empty($filters['karyawan_id'])) {
+            $query->where('karyawan_id', $filters['karyawan_id']);
+        }
 
-        $pdf = Pdf::loadview('rekap.preview-kas-bon', [
-            'data' => $data,
-            'dataSebelumnya' => $dataSebelumnya,
-            'stringBulan' => $stringBulan,
-            'tahun' => $tahun,
-            'tahunSebelumnya' => $tahunSebelumnya,
-            'bulan' => $bulan,
-            'stringBulanNow' => $stringBulanNow,
-        ])->setPaper('a4', 'landscape');
+        return $query;
+    }
 
-        return $pdf->stream('Rekap Kasbon '.$stringBulanNow.' '.$tahun.'.pdf');
+    /** @return array{count: int, people: int, nominal: int, paid: int, remaining: int} */
+    private function kasbonSummary(Builder $query): array
+    {
+        $totals = (clone $query)->toBase()->reorder()->selectRaw('COUNT(*) as records, COUNT(DISTINCT karyawan_id) as people, COALESCE(SUM(nominal), 0) as nominal, COALESCE(SUM(total_bayar), 0) as paid, COALESCE(SUM(sisa_kas), 0) as remaining')->first();
+
+        return ['count' => (int) $totals->records, 'people' => (int) $totals->people, 'nominal' => (int) $totals->nominal, 'paid' => (int) $totals->paid, 'remaining' => (int) $totals->remaining];
+    }
+
+    public function preview_kas_bon(Request $request): Response
+    {
+        $request->merge(['bulan' => $request->route('bulan'), 'tahun' => $request->route('tahun')]);
+        $filters = [...$this->kasbonFilters($request), 'jenis' => 'potong'];
+        $query = $this->kasbonReportQuery($filters);
+        $search = mb_substr($request->string('q')->trim()->toString(), 0, 100);
+        if ($search !== '') {
+            $query->whereHas('karyawan', fn (Builder $people) => $people->where('nama', 'like', '%'.$search.'%'));
+        }
+        $data = $query->with('karyawan:id,nama')->orderBy('tanggal')->orderBy('id')->get();
+
+        return Pdf::loadView('rekap.preview-kas-bon', [
+            'data' => $data, 'summary' => $this->kasbonSummary($query),
+            'periodLabel' => Carbon::create($filters['tahun'], $filters['bulan'], 1)->locale('id')->translatedFormat('F Y'),
+        ])->setPaper('a4', 'landscape')->stream('Rekap Kasbon '.$filters['bulan'].'-'.$filters['tahun'].'.pdf');
     }
 
     public function kas_bon_void(Request $request, KasBon $kas)

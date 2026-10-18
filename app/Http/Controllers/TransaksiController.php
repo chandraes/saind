@@ -1452,13 +1452,19 @@ class TransaksiController extends Controller
     {
         $data = $request->validate([
             'total_bonus' => 'required|numeric',
-            'bulan' => 'required',
-            'tahun' => 'required',
+            'bulan' => ['required', 'integer', 'between:1,12'],
+            'tahun' => ['required', 'integer', 'between:1901,2155'],
         ]);
 
         $db = new Transaksi;
 
         $bonus = $db->getIdNotaBonus($sponsor->id, $data['bulan'], $data['tahun']);
+
+        $period = ['sponsor_id' => $sponsor->id, 'bulan' => $data['bulan'], 'tahun' => $data['tahun']];
+
+        if ($bonus->isEmpty()) {
+            return redirect()->route('transaksi.nota-bonus', $period)->with('error', 'Tidak ada transaksi bonus yang belum diproses pada periode ini.');
+        }
 
         unset($data['bulan']);
         unset($data['tahun']);
@@ -1490,7 +1496,7 @@ class TransaksiController extends Controller
 
         DB::commit();
 
-        return redirect()->route('billing.transaksi.index')->with('success', 'Berhasil menyimpan data!!');
+        return redirect()->route('transaksi.nota-bonus', $period)->with('success', 'Nota bonus berhasil disimpan.');
     }
 
     public function nota_csr(Request $request)
