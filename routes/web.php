@@ -758,6 +758,7 @@ Route::group(['middleware' => ['auth']], function () {
             // form kasbon
             Route::prefix('kasbon')->group(function () {
                 Route::get('/', [FormKasbonController::class, 'index'])->name('billing.kasbon.index');
+                Route::get('/limit', [FormKasbonController::class, 'limit_summary'])->name('billing.kasbon.limit');
 
                 Route::prefix('direksi')->group(function () {
                     Route::view('/', 'billing.kasbon.direksi.index')->name('billing.kasbon.direksi.index');
