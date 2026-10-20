@@ -17,6 +17,9 @@
         const root = element('div', 'payroll-attendance-popup');
         root.append(element('p', 'payroll-attendance-person', name + ' · ' + period));
         if (detail.from && detail.to) root.append(element('p', 'small text-muted', 'Periode absensi: ' + detail.from + ' sampai ' + detail.to));
+        if (detail.provisional) {
+            root.append(element('p','small text-warning','Potongan sementara. Shift mendatang/berjalan dan cuti/sakit menunggu HR belum dikenai potongan.'));
+        }
         const summary = element('div', 'payroll-attendance-summary');
         [['Nilai satu hari · pembagi 25', detail.daily], ['Total sebelum batas', detail.raw], ['Batas periode · 25%', detail.cap], ['Potongan akhir', detail.amount]].forEach(([label, value], index) => {
             const card = element('div', 'payroll-attendance-stat' + (index === 3 ? ' is-final' : ''));
@@ -33,7 +36,7 @@
         head.append(header); table.append(head);
         const body = element('tbody');
         const timezone = detail.timezone || 'Asia/Jakarta';
-        detail.days.filter(day => day.automatic > 0 || day.deduction > 0 || day.override).forEach(day => {
+        detail.days.filter(day => day.automatic > 0 || day.deduction > 0 || day.override || ['pending_leave','pending','upcoming','in_progress'].includes(day.status)).forEach(day => {
             const row = element('tr');
             const dateCell = element('td');
             dateCell.append(element('strong', '', new Intl.DateTimeFormat('id-ID', {timeZone: 'UTC', weekday: 'long'}).format(new Date(day.date + 'T12:00:00Z'))), element('div', 'small text-muted', day.date));
@@ -41,7 +44,9 @@
             timeCell.append(element('div', 'small', 'Jadwal: ' + stamp(day.scheduled_start_at, timezone) + ' – ' + stamp(day.scheduled_end_at, timezone)), element('div', 'small text-muted', 'Masuk: ' + stamp(day.check_in_at, timezone)), element('div', 'small text-muted', 'Pulang: ' + stamp(day.check_out_at, timezone)));
             const reasonCell = element('td');
             const reasons = [];
-            if (day.status === 'absent') reasons.push('Tidak masuk');
+            if (day.status === 'pending_leave') reasons.push('Menunggu keputusan HR · belum dihitung');
+            else if (['pending','upcoming','in_progress'].includes(day.status)) reasons.push(day.status === 'upcoming' ? 'Jadwal mendatang · belum dihitung' : 'Shift/batas pulang belum selesai · belum dihitung');
+            else if (day.status === 'absent') reasons.push('Tidak masuk');
             else if (day.status === 'half_day') reasons.push('Tidak absen pulang · setengah hari');
             else {
                 if (day.late_minutes > 0) reasons.push('Terlambat ' + day.late_minutes + ' menit setelah toleransi');
@@ -52,7 +57,8 @@
             const formulaCell = element('td');
             const effective = Number(day.effective_minutes) || 0;
             let formula;
-            if (day.status === 'absent') formula = '1 × ' + rupiah(detail.daily);
+            if (['pending_leave','pending','upcoming','in_progress'].includes(day.status)) formula = 'Belum dihitung';
+            else if (day.status === 'absent') formula = '1 × ' + rupiah(detail.daily);
             else if (day.status === 'half_day') formula = '½ × ' + rupiah(detail.daily) + ' · tanpa tambahan terlambat';
             else {
                 const lost = Math.min(effective, Math.max(0, Number(day.late_minutes)) + Math.max(0, Number(day.early_minutes)));

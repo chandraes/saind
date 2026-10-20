@@ -2,7 +2,7 @@
 @section('content')
 <div class="container-fluid payroll-page">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div><div class="small text-success fw-bold text-uppercase mb-1">Billing · Penggajian</div><h2 class="fw-bold mb-1">Form Gaji Direksi & Staff</h2><p class="text-muted mb-0">Tinjau rincian pendapatan dan potongan sebelum menyimpan gaji.</p></div>
+        <div><div class="small text-success fw-bold text-uppercase mb-1">Billing · Penggajian</div><h2 class="fw-bold mb-1">Form Gaji Direksi & Staff</h2><p class="text-muted mb-0">Tinjau pendapatan dan pantau potongan absensi sampai penarikan terakhir sebelum mengesahkan gaji.</p></div>
         <div class="d-flex align-items-center gap-2"><span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-2">{{ $monthName }} {{ $tahun }}</span><a href="{{ route('billing.index') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Billing</a></div>
     </div>
     @include('billing.gaji.attendance')
@@ -19,7 +19,7 @@
         </div>
         <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
             <div class="payroll-search"><label for="payroll-search" class="form-label small fw-bold">Cari penerima</label><div class="input-group"><span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span><input id="payroll-search" type="search" class="form-control" maxlength="100" placeholder="Nama atau jabatan…" aria-controls="rekapTable"><button id="reset-search" type="button" class="btn btn-outline-secondary" aria-label="Bersihkan pencarian"><i class="fa fa-times"></i></button></div></div>
-            <div class="small text-muted"><i class="fa fa-calendar-check-o me-1"></i> Periode {{ $monthName }} {{ $tahun }}</div>
+            <label class="small text-muted d-flex align-items-center gap-2"><input id="payroll-deductions-only" type="checkbox"> Hanya pegawai dengan potongan absensi</label><div class="small text-muted"><i class="fa fa-calendar-check-o me-1"></i> Periode {{ $monthName }} {{ $tahun }}</div>
         </div>
         <div class="table-responsive">
         <table class="table table-hover align-middle w-100" id="rekapTable">
@@ -115,7 +115,7 @@ $(function () {
     };
     const table=$('#rekapTable').DataTable({
         processing:true,serverSide:true,deferRender:true,autoWidth:false,ordering:false,dom:'rti',pageLength:25,scrollX:true,scrollY:'460px',scrollCollapse:true,scroller:{displayBuffer:3,serverWait:350,rowHeight:64},
-        ajax:{url:@json(route('billing.gaji.index', ['bulan' => $bulan, 'tahun' => $tahun])),error:xhr => {
+        ajax:{url:@json(route('billing.gaji.index', ['bulan' => $bulan, 'tahun' => $tahun])),data:request=>{request.deductions_only=$('#payroll-deductions-only').prop('checked') ? 1 : 0;},error:xhr => {
             ready=false; $('#save-payroll').prop('disabled',true); $('#retry-table').removeClass('d-none');
             Swal.fire({icon:'error',title:'Data belum dapat dimuat',text:xhr.status === 419 ? 'Sesi berakhir. Muat ulang halaman.' : xhr.responseJSON?.errors ? Object.values(xhr.responseJSON.errors).flat().join('\n') : 'Periksa koneksi lalu coba muat ulang data.'});
         }},
@@ -139,6 +139,7 @@ $(function () {
     let searchTimer;
     $('#payroll-search').on('input',function(){clearTimeout(searchTimer);const search=this.value;searchTimer=setTimeout(() => table.search(search).draw(),400);});
     $('#reset-search').on('click',function(){clearTimeout(searchTimer);$('#payroll-search').val('').trigger('focus');table.search('').draw();});
+    $('#payroll-deductions-only').on('change',()=>table.ajax.reload());
     $('#retry-table').on('click',() => table.ajax.reload());
     $('#lanjutForm').on('submit',async function(event){
         event.preventDefault(); if(busy || confirming || !ready || !canSave) return;

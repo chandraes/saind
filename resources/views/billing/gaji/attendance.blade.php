@@ -8,8 +8,14 @@
         <form method="post" action="{{ route('billing.gaji.attendance.refresh') }}" data-payroll-operation>@csrf<input type="hidden" name="bulan" value="{{ $bulan }}"><input type="hidden" name="tahun" value="{{ $tahun }}"><button class="btn btn-outline-success"><i class="fa fa-refresh me-1"></i>{{ $attendancePeriod ? 'Perbarui' : 'Tarik' }} Data Absensi</button></form>
         @endif
     </div>
+    @if($attendanceEnabled && $attendanceSnapshot)
+    <div class="row g-2 mt-3">
+        <div class="col-md-7"><div class="p-3 rounded-3 bg-light"><strong>{{ ($attendanceSnapshot['ready'] ?? false) ? 'Potongan periode siap ditinjau' : 'Pantauan potongan sementara' }}</strong><div class="small text-muted mt-1">Data sampai {{ isset($attendanceSnapshot['as_of']) ? \Carbon\Carbon::parse($attendanceSnapshot['as_of'])->timezone($attendanceSnapshot['timezone'] ?? config('app.timezone'))->format('d/m/Y H:i') : 'waktu penarikan terakhir' }}. Perbarui data untuk membaca koreksi dan shift terbaru.</div><div class="small text-muted">Tanggal mendatang dan shift yang belum selesai tidak dihitung sebagai tidak masuk. Cuti/sakit yang menunggu HR belum dikenai potongan.</div></div></div>
+        <div class="col-md-5"><div class="p-3 rounded-3 bg-light"><strong>{{ $deductedCount }} pegawai dengan potongan · Rp {{ number_format($gt['potongan_absensi'],0,',','.') }}</strong><div class="small text-muted mt-1">{{ $attendanceSnapshot['unfinished_shifts'] ?? 0 }} shift belum dihitung · {{ $attendanceSnapshot['waiting_hr_days'] ?? 0 }} hari menunggu keputusan HR.</div></div></div>
+    </div>
+    @endif
     @if($attendanceEnabled && !($attendanceSnapshot['ready'] ?? false))
-    <div class="alert alert-warning mt-3 mb-0"><strong>Eksekusi gaji diblokir.</strong>
+    <div class="alert alert-warning mt-3 mb-0"><strong>Pengesahan gaji belum tersedia; pantauan tetap dapat dilihat.</strong>
         @if(!$attendanceSnapshot) Tarik data absensi terlebih dahulu. @else
         <ul class="mb-0 mt-2">@foreach($attendanceSnapshot['issues'] as $issue)<li>{{ $issue }}</li>@endforeach</ul>
         @endif

@@ -90,10 +90,15 @@ class FormGajiController extends Controller
             $snapshot['issues'][] = 'Daftar pegawai berubah. Perbarui data absensi.';
         }
 
+        if ($snapshot && ($snapshot['monitoring_version'] ?? null) !== 1) {
+            $snapshot['ready'] = false;
+            $snapshot['issues'][] = 'Perbarui snapshot untuk mengaktifkan pantauan berjalan.';
+        }
+
         return view('billing.gaji.index', [...$preview,
             'attendanceEnabled' => $this->payroll->attendance->enabled(), 'attendancePeriod' => $record,
             'attendanceDates' => $this->payroll->attendance->dates($period->month, $period->year),
-            'attendanceSnapshot' => $snapshot, 'payrollRevision' => $this->payroll->revision($period->month, $period->year),
+            'attendanceSnapshot' => $snapshot, 'deductedCount' => $rows->where('potongan_absensi', '>', 0)->count(), 'payrollRevision' => $this->payroll->revision($period->month, $period->year),
             'gt' => $totals, 'peopleCount' => $rows->count(), 'negativeCount' => $rows->where('total', '<', 0)->count(),
         ]);
     }
@@ -111,6 +116,12 @@ class FormGajiController extends Controller
             $directors->where(function (Builder $query) use ($search): void {
                 $query->where('nama', 'like', '%'.$search.'%')->orWhere('jabatan', 'like', '%'.$search.'%');
             });
+        }
+        $request->validate(['deductions_only' => ['sometimes', 'boolean']]);
+        if ($request->boolean('deductions_only')) {
+            $ids = (clone $employees)->get()->filter(fn ($employee): bool => $this->payroll->attendance->calculate($employee, $period->month, $period->year)['amount'] > 0)->modelKeys();
+            $employees->whereIn('id', $ids);
+            $directors->whereRaw('1 = 0');
         }
         $directorCount = (clone $directors)->count();
         $filtered = $directorCount + (clone $employees)->count();

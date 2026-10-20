@@ -87,6 +87,9 @@ class PayrollAttendanceService
         if (! is_array($snapshot) || ($snapshot['schema_version'] ?? null) !== 1 || ! is_array($snapshot['employees'] ?? null) || ! is_array($snapshot['issues'] ?? null) || ! is_bool($snapshot['ready'] ?? null) || ! preg_match('/^[a-f0-9]{64}$/', $snapshot['revision'] ?? '') || ($snapshot['from'] ?? null) !== $data['from'] || ($snapshot['to'] ?? null) !== $data['to']) {
             throw ValidationException::withMessages(['attendance' => 'Format snapshot absensi tidak valid. Gaji diblokir.']);
         }
+        if (($snapshot['monitoring_version'] ?? null) !== 1) {
+            throw ValidationException::withMessages(['attendance' => 'Backend absensi belum mendukung pantauan berjalan. Perbarui backend sebelum menarik data gaji.']);
+        }
         $expected = $data['source_employee_ids'];
         $received = $snapshot['source_employee_ids'] ?? [];
         sort($expected, SORT_STRING);
@@ -109,7 +112,7 @@ class PayrollAttendanceService
                 throw ValidationException::withMessages(['attendance' => 'Rincian tanggal/pegawai snapshot tidak lengkap.']);
             }
             foreach ($employee['days'] as $day) {
-                if (! in_array($day['status'] ?? '', ['present', 'half_day', 'absent', 'excused', 'exempt', 'before_tracking', 'off', 'holiday', 'pending', 'invalid'], true)) {
+                if (! in_array($day['status'] ?? '', ['present', 'half_day', 'absent', 'excused', 'exempt', 'before_tracking', 'off', 'holiday', 'pending', 'invalid', 'upcoming', 'in_progress', 'pending_leave'], true)) {
                     throw ValidationException::withMessages(['attendance' => 'Status absensi tidak dikenal.']);
                 }
                 foreach (['scheduled_minutes', 'break_minutes', 'late_minutes', 'early_minutes'] as $field) {
@@ -117,7 +120,7 @@ class PayrollAttendanceService
                         throw ValidationException::withMessages(['attendance' => 'Rincian menit absensi tidak valid.']);
                     }
                 }
-                if ($snapshot['ready'] && (in_array($day['status'], ['pending', 'invalid'], true) || (in_array($day['status'], ['present', 'half_day', 'absent'], true) && $day['scheduled_minutes'] <= $day['break_minutes']))) {
+                if ($snapshot['ready'] && (in_array($day['status'], ['pending', 'invalid', 'upcoming', 'in_progress', 'pending_leave'], true) || (in_array($day['status'], ['present', 'half_day', 'absent'], true) && $day['scheduled_minutes'] <= $day['break_minutes']))) {
                     throw ValidationException::withMessages(['attendance' => 'Snapshot belum siap untuk gaji.']);
                 }
             }
@@ -140,7 +143,8 @@ class PayrollAttendanceService
         $sources = array_map('strval', $sources);
         sort($sources, SORT_STRING);
         if ($sources === []) {
-            $snapshot = ['schema_version' => 1, ...$dates, 'source_employee_ids' => [], 'employees' => [], 'ready' => true, 'issues' => [], 'revision' => hash('sha256', json_encode($dates))];
+            $ended = now()->gt(Carbon::parse($dates['to'])->endOfDay());
+            $snapshot = ['schema_version' => 1, 'monitoring_version' => 1, 'as_of' => now()->toIso8601String(), ...$dates, 'source_employee_ids' => [], 'employees' => [], 'ready' => $ended, 'issues' => $ended ? [] : ['Periode absensi masih berjalan.'], 'revision' => hash('sha256', json_encode([$dates, $ended]))];
         } else {
             $snapshot = $this->request($dates + ['source_employee_ids' => $sources]);
         }
@@ -164,6 +168,9 @@ class PayrollAttendanceService
             return array_replace($empty, ['ready' => false]);
         }
         $snapshot = $this->payload($period);
+        if (($snapshot['monitoring_version'] ?? null) !== 1) {
+            return array_replace($empty, ['ready' => false]);
+        }
         if (! isset($this->peopleCache[$period->id])) {
             $this->peopleCache[$period->id] = array_column($snapshot['employees'], null, 'source_employee_id');
         }
@@ -194,7 +201,7 @@ class PayrollAttendanceService
             $raw += $applied;
         }
 
-        return ['timezone' => $snapshot['timezone'] ?? 'Asia/Jakarta', 'from' => $snapshot['from'], 'to' => $snapshot['to'], 'amount' => min($cap, $raw), 'raw' => $raw, 'cap' => $cap, 'daily' => $daily, 'days' => $days, 'ready' => $snapshot['ready']];
+        return ['as_of' => $snapshot['as_of'] ?? null, 'provisional' => ! $snapshot['ready'], 'waiting_hr_days' => count(array_filter($person['days'], fn ($day): bool => $day['status'] === 'pending_leave')), 'unfinished_shifts' => count(array_filter($person['days'], fn ($day): bool => in_array($day['status'], ['pending', 'upcoming', 'in_progress'], true))), 'timezone' => $snapshot['timezone'] ?? 'Asia/Jakarta', 'from' => $snapshot['from'], 'to' => $snapshot['to'], 'amount' => min($cap, $raw), 'raw' => $raw, 'cap' => $cap, 'daily' => $daily, 'days' => $days, 'ready' => $snapshot['ready']];
     }
 
     public function lock(int $month, int $year, array $sources): ?object
@@ -204,7 +211,7 @@ class PayrollAttendanceService
             return null;
         }
         $period = $this->period($month, $year);
-        if (! $period || ! $this->payload($period)['ready']) {
+        if (! $period || ! $this->payload($period)['ready'] || ($this->payload($period)['monitoring_version'] ?? null) !== 1) {
             throw ValidationException::withMessages(['attendance' => 'Perbarui data absensi dan selesaikan seluruh masalah sebelum menyimpan gaji.']);
         }
         $snapshot = $this->payload($period);
