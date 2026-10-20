@@ -259,6 +259,41 @@ class PayrollAttendanceTest extends TestCase
         Http::assertSent(fn ($request) => ($request['request_id'] ?? null) === $requestId);
     }
 
+    public function test_employee_pdf_download_uses_local_snapshot_and_saved_report_is_frozen(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $this->cash();
+        $this->refresh($employee, $this->snapshot($employee, ['2026-09-26' => ['status' => 'absent']]));
+        $url = '/billing/gaji/attendance/'.$employee->id.'/pdf?bulan=10&tahun=2026';
+        $response = $this->get($url)->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $this->assertStringContainsString('attachment;', $response->headers->get('content-disposition'));
+        $this->get('/billing/gaji/attendance/999999/pdf?bulan=10&tahun=2026')->assertNotFound();
+        $revision = app(PayrollService::class)->revision(10, 2026);
+        $this->post('/billing/gaji/store', ['bulan' => 10, 'tahun' => 2026, 'payroll_revision' => $revision])->assertSessionHasNoErrors();
+        $record = RekapGajiDetail::sole();
+        $savedUrl = '/billing/gaji/attendance-saved/'.$record->id.'/pdf';
+        $before = $this->get($savedUrl)->assertOk()->assertHeader('content-type', 'application/pdf');
+        $employee->update(['gaji_pokok' => 10000000]);
+        config(['attendance.enabled' => false]);
+        $this->get($savedUrl)->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->assertSame(200000, json_decode($record->fresh()->rincian_absensi, true)['amount']);
+        $this->assertStringStartsWith('%PDF-', $before->getContent());
+        $this->get('/billing/gaji/attendance-saved/999999/pdf')->assertNotFound();
+        Http::assertSentCount(2);
+        auth()->forgetGuards();
+        $this->get($savedUrl)->assertRedirect('/login');
+    }
+
+    public function test_employee_pdf_without_snapshot_is_not_available(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $this->get('/billing/gaji/attendance/'.$employee->id.'/pdf?bulan=10&tahun=2026')->assertNotFound();
+        Http::assertNothingSent();
+    }
+
     public function test_env_disabled_ignores_existing_deductions_and_saves_without_remote_lock(): void
     {
         $this->login();

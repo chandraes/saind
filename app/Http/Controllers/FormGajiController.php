@@ -264,6 +264,34 @@ class FormGajiController extends Controller
         }
     }
 
+    public function attendancePdf(Request $request, int $employee): Response
+    {
+        $this->payroll->attendance->clear();
+        $period = $this->period($request);
+        $this->ensurePeriodAvailable($period);
+        $person = $this->payroll->employeesQueryForPeriod($period->month, $period->year)->whereKey($employee)->firstOrFail();
+        $detail = $this->payroll->attendance->calculate($person, $period->month, $period->year);
+        abort_unless(! empty($detail['days']), 404, 'Rincian absensi belum tersedia.');
+
+        return $this->downloadAttendancePdf($person->nama, $period, $detail, false, $employee);
+    }
+
+    public function savedAttendancePdf(int $detail): Response
+    {
+        $record = RekapGajiDetail::with('rekap_gaji')->findOrFail($detail);
+        $payload = json_decode($record->rincian_absensi ?? 'null', true);
+        abort_unless(is_array($payload) && ! empty($payload['days']) && $record->rekap_gaji, 404, 'Rincian absensi tersimpan belum tersedia.');
+        $period = Carbon::create($record->rekap_gaji->tahun, $record->rekap_gaji->bulan, 1);
+
+        return $this->downloadAttendancePdf($record->nama, $period, $payload, true, $record->id);
+    }
+
+    private function downloadAttendancePdf(string $name, Carbon $period, array $detail, bool $saved, int $identifier): Response
+    {
+        return Pdf::loadView('billing.gaji.attendance-pdf', compact('name', 'period', 'detail', 'saved'))
+            ->setPaper('a4', 'landscape')->download('Rincian_Absensi_'.$period->format('Y_m').'_'.$identifier.'.pdf');
+    }
+
     public function previewPdf(Request $request): Response
     {
         $this->payroll->attendance->clear();

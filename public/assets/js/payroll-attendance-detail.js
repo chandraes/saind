@@ -12,13 +12,38 @@
         try { return new Intl.DateTimeFormat('id-ID', {timeZone: timezone, day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(value)); }
         catch { return '—'; }
     };
-    window.showPayrollAttendanceDetail = function (name, period, detail) {
+    window.showPayrollAttendanceDetail = function (name, period, detail, downloadUrl) {
         if (!detail || !Array.isArray(detail.days)) return;
         const root = element('div', 'payroll-attendance-popup');
         root.append(element('p', 'payroll-attendance-person', name + ' · ' + period));
         if (detail.from && detail.to) root.append(element('p', 'small text-muted', 'Periode absensi: ' + detail.from + ' sampai ' + detail.to));
         if (detail.provisional) {
             root.append(element('p','small text-warning','Potongan sementara. Shift mendatang/berjalan dan cuti/sakit menunggu HR belum dikenai potongan.'));
+        }
+        if (downloadUrl) {
+            const download = element('a', 'btn btn-outline-success btn-sm mb-3', 'Unduh rincian PDF');
+            download.href = downloadUrl;
+            download.addEventListener('click', async event => {
+                event.preventDefault();
+                if (download.dataset.busy) return;
+                download.dataset.busy = '1';
+                Swal.fire({title: 'Menyiapkan PDF…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading()});
+                try {
+                    const response = await fetch(downloadUrl, {headers: {'Accept': 'application/pdf'}, credentials: 'same-origin'});
+                    if (!response.ok || !(response.headers.get('content-type') || '').includes('application/pdf')) throw new Error('Rincian belum tersedia atau sesi berakhir. Muat ulang halaman lalu coba lagi.');
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = (response.headers.get('content-disposition') || '').match(/filename="?([^";]+)/)?.[1] || 'Rincian_Absensi.pdf';
+                    document.body.append(link); link.click(); link.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 60000);
+                    Swal.fire({icon: 'success', title: 'PDF siap', text: 'Rincian potongan berhasil diunduh.'});
+                } catch (error) {
+                    Swal.fire({icon: 'error', title: 'Unduhan gagal', text: error.message});
+                } finally { delete download.dataset.busy; }
+            });
+            root.append(download);
         }
         const summary = element('div', 'payroll-attendance-summary');
         [['Nilai satu hari · pembagi 25', detail.daily], ['Total sebelum batas', detail.raw], ['Batas periode · 25%', detail.cap], ['Potongan akhir', detail.amount]].forEach(([label, value], index) => {
@@ -84,7 +109,7 @@
     document.addEventListener('click', event => {
         const button = event.target.closest('[data-saved-attendance-detail]');
         if (!button) return;
-        try { window.showPayrollAttendanceDetail(button.dataset.employeeName, button.dataset.payrollPeriod, JSON.parse(button.dataset.savedAttendanceDetail)); }
+        try { window.showPayrollAttendanceDetail(button.dataset.employeeName, button.dataset.payrollPeriod, JSON.parse(button.dataset.savedAttendanceDetail), button.dataset.downloadUrl); }
         catch { Swal.fire({icon: 'error', title: 'Rincian belum dapat dibuka', text: 'Data rincian tidak tersedia atau tidak valid.'}); }
     });
 })();

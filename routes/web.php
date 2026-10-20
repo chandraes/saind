@@ -785,6 +785,8 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/gaji', [FormGajiController::class, 'index'])->name('billing.gaji.index');
             Route::post('/gaji/store', [FormGajiController::class, 'store'])->name('billing.gaji.store');
             Route::get('/gaji/preview-pdf', [FormGajiController::class, 'previewPdf'])->name('billing.gaji.preview-pdf');
+            Route::get('/gaji/attendance/{employee}/pdf', [FormGajiController::class, 'attendancePdf'])->name('billing.gaji.attendance.pdf');
+            Route::get('/gaji/attendance-saved/{detail}/pdf', [FormGajiController::class, 'savedAttendancePdf'])->name('billing.gaji.attendance.saved-pdf');
             Route::get('/gaji/preview-excel', [FormGajiController::class, 'previewExcel'])->name('billing.gaji.preview-excel');
 
             Route::prefix('transaksi')->group(function () {

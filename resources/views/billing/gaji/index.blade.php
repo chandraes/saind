@@ -126,7 +126,7 @@ $(function () {
     $('#rekapTable').on('click','.payroll-attendance-detail',function(){
         const row=table.row($(this).closest('tr')).data();
         if(!row || !(Number(row.potongan_absensi) > 0)) return;
-        window.showPayrollAttendanceDetail(row.nama,period,row.attendance_detail);
+        window.showPayrollAttendanceDetail(row.nama,period,row.attendance_detail,{{ \Illuminate\Support\Js::from(route('billing.gaji.attendance.pdf', ['employee' => '__EMPLOYEE__', 'bulan' => $bulan, 'tahun' => $tahun])) }}.replace('__EMPLOYEE__',encodeURIComponent(row.employee_id)));
     });
     $('[data-payroll-operation]').on('submit',async function(event){
         event.preventDefault(); if(busy || confirming) return; confirming=true;

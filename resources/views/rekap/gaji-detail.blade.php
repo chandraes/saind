@@ -66,7 +66,7 @@
                     <td class="text-end align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
                     <td class="text-end align-middle">
                         @if(($dir->potongan_absensi ?? 0) > 0 && $dir->rincian_absensi)
-                        <button type="button" class="btn btn-link text-danger p-0 text-decoration-underline" data-saved-attendance-detail="{{ $dir->rincian_absensi }}" data-employee-name="{{ $dir->nama }}" data-payroll-period="{{ $bulan }} {{ $tahun }}" aria-label="Lihat rincian potongan absensi {{ $dir->nama }}">{{ number_format($dir->potongan_absensi,0,',','.') }}</button>
+                        <button type="button" class="btn btn-link text-danger p-0 text-decoration-underline" data-saved-attendance-detail="{{ $dir->rincian_absensi }}" data-download-url="{{ route('billing.gaji.attendance.saved-pdf', ['detail' => $dir->id]) }}" data-employee-name="{{ $dir->nama }}" data-payroll-period="{{ $bulan }} {{ $tahun }}" aria-label="Lihat rincian potongan absensi {{ $dir->nama }}">{{ number_format($dir->potongan_absensi,0,',','.') }}</button>
                         @else {{ number_format($dir->potongan_absensi ?? 0,0,',','.') }} @endif
                     </td>
                     <td class="text-end align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
