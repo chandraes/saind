@@ -37,6 +37,7 @@ use App\Http\Controllers\LegalitasController;
 use App\Http\Controllers\OperasionalController;
 use App\Http\Controllers\PajakController;
 use App\Http\Controllers\PasswordKonfirmasiController;
+use App\Http\Controllers\PayrollAttendanceController;
 use App\Http\Controllers\PemegangSahamController;
 use App\Http\Controllers\PerCustomerAdminController;
 use App\Http\Controllers\PerCustomerController;
@@ -778,6 +779,9 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             // Form Gaji
+            Route::post('/gaji/attendance/refresh', [PayrollAttendanceController::class, 'refresh'])->name('billing.gaji.attendance.refresh');
+            Route::post('/gaji/attendance/setting', [PayrollAttendanceController::class, 'setting'])->middleware('role:su')->name('billing.gaji.attendance.setting');
+            Route::post('/gaji/attendance/adjustment', [PayrollAttendanceController::class, 'adjustment'])->middleware('role:su')->name('billing.gaji.attendance.adjustment');
             Route::get('/gaji', [FormGajiController::class, 'index'])->name('billing.gaji.index');
             Route::post('/gaji/store', [FormGajiController::class, 'store'])->name('billing.gaji.store');
             Route::get('/gaji/preview-pdf', [FormGajiController::class, 'previewPdf'])->name('billing.gaji.preview-pdf');

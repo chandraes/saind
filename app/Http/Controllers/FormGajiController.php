@@ -67,6 +67,7 @@ class FormGajiController extends Controller
 
     public function index(Request $request): View|JsonResponse
     {
+        $this->payroll->attendance->clear();
         $period = $this->period($request);
         $this->ensurePeriodAvailable($period);
 
@@ -76,11 +77,25 @@ class FormGajiController extends Controller
         $preview = $this->previewData($period);
         $rows = $preview['direksi']->concat($preview['data'])->map(fn ($person): array => $this->payroll->previewRow($person, $period->month, $period->year));
         $totals = [];
-        foreach (['gp', 'tj', 'tk', 'btk', 'bk', 'ptk', 'pk', 'pkotor', 'pbersih', 'kasbon', 'total'] as $key) {
+        foreach (['gp', 'tj', 'tk', 'btk', 'bk', 'ptk', 'pk', 'pkotor', 'pbersih', 'kasbon', 'potongan_absensi', 'total'] as $key) {
             $totals[$key] = $rows->sum($key);
         }
 
-        return view('billing.gaji.index', [...$preview, 'gt' => $totals, 'peopleCount' => $rows->count(), 'negativeCount' => $rows->where('total', '<', 0)->count()]);
+        $record = $this->payroll->attendance->period($period->month, $period->year);
+        $snapshot = $record ? $this->payroll->attendance->payload($record) : null;
+        $sources = array_map('strval', $preview['data']->modelKeys());
+        sort($sources, SORT_STRING);
+        if ($snapshot && $snapshot['source_employee_ids'] !== $sources) {
+            $snapshot['ready'] = false;
+            $snapshot['issues'][] = 'Daftar pegawai berubah. Perbarui data absensi.';
+        }
+
+        return view('billing.gaji.index', [...$preview,
+            'attendanceEnabled' => $this->payroll->attendance->enabled(), 'attendancePeriod' => $record,
+            'attendanceDates' => $this->payroll->attendance->dates($period->month, $period->year),
+            'attendanceSnapshot' => $snapshot, 'payrollRevision' => $this->payroll->revision($period->month, $period->year),
+            'gt' => $totals, 'peopleCount' => $rows->count(), 'negativeCount' => $rows->where('total', '<', 0)->count(),
+        ]);
     }
 
     private function previewTable(Request $request, Carbon $period): JsonResponse
@@ -118,15 +133,35 @@ class FormGajiController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->payroll->attendance->clear();
         $period = $this->period($request);
         $this->ensurePeriodAvailable($period);
         try {
-            $cash = Cache::lock('payroll-generation', 300)->get(function () use ($period): KasBesar {
-                return DB::transaction(function () use ($period): KasBesar {
+            $cash = Cache::lock('payroll-generation', 300)->get(function () use ($period, $request): KasBesar {
+                $this->ensurePeriodAvailable($period);
+                $attendance = $this->payroll->attendance;
+                $checkRevision = function () use ($period, $request, $attendance): void {
+                    if (($attendance->enabled() || $request->filled('payroll_revision')) && (! is_string($request->input('payroll_revision')) || ! hash_equals($this->payroll->revision($period->month, $period->year), $request->input('payroll_revision')))) {
+                        throw ValidationException::withMessages(['attendance' => 'Pratinjau gaji berubah atau kedaluwarsa. Muat ulang dan tinjau sebelum menyimpan.']);
+                    }
+                };
+                $checkRevision();
+                $people = $this->payroll->employeesForPeriod($period->month, $period->year);
+                $previews = $this->payroll->directorsForPeriod($period->month, $period->year)->concat($people)->map(fn ($person) => $this->payroll->previewRow($person, $period->month, $period->year));
+                if ($previews->contains(fn ($row) => $row['total'] < 0)) {
+                    throw ValidationException::withMessages(['bulan' => 'Potongan melebihi pendapatan bersih. Periksa sebelum menyimpan.']);
+                }
+                if ((int) KasBesar::orderByDesc('id')->value('saldo') < $previews->sum('total')) {
+                    throw ValidationException::withMessages(['bulan' => 'Saldo Kas Besar Tidak Cukup']);
+                }
+                $lockedPeriod = $attendance->lock($period->month, $period->year, $people->modelKeys());
+
+                return DB::transaction(function () use ($period, $lockedPeriod, $checkRevision): KasBesar {
                     $this->ensurePeriodAvailable($period);
                     $kasBesar = KasBesar::orderByDesc('id')->lockForUpdate()->first();
                     $data = $this->payroll->employeesForPeriod($period->month, $period->year, true);
                     $direksi = $this->payroll->directorsForPeriod($period->month, $period->year, true);
+                    $checkRevision();
                     if ($data->isEmpty() && $direksi->isEmpty()) {
                         throw ValidationException::withMessages(['bulan' => 'Tidak ada pegawai atau direksi untuk periode gaji ini.']);
                     }
@@ -139,7 +174,8 @@ class FormGajiController extends Controller
                         $calc = $this->payroll->calculateComponent($person);
                         $payments = $person instanceof Karyawan ? $this->payroll->kasbonPayments($person, $period->month, $period->year) : [];
                         $kasbon = array_sum(array_column($payments, 'amount'));
-                        $sisaGaji = $calc['pendapatan_bersih'] - $kasbon;
+                        $deduction = $person instanceof Karyawan ? $this->payroll->attendance->calculate($person, $period->month, $period->year) : ['amount' => 0, 'raw' => 0, 'days' => []];
+                        $sisaGaji = $calc['pendapatan_bersih'] - $kasbon - $deduction['amount'];
                         if ($sisaGaji < 0) {
                             throw ValidationException::withMessages(['bulan' => 'Potongan kasbon '.$person->nama.' melebihi pendapatan bersih. Periksa kasbon sebelum menyimpan gaji.']);
                         }
@@ -151,6 +187,7 @@ class FormGajiController extends Controller
                             'gaji_pokok' => $person->gaji_pokok, 'tunjangan_jabatan' => $person->tunjangan_jabatan, 'tunjangan_keluarga' => $person->tunjangan_keluarga,
                             'bpjs_tk' => $calc['bpjs_tk'], 'bpjs_k' => $calc['bpjs_k'], 'potongan_bpjs_tk' => $calc['pot_tk'], 'potongan_bpjs_kesehatan' => $calc['pot_k'],
                             'pendapatan_kotor' => $calc['pendapatan_kotor'], 'pendapatan_bersih' => $calc['pendapatan_bersih'], 'kasbon' => $kasbon, 'sisa_gaji_dibayar' => $sisaGaji,
+                            'potongan_absensi' => $deduction['amount'], 'potongan_absensi_sebelum_batas' => $deduction['raw'], 'rincian_absensi' => json_encode($deduction, JSON_THROW_ON_ERROR),
                             'transfer_ke' => $person->nama_rekening, 'bank' => $person->bank, 'no_rekening' => $person->no_rekening,
                         ]);
                         foreach ($payments as $payment) {
@@ -163,6 +200,7 @@ class FormGajiController extends Controller
                         throw ValidationException::withMessages(['bulan' => 'Saldo Kas Besar Tidak Cukup']);
                     }
                     $rekap->update(['total' => $total]);
+                    $this->payroll->attendance->seal($lockedPeriod, $rekap->id);
 
                     return KasBesar::create([
                         'uraian' => $rekap->uraian, 'tanggal' => now()->toDateString(), 'nominal_transaksi' => $total, 'jenis_transaksi_id' => 2,
@@ -179,7 +217,7 @@ class FormGajiController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
 
-            return back()->with('error', 'Gaji gagal disimpan. Tidak ada perubahan data; silakan coba kembali.');
+            return back()->with('error', 'Gaji belum tersimpan. Periode absensi mungkin sudah terkunci; muat ulang lalu ulangi transaksi yang sama.');
         }
         $this->sendWaNotification((int) $cash->nominal_transaksi, $cash);
 
@@ -217,6 +255,7 @@ class FormGajiController extends Controller
 
     public function previewPdf(Request $request): Response
     {
+        $this->payroll->attendance->clear();
         $period = $this->period($request);
         $this->ensurePeriodAvailable($period);
 
@@ -226,6 +265,7 @@ class FormGajiController extends Controller
 
     public function previewExcel(Request $request): BinaryFileResponse
     {
+        $this->payroll->attendance->clear();
         $period = $this->period($request);
         $this->ensurePeriodAvailable($period);
 

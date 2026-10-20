@@ -2,7 +2,7 @@
     $total_pemasukan = $d->gaji_pokok + $d->tunjangan_jabatan + $d->tunjangan_keluarga;
     $total_potongan_bpjs = $d->potongan_bpjs_tk + $d->potongan_bpjs_kesehatan;
     $gaji_bersih = $total_pemasukan - $total_potongan_bpjs;
-    $total_dibayarkan = $gaji_bersih - $d->kasbon;
+    $total_dibayarkan = $d->sisa_gaji_dibayar;
 ?>
 
 <div class="text-center">
@@ -110,6 +110,7 @@
             <td colspan="3" style="color: red; border-right:none;">Kasbon / Cicilan</td>
             <td class="text-end" style="color: red;">{{ number_format($d->kasbon, 0, ',', '.') }}</td>
         </tr>
+        <tr><td colspan="3" style="color:red;border-right:none;">Potongan Absensi</td><td class="text-end" style="color:red;">{{ number_format($d->potongan_absensi ?? 0,0,',','.') }}</td></tr>
 
         <tr class="bg-grand">
             <td colspan="3" class="text-center">TOTAL GAJI YANG DIBAYARKAN</td>

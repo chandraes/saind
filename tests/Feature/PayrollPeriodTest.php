@@ -36,10 +36,11 @@ class PayrollPeriodTest extends TestCase
             '2023_10_29_185538_change_column_in_rekap_gajis_table.php', '2023_10_30_200911_add_column_to_rekap_gaji_details_table.php',
             '2023_08_26_113058_create_jenis_transaksis_table.php', '2023_08_26_113809_create_tipe_transaksis_table.php', '2023_08_26_140300_create_kas_besars_table.php',
             '2023_09_03_061547_drop_tipe_transaksi_table_and_column.php', '2023_10_21_092404_change_uraian_column_in_kas_besars_table.php',
-            '2023_09_06_160726_create_group_was_table.php',
+            '2023_09_06_160726_create_group_was_table.php', '2026_10_20_124833_create_payroll_attendance_periods_table.php',
         ] as $migration) {
             (require database_path('migrations/'.$migration))->up();
         }
+        DB::table('payroll_attendance_settings')->where('id', 1)->update(['enabled' => false]);
         DB::table('jenis_transaksis')->insert([['id' => 1, 'nama' => 'Masuk'], ['id' => 2, 'nama' => 'Keluar']]);
         Http::preventStrayRequests();
         View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);

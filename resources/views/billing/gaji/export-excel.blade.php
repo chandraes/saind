@@ -1,12 +1,12 @@
 <table>
     <thead>
         <tr>
-            <th colspan="14" style="text-align: center; font-size: 14pt; font-weight: bold;">
+            <th colspan="15" style="text-align: center; font-size: 14pt; font-weight: bold;">
                 REKAP GAJI DIREKSI & STAFF
             </th>
         </tr>
         <tr>
-            <th colspan="14" style="text-align: center; font-size: 12pt; font-weight: bold;">
+            <th colspan="15" style="text-align: center; font-size: 12pt; font-weight: bold;">
                 Periode: {{ Carbon\Carbon::create($tahun, $bulan, 1)->locale('id')->monthName }} {{ $tahun }}
             </th>
         </tr>
@@ -24,7 +24,7 @@
             <th rowspan="2" style="font-weight: bold; text-align: center; vertical-align: center; border: 1pt solid black;">Total Kotor</th>
             <th rowspan="2" style="font-weight: bold; text-align: center; vertical-align: center; border: 1pt solid black;">Total Bersih</th>
             <th rowspan="2" style="font-weight: bold; text-align: center; vertical-align: center; border: 1pt solid black;">Kasbon</th>
-            <th rowspan="2" style="font-weight: bold; text-align: center; vertical-align: center; border: 1pt solid black;">Sisa Gaji Dibayar</th>
+            <th rowspan="2" style="font-weight: bold; text-align: center; vertical-align: center; border: 1pt solid black;">Potongan Absensi</th><th rowspan="2" style="font-weight: bold; text-align: center; vertical-align: center; border: 1pt solid black;">Sisa Gaji Dibayar</th>
         </tr>
         <tr style="background-color: #c6e0b4;">
             <th style="font-weight: bold; text-align: center; border: 1pt solid black;">Jabatan</th>
@@ -33,14 +33,16 @@
     </thead>
     <tbody>
         @php
-            $gt = ['gp' => 0, 'tj' => 0, 'tk' => 0, 'btk' => 0, 'bk' => 0, 'ptk' => 0, 'pk' => 0, 'pkotor' => 0, 'pbersih' => 0, 'kasbon' => 0, 'total' => 0];
+            $gt = ['gp' => 0, 'tj' => 0, 'tk' => 0, 'btk' => 0, 'bk' => 0, 'ptk' => 0, 'pk' => 0, 'pkotor' => 0, 'pbersih' => 0, 'kasbon' => 0, 'potongan_absensi' => 0, 'total' => 0];
         @endphp
         @foreach(array_merge($direksi->all(), $data->all()) as $index => $item)
             @php
                 $res = $payroll->calculateComponent($item);
+                    $attendanceRow = $payroll->previewRow($item,$bulan,$tahun);
+                    $attendanceDeduction = $attendanceRow['potongan_absensi'];
                 // Tetap menggunakan $bulan (integer) untuk kalkulasi agar tidak OutOfRangeException
                 $kasbon = $item instanceof \App\Models\Karyawan ? $payroll->calculateKasbon($item, $bulan, $tahun) : 0;
-                $sisa = $res['pendapatan_bersih'] - $kasbon;
+                $sisa = $res['pendapatan_bersih'] - $kasbon - $attendanceDeduction;
 
                 // Akumulasi Grand Total
                 $gt['gp'] += $item->gaji_pokok;
@@ -53,7 +55,8 @@
                 $gt['pkotor'] += $res['pendapatan_kotor'];
                 $gt['pbersih'] += $res['pendapatan_bersih'];
                 $gt['kasbon'] += $kasbon;
-                $gt['total'] += $sisa;
+                $gt['potongan_absensi'] += $attendanceDeduction;
+                    $gt['total'] += $sisa;
             @endphp
             <tr>
                 <td style="border: 1pt solid black; text-align: center;">{{ $index + 1 }}</td>
@@ -69,7 +72,7 @@
                 <td style="border: 1pt solid black; text-align: right;">{{ $res['pendapatan_kotor'] }}</td>
                 <td style="border: 1pt solid black; text-align: right;">{{ $res['pendapatan_bersih'] }}</td>
                 <td style="border: 1pt solid black; text-align: right; color: #ff0000;">{{ $kasbon }}</td>
-                <td style="border: 1pt solid black; text-align: right; font-weight: bold;">{{ $sisa }}</td>
+                <td style="border: 1pt solid black; text-align: right;">{{ $attendanceDeduction }}</td><td style="border: 1pt solid black; text-align: right; font-weight: bold;">{{ $sisa }}</td>
             </tr>
         @endforeach
     </tbody>
@@ -86,7 +89,7 @@
             <td style="border: 1pt solid black; text-align: right;">{{ $gt['pkotor'] }}</td>
             <td style="border: 1pt solid black; text-align: right;">{{ $gt['pbersih'] }}</td>
             <td style="border: 1pt solid black; text-align: right; color: #ff0000;">{{ $gt['kasbon'] }}</td>
-            <td style="border: 1pt solid black; text-align: right; background-color: #ffff00;">{{ $gt['total'] }}</td>
+            <td style="border: 1pt solid black; text-align: right;">{{ $gt['potongan_absensi'] }}</td><td style="border: 1pt solid black; text-align: right; background-color: #ffff00;">{{ $gt['total'] }}</td>
         </tr>
     </tfoot>
 </table>
