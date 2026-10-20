@@ -23,7 +23,7 @@ class PayrollAttendanceService
 
     public function enabled(): bool
     {
-        return $this->enabledCache ??= Schema::hasTable('payroll_attendance_settings') && (bool) DB::table('payroll_attendance_settings')->where('id', 1)->value('enabled');
+        return $this->enabledCache ??= (bool) config('attendance.enabled', false) && Schema::hasTable('payroll_attendance_settings') && (bool) DB::table('payroll_attendance_settings')->where('id', 1)->value('enabled');
     }
 
     public function period(int $month, int $year): ?object

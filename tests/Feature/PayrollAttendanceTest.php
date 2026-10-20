@@ -153,6 +153,7 @@ class PayrollAttendanceTest extends TestCase
 
     public function test_missing_or_pending_snapshot_blocks_execution_without_payment(): void
     {
+        config(['attendance.enabled' => true]);
         $this->login();
         $employee = $this->employee();
         $this->cash();
@@ -256,6 +257,41 @@ class PayrollAttendanceTest extends TestCase
         $this->assertSame($requestId, DB::table('payroll_attendance_periods')->sole()->request_id);
         $this->assertSame(1, RekapGaji::count());
         Http::assertSent(fn ($request) => ($request['request_id'] ?? null) === $requestId);
+    }
+
+    public function test_env_disabled_ignores_existing_deductions_and_saves_without_remote_lock(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $this->cash();
+        $snapshot = $this->snapshot($employee, ['2026-09-26' => ['status' => 'absent']]);
+        $snapshot['ready'] = false;
+        $snapshot['issues'] = ['Masih menunggu HR'];
+        $this->refresh($employee, $snapshot);
+        config(['attendance.enabled' => false]);
+        $service = app(PayrollAttendanceService::class);
+        $service->clear();
+        $this->assertFalse($service->enabled());
+        $this->assertSame(0, $service->calculate($employee, 10, 2026)['amount']);
+        $this->get('/billing/gaji?bulan=10&tahun=2026')->assertOk()->assertViewHas('attendanceEnabled', false);
+        $this->post('/billing/gaji/store', ['bulan' => 10, 'tahun' => 2026])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(5000000, RekapGaji::sole()->total);
+        $this->assertSame(0, RekapGajiDetail::sole()->potongan_absensi);
+        $period = DB::table('payroll_attendance_periods')->sole();
+        $this->assertNull($period->remote_locked_at);
+        $this->assertNull($period->sealed_at);
+        Http::assertSentCount(1);
+    }
+
+    public function test_env_disabled_allows_salary_without_attendance_snapshot(): void
+    {
+        $this->login();
+        $this->employee();
+        $this->cash();
+        $this->post('/billing/gaji/store', ['bulan' => 10, 'tahun' => 2026])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame(5000000, RekapGaji::sole()->total);
+        $this->assertSame(0, DB::table('payroll_attendance_periods')->count());
+        Http::assertNothingSent();
     }
 
     public function test_running_monitoring_refresh_replaces_deductions_filters_and_never_locks(): void
