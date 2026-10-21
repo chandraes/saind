@@ -9,15 +9,21 @@ body{font-family:DejaVu Sans,sans-serif;font-size:9px;color:#24352f}h1{font-size
 @php
     $money = fn ($value) => 'Rp '.number_format($value ?? 0, 0, ',', '.');
     $zone = $detail['timezone'] ?? 'Asia/Jakarta';
-    $stamp = fn ($value) => $value ? \Carbon\Carbon::parse($value)->timezone($zone)->format('d/m H:i') : '—';
+    $stamp = fn ($value) => $value ? \Carbon\Carbon::parse($value)->timezone($zone)->format('d/m/Y H:i') : '—';
 @endphp
 @if($detail['provisional'] ?? false)<p>Potongan sementara. Jadwal mendatang, shift berjalan dan pengajuan menunggu HR belum dikenai potongan.</p>@endif
 @if($detail['as_of'] ?? null)<p class="muted">Data ditarik: {{ $stamp($detail['as_of']) }} ({{ $zone }})</p>@endif
 <div class="summary"><span>Nilai harian: <strong>{{ $money($detail['daily'] ?? 0) }}</strong></span><span>Sebelum batas: <strong>{{ $money($detail['raw']) }}</strong></span><span>Batas 25%: <strong>{{ $money($detail['cap'] ?? 0) }}</strong></span><span>Potongan akhir: <strong>{{ $money($detail['amount']) }}</strong></span></div>
+<p class="muted">Tanggal kerja mengikuti tanggal mulai jadwal, termasuk shift malam yang pulang keesokan hari. Semua jam dalam zona {{ $zone }}.</p>
 <table><thead><tr><th>Hari / tanggal</th><th>Jadwal & kehadiran</th><th>Keterangan</th><th>Perhitungan</th><th>Potongan harian</th></tr></thead><tbody>
 @forelse($detail['days'] as $day)
 @php
     $status = $day['status'];
+    $scheduleLabel = match($day['schedule_mode'] ?? null) {
+        'shift' => 'Shift'.(!empty($day['schedule_name']) ? ' · '.$day['schedule_name'] : ''),
+        'weekly' => 'Jadwal mingguan',
+        default => 'Jenis jadwal belum tersedia',
+    };
     $pending = in_array($status, ['pending_leave','pending','upcoming','in_progress'], true);
     $effective = $day['effective_minutes'] ?? max(0, $day['scheduled_minutes'] - $day['break_minutes']);
     $lost = min($effective, ($day['late_minutes'] ?? 0) + ($day['early_minutes'] ?? 0));
@@ -28,7 +34,7 @@ body{font-family:DejaVu Sans,sans-serif;font-size:9px;color:#24352f}h1{font-size
         'present' => 'Hadir', default => 'Belum dapat dihitung',
     };
 @endphp
-<tr><td>{{ \Carbon\Carbon::parse($day['date'])->locale('id')->translatedFormat('l, d/m/Y') }}</td><td>Jadwal: {{ $stamp($day['scheduled_start_at'] ?? null) }} – {{ $stamp($day['scheduled_end_at'] ?? null) }}<br>Masuk: {{ $stamp($day['check_in_at'] ?? null) }}<br>Pulang: {{ $stamp($day['check_out_at'] ?? null) }}</td><td>{{ $label }}
+<tr><td>{{ \Carbon\Carbon::parse($day['date'])->locale('id')->translatedFormat('l, d/m/Y') }}</td><td><strong>{{ $scheduleLabel }}</strong><br>Jadwal: {{ $stamp($day['scheduled_start_at'] ?? null) }} – {{ $stamp($day['scheduled_end_at'] ?? null) }}<br>Masuk: {{ $stamp($day['check_in_at'] ?? null) }}<br>Pulang: {{ $stamp($day['check_out_at'] ?? null) }}</td><td>{{ $label }}
 @if(($day['late_minutes'] ?? 0) > 0)<br>Telat setelah toleransi: {{ $day['late_minutes'] }} menit
 @endif
 @if(($day['early_minutes'] ?? 0) > 0)<br>Pulang cepat: {{ $day['early_minutes'] }} menit

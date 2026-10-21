@@ -39,7 +39,7 @@
                 'Kontak & Alamat' => ['Alamat' => $karyawan->alamat, 'Nomor HP' => $karyawan->no_hp, 'Nomor WhatsApp' => $karyawan->no_wa],
                 'Kepesertaan BPJS' => ['BPJS Ketenagakerjaan' => ($karyawan->apa_bpjs_tk ? 'Terdaftar - ' : 'Tidak terdaftar - ').($karyawan->bpjs_tk ?: '-'), 'BPJS Kesehatan' => ($karyawan->apa_bpjs_kesehatan ? 'Terdaftar - ' : 'Tidak terdaftar - ').($karyawan->bpjs_kesehatan ?: '-')],
                 'Rekening Bank' => ['Nama bank' => $karyawan->bank, 'Nomor rekening' => $karyawan->no_rekening, 'Pemilik rekening' => $karyawan->nama_rekening],
-                'Kepegawaian' => ['Mulai bekerja' => $dates['mulai'], 'Status' => $karyawan->status === 'aktif' ? 'Aktif' : 'Nonaktif']
+                'Kepegawaian' => ['Mulai bekerja' => $dates['mulai'], 'Status' => $karyawan->status === 'aktif' ? 'Aktif' : 'Nonaktif', 'Perjanjian kerja' => $karyawan->perjanjian_kerja ? 'Tersedia (buka dari detail web pegawai)' : 'Belum tersedia']
             ])
             @foreach ($sections as $title => $fields)
                 <div class="section">{{ $title }}</div>
@@ -52,6 +52,6 @@
             @endforeach
         </td>
     </tr></tbody></table>
-    <div class="footer">Biodata Pegawai &nbsp; | &nbsp; {{ $karyawan->kode }}{{ $karyawan->nomor }} &nbsp; | &nbsp; {{ $karyawan->nama }}</div>
+    <div class="footer">Biodata Pegawai &nbsp; | &nbsp; {{ $karyawan->kode }}{{ $karyawan->nomor }} &nbsp; | &nbsp; {{ $karyawan->nama }} @if($karyawan->perjanjian_kerja) | <a href="{{ route('karyawan.document', ['karyawan' => $karyawan->id, 'document' => 'perjanjian_kerja']) }}">Perjanjian kerja (login SAIND)</a>@endif</div>
 </body>
 </html>

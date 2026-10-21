@@ -62,7 +62,13 @@
                         <div class="col-md-6"><label for="{{ $field }}" class="form-label fw-bold">{{ $label }} @if (!$editing)<span class="text-danger">*</span>@endif</label><input id="{{ $field }}" name="{{ $field }}" type="file" accept="image/jpeg,image/png" class="form-control employee-photo @error($field) is-invalid @enderror" @required(!$editing)><div class="invalid-feedback" data-error="{{ $field }}">@error($field){{ $message }}@enderror</div>
                             <div class="photo-preview mt-3 rounded-3 border bg-light d-flex align-items-center justify-content-center"><img id="preview-{{ $field }}" class="img-fluid rounded-2" alt="Pratinjau {{ strtolower($label) }}" @if ($photos[$field]) src="{{ asset('storage/'.preg_replace('#^public/#', '', $karyawan->$field)) }}" @else hidden @endif><span id="empty-{{ $field }}" class="text-muted small" @if ($photos[$field]) hidden @endif>Belum ada foto</span></div>
                         </div>
-                    @endforeach</div>
+                    @endforeach
+                    <div class="col-12"><label for="perjanjian_kerja" class="form-label fw-bold">Perjanjian Kerja <span class="text-danger">*</span></label>
+                        <input id="perjanjian_kerja" name="perjanjian_kerja" type="file" accept="application/pdf,.pdf" class="form-control @error('perjanjian_kerja') is-invalid @enderror" @required(!$karyawan->perjanjian_kerja)>
+                        <div class="invalid-feedback" data-error="perjanjian_kerja">@error('perjanjian_kerja'){{ $message }}@enderror</div>
+                        <div class="form-text">Wajib tersedia. Hanya PDF, maksimal 5 MB. {{ $karyawan->perjanjian_kerja ? 'Dokumen tersimpan tetap digunakan jika tidak diganti.' : 'Unggah perjanjian kerja pegawai sebelum menyimpan.' }}</div>
+                        @if($karyawan->perjanjian_kerja)<a class="btn btn-sm btn-outline-success mt-2" target="_blank" rel="noopener" href="{{ route('karyawan.document', ['karyawan' => $karyawan->id, 'document' => 'perjanjian_kerja']) }}"><i class="fa fa-file-text-o me-1"></i>Lihat perjanjian tersimpan</a>@endif
+                    </div></div>
                 </div></div>
                 <div class="employee-save-bar bg-white border rounded-4 p-3 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3"><span class="text-muted small">Periksa kembali data sebelum menyimpan.</span><div class="d-flex gap-2"><a href="{{ route('karyawan.index') }}" class="btn btn-outline-secondary">Batal</a><button id="employee-save" type="submit" class="btn btn-success"><i class="fa fa-check me-1"></i> Simpan Pegawai</button></div></div>
             </div>

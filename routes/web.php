@@ -339,6 +339,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('attendance-integration', [AttendanceIntegrationController::class, 'index'])->name('attendance-integration.index');
         Route::post('attendance-integration/sync', [AttendanceIntegrationController::class, 'sync'])->middleware('throttle:6,1')->name('attendance-integration.sync');
+        Route::get('karyawan/{karyawan}/dokumen/{document}', [KaryawanController::class, 'document'])->name('karyawan.document');
         Route::resource('karyawan', KaryawanController::class);
         Route::post('karyawan/jabatan-store', [KaryawanController::class, 'jabatan_store'])->name('karyawan.jabatan-store');
         Route::patch('karyawan/jabatan-update/{jabatan}', [KaryawanController::class, 'jabatan_update'])->name('karyawan.jabatan-update');

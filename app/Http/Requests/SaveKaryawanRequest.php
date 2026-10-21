@@ -46,6 +46,7 @@ class SaveKaryawanRequest extends FormRequest
             'apa_bpjs_kesehatan' => ['required', 'boolean'],
             'bpjs_tk' => ['required_if:apa_bpjs_tk,1', 'nullable', 'string', 'max:255'],
             'bpjs_kesehatan' => ['required_if:apa_bpjs_kesehatan,1', 'nullable', 'string', 'max:255'],
+            'perjanjian_kerja' => [$this->route('karyawan')?->perjanjian_kerja ? 'nullable' : 'required', 'file', 'mimes:pdf', 'extensions:pdf', 'max:5120'],
             'foto_ktp' => [$this->isMethod('POST') ? 'required' : 'nullable', 'image', 'mimes:jpg,jpeg,png', 'max:10000'],
             'foto_diri' => [$this->isMethod('POST') ? 'required' : 'nullable', 'image', 'mimes:jpg,jpeg,png', 'max:10000'],
         ]);
@@ -54,6 +55,6 @@ class SaveKaryawanRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['jabatan_id' => 'jabatan', 'gaji_pokok' => 'gaji pokok', 'tunjangan_jabatan' => 'tunjangan jabatan', 'tunjangan_keluarga' => 'tunjangan keluarga', 'tanggal_lahir' => 'tanggal lahir', 'mulai_bekerja' => 'tanggal mulai bekerja', 'foto_ktp' => 'foto KTP', 'foto_diri' => 'foto diri', 'bpjs_tk' => 'nomor BPJS Ketenagakerjaan', 'bpjs_kesehatan' => 'nomor BPJS Kesehatan'];
+        return ['perjanjian_kerja' => 'perjanjian kerja', 'jabatan_id' => 'jabatan', 'gaji_pokok' => 'gaji pokok', 'tunjangan_jabatan' => 'tunjangan jabatan', 'tunjangan_keluarga' => 'tunjangan keluarga', 'tanggal_lahir' => 'tanggal lahir', 'mulai_bekerja' => 'tanggal mulai bekerja', 'foto_ktp' => 'foto KTP', 'foto_diri' => 'foto diri', 'bpjs_tk' => 'nomor BPJS Ketenagakerjaan', 'bpjs_kesehatan' => 'nomor BPJS Kesehatan'];
     }
 }

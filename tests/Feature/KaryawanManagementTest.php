@@ -25,7 +25,7 @@ class KaryawanManagementTest extends TestCase
         parent::setUp();
         config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'attendance.enabled' => false, 'attendance.send_immediately' => false]);
         DB::purge('sqlite');
-        foreach (['2014_10_12_000000_create_users_table.php', '2023_08_12_155039_create_jabatans_table.php', '2023_08_12_155203_create_karyawans_table.php', '2023_10_18_020025_add_column_to_karyawans_table.php', '2023_10_29_134916_add_column_to_karyawans_table.php', '2026_10_10_160208_create_attendance_employee_syncs_table.php'] as $migration) {
+        foreach (['2014_10_12_000000_create_users_table.php', '2023_08_12_155039_create_jabatans_table.php', '2023_08_12_155203_create_karyawans_table.php', '2023_10_18_020025_add_column_to_karyawans_table.php', '2023_10_29_134916_add_column_to_karyawans_table.php', '2026_10_10_160208_create_attendance_employee_syncs_table.php', '2026_10_20_213921_add_perjanjian_kerja_to_karyawans_table.php'] as $migration) {
             (require database_path('migrations/'.$migration))->up();
         }
         Schema::table('karyawans', function (Blueprint $table): void {
@@ -81,7 +81,7 @@ class KaryawanManagementTest extends TestCase
 
     private function photos(): array
     {
-        return ['foto_ktp' => UploadedFile::fake()->image('ktp.png'), 'foto_diri' => UploadedFile::fake()->image('diri.jpg')];
+        return ['perjanjian_kerja' => UploadedFile::fake()->create('perjanjian.pdf', 10, 'application/pdf'), 'foto_ktp' => UploadedFile::fake()->image('ktp.png'), 'foto_diri' => UploadedFile::fake()->image('diri.jpg')];
     }
 
     private function listing(array $parameters = []): TestResponse
@@ -133,6 +133,7 @@ class KaryawanManagementTest extends TestCase
         $response = $this->listing()->assertOk();
         $this->assertStringNotContainsString('<script>', $response->json('data.0.nama'));
         $this->assertStringNotContainsString('<script>', $response->json('data.0.action'));
+        $this->assertStringNotContainsString('<script>', $response->json('data.0.documents'));
         $this->get(route('karyawan.show', ['karyawan' => $employee->id, 'format' => 'html']))->assertOk()->assertSee('Jabatan belum tersedia')->assertSee('Foto diri belum tersedia')->assertDontSee('<script>alert(1)</script>', false);
     }
 
@@ -162,7 +163,7 @@ class KaryawanManagementTest extends TestCase
         $this->assertSame(0, $employee->apa_bpjs_tk);
         $this->assertSame('-', $employee->bpjs_tk);
         $this->assertSame($actor->id, $employee->created_by);
-        Storage::disk('local')->assertExists([$employee->foto_ktp, $employee->foto_diri]);
+        Storage::disk('local')->assertExists([$employee->foto_ktp, $employee->foto_diri, $employee->perjanjian_kerja]);
     }
 
     public function test_number_uses_highest_existing_number_instead_of_latest_created_record(): void
@@ -179,7 +180,8 @@ class KaryawanManagementTest extends TestCase
     {
         Storage::fake('local');
         $actor = $this->login();
-        $employee = Karyawan::factory()->create(['foto_ktp' => 'public/karyawan/missing.png', 'foto_diri' => 'public/karyawan/old.png', 'apa_bpjs_tk' => true]);
+        $employee = Karyawan::factory()->create(['foto_ktp' => 'public/karyawan/missing.png', 'foto_diri' => 'public/karyawan/old.png', 'apa_bpjs_tk' => true, 'perjanjian_kerja' => 'private/karyawan/contracts/old.pdf']);
+        Storage::disk('local')->put($employee->perjanjian_kerja, '%PDF-1.4 old');
         Storage::disk('local')->put($employee->foto_diri, 'old');
         $this->putJson(route('karyawan.update', $employee), $this->payload())->assertOk();
         $this->assertDatabaseHas('karyawans', ['id' => $employee->id, 'bank' => 'Mandiri', 'foto_ktp' => 'public/karyawan/missing.png', 'foto_diri' => 'public/karyawan/old.png', 'apa_bpjs_tk' => 0, 'updated_by' => $actor->id]);
@@ -190,12 +192,13 @@ class KaryawanManagementTest extends TestCase
     {
         Storage::fake('local');
         $this->login();
-        $employee = Karyawan::factory()->create(['foto_ktp' => 'public/karyawan/missing.png', 'foto_diri' => 'public/karyawan/old.png']);
+        $employee = Karyawan::factory()->create(['foto_ktp' => 'public/karyawan/missing.png', 'foto_diri' => 'public/karyawan/old.png', 'perjanjian_kerja' => 'private/karyawan/contracts/old.pdf']);
+        Storage::disk('local')->put($employee->perjanjian_kerja, '%PDF-1.4 old');
         Storage::disk('local')->put($employee->foto_diri, 'old');
         $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(), $this->photos()))->assertOk();
         $employee->refresh();
-        Storage::disk('local')->assertExists([$employee->foto_ktp, $employee->foto_diri]);
-        Storage::disk('local')->assertMissing('public/karyawan/old.png');
+        Storage::disk('local')->assertExists([$employee->foto_ktp, $employee->foto_diri, $employee->perjanjian_kerja]);
+        Storage::disk('local')->assertMissing(['public/karyawan/old.png', 'private/karyawan/contracts/old.pdf']);
     }
 
     public function test_failed_update_keeps_old_files_and_removes_new_uploads(): void
@@ -210,6 +213,7 @@ class KaryawanManagementTest extends TestCase
         $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(), $this->photos()))->assertUnprocessable()->assertJsonPath('message', 'Data pegawai belum tersimpan. Silakan coba kembali.');
         $this->assertDatabaseHas('karyawans', ['id' => $employee->id, 'foto_diri' => 'public/karyawan/old.png']);
         $this->assertSame(['public/karyawan/old.png'], Storage::disk('local')->allFiles('public/karyawan'));
+        $this->assertSame([], Storage::disk('local')->allFiles('private/karyawan/contracts'));
     }
 
     #[TestWith(['gaji_pokok', '-100'])]
@@ -240,10 +244,11 @@ class KaryawanManagementTest extends TestCase
 
     public function test_bpjs_membership_requires_number_and_off_accepts_empty_number(): void
     {
+        Storage::fake('local');
         $this->login();
         $employee = Karyawan::factory()->create();
         $this->putJson(route('karyawan.update', $employee), $this->payload(['apa_bpjs_tk' => 1, 'apa_bpjs_kesehatan' => 1]))->assertUnprocessable()->assertJsonValidationErrors(['bpjs_tk', 'bpjs_kesehatan']);
-        $this->putJson(route('karyawan.update', $employee), $this->payload(['apa_bpjs_tk' => 'on', 'bpjs_tk' => '000123']))->assertOk();
+        $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(['apa_bpjs_tk' => 'on', 'bpjs_tk' => '000123']), ['perjanjian_kerja' => UploadedFile::fake()->create('perjanjian.pdf', 10, 'application/pdf')]))->assertOk();
         $this->assertDatabaseHas('karyawans', ['id' => $employee->id, 'apa_bpjs_tk' => 1, 'bpjs_tk' => '000123']);
     }
 
@@ -278,11 +283,12 @@ class KaryawanManagementTest extends TestCase
     {
         Storage::fake('local');
         $this->login();
-        $employee = Karyawan::factory()->create(['foto_diri' => 'public/karyawan/photo.jpg', 'foto_ktp' => 'public/karyawan/missing.jpg']);
+        $employee = Karyawan::factory()->create(['foto_diri' => 'public/karyawan/photo.jpg', 'foto_ktp' => 'public/karyawan/missing.jpg', 'perjanjian_kerja' => 'private/karyawan/contracts/delete.pdf']);
+        Storage::disk('local')->put($employee->perjanjian_kerja, '%PDF-1.4 delete');
         Storage::disk('local')->put($employee->foto_diri, 'photo');
         $this->deleteJson(route('karyawan.destroy', $employee))->assertOk();
         $this->assertDatabaseMissing('karyawans', ['id' => $employee->id]);
-        Storage::disk('local')->assertMissing('public/karyawan/photo.jpg');
+        Storage::disk('local')->assertMissing(['public/karyawan/photo.jpg', 'private/karyawan/contracts/delete.pdf']);
     }
 
     public function test_position_crud_rejects_duplicates_and_protects_assigned_employees(): void
@@ -303,16 +309,83 @@ class KaryawanManagementTest extends TestCase
 
     public function test_employee_and_position_changes_keep_attendance_outbox_in_sync(): void
     {
+        Storage::fake('local');
         $this->login();
         config(['attendance.enabled' => true]);
         $employee = Karyawan::factory()->create();
-        $this->putJson(route('karyawan.update', $employee), $this->payload(['nama' => 'Nama Baru', 'jabatan_id' => $employee->jabatan_id]))->assertOk();
+        $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(['nama' => 'Nama Baru', 'jabatan_id' => $employee->jabatan_id]), ['perjanjian_kerja' => UploadedFile::fake()->create('perjanjian.pdf', 10, 'application/pdf')]))->assertOk();
         $this->assertSame('Nama Baru', AttendanceEmployeeSync::sole()->payload['name']);
         $this->patchJson(route('karyawan.jabatan-update', $employee->jabatan_id), ['nama_jabatan' => 'Jabatan Baru'])->assertOk();
         $this->assertSame('Jabatan Baru', AttendanceEmployeeSync::sole()->payload['position']);
         $this->deleteJson(route('karyawan.destroy', $employee))->assertOk();
         $this->assertSame('inactive', AttendanceEmployeeSync::sole()->payload['status']);
         Http::assertNothingSent();
+    }
+
+    public function test_contract_is_required_on_create_and_update_and_rejects_invalid_files(): void
+    {
+        Storage::fake('local');
+        $this->login();
+        $files = $this->photos();
+        unset($files['perjanjian_kerja']);
+        $this->postJson(route('karyawan.store'), array_merge($this->payload(), $files))->assertUnprocessable()->assertJsonValidationErrors('perjanjian_kerja');
+        $employee = Karyawan::factory()->create();
+        $this->putJson(route('karyawan.update', $employee), $this->payload())->assertUnprocessable()->assertJsonValidationErrors('perjanjian_kerja');
+        $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(), ['perjanjian_kerja' => UploadedFile::fake()->create('script.php', 1, 'text/plain')]))->assertUnprocessable()->assertJsonValidationErrors('perjanjian_kerja');
+        $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(), ['perjanjian_kerja' => UploadedFile::fake()->create('large.pdf', 5121, 'application/pdf')]))->assertUnprocessable()->assertJsonValidationErrors('perjanjian_kerja');
+        $this->assertNull($employee->fresh()->perjanjian_kerja);
+        $this->assertSame([], Storage::disk('local')->allFiles());
+    }
+
+    public function test_contract_accepts_pdf_at_maximum_size(): void
+    {
+        Storage::fake('local');
+        $this->login();
+        $employee = Karyawan::factory()->create();
+        $file = UploadedFile::fake()->create('contract.pdf', 5120, 'application/pdf');
+
+        $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(), ['perjanjian_kerja' => $file]))->assertOk();
+
+        $employee->refresh();
+        $this->assertStringStartsWith('private/karyawan/contracts/', $employee->perjanjian_kerja);
+        Storage::disk('local')->assertExists($employee->perjanjian_kerja);
+        $this->get(route('karyawan.show', ['karyawan' => $employee->id, 'format' => 'html']))->assertOk()->assertSee('Perjanjian');
+    }
+
+    #[TestWith(['jpg'])]
+    #[TestWith(['png'])]
+    public function test_contract_rejects_images_even_with_pdf_filename(string $extension): void
+    {
+        Storage::fake('local');
+        $this->login();
+        $employee = Karyawan::factory()->create();
+        $image = UploadedFile::fake()->image('contract.'.$extension);
+        $file = new UploadedFile($image->getPathname(), 'contract.pdf', 'application/pdf', null, true);
+
+        $this->putJson(route('karyawan.update', $employee), array_merge($this->payload(), ['perjanjian_kerja' => $file]))->assertUnprocessable()->assertJsonValidationErrors('perjanjian_kerja');
+
+        $this->assertNull($employee->fresh()->perjanjian_kerja);
+        $this->assertSame([], Storage::disk('local')->allFiles());
+    }
+
+    public function test_documents_are_loaded_on_demand_and_private_paths_are_not_exposed_in_listing(): void
+    {
+        Storage::fake('local');
+        $this->login();
+        $employee = Karyawan::factory()->create(['perjanjian_kerja' => 'private/karyawan/contracts/secret.pdf', 'foto_diri' => 'public/karyawan/photo.jpg']);
+        Storage::disk('local')->put($employee->perjanjian_kerja, '%PDF-1.4 contract');
+        $response = $this->listing()->assertOk();
+        $this->assertStringContainsString(route('karyawan.document', ['karyawan' => $employee->id, 'document' => 'perjanjian_kerja']), $response->json('data.0.documents'));
+        $this->assertStringNotContainsString('private/karyawan', $response->getContent());
+        $this->assertArrayNotHasKey('perjanjian_kerja', $response->json('data.0'));
+        $url = route('karyawan.document', ['karyawan' => $employee->id, 'document' => 'perjanjian_kerja']);
+        $this->get($url)->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->get(route('karyawan.document', ['karyawan' => $employee->id, 'document' => 'foto_diri']))->assertNotFound();
+        $this->get(route('karyawan.document', ['karyawan' => $employee->id, 'document' => 'password']))->assertNotFound();
+        $this->login('user');
+        $this->get($url)->assertForbidden();
+        auth()->forgetGuards();
+        $this->get($url)->assertRedirect(route('login'));
     }
 
     public function test_unauthorized_roles_and_guests_cannot_access_employee_crud(): void

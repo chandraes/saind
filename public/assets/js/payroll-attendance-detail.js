@@ -9,7 +9,7 @@
     };
     const stamp = (value, timezone) => {
         if (!value) return '—';
-        try { return new Intl.DateTimeFormat('id-ID', {timeZone: timezone, day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(value)); }
+        try { return new Intl.DateTimeFormat('id-ID', {timeZone: timezone, day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(value)); }
         catch { return '—'; }
     };
     window.showPayrollAttendanceDetail = function (name, period, detail, downloadUrl) {
@@ -61,11 +61,14 @@
         head.append(header); table.append(head);
         const body = element('tbody');
         const timezone = detail.timezone || 'Asia/Jakarta';
+        root.append(element('p', 'small text-muted', 'Tanggal kerja mengikuti tanggal mulai jadwal, termasuk shift malam yang pulang keesokan hari. Semua jam dalam zona ' + timezone + '.'));
         detail.days.filter(day => day.automatic > 0 || day.deduction > 0 || day.override || ['pending_leave','pending','upcoming','in_progress'].includes(day.status)).forEach(day => {
             const row = element('tr');
             const dateCell = element('td');
             dateCell.append(element('strong', '', new Intl.DateTimeFormat('id-ID', {timeZone: 'UTC', weekday: 'long'}).format(new Date(day.date + 'T12:00:00Z'))), element('div', 'small text-muted', day.date));
             const timeCell = element('td');
+            const scheduleLabel = day.schedule_mode === 'shift' ? 'Shift' : (day.schedule_mode === 'weekly' ? 'Jadwal mingguan' : 'Jenis jadwal belum tersedia');
+            timeCell.append(element('div', 'fw-semibold mb-1', scheduleLabel + (day.schedule_mode === 'shift' && day.schedule_name ? ' · ' + day.schedule_name : '')));
             timeCell.append(element('div', 'small', 'Jadwal: ' + stamp(day.scheduled_start_at, timezone) + ' – ' + stamp(day.scheduled_end_at, timezone)), element('div', 'small text-muted', 'Masuk: ' + stamp(day.check_in_at, timezone)), element('div', 'small text-muted', 'Pulang: ' + stamp(day.check_out_at, timezone)));
             const reasonCell = element('td');
             const reasons = [];

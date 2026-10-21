@@ -294,6 +294,41 @@ class PayrollAttendanceTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_overnight_shift_at_period_end_keeps_its_start_date_and_next_day_checkout(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $this->refresh($employee, $this->snapshot($employee, ['2026-09-26' => ['schedule_mode' => 'weekly'], '2026-10-25' => [
+            'schedule_mode' => 'shift', 'schedule_name' => 'Malam',
+            'scheduled_start_at' => '2026-10-25T22:00:00+07:00',
+            'scheduled_end_at' => '2026-10-26T06:00:00+07:00',
+            'check_in_at' => '2026-10-25T22:30:00+07:00',
+            'check_out_at' => '2026-10-26T05:40:00+07:00',
+            'scheduled_minutes' => 480, 'break_minutes' => 60,
+            'late_minutes' => 30, 'early_minutes' => 20,
+        ]]));
+
+        $detail = app(PayrollAttendanceService::class)->calculate($employee, 10, 2026);
+
+        $this->assertSame(23810, $detail['amount']);
+        $last = $detail['days'][29];
+        $this->assertSame('2026-10-25', $last['date']);
+        $this->assertSame('2026-10-26T05:40:00+07:00', $last['check_out_at']);
+        $this->assertSame(420, $last['effective_minutes']);
+        $this->assertSame('shift', $last['schedule_mode']);
+        $this->assertSame('Malam', $last['schedule_name']);
+        $this->assertCount(30, $detail['days']);
+        Http::assertSent(fn ($request) => $request['from'] === '2026-09-26' && $request['to'] === '2026-10-25');
+        $html = view('billing.gaji.attendance-pdf', ['name' => $employee->nama, 'period' => Carbon::parse('2026-10-01'), 'saved' => false, 'detail' => $detail])->render();
+        $this->assertStringContainsString('25/10/2026 22:00', $html);
+        $this->assertStringContainsString('26/10/2026 06:00', $html);
+        $this->assertStringContainsString('26/10/2026 05:40', $html);
+        $this->assertStringContainsString('Tanggal kerja mengikuti tanggal mulai jadwal', $html);
+        $this->assertStringContainsString('Shift · Malam', $html);
+        $this->assertStringContainsString('Jadwal mingguan', $html);
+        $this->assertStringContainsString('Jenis jadwal belum tersedia', $html);
+    }
+
     public function test_env_disabled_ignores_existing_deductions_and_saves_without_remote_lock(): void
     {
         $this->login();

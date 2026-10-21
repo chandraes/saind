@@ -37,7 +37,7 @@ class KaryawanController extends Controller
         }
         $request->merge(['length' => min(100, max(1, $request->integer('length', 10))), 'start' => max(0, $request->integer('start')), 'columns' => []]);
         $query = DB::table('karyawans')->leftJoin('jabatans', 'karyawans.jabatan_id', '=', 'jabatans.id')
-            ->select('karyawans.id', 'karyawans.nama', 'karyawans.nickname', 'karyawans.status', 'jabatans.nama as jabatan');
+            ->select('karyawans.id', 'karyawans.nama', 'karyawans.nickname', 'karyawans.status', 'karyawans.foto_diri', 'karyawans.foto_ktp', 'karyawans.perjanjian_kerja', 'jabatans.nama as jabatan');
 
         return DataTables::of($query)->filter(function (Builder $query) use ($request, $status): void {
             if ($status !== 'semua') {
@@ -54,7 +54,7 @@ class KaryawanController extends Controller
         })->order(function (Builder $query) use ($request): void {
             $columns = [1 => 'karyawans.nama', 2 => 'karyawans.nickname', 3 => 'jabatans.nama', 4 => 'karyawans.status'];
             $query->orderBy($columns[$request->integer('order.0.column', 1)] ?? 'karyawans.nama', $request->input('order.0.dir') === 'desc' ? 'desc' : 'asc')->orderBy('karyawans.id');
-        })->addIndexColumn()->addColumn('action', fn (object $employee): string => view('database.karyawan.actions', compact('employee'))->render())->rawColumns(['action'])->toJson();
+        })->addIndexColumn()->addColumn('documents', fn (object $employee): string => view('database.karyawan.documents', compact('employee'))->render())->removeColumn('foto_diri')->removeColumn('foto_ktp')->removeColumn('perjanjian_kerja')->addColumn('action', fn (object $employee): string => view('database.karyawan.actions', compact('employee'))->render())->rawColumns(['action', 'documents'])->toJson();
     }
 
     public function create(): View
@@ -79,6 +79,17 @@ class KaryawanController extends Controller
         return Pdf::loadView('database.karyawan.show', compact('karyawan', 'dates', 'photos'))->setOption('isRemoteEnabled', false)->setPaper('a4', 'landscape')->stream('biodata-pegawai-'.$karyawan->id.'.pdf');
     }
 
+    public function document(Request $request, Karyawan $karyawan, string $document): Response
+    {
+        abort_unless(in_array($request->user()?->role, ['admin', 'su'], true), 403);
+        abort_unless(in_array($document, ['foto_diri', 'foto_ktp', 'perjanjian_kerja'], true), 404);
+        $path = $karyawan->$document;
+        $prefix = $document === 'perjanjian_kerja' ? 'private/karyawan/contracts/' : 'public/karyawan/';
+        abort_unless($path && str_starts_with($path, $prefix) && ! str_contains($path, '..') && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path, $document.'-'.$karyawan->id.'.'.pathinfo($path, PATHINFO_EXTENSION), ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
+    }
+
     public function edit(Karyawan $karyawan): View
     {
         return view('database.karyawan.edit', ['karyawan' => $karyawan, 'jabatan' => Jabatan::orderBy('nama')->get(['id', 'nama']), 'photos' => $this->photoPaths($karyawan)]);
@@ -101,12 +112,12 @@ class KaryawanController extends Controller
         $newFiles = [];
         $oldFiles = [];
         try {
-            foreach (['foto_ktp', 'foto_diri'] as $field) {
+            foreach (['foto_ktp', 'foto_diri', 'perjanjian_kerja'] as $field) {
                 unset($data[$field]);
                 if ($request->hasFile($field)) {
-                    $path = $request->file($field)->store('public/karyawan', 'local');
+                    $path = $request->file($field)->store($field === 'perjanjian_kerja' ? 'private/karyawan/contracts' : 'public/karyawan', 'local');
                     if (! $path) {
-                        throw new RuntimeException('Penyimpanan foto pegawai gagal.');
+                        throw new RuntimeException('Penyimpanan dokumen pegawai gagal.');
                     }
                     $data[$field] = $path;
                     $newFiles[] = $path;
@@ -119,7 +130,7 @@ class KaryawanController extends Controller
                 }
                 if ($employee) {
                     $locked = Karyawan::whereKey($employee->id)->lockForUpdate()->firstOrFail();
-                    foreach (['foto_ktp', 'foto_diri'] as $field) {
+                    foreach (['foto_ktp', 'foto_diri', 'perjanjian_kerja'] as $field) {
                         if (isset($data[$field]) && $locked->$field) {
                             $oldFiles[] = $locked->$field;
                         }
@@ -159,7 +170,7 @@ class KaryawanController extends Controller
                     throw ValidationException::withMessages(['karyawan' => 'Pegawai memiliki riwayat keuangan. Ubah status menjadi nonaktif agar riwayat tetap tersimpan.']);
                 }
                 $employee->delete();
-                DB::afterCommit(fn () => $this->deletePhotos(array_filter([$employee->foto_ktp, $employee->foto_diri])));
+                DB::afterCommit(fn () => $this->deletePhotos(array_filter([$employee->foto_ktp, $employee->foto_diri, $employee->perjanjian_kerja])));
             });
         } catch (ValidationException $exception) {
             return $this->failure($request, $exception->validator->errors()->first());
@@ -217,7 +228,7 @@ class KaryawanController extends Controller
     private function deletePhotos(array $paths): void
     {
         foreach ($paths as $path) {
-            if (str_starts_with($path, 'public/karyawan/')) {
+            if (str_starts_with($path, 'public/karyawan/') || str_starts_with($path, 'private/karyawan/contracts/')) {
                 try {
                     Storage::disk('local')->delete($path);
                 } catch (Throwable $exception) {
@@ -250,6 +261,6 @@ class KaryawanController extends Controller
 
     private function failure(Request $request, string $message): JsonResponse|RedirectResponse
     {
-        return $request->expectsJson() ? response()->json(['message' => $message], 422) : back()->withInput($request->except(['foto_ktp', 'foto_diri']))->with('error', $message);
+        return $request->expectsJson() ? response()->json(['message' => $message], 422) : back()->withInput($request->except(['foto_ktp', 'foto_diri', 'perjanjian_kerja']))->with('error', $message);
     }
 }
