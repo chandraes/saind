@@ -880,6 +880,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/', [RekapController::class, 'cost_operational'])->name('rekap.cost-operational');
             });
 
+            Route::get('/lain-lain', [RekapController::class, 'lain_lain'])->name('rekap.lain-lain');
             Route::get('/kas-besar', [RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
             Route::get('/kas-besar/preview/{bulan}/{tahun}', [RekapController::class, 'preview_kas_besar'])->name('rekap.kas-besar.preview');
             Route::get('/kas-kecil', [RekapController::class, 'kas_kecil'])->name('rekap.kas-kecil');

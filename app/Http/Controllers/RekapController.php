@@ -41,12 +41,14 @@ use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class RekapController extends Controller
 {
@@ -535,6 +537,40 @@ class RekapController extends Controller
 
         return redirect()->route('rekap.index')->with('success', 'Berhasil Void Kas Vendor!!');
 
+    }
+
+    public function lain_lain(Request $request): View|JsonResponse
+    {
+        $validated = $request->validate(['bulan' => ['nullable', 'integer', 'between:1,12'], 'tahun' => ['nullable', 'integer', 'between:1901,2155']]);
+        $bulan = (int) ($validated['bulan'] ?? now()->month);
+        $tahun = (int) ($validated['tahun'] ?? now()->year);
+        $period = Carbon::create($tahun, $bulan, 1)->startOfDay();
+        $query = KasBesar::where('lain_lain', true)->where('tanggal', '>=', $period->toDateString())->where('tanggal', '<', $period->copy()->addMonth()->toDateString())->toBase();
+        if ($request->ajax()) {
+            $columns = [];
+            foreach (['tanggal', 'uraian', 'masuk', 'keluar', 'transfer_ke', 'bank'] as $name) {
+                $columns[] = ['data' => $name, 'name' => $name, 'searchable' => in_array($name, ['uraian', 'transfer_ke', 'bank'], true) ? 'true' : 'false', 'orderable' => 'false'];
+            }
+            $request->merge(['length' => min(100, max(1, $request->integer('length', 25))), 'start' => max(0, $request->integer('start')), 'columns' => $columns, 'order' => [], 'search' => ['value' => mb_substr($request->string('search.value')->trim()->toString(), 0, 100), 'regex' => false]]);
+
+            return DataTables::of($query->select(['id', 'tanggal', 'uraian', 'jenis_transaksi_id', 'nominal_transaksi', 'transfer_ke', 'bank'])->orderByDesc('tanggal')->orderByDesc('id'))
+                ->editColumn('tanggal', fn (object $row): string => Carbon::parse($row->tanggal)->format('d-m-Y'))
+                ->addColumn('masuk', fn (object $row): int => (int) $row->jenis_transaksi_id === 1 ? (int) $row->nominal_transaksi : 0)
+                ->addColumn('keluar', fn (object $row): int => (int) $row->jenis_transaksi_id === 2 ? (int) $row->nominal_transaksi : 0)
+                ->withQuery('totals', fn (QueryBuilder $filtered): array => $this->lainLainTotals($filtered))
+                ->escapeColumns([])->toJson();
+        }
+        $years = KasBesar::where('lain_lain', true)->selectRaw('YEAR(tanggal) as tahun')->distinct()->pluck('tahun')->push(now()->year)->push($tahun)->unique()->sortDesc()->values();
+
+        return view('rekap.lain-lain', ['bulan' => $bulan, 'tahun' => $tahun, 'years' => $years, 'periodLabel' => $period->locale('id')->translatedFormat('F Y'), 'totals' => $this->lainLainTotals($query)]);
+    }
+
+    /** @return array{count: int, masuk: int, keluar: int} */
+    private function lainLainTotals(QueryBuilder $query): array
+    {
+        $totals = $query->cloneWithout(['columns', 'orders', 'limit', 'offset'])->selectRaw('COUNT(*) as records, COALESCE(SUM(CASE WHEN jenis_transaksi_id = 1 THEN nominal_transaksi ELSE 0 END), 0) as masuk, COALESCE(SUM(CASE WHEN jenis_transaksi_id = 2 THEN nominal_transaksi ELSE 0 END), 0) as keluar')->first();
+
+        return ['count' => (int) $totals->records, 'masuk' => (int) $totals->masuk, 'keluar' => (int) $totals->keluar];
     }
 
     public function kas_bon(Request $request): View|JsonResponse
