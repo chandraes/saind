@@ -30,15 +30,19 @@
                             <div class="col-sm-3"><label for="mulai_tahun" class="form-label fw-bold">Tahun <span class="text-danger">*</span></label><input type="number" name="mulai_tahun" id="mulai_tahun" class="form-control" min="{{ now()->year }}" max="2155" step="1" value="{{ old('mulai_tahun', now()->year) }}" required></div>
                         </div>
                     @endif
+                    <div class="border-top pt-4 mt-4"><h5 class="fw-bold mb-2">Pinjaman Berjalan</h5><p id="loan-period" class="small text-muted">Pilih pegawai untuk melihat pinjaman dan batas pengajuan.</p><div id="running-loans" aria-live="polite"></div></div>
                 </div></div>
             </div>
             <div class="col-lg-4"><div class="card border-0 rounded-4 bg-success bg-opacity-10"><div class="card-body p-4">
                 <span class="badge bg-success rounded-pill mb-3">Acuan {{ $percentage }}%</span><h5 class="fw-bold">Ringkasan Pinjaman</h5>
                 <div class="small text-muted mb-1 mt-4">Total penghasilan acuan</div><div id="income-summary" class="fw-bold fs-5">—</div>
                 <p class="small text-muted mt-2">Gaji pokok + tunjangan jabatan + tunjangan keluarga.</p>
+                <div class="small text-muted mt-3 mb-1">{{ $isCicilan ? 'Kasbon potong gaji belum lunas' : 'Angsuran berjalan pada bulan ini' }}</div><div id="deduction-summary" class="fw-bold">—</div>
+                <div class="small text-muted mt-3 mb-1">Penghasilan setelah pengurang</div><div id="base-summary" class="fw-bold">—</div>
                 <hr><div class="small text-muted mb-1">{{ $isCicilan ? 'Batas angsuran per bulan' : 'Batas total kasbon belum lunas' }}</div><div id="limit-summary" class="fw-bold fs-5 text-success">—</div>
+                @unless($isCicilan)<div class="small text-muted mt-3 mb-1">Kasbon potong gaji belum lunas</div><div id="existing-summary" class="fw-bold">—</div><div class="small text-muted mt-3 mb-1">Sisa batas pengajuan baru</div><div id="available-summary" class="fw-bold text-success">—</div>@endunless
                 <div class="small text-muted mb-1 mt-4">{{ $isCicilan ? 'Estimasi angsuran per bulan' : 'Nominal pengajuan' }}</div><div id="amount-summary" class="fw-bold fs-5">Rp 0</div>
-                <p id="limit-note" class="small text-muted mt-3 mb-0" aria-live="polite">{{ $isCicilan ? 'Angsuran maksimal 30% dari total penghasilan acuan.' : 'Pinjaman yang belum lunas ikut diperhitungkan saat penyimpanan.' }}</p>
+                <p id="limit-note" class="small text-muted mt-3 mb-0" aria-live="polite">{{ $isCicilan ? '30% × (total penghasilan − kasbon potong gaji belum lunas).' : '50% × (total penghasilan − angsuran berjalan), lalu dikurangi kasbon potong gaji belum lunas.' }}</p>
             </div></div></div>
         </div>
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 border-top mt-4 pt-4"><span class="small text-muted"><i class="fa fa-info-circle me-1"></i> Periksa data sebelum menyimpan. Dana dicatat keluar dari Kas Besar.</span><div class="d-flex gap-2"><a href="{{ route('billing.index') }}" class="btn btn-outline-secondary">Batal</a><button type="submit" id="save-kasbon" class="btn btn-success px-4" @disabled($karyawan->isEmpty())><i class="fa fa-check-circle me-1"></i> Simpan Kasbon</button></div></div>
@@ -71,22 +75,61 @@ $(function () {
         updateMonths(oldMonth);
         $('#mulai_tahun').on('input',function(){updateMonths($('#mulai_bulan').val());});
     }
+    let activeSummary=null, summaryRequest=null, requestVersion=0, loading=false, confirming=false, saving=false;
+    const endpoint=@json(route('billing.kasbon.limit'));
     function summary(){
-        const selected=$('#karyawan_id').val(), income=Number($('#karyawan_id option:selected').attr('data-income')) || 0;
         const amount=Number(nominal.getRawValue()) || 0, count=Number($('#cicil_kali').val());
-        $('#income-summary').text(selected ? money(income) : '—');
-        $('#limit-summary').text(selected ? money(income*percentage/100) : '—');
         $('#amount-summary').text(isCicilan ? (count>0 ? money(amount/count) : '—') : money(amount));
+        const details=activeSummary;
+        $('#income-summary').text(details ? money(details.income) : '—');
+        const deduction=details ? (isCicilan ? details.ordinary_due : details.installment_due) : 0;
+        $('#deduction-summary').text(details ? money(deduction) : '—');
+        $('#base-summary').text(details ? money(Math.max(0,details.income-deduction)) : '—');
+        $('#limit-summary').text(details ? money(isCicilan ? details.installment_limit : details.ordinary_limit) : '—');
+        $('#existing-summary').text(details ? money(details.ordinary_due) : '—');
+        $('#available-summary').text(details ? money(details.ordinary_available) : '—');
+        $('#save-kasbon').prop('disabled',!details || loading || saving);
     }
-    $('#karyawan_id').on('change',summary); $('#nominal,#cicil_kali').on('input',summary); summary();
-    let confirming=false, saving=false;
+    function loadLoans(){
+        const version=++requestVersion;
+        summaryRequest?.abort(); activeSummary=null; loading=false;
+        const employee=$('#karyawan_id').val(), year=isCicilan ? Number($('#mulai_tahun').val()) : currentYear;
+        const month=isCicilan ? Number($('#mulai_bulan').val() || currentMonth) : currentMonth;
+        $('#running-loans').empty();
+        if(!employee || !Number.isInteger(year) || year<1901 || year>2155){$('#loan-period').text('Pilih pegawai dan periode yang valid untuk melihat pinjaman berjalan.');summary();return;}
+        loading=true; $('#loan-period').text('Memuat pinjaman berjalan…');summary();
+        summaryRequest=$.ajax({url:endpoint,dataType:'json',data:{karyawan_id:employee,bulan:month,tahun:year}}).done(details => {
+            if(version!==requestVersion) return;
+            activeSummary=details;
+            $('#loan-period').text('Acuan '+details.period+'. Batas akan diperiksa ulang saat disimpan.');
+            if(!details.loans.length) $('#running-loans').append($('<p class="small text-success mb-0">').text('Tidak ada pinjaman yang belum lunas.'));
+            details.loans.forEach(loan => {
+                const item=$('<div class="bg-light rounded-3 p-3 mb-2">');
+                item.append($('<div class="fw-bold small">').text(loan.jenis+' · '+loan.tanggal));
+                item.append($('<div class="small mt-1">').text('Sisa '+money(loan.sisa)+(loan.angsuran ? ' · Angsuran '+money(loan.angsuran)+'/bulan' : '')));
+                if(!loan.berlaku) item.append($('<div class="small text-muted mt-1">').text('Belum masuk potongan pada periode acuan.'));
+                $('#running-loans').append(item);
+            });
+        }).fail((xhr,status) => {
+            if(status==='abort' || version!==requestVersion) return;
+            $('#loan-period').text('Data belum dapat dimuat.');
+            $('<button type="button" class="btn btn-sm btn-outline-success">').text('Coba lagi').on('click',loadLoans).appendTo('#running-loans');
+            Swal.fire({icon:'error',title:'Pinjaman belum dapat dimuat',text:'Silakan coba lagi sebelum melanjutkan pengajuan.'});
+        }).always(() => {if(version===requestVersion){loading=false;summary();}});
+    }
+    $('#karyawan_id,#mulai_bulan').on('change',loadLoans);
+    let yearTimer; $('#mulai_tahun').on('input',function(){clearTimeout(yearTimer);yearTimer=setTimeout(loadLoans,300);});
+    $('#nominal,#cicil_kali').on('input',summary);loadLoans();
     $('#kasbon-form').on('submit',async function(event){
-        event.preventDefault(); if(confirming || saving) return;
+        event.preventDefault(); if(confirming || saving || loading) return;
         const amount=Number(nominal.getRawValue());
-        if(!this.checkValidity() || !(amount>0)){
+        if(!this.checkValidity() || !(amount>0) || !activeSummary){
             this.classList.add('was-validated');
             Swal.fire({icon:'warning',title:'Lengkapi data pinjaman',text:'Pilih pegawai, isi nominal lebih dari nol, dan lengkapi jadwal angsuran jika menggunakan cicilan.'}); return;
         }
+        const limit=isCicilan ? activeSummary.installment_limit : activeSummary.ordinary_available;
+        const proposed=isCicilan ? amount/Number($('#cicil_kali').val()) : amount;
+        if(proposed>limit){Swal.fire({icon:'warning',title:'Pengajuan melebihi batas',text:'Maksimal '+money(limit)+(isCicilan ? ' per bulan' : ' untuk pengajuan baru')+'. Periksa pinjaman berjalan pada ringkasan.'});return;}
         confirming=true;
         const person=$('#karyawan_id option:selected').text();
         const schedule=isCicilan ? ' Dibayar '+$('#cicil_kali').val()+' kali, mulai '+$('#mulai_bulan option:selected').text()+' '+$('#mulai_tahun').val()+'.' : ' Dipotong melalui penggajian.';

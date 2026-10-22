@@ -56,7 +56,7 @@
                 <th rowspan="2">Kotor</th>
                 <th rowspan="2">Bersih</th>
                 <th rowspan="2">Kasbon</th>
-                <th rowspan="2">Sisa Gaji</th>
+                <th rowspan="2">Pot. Absensi</th><th rowspan="2">Sisa Gaji</th>
             </tr>
             <tr>
                 <th>Jabatan</th>
@@ -65,16 +65,18 @@
         </thead>
         <tbody>
             @php
-                $gt = ['gp' => 0, 'tj' => 0, 'tk' => 0, 'btk' => 0, 'bk' => 0, 'ptk' => 0, 'pk' => 0, 'pkotor' => 0, 'pbersih' => 0, 'kasbon' => 0, 'total' => 0];
+                $gt = ['gp' => 0, 'tj' => 0, 'tk' => 0, 'btk' => 0, 'bk' => 0, 'ptk' => 0, 'pk' => 0, 'pkotor' => 0, 'pbersih' => 0, 'kasbon' => 0, 'potongan_absensi' => 0, 'total' => 0];
             @endphp
             @foreach(array_merge($direksi->all(), $data->all()) as $index => $item)
                 @php
                     $res = $payroll->calculateComponent($item);
+                    $attendanceRow = $payroll->previewRow($item,$bulan,$tahun);
+                    $attendanceDeduction = $attendanceRow['potongan_absensi'];
                     $kasbon = $item instanceof \App\Models\Karyawan ? $payroll->calculateKasbon($item, $bulan, $tahun) : 0;
 
                     $pKotor = round($res['pendapatan_kotor']);
                     $pBersih = round($res['pendapatan_bersih']);
-                    $sisaGaji = $pBersih - $kasbon;
+                    $sisaGaji = $pBersih - $kasbon - $attendanceDeduction;
 
                     // Akumulasi Total
                     $gt['gp'] += $item->gaji_pokok; $gt['tj'] += $item->tunjangan_jabatan;
@@ -82,6 +84,7 @@
                     $gt['bk'] += round($res['bpjs_k']); $gt['ptk'] += round($res['pot_tk']);
                     $gt['pk'] += round($res['pot_k']); $gt['pkotor'] += $pKotor;
                     $gt['pbersih'] += $pBersih; $gt['kasbon'] += $kasbon;
+                    $gt['potongan_absensi'] += $attendanceDeduction;
                     $gt['total'] += $sisaGaji;
                 @endphp
                 <tr>
@@ -98,7 +101,7 @@
                     <td class="text-end">{{ number_format($pKotor, 0, ',', '.') }}</td>
                     <td class="text-end">{{ number_format($pBersih, 0, ',', '.') }}</td>
                     <td class="text-end" style="color: red;">{{ number_format($kasbon, 0, ',', '.') }}</td>
-                    <td class="text-end fw-bold">{{ number_format($sisaGaji, 0, ',', '.') }}</td>
+                    <td class="text-end">{{ number_format($attendanceDeduction,0,',','.') }}</td><td class="text-end fw-bold">{{ number_format($sisaGaji, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -115,7 +118,7 @@
                 <td class="text-end">{{ number_format($gt['pkotor'], 0, ',', '.') }}</td>
                 <td class="text-end">{{ number_format($gt['pbersih'], 0, ',', '.') }}</td>
                 <td class="text-end">{{ number_format($gt['kasbon'], 0, ',', '.') }}</td>
-                <td class="text-end" style="background-color: yellow;">{{ number_format($gt['total'], 0, ',', '.') }}</td>
+                <td class="text-end">{{ number_format($gt['potongan_absensi'],0,',','.') }}</td><td class="text-end" style="background-color: yellow;">{{ number_format($gt['total'], 0, ',', '.') }}</td>
             </tr>
         </tfoot>
     </table>

@@ -72,7 +72,7 @@ class KasbonIncomeLimitTest extends TestCase
             }
             $this->assertDatabaseHas('kas_besars', ['jenis_transaksi_id' => 2, 'nominal_transaksi' => $amount, 'saldo' => 10000000 - $amount]);
         } else {
-            $response->assertSessionHas('error', $installment ? 'Cicilan melebihi 30% dari total Gaji Pokok, Tunjangan Jabatan, dan Tunjangan Keluarga!!' : 'Kasbon sudah melebihi ketentuan!!');
+            $response->assertSessionHas('error', $installment ? 'Cicilan melebihi 30% dari penghasilan setelah dikurangi kasbon potong gaji yang belum lunas.' : 'Kasbon sudah melebihi ketentuan!!');
             $this->assertDatabaseMissing($table, ['nominal' => $amount]);
             $this->assertDatabaseCount('kas_besars', 1);
         }
@@ -159,5 +159,108 @@ class KasbonIncomeLimitTest extends TestCase
         $this->assertDatabaseCount('kas_besars', 2);
         $this->assertDatabaseHas('kas_besars', ['jenis_transaksi_id' => 2, 'saldo' => 9000000]);
         $this->assertDatabaseCount('pesan_was', 1);
+    }
+
+    #[TestWith(['0'])]
+    #[TestWith(['-100000'])]
+    #[TestWith(['-100.000'])]
+    #[TestWith(['0.000'])]
+    #[TestWith(['1,50'])]
+    #[TestWith(['1.5'])]
+    #[TestWith(['1e3'])]
+    #[TestWith(['bukan angka'])]
+    #[TestWith([['1000000']])]
+    public function test_invalid_nominal_is_rejected_by_both_backends_without_writes(mixed $nominal): void
+    {
+        $employee = Karyawan::factory()->create();
+        foreach (['billing.kasbon.store', 'billing.kasbon.kas-bon-cicil-store'] as $route) {
+            $this->post(route($route), ['karyawan_id' => $employee->id, 'nominal' => $nominal, 'cicil_kali' => 2, 'mulai_bulan' => 10, 'mulai_tahun' => 2026])->assertSessionHasErrors(['nominal' => 'Nominal harus berupa rupiah bulat lebih dari nol. Contoh: 1000000 atau 1.000.000.']);
+        }
+        $this->assertDatabaseCount('kas_bons', 0);
+        $this->assertDatabaseCount('kas_bon_cicilans', 0);
+        $this->assertDatabaseCount('kas_besars', 0);
+        $this->assertDatabaseCount('pesan_was', 0);
+    }
+
+    private function crossLoanEmployee(): Karyawan
+    {
+        $this->travelTo(Carbon::parse('2026-10-19 10:00:00'));
+        $employee = Karyawan::factory()->create(['gaji_pokok' => 5000000, 'tunjangan_jabatan' => 1000000, 'tunjangan_keluarga' => 500000]);
+        KasBesar::create(['tanggal' => '2026-10-19', 'uraian' => 'Saldo awal', 'jenis_transaksi_id' => 1, 'nominal_transaksi' => 20000000, 'saldo' => 20000000, 'modal_investor_terakhir' => 20000000, 'transfer_ke' => '-', 'bank' => '-', 'no_rekening' => '-']);
+
+        return $employee;
+    }
+
+    #[TestWith([2600000, true])]
+    #[TestWith([2600001, false])]
+    public function test_ordinary_limit_deducts_final_installment_and_remaining_ordinary_loans(int $amount, bool $accepted): void
+    {
+        $employee = $this->crossLoanEmployee();
+        KasBon::create(['karyawan_id' => $employee->id, 'tanggal' => '2026-09-01', 'nominal' => 1000000, 'total_bayar' => 400000, 'sisa_kas' => 600000]);
+        KasBonCicilan::create(['karyawan_id' => $employee->id, 'tanggal' => '2026-08-01', 'nominal' => 1000000, 'total_bayar' => 900000, 'sisa_kas' => 100000, 'cicilan_nominal' => 500000, 'cicil_kali' => 2, 'mulai_bulan' => 8, 'mulai_tahun' => 2026]);
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => $employee->id, 'bulan' => 10, 'tahun' => 2026]))->assertOk()->assertJsonPath('income', 6500000)->assertJsonPath('installment_due', 100000)->assertJsonPath('ordinary_due', 600000)->assertJsonPath('ordinary_limit', 3200000)->assertJsonPath('ordinary_available', 2600000)->assertJsonCount(2, 'loans');
+        if ($accepted) {
+            GroupWa::create(['untuk' => 'kas-besar', 'nama_group' => 'uji']);
+            Mockery::mock('overload:App\\Services\\StarSender')->shouldReceive('sendGroup')->once()->andReturn(true);
+        }
+        $response = $this->post(route('billing.kasbon.store'), ['karyawan_id' => $employee->id, 'nominal' => $amount]);
+        if ($accepted) {
+            $response->assertSessionHas('success');
+            $this->assertDatabaseHas('kas_bons', ['karyawan_id' => $employee->id, 'nominal' => 2600000]);
+            $this->assertDatabaseHas('kas_besars', ['jenis_transaksi_id' => 2, 'saldo' => 17400000]);
+        } else {
+            $response->assertSessionHasErrors('nominal');
+            $this->assertDatabaseCount('kas_bons', 1);
+            $this->assertDatabaseCount('kas_besars', 1);
+        }
+    }
+
+    #[TestWith([3300000, true])]
+    #[TestWith([3300002, false])]
+    public function test_installment_limit_deducts_older_unpaid_ordinary_loan_and_ignores_paid_void_future_loans(int $amount, bool $accepted): void
+    {
+        $employee = $this->crossLoanEmployee();
+        foreach ([
+            ['tanggal' => '2026-09-01', 'total_bayar' => 500000, 'sisa_kas' => 1000000],
+            ['tanggal' => '2026-09-01', 'total_bayar' => 1500000, 'sisa_kas' => 0, 'lunas' => true],
+            ['tanggal' => '2026-09-01', 'void' => true],
+            ['tanggal' => '2026-11-01'],
+        ] as $attributes) {
+            KasBon::create(['karyawan_id' => $employee->id, 'nominal' => 1500000, 'sisa_kas' => 1500000, ...$attributes]);
+        }
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => $employee->id, 'bulan' => 10, 'tahun' => 2026]))->assertOk()->assertJsonPath('ordinary_due', 1000000)->assertJsonPath('installment_limit', 1650000)->assertJsonCount(2, 'loans')->assertJsonPath('loans.1.berlaku', false);
+        if ($accepted) {
+            GroupWa::create(['untuk' => 'kas-besar', 'nama_group' => 'uji']);
+            Mockery::mock('overload:App\\Services\\StarSender')->shouldReceive('sendGroup')->once()->andReturn(true);
+        }
+        $response = $this->post(route('billing.kasbon.kas-bon-cicil-store'), ['karyawan_id' => $employee->id, 'nominal' => $amount, 'cicil_kali' => 2, 'mulai_bulan' => 10, 'mulai_tahun' => 2026]);
+        if ($accepted) {
+            $response->assertSessionHas('success');
+            $this->assertDatabaseHas('kas_bon_cicilans', ['karyawan_id' => $employee->id, 'cicilan_nominal' => 1650000]);
+            $this->assertDatabaseHas('kas_besars', ['jenis_transaksi_id' => 2, 'saldo' => 16700000]);
+        } else {
+            $response->assertSessionHasErrors('nominal');
+            $this->assertDatabaseCount('kas_bon_cicilans', 0);
+            $this->assertDatabaseCount('kas_besars', 1);
+        }
+    }
+
+    public function test_summary_changes_with_installment_start_month_and_never_returns_negative_limits(): void
+    {
+        $employee = $this->crossLoanEmployee();
+        KasBonCicilan::create(['karyawan_id' => $employee->id, 'tanggal' => '2026-10-01', 'nominal' => 7000000, 'sisa_kas' => 7000000, 'cicilan_nominal' => 7000000, 'cicil_kali' => 1, 'mulai_bulan' => 11, 'mulai_tahun' => 2026]);
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => $employee->id, 'bulan' => 10, 'tahun' => 2026]))->assertJsonPath('installment_due', 0)->assertJsonPath('ordinary_available', 3250000)->assertJsonPath('loans.0.berlaku', false);
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => $employee->id, 'bulan' => 11, 'tahun' => 2026]))->assertJsonPath('installment_due', 7000000)->assertJsonPath('ordinary_available', 0)->assertJsonPath('loans.0.berlaku', true);
+        KasBon::create(['karyawan_id' => $employee->id, 'tanggal' => '2026-10-01', 'nominal' => 7000000, 'sisa_kas' => 7000000]);
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => $employee->id, 'bulan' => 11, 'tahun' => 2026]))->assertJsonPath('installment_limit', 0);
+    }
+
+    public function test_limit_endpoint_requires_valid_employee_period_and_authorization(): void
+    {
+        $employee = Karyawan::factory()->create();
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => $employee->id, 'bulan' => 13, 'tahun' => 2026]))->assertUnprocessable()->assertJsonValidationErrors('bulan');
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => 999999, 'bulan' => 10, 'tahun' => 2026]))->assertUnprocessable()->assertJsonValidationErrors('karyawan_id');
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'operasional', 'password' => 'password']));
+        $this->getJson(route('billing.kasbon.limit', ['karyawan_id' => $employee->id, 'bulan' => 10, 'tahun' => 2026]))->assertForbidden();
     }
 }

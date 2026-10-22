@@ -7,7 +7,7 @@
     </div>
     <div class="row g-4">
         <div class="col-lg-4"><div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 text-center">
-            @if ($photos['foto_diri'])<img src="{{ asset('storage/'.preg_replace('#^public/#', '', $karyawan->foto_diri)) }}" class="rounded-3 img-fluid mb-3" style="max-height:240px;object-fit:contain" alt="Foto {{ $karyawan->nama }}">@else<div class="rounded-3 bg-light p-5 mb-3 text-muted"><i class="fa fa-user fa-4x" aria-hidden="true"></i><p class="small mt-3 mb-0">Foto diri belum tersedia</p></div>@endif
+            @if ($photos['foto_diri'])<img src="{{ route('karyawan.document', ['karyawan' => $karyawan->id, 'document' => 'foto_diri']) }}" class="rounded-3 img-fluid mb-3" style="max-height:240px;object-fit:contain" alt="Foto {{ $karyawan->nama }}">@else<div class="rounded-3 bg-light p-5 mb-3 text-muted"><i class="fa fa-user fa-4x" aria-hidden="true"></i><p class="small mt-3 mb-0">Foto diri belum tersedia</p></div>@endif
             <h5 class="fw-bold mb-1">{{ $karyawan->nickname }}</h5><p class="text-muted small">Mulai bekerja {{ $dates['mulai'] }}</p><span class="badge rounded-pill px-3 py-2 {{ $karyawan->status === 'aktif' ? 'bg-success' : 'bg-secondary' }}">{{ $karyawan->status === 'aktif' ? 'Aktif' : 'Nonaktif' }}</span>
         </div></div></div>
         <div class="col-lg-8">
@@ -20,7 +20,7 @@
             @foreach ($sections as $title => $fields)
                 <div class="card border-0 shadow-sm rounded-4 mb-4"><div class="card-body p-4"><h5 class="fw-bold mb-4">{{ $title }}</h5><dl class="row mb-0 g-3">@foreach ($fields as $label => $value)<dt class="col-sm-4 text-muted fw-normal">{{ $label }}</dt><dd class="col-sm-8 mb-0 text-break">{{ $value ?: '—' }}</dd>@endforeach</dl></div></div>
             @endforeach
-            <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4"><h5 class="fw-bold mb-3">Dokumen KTP</h5>@if ($photos['foto_ktp'])<img src="{{ asset('storage/'.preg_replace('#^public/#', '', $karyawan->foto_ktp)) }}" class="img-fluid rounded-3" style="max-height:320px;object-fit:contain" alt="Foto KTP {{ $karyawan->nama }}">@else<p class="text-muted mb-0">Foto KTP belum tersedia.</p>@endif</div></div>
+            <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4"><h5 class="fw-bold mb-3">Dokumen Pegawai</h5>@include('database.karyawan.documents', ['employee' => $karyawan])<hr><h6>Foto KTP</h6>@if ($photos['foto_ktp'])<img src="{{ route('karyawan.document', ['karyawan' => $karyawan->id, 'document' => 'foto_ktp']) }}" class="img-fluid rounded-3" style="max-height:320px;object-fit:contain" alt="Foto KTP {{ $karyawan->nama }}">@else<p class="text-muted mb-0">Foto KTP belum tersedia.</p>@endif</div></div>
         </div>
     </div>
 </div>

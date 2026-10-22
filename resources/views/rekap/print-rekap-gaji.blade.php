@@ -23,6 +23,7 @@
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">Total Pendapatan Kotor</th>
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">Total Pendapatan Bersih</th>
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">Kasbon</th>
+                    <th rowspan="2" class="table-pdf text-pdf text-center align-middle">Potongan Absensi</th>
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">Sisa Gaji Dibayar</th>
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">Rekening</th>
                     <th rowspan="2" class="table-pdf text-pdf text-center align-middle">Nama Rekening</th>
@@ -50,6 +51,7 @@
                     <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
                     <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
                     <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
+                    <td class="table-pdf text-pdf text-end align-middle">{{number_format(($dir->potongan_absensi ?? 0), 0, ',','.')}}</td>
                     <td class="table-pdf text-pdf text-end align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->no_rekening}}</td>
                     <td class="table-pdf text-pdf text-center align-middle">{{$dir->transfer_ke}}</td>
@@ -70,6 +72,7 @@
                     <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('pendapatan_kotor'), 0, ',','.')}}</th>
                     <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('pendapatan_bersih'), 0, ',','.')}}</th>
                     <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('kasbon'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('potongan_absensi'), 0, ',','.')}}</th>
                     <th class="text-end align-middle table-pdf text-pdf">{{number_format($data->sum('sisa_gaji_dibayar'), 0, ',','.')}}</th>
                     <th class="text-end align-middle table-pdf text-pdf" colspan="3"></th>
                 </tr>

@@ -30,6 +30,7 @@
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Kotor</th>
                     <th rowspan="2" class="text-center align-middle">Total Pendapatan Bersih</th>
                     <th rowspan="2" class="text-center align-middle">Kasbon</th>
+                    <th rowspan="2" class="text-center align-middle">Potongan Absensi</th>
                     <th rowspan="2" class="text-center align-middle">Sisa Gaji Dibayar</th>
                     <th rowspan="2" class="text-center align-middle">Rekening</th>
                     <th rowspan="2" class="text-center align-middle">Nama Rekening</th>
@@ -63,6 +64,11 @@
                     <td class="text-end align-middle">{{number_format($dir->pendapatan_kotor, 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($dir->pendapatan_bersih, 0, ',','.')}}</td>
                     <td class="text-end align-middle">{{number_format($dir->kasbon, 0, ',','.')}}</td>
+                    <td class="text-end align-middle">
+                        @if(($dir->potongan_absensi ?? 0) > 0 && $dir->rincian_absensi)
+                        <button type="button" class="btn btn-link text-danger p-0 text-decoration-underline" data-saved-attendance-detail="{{ $dir->rincian_absensi }}" data-download-url="{{ route('billing.gaji.attendance.saved-pdf', ['detail' => $dir->id]) }}" data-employee-name="{{ $dir->nama }}" data-payroll-period="{{ $bulan }} {{ $tahun }}" aria-label="Lihat rincian potongan absensi {{ $dir->nama }}">{{ number_format($dir->potongan_absensi,0,',','.') }}</button>
+                        @else {{ number_format($dir->potongan_absensi ?? 0,0,',','.') }} @endif
+                    </td>
                     <td class="text-end align-middle">{{number_format($dir->sisa_gaji_dibayar, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{$dir->no_rekening}}</td>
                     <td class="text-center align-middle">{{$dir->transfer_ke}}</td>
@@ -83,6 +89,7 @@
                     <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('pendapatan_kotor'), 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('pendapatan_bersih'), 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('kasbon'), 0, ',','.')}}</th>
+                    <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('potongan_absensi'), 0, ',','.')}}</th>
                     <th class="text-end align-middle">{{number_format($data->rekap_gaji_detail->sum('sisa_gaji_dibayar'), 0, ',','.')}}</th>
                     <th class="text-end align-middle" colspan="3"></th>
                 </tr>
@@ -92,9 +99,11 @@
 </div>
 @endsection
 @push('css')
+<link href="{{ asset('assets/css/payroll-attendance-detail.css') }}" rel="stylesheet">
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
+<script src="{{ asset('assets/js/payroll-attendance-detail.js') }}"></script>
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>

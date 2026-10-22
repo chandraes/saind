@@ -64,8 +64,8 @@
                 </div>
             </div>
             <div class="col-md-2 text-center mt-5">
-                <a href="#" class="text-decoration-none">
-                    <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
+                <a href="{{ route('rekap.lain-lain') }}" class="text-decoration-none">
+                    <img src="{{ asset('images/lain-lain.svg') }}" alt="Rekap Lain-lain" width="70" height="70">
                     <h5 class="mt-3">LAIN-LAIN</h5>
                 </a>
             </div>

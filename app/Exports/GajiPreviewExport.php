@@ -14,7 +14,7 @@ class GajiPreviewExport implements FromView, WithColumnFormatting
     public function columnFormats(): array
     {
         return [
-            // Kolom D sampai N (Gaji Pokok sampai Sisa Gaji) diformat ribuan
+            // Kolom D sampai O (Gaji Pokok sampai Sisa Gaji) diformat ribuan
             'D' => '#,##0',
             'E' => '#,##0',
             'F' => '#,##0',
@@ -25,7 +25,7 @@ class GajiPreviewExport implements FromView, WithColumnFormatting
             'K' => '#,##0',
             'L' => '#,##0',
             'M' => '#,##0',
-            'N' => '#,##0',
+            'N' => '#,##0', 'O' => '#,##0',
         ];
     }
 

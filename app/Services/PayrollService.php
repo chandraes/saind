@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PayrollService
 {
+    public function __construct(public PayrollAttendanceService $attendance) {}
+
     public function calculateComponent(Karyawan|Direksi $person): array
     {
         $gapokPlus = $person->gaji_pokok + $person->tunjangan_jabatan + $person->tunjangan_keluarga;
@@ -99,13 +101,25 @@ class PayrollService
         $calc = $this->calculateComponent($person);
         $kasbon = $person instanceof Karyawan ? $this->calculateKasbon($person, $bulan, $tahun) : 0;
 
+        $deduction = $person instanceof Karyawan ? $this->attendance->calculate($person, $bulan, $tahun) : ['amount' => 0, 'raw' => 0, 'cap' => 0, 'daily' => 0, 'days' => [], 'ready' => true];
+
         return [
+            'employee_id' => $person instanceof Karyawan ? $person->id : null, 'potongan_absensi' => $deduction['amount'], 'potongan_absensi_sebelum_batas' => $deduction['raw'], 'attendance_detail' => $deduction,
             'nama' => $person->nama, 'jabatan' => $person instanceof Karyawan ? ($person->jabatan?->nama ?? '—') : $person->jabatan,
             'gp' => (int) $person->gaji_pokok, 'tj' => (int) $person->tunjangan_jabatan, 'tk' => (int) $person->tunjangan_keluarga,
             'btk' => $calc['bpjs_tk'], 'bk' => $calc['bpjs_k'], 'ptk' => $calc['pot_tk'], 'pk' => $calc['pot_k'],
             'pkotor' => $calc['pendapatan_kotor'], 'pbersih' => $calc['pendapatan_bersih'], 'kasbon' => $kasbon,
-            'total' => $calc['pendapatan_bersih'] - $kasbon,
+            'total' => $calc['pendapatan_bersih'] - $kasbon - $deduction['amount'],
         ];
+    }
+
+    public function revision(int $month, int $year): string
+    {
+        $people = $this->directorsForPeriod($month, $year)->concat($this->employeesForPeriod($month, $year));
+        $rows = $people->map(fn ($person): array => [get_class($person), $person->id, $person->getAttributes(), $this->previewRow($person, $month, $year), $person instanceof Karyawan ? $person->kas_bon->toArray() : [], $person instanceof Karyawan ? $person->kas_bon_cicilan->toArray() : []])->all();
+        $period = $this->attendance->period($month, $year);
+
+        return hash('sha256', json_encode([$this->attendance->enabled(), $period?->snapshot, $period?->overrides, $rows], JSON_THROW_ON_ERROR));
     }
 
     /** @return list<array{loan: KasBon|KasBonCicilan, amount: int}> */

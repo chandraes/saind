@@ -11,7 +11,9 @@ use App\Models\KasBonCicilan;
 use App\Models\KasDireksi;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Rekening;
+use App\Services\KasbonLimitService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -206,55 +208,63 @@ class FormKasbonController extends Controller
 
     }
 
-    public function store(Request $request)
+    public function limit_summary(Request $request, KasbonLimitService $limits): JsonResponse
     {
         $data = $request->validate([
-            'karyawan_id' => 'required',
-            'nominal' => 'required',
+            'karyawan_id' => ['required', 'integer', 'exists:karyawans,id'],
+            'bulan' => ['required', 'integer', 'between:1,12'], 'tahun' => ['required', 'integer', 'between:1901,2155'],
+        ]);
+        $employee = Karyawan::whereKey($data['karyawan_id'])->where('status', 'aktif')->firstOrFail();
+
+        return response()->json($limits->summary($employee, Carbon::create((int) $data['tahun'], (int) $data['bulan'], 1)));
+    }
+
+    public function store(Request $request, KasbonLimitService $limits)
+    {
+        $data = $request->validate([
+            'karyawan_id' => ['required', 'integer', 'exists:karyawans,id'],
+            'nominal' => ['bail', 'required', 'regex:/\A(?:[1-9][0-9]*|[1-9][0-9]{0,2}(?:\.[0-9]{3})+)\z/'],
+        ], [
+            'nominal.regex' => 'Nominal harus berupa rupiah bulat lebih dari nol. Contoh: 1000000 atau 1.000.000.',
         ]);
 
         $data['nominal'] = str_replace('.', '', $data['nominal']);
         $data['tanggal'] = date('Y-m-d');
         $data['sisa_kas'] = $data['nominal'];
 
-        $kasbon = KasBon::where('karyawan_id', $data['karyawan_id'])->where('lunas', 0)->sum('nominal');
-
-        $karyawan = Karyawan::find($data['karyawan_id']);
-
-        $totalPendapatan = $karyawan->gaji_pokok + ($karyawan->tunjangan_jabatan ?? 0) + ($karyawan->tunjangan_keluarga ?? 0);
-        $batasKasbon = $totalPendapatan * 0.5;
-
-        if ($batasKasbon < $data['nominal'] || $batasKasbon < ($kasbon + $data['nominal'])) {
-            return redirect()->back()->with('error', 'Kasbon sudah melebihi ketentuan!!');
-        }
-
-        $last = KasBesar::latest()->orderBy('id', 'desc')->first();
-
-        if ($last == null || $last->saldo < $data['nominal']) {
-            return redirect()->back()->with('error', 'Saldo Kas Besar tidak mencukupi');
-        }
-
-        $kas['tanggal'] = $data['tanggal'];
-        $kas['uraian'] = 'Kasbon '.$karyawan->nama;
-        $kas['jenis_transaksi_id'] = 2;
-        $kas['nominal_transaksi'] = $data['nominal'];
-        $kas['saldo'] = $last->saldo - $data['nominal'];
-        $kas['modal_investor_terakhir'] = $last->modal_investor_terakhir;
-        $kas['transfer_ke'] = substr($karyawan->nama_rekening, 0, 15);
-        $kas['bank'] = $karyawan->bank;
-        $kas['no_rekening'] = $karyawan->no_rekening;
-
         try {
-            $store = DB::transaction(function () use ($data, $kas): KasBesar {
+            $result = DB::transaction(function () use ($data, $limits): array {
+                $karyawan = Karyawan::whereKey($data['karyawan_id'])->lockForUpdate()->firstOrFail();
+                if ($karyawan->status !== 'aktif') {
+                    throw ValidationException::withMessages(['karyawan_id' => 'Kasbon hanya dapat diajukan untuk pegawai aktif.']);
+                }
+                $summary = $limits->summary($karyawan, now(), true);
+                if ($data['nominal'] > $summary['ordinary_available']) {
+                    throw ValidationException::withMessages(['nominal' => 'Kasbon sudah melebihi ketentuan!!']);
+                }
+                $last = KasBesar::latest('id')->lockForUpdate()->first();
+                if (! $last || $last->saldo < $data['nominal']) {
+                    throw ValidationException::withMessages(['nominal' => 'Saldo Kas Besar tidak mencukupi']);
+                }
+                $kas = [
+                    'tanggal' => $data['tanggal'], 'uraian' => 'Kasbon '.$karyawan->nama, 'jenis_transaksi_id' => 2,
+                    'nominal_transaksi' => $data['nominal'], 'saldo' => $last->saldo - $data['nominal'], 'modal_investor_terakhir' => $last->modal_investor_terakhir,
+                    'transfer_ke' => substr($karyawan->nama_rekening, 0, 15), 'bank' => $karyawan->bank, 'no_rekening' => $karyawan->no_rekening,
+                ];
                 KasBon::create($data);
 
-                return KasBesar::create($kas);
-            });
+                return ['store' => KasBesar::create($kas), 'kas' => $kas, 'karyawan' => $karyawan];
+            }, 3);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->withInput()->withErrors($exception->errors())->with('error', $exception->validator->errors()->first());
         } catch (\Throwable $exception) {
             report($exception);
 
             return redirect()->back()->withInput()->with('error', 'Kasbon gagal disimpan. Tidak ada perubahan data; silakan coba kembali.');
         }
+        $store = $result['store'];
+        $kas = $result['kas'];
+        $karyawan = $result['karyawan'];
 
         $dbWa = new GroupWa;
 
@@ -299,15 +309,16 @@ class FormKasbonController extends Controller
         ]);
     }
 
-    public function kas_bon_cicil_store(Request $request)
+    public function kas_bon_cicil_store(Request $request, KasbonLimitService $limits)
     {
         $data = $request->validate([
             'karyawan_id' => ['required', 'integer', 'exists:karyawans,id'],
-            'nominal' => 'required',
+            'nominal' => ['bail', 'required', 'regex:/\A(?:[1-9][0-9]*|[1-9][0-9]{0,2}(?:\.[0-9]{3})+)\z/'],
             'cicil_kali' => 'required|integer|min:1',
             'mulai_bulan' => 'required|integer|between:1,12',
-            'mulai_tahun' => 'required|integer',
+            'mulai_tahun' => 'required|integer|between:1901,2155',
         ], [
+            'nominal.regex' => 'Nominal harus berupa rupiah bulat lebih dari nol. Contoh: 1000000 atau 1.000.000.',
             'cicil_kali.min' => 'Jumlah cicilan minimal 1 kali.',
         ]);
 
@@ -318,7 +329,7 @@ class FormKasbonController extends Controller
         $data['nominal'] = str_replace('.', '', $data['nominal']);
 
         try {
-            $result = DB::transaction(function () use ($data): array {
+            $result = DB::transaction(function () use ($data, $limits): array {
                 $karyawan = Karyawan::whereKey($data['karyawan_id'])->lockForUpdate()->firstOrFail();
                 if ($karyawan->status !== 'aktif') {
                     throw ValidationException::withMessages(['karyawan_id' => 'Kasbon cicilan hanya dapat diajukan untuk pegawai aktif.']);
@@ -334,9 +345,10 @@ class FormKasbonController extends Controller
                 $data['tanggal'] = now()->toDateString();
                 $data['sisa_kas'] = $data['nominal'];
                 $data['cicilan_nominal'] = $data['nominal'] / $data['cicil_kali'];
-                $totalPendapatan = $karyawan->gaji_pokok + ($karyawan->tunjangan_jabatan ?? 0) + ($karyawan->tunjangan_keluarga ?? 0);
-                if ($totalPendapatan * 0.3 < $data['cicilan_nominal']) {
-                    throw ValidationException::withMessages(['nominal' => 'Cicilan melebihi 30% dari total Gaji Pokok, Tunjangan Jabatan, dan Tunjangan Keluarga!!']);
+                $period = Carbon::create((int) $data['mulai_tahun'], (int) $data['mulai_bulan'], 1);
+                $summary = $limits->summary($karyawan, $period, true);
+                if ($data['nominal'] > $summary['installment_limit'] * $data['cicil_kali']) {
+                    throw ValidationException::withMessages(['nominal' => 'Cicilan melebihi 30% dari penghasilan setelah dikurangi kasbon potong gaji yang belum lunas.']);
                 }
                 $k = [
                     'tanggal' => $data['tanggal'], 'uraian' => 'Kasbon Cicilan '.$karyawan->nama, 'jenis_transaksi_id' => 2,

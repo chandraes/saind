@@ -37,6 +37,7 @@ use App\Http\Controllers\LegalitasController;
 use App\Http\Controllers\OperasionalController;
 use App\Http\Controllers\PajakController;
 use App\Http\Controllers\PasswordKonfirmasiController;
+use App\Http\Controllers\PayrollAttendanceController;
 use App\Http\Controllers\PemegangSahamController;
 use App\Http\Controllers\PerCustomerAdminController;
 use App\Http\Controllers\PerCustomerController;
@@ -338,6 +339,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('attendance-integration', [AttendanceIntegrationController::class, 'index'])->name('attendance-integration.index');
         Route::post('attendance-integration/sync', [AttendanceIntegrationController::class, 'sync'])->middleware('throttle:6,1')->name('attendance-integration.sync');
+        Route::get('karyawan/{karyawan}/dokumen/{document}', [KaryawanController::class, 'document'])->name('karyawan.document');
         Route::resource('karyawan', KaryawanController::class);
         Route::post('karyawan/jabatan-store', [KaryawanController::class, 'jabatan_store'])->name('karyawan.jabatan-store');
         Route::patch('karyawan/jabatan-update/{jabatan}', [KaryawanController::class, 'jabatan_update'])->name('karyawan.jabatan-update');
@@ -758,6 +760,7 @@ Route::group(['middleware' => ['auth']], function () {
             // form kasbon
             Route::prefix('kasbon')->group(function () {
                 Route::get('/', [FormKasbonController::class, 'index'])->name('billing.kasbon.index');
+                Route::get('/limit', [FormKasbonController::class, 'limit_summary'])->name('billing.kasbon.limit');
 
                 Route::prefix('direksi')->group(function () {
                     Route::view('/', 'billing.kasbon.direksi.index')->name('billing.kasbon.direksi.index');
@@ -777,9 +780,14 @@ Route::group(['middleware' => ['auth']], function () {
             });
 
             // Form Gaji
+            Route::post('/gaji/attendance/refresh', [PayrollAttendanceController::class, 'refresh'])->name('billing.gaji.attendance.refresh');
+            Route::post('/gaji/attendance/setting', [PayrollAttendanceController::class, 'setting'])->middleware('role:su')->name('billing.gaji.attendance.setting');
+            Route::post('/gaji/attendance/adjustment', [PayrollAttendanceController::class, 'adjustment'])->middleware('role:su')->name('billing.gaji.attendance.adjustment');
             Route::get('/gaji', [FormGajiController::class, 'index'])->name('billing.gaji.index');
             Route::post('/gaji/store', [FormGajiController::class, 'store'])->name('billing.gaji.store');
             Route::get('/gaji/preview-pdf', [FormGajiController::class, 'previewPdf'])->name('billing.gaji.preview-pdf');
+            Route::get('/gaji/attendance/{employee}/pdf', [FormGajiController::class, 'attendancePdf'])->name('billing.gaji.attendance.pdf');
+            Route::get('/gaji/attendance-saved/{detail}/pdf', [FormGajiController::class, 'savedAttendancePdf'])->name('billing.gaji.attendance.saved-pdf');
             Route::get('/gaji/preview-excel', [FormGajiController::class, 'previewExcel'])->name('billing.gaji.preview-excel');
 
             Route::prefix('transaksi')->group(function () {
@@ -872,6 +880,7 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/', [RekapController::class, 'cost_operational'])->name('rekap.cost-operational');
             });
 
+            Route::get('/lain-lain', [RekapController::class, 'lain_lain'])->name('rekap.lain-lain');
             Route::get('/kas-besar', [RekapController::class, 'kas_besar'])->name('rekap.kas-besar');
             Route::get('/kas-besar/preview/{bulan}/{tahun}', [RekapController::class, 'preview_kas_besar'])->name('rekap.kas-besar.preview');
             Route::get('/kas-kecil', [RekapController::class, 'kas_kecil'])->name('rekap.kas-kecil');
