@@ -60,6 +60,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WaController;
+use App\Http\Middleware\EnsureVendorOperationalVehicle;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -1001,7 +1002,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     });
 
-    Route::group(['middleware' => 'role:vendor-operational'], function () {
+    Route::group(['middleware' => ['role:vendor-operational', EnsureVendorOperationalVehicle::class]], function () {
         Route::prefix('vendor-operational')->group(function () {
             // Route::get('kas-per-vendor/{vendor}', [App\Http\Controllers\RekapController::class, 'kas_per_vendor'])->name('vendor-operational.kas-per-vendor.index');
             // Route::get('kas-per-vendor/{invoiceBayar}/detail', [App\Http\Controllers\RekapController::class, 'kas_per_vendor_detail'])->name('vendor-operational.kas-per-vendor.detail');
