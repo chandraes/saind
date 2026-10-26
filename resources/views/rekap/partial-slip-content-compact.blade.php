@@ -28,15 +28,15 @@
     </tr>
 </table>
     <div style="border-bottom: 2px solid #000; margin-top: 5px; margin-bottom: 2px; width: 100%;"></div>
-    <div style="border-bottom: 1px solid #000; margin-bottom: 10px; width: 100%;"></div>
+    <div style="border-bottom: 1px solid #000; margin-bottom: 6px; width: 100%;"></div>
 </div>
 
-<div class="text-center" style="margin-bottom: 10px;">
+<div class="text-center" style="margin-bottom: 6px;">
     <div style="font-size: 10pt; font-weight: bold; text-decoration: underline;">SLIP GAJI</div>
     <div style="font-size: 8pt;">{{ strtoupper($bulan) }} {{ $tahun }}</div>
 </div>
 
-<table class="info-table" style="margin-bottom: 8px;">
+<table class="info-table" style="margin-bottom: 6px;">
     <tr>
         <td width="15%">Tanggal</td><td width="2%">:</td><td width="33%">{{$tanggal_cutoff}}</td>
         <td width="15%">Jabatan</td><td width="2%">:</td><td width="33%">{{ $d->jabatan }}</td>
@@ -98,9 +98,6 @@
             <td class="text-end">{{ number_format($total_pemasukan, 0, ',', '.') }}</td>
             <td class="text-end">{{ number_format($total_potongan_bpjs, 0, ',', '.') }}</td>
         </tr>
-         <tr>
-            <td colspan="4" class="fw-bold" style="border-right:none;"></td>
-        </tr>
         <tr>
             <td colspan="3" class="fw-bold" style="border-right:none;">Gaji Bersih</td>
             <td class="text-end fw-bold">{{ number_format($gaji_bersih, 0, ',', '.') }}</td>
@@ -123,17 +120,17 @@
     Terbilang: # {{ ucwords(App\Helpers\PayrollHelper::terbilang($total_dibayarkan)) }} Rupiah #
 </div>
 
-<table style="margin-top: 15px;">
+<table class="signature-table">
     <tr>
         <td width="50%" class="text-center">
             <div style="font-size: 8pt;">Penerima,</div>
-            <div style="height: 40px;"></div> <div style="font-size: 8pt; font-weight: bold; text-decoration: underline;">{{ $d->nama }}</div>
+            <div class="signature-space"></div> <div style="font-size: 8pt; font-weight: bold; text-decoration: underline;">{{ $d->nama }}</div>
             <div style="font-size: 7pt;">{{ $d->jabatan }}</div>
         </td>
 
         <td width="50%" class="text-center">
             <div style="font-size: 8pt;">Mengetahui,</div>
-            <div style="height: 40px;"></div> <div style="font-size: 8pt; font-weight: bold; text-decoration: underline;">{{$global_app_keuangan}}</div>
+            <div class="signature-space"></div> <div style="font-size: 8pt; font-weight: bold; text-decoration: underline;">{{$global_app_keuangan}}</div>
             <div style="font-size: 7pt;">Manager Adm & Keuangan</div>
         </td>
     </tr>

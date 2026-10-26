@@ -18,7 +18,11 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="ATTENDANCE_ENABLED" value="false" force="true"/>
+        <env name="ATTENDANCE_URL" value="https://attendance.test" force="true"/>
+        <env name="ATTENDANCE_TOKEN" value="" force="true"/>
+        <env name="ATTENDANCE_SEND_IMMEDIATELY" value="false" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <!-- <env name="DB_CONNECTION" value="sqlite"/> -->
