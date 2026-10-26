@@ -37,7 +37,7 @@
         @endphp
         @foreach(array_merge($direksi->all(), $data->all()) as $index => $item)
             @php
-                $res = $payroll->calculateComponent($item);
+                $res = $payroll->calculateComponent($item, (int) $tahun);
                     $attendanceRow = $payroll->previewRow($item,$bulan,$tahun);
                     $attendanceDeduction = $attendanceRow['potongan_absensi'];
                 // Tetap menggunakan $bulan (integer) untuk kalkulasi agar tidak OutOfRangeException

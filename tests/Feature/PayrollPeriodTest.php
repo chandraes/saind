@@ -40,6 +40,10 @@ class PayrollPeriodTest extends TestCase
         ] as $migration) {
             (require database_path('migrations/'.$migration))->up();
         }
+        (require glob(database_path('migrations/*_create_bpjs_health_minimums_table.php'))[0])->up();
+        foreach (range(2020, 2030) as $year) {
+            DB::table('bpjs_health_minimums')->insert(['year' => $year, 'minimum_wage' => 1, 'basis' => 'UMK', 'reference' => 'Fixture pengujian']);
+        }
         DB::table('payroll_attendance_settings')->where('id', 1)->update(['enabled' => false]);
         DB::table('jenis_transaksis')->insert([['id' => 1, 'nama' => 'Masuk'], ['id' => 2, 'nama' => 'Keluar']]);
         Http::preventStrayRequests();
@@ -216,6 +220,36 @@ class PayrollPeriodTest extends TestCase
         $this->login('operasional');
         $this->post('/billing/gaji/store', ['bulan' => 9, 'tahun' => 2026])->assertForbidden();
         $this->assertSame(0, RekapGaji::count());
+    }
+
+    public function test_missing_bpjs_year_blocks_payroll_and_preserves_cash(): void
+    {
+        $this->login();
+        $this->employee();
+        $cash = $this->cash();
+        DB::table('bpjs_health_minimums')->where('year', 2026)->delete();
+
+        $this->post('/billing/gaji/store', ['bulan' => 9, 'tahun' => 2026])->assertSessionHasErrors('bpjs_health');
+
+        $this->assertSame(0, RekapGaji::count());
+        $this->assertEquals(100000000, $cash->fresh()->saldo);
+    }
+
+    public function test_payroll_uses_minimum_for_the_salary_year_and_saves_values(): void
+    {
+        $this->login();
+        $employee = $this->employee(['gaji_pokok' => 3000000, 'mulai_bekerja' => '2020-01-01', 'apa_bpjs_tk' => 1, 'apa_bpjs_kesehatan' => 1]);
+        $this->cash();
+        DB::table('bpjs_health_minimums')->where('year', 2025)->update(['minimum_wage' => 4000000]);
+        DB::table('bpjs_health_minimums')->where('year', 2026)->update(['minimum_wage' => 4500000]);
+        $this->get('/billing/gaji?bulan=9&tahun=2025')->assertOk()->assertViewHas('gt', fn ($totals): bool => $totals['pk'] === 40000);
+        $this->post('/billing/gaji/store', ['bulan' => 9, 'tahun' => 2025])->assertSessionHasNoErrors();
+        $detail = RekapGajiDetail::sole();
+        $this->assertEquals(160000, $detail->bpjs_k);
+        $this->assertEquals(40000, $detail->potongan_bpjs_kesehatan);
+        $this->assertEquals(60000, $detail->potongan_bpjs_tk);
+        DB::table('bpjs_health_minimums')->where('year', 2025)->update(['minimum_wage' => 5000000]);
+        $this->assertEquals(40000, $detail->fresh()->potongan_bpjs_kesehatan);
     }
 
     public function test_components_round_to_whole_rupiah_identically_in_preview_and_storage(): void

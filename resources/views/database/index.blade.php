@@ -18,6 +18,7 @@
     <hr>
     <div class="row justify-content-left">
         <h2>Data Internal</h2>
+        <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center"><a href="{{ route('bpjs-health.index') }}" class="text-decoration-none"><img src="{{ asset('images/bpjs-health.svg') }}" width="70" height="70" alt=""><h5 class="mt-2">DASAR MINIMUM<br>BPJS KESEHATAN</h5></a></div>
         <div class="col-lg-2 col-md-2 col-sm-4 my-4 text-center">
             <a href="#" class="text-decoration-none">
                 <img src="{{asset('images/kosong.svg')}}" alt="" width="70">
