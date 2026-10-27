@@ -61,7 +61,7 @@ class FormGajiController extends Controller
             'data' => $this->payroll->employeesForPeriod($period->month, $period->year),
             'direksi' => $this->payroll->directorsForPeriod($period->month, $period->year),
             'monthName' => $period->copy()->locale('id')->monthName,
-            'bulan' => $period->month, 'tahun' => $period->year, 'payroll' => $this->payroll,
+            'bulan' => $period->month, 'tahun' => $period->year, 'payroll' => $this->payroll, 'bpjsSetting' => $this->payroll->bpjs->setting($period->year),
         ];
     }
 
@@ -147,6 +147,7 @@ class FormGajiController extends Controller
         $this->payroll->attendance->clear();
         $period = $this->period($request);
         $this->ensurePeriodAvailable($period);
+        $this->payroll->bpjs->requireConfigured($period->year);
         try {
             $cash = Cache::lock('payroll-generation', 300)->get(function () use ($period, $request): KasBesar {
                 $this->ensurePeriodAvailable($period);
@@ -168,6 +169,7 @@ class FormGajiController extends Controller
                 $lockedPeriod = $attendance->lock($period->month, $period->year, $people->modelKeys());
 
                 return DB::transaction(function () use ($period, $lockedPeriod, $checkRevision): KasBesar {
+                    $this->payroll->bpjs->requireConfigured($period->year, true);
                     $this->ensurePeriodAvailable($period);
                     $kasBesar = KasBesar::orderByDesc('id')->lockForUpdate()->first();
                     $data = $this->payroll->employeesForPeriod($period->month, $period->year, true);
@@ -182,7 +184,7 @@ class FormGajiController extends Controller
                     ]);
                     $total = 0;
                     foreach ($direksi->concat($data) as $person) {
-                        $calc = $this->payroll->calculateComponent($person);
+                        $calc = $this->payroll->calculateComponent($person, $period->year);
                         $payments = $person instanceof Karyawan ? $this->payroll->kasbonPayments($person, $period->month, $period->year) : [];
                         $kasbon = array_sum(array_column($payments, 'amount'));
                         $deduction = $person instanceof Karyawan ? $this->payroll->attendance->calculate($person, $period->month, $period->year) : ['amount' => 0, 'raw' => 0, 'days' => []];

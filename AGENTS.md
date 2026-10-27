@@ -190,3 +190,10 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
 </laravel-boost-guidelines>
+
+
+## Currency inputs
+
+- Always use the existing Cleave.js library for monetary inputs, with Indonesian thousands separators (`.`), whole rupiah and a numeric mobile keyboard.
+- Submit an unformatted integer through a separate canonical field; retain authoritative server-side validation.
+- Do not add a new formatting dependency.

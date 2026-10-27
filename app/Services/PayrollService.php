@@ -13,9 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PayrollService
 {
-    public function __construct(public PayrollAttendanceService $attendance) {}
+    public function __construct(public PayrollAttendanceService $attendance, public BpjsHealthMinimumService $bpjs) {}
 
-    public function calculateComponent(Karyawan|Direksi $person): array
+    public function calculateComponent(Karyawan|Direksi $person, ?int $year = null): array
     {
         $gapokPlus = $person->gaji_pokok + $person->tunjangan_jabatan + $person->tunjangan_keluarga;
 
@@ -23,15 +23,9 @@ class PayrollService
 
         $pot_tk = $person->apa_bpjs_tk == 1 ? $gapokPlus * 0.02 : 0;
 
-        // tambahkan kondisi gapokPlus maksimal 12 juta, jika lebih dari 12 juta, maka potongan hanya dihitung dari 12 juta
-        // sesuai aturan BPJS Tahun 2026
-        if ($gapokPlus > 12000000) {
-            $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? 12000000 * 0.04 : 0;
-            $pot_k = $person->apa_bpjs_kesehatan == 1 ? 12000000 * 0.01 : 0;
-        } else {
-            $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.04 : 0;
-            $pot_k = $person->apa_bpjs_kesehatan == 1 ? $gapokPlus * 0.01 : 0;
-        }
+        $healthBase = $this->bpjs->base((int) $gapokPlus, $year ?? now()->year);
+        $bpjs_k = $person->apa_bpjs_kesehatan == 1 ? $healthBase * 0.04 : 0;
+        $pot_k = $person->apa_bpjs_kesehatan == 1 ? $healthBase * 0.01 : 0;
 
         $bpjs_tk = (int) round($bpjs_tk);
         $bpjs_k = (int) round($bpjs_k);
@@ -98,7 +92,7 @@ class PayrollService
 
     public function previewRow(Karyawan|Direksi $person, int $bulan, int $tahun): array
     {
-        $calc = $this->calculateComponent($person);
+        $calc = $this->calculateComponent($person, $tahun);
         $kasbon = $person instanceof Karyawan ? $this->calculateKasbon($person, $bulan, $tahun) : 0;
 
         $deduction = $person instanceof Karyawan ? $this->attendance->calculate($person, $bulan, $tahun) : ['amount' => 0, 'raw' => 0, 'cap' => 0, 'daily' => 0, 'days' => [], 'ready' => true];

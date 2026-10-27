@@ -5,6 +5,7 @@
         <div><div class="small text-success fw-bold text-uppercase mb-1">Billing · Penggajian</div><h2 class="fw-bold mb-1">Form Gaji Direksi & Staff</h2><p class="text-muted mb-0">Tinjau pendapatan dan pantau potongan absensi sampai penarikan terakhir sebelum mengesahkan gaji.</p></div>
         <div class="d-flex align-items-center gap-2"><span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-2">{{ $monthName }} {{ $tahun }}</span><a href="{{ route('billing.index') }}" class="btn btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i> Billing</a></div>
     </div>
+    @include('database.bpjs-health-payroll-status', ['bpjsYear' => $tahun])
     @include('billing.gaji.attendance')
     <div class="row g-3 mb-4">
         <div class="col-6 col-xl-3"><div class="card payroll-summary h-100"><div class="card-body p-3 p-lg-4"><div class="small text-muted mb-2">Penerima gaji</div><div class="fs-3 fw-bold">{{ $peopleCount }} <span class="fs-6 fw-normal text-muted">orang</span></div><div class="small text-muted mt-1">{{ $direksi->count() }} direksi · {{ $data->count() }} staff</div></div></div></div>
@@ -99,7 +100,7 @@
 <script>
 $(function () {
     $('#adjust-employee').select2({width:'100%',dropdownParent:$('#adjust-employee').parent()});
-    const canSave=@json($peopleCount > 0 && $negativeCount === 0 && (!$attendanceEnabled || ($attendanceSnapshot['ready'] ?? false)));
+    const canSave=@json($peopleCount > 0 && $negativeCount === 0 && $bpjsSetting !== null && (!$attendanceEnabled || ($attendanceSnapshot['ready'] ?? false)));
     @php($formattedTotal = 'Rp '.number_format($gt['total'], 0, ',', '.'))
     const period=@json($monthName.' '.$tahun), total=@json($formattedTotal), peopleCount=@json($peopleCount);
     let ready=false, busy=false, confirming=false;

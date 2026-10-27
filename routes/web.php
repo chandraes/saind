@@ -7,6 +7,7 @@ use App\Http\Controllers\BanController;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\BbmStoringController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\BpjsHealthMinimumController;
 use App\Http\Controllers\ByPassVendorController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DatabaseController;
@@ -232,6 +233,8 @@ Route::group(['middleware' => ['auth']], function () {
         });
 
         Route::prefix('database')->group(function () {
+            Route::get('/bpjs-kesehatan', [BpjsHealthMinimumController::class, 'index'])->name('bpjs-health.index')->middleware('role:su,admin');
+            Route::post('/bpjs-kesehatan', [BpjsHealthMinimumController::class, 'store'])->name('bpjs-health.store')->middleware('role:su,admin');
             Route::get('/kategori-filter-oli-mesin', [KategoriFilterOliMesinController::class, 'index'])->name('database.kategori-filter-oli-mesin.index');
             Route::post('/kategori-filter-oli-mesin', [KategoriFilterOliMesinController::class, 'store'])->name('database.kategori-filter-oli-mesin.store');
             Route::get('/kategori-filter-oli-mesin/{kategori}/edit', [KategoriFilterOliMesinController::class, 'edit'])->name('database.kategori-filter-oli-mesin.edit');

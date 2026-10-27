@@ -45,6 +45,10 @@ class PayrollAttendanceTest extends TestCase
         ] as $migration) {
             (require database_path('migrations/'.$migration))->up();
         }
+        (require glob(database_path('migrations/*_create_bpjs_health_minimums_table.php'))[0])->up();
+        foreach (range(2020, 2030) as $year) {
+            DB::table('bpjs_health_minimums')->insert(['year' => $year, 'minimum_wage' => 1, 'basis' => 'UMK', 'reference' => 'Fixture pengujian']);
+        }
         DB::table('payroll_attendance_settings')->where('id', 1)->update(['enabled' => true]);
         DB::table('jenis_transaksis')->insert([['id' => 1, 'nama' => 'Masuk'], ['id' => 2, 'nama' => 'Keluar']]);
         Http::preventStrayRequests();

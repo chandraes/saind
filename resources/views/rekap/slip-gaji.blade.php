@@ -27,7 +27,7 @@
         .content-wrapper {
             width: 19cm;
             margin: 0 auto; /* Tengah secara horizontal */
-            padding-top: 0.5cm;
+            padding-top: 0.4cm;
         }
 
         /* TYPOGRAPHY & UTILS */
@@ -69,6 +69,17 @@
 
         .bg-total { background-color: #f8f9fa; font-weight: bold; }
         .bg-grand { background-color: #e2e3e5; font-weight: bold; }
+
+        .signature-table {
+            margin-top: 8px;
+            page-break-inside: avoid;
+        }
+        .signature-table td {
+            vertical-align: top;
+            padding: 0 6px;
+            word-wrap: break-word;
+        }
+        .signature-space { height: 30px; }
 
         /* TANDA GUNTING */
         .cut-here {
