@@ -9,7 +9,7 @@
             <p class="text-muted">Buka aplikasi, pilih Tambah ruang kerja, lalu pindai QR berikut atau masukkan alamat website.</p>
             <div class="row g-4 align-items-center mt-2">
                 <div class="col-md-5 text-center">
-                    <canvas id="workspace-qr" class="img-fluid border rounded" aria-label="QR koneksi {{ $identity['name'] }}" role="img" data-connection="{{ json_encode($connection, JSON_UNESCAPED_SLASHES) }}"></canvas>
+                    <canvas id="workspace-qr" class="img-fluid border rounded" aria-label="QR koneksi {{ $identity['name'] }}" role="img" data-workspace-name="{{ $identity['name'] }}" data-connection="{{ json_encode($connection, JSON_UNESCAPED_SLASHES) }}"></canvas>
                     <p id="workspace-qr-status" role="status" class="small text-muted mt-2">Menyiapkan QR…</p>
                 </div>
                 <div class="col-md-7">
@@ -18,6 +18,11 @@
                     <label for="workspace-address" class="form-label fw-bold">Alamat website</label>
                     <input id="workspace-address" class="form-control" readonly value="{{ $baseUrl }}" onclick="this.select()">
                     <p class="small text-muted mt-2">Pastikan nama perusahaan dan alamat ini sama dengan yang muncul di aplikasi sebelum login.</p>
+                    <div class="d-flex flex-wrap gap-2 my-3" role="group" aria-label="Unduh dan bagikan koneksi ruang kerja">
+                        <button type="button" id="workspace-qr-download" class="btn btn-success" disabled><i class="fa fa-download me-1" aria-hidden="true"></i> Unduh QR</button>
+                        <button type="button" id="workspace-qr-share" class="btn btn-outline-success" disabled><i class="fa fa-share-alt me-1" aria-hidden="true"></i> Bagikan</button>
+                    </div>
+                    <p id="workspace-qr-feedback" class="small text-muted" role="status" aria-live="polite"></p>
                     <p class="small mb-0">QR ini hanya berisi informasi koneksi. Setiap pengguna tetap harus login dengan akun SAIND miliknya.</p>
                 </div>
             </div>

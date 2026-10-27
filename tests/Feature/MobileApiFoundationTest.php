@@ -279,4 +279,17 @@ class MobileApiFoundationTest extends TestCase
         config(['app.url' => 'http://workspace.example.test']);
         $this->actingAs($this->user())->get('/mobile/ruang-kerja')->assertStatus(503);
     }
+
+    public function test_settings_provides_mobile_connection_menu(): void
+    {
+        $this->withoutVite();
+        View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '',
+            'global_app_logo' => '', 'global_app_nav_bg' => '#212529']);
+        Schema::create('password_konfirmasis', function (Blueprint $table): void {
+            $table->id();
+            $table->string('password');
+        });
+        $this->actingAs($this->user(null, 'admin'))->get('/pengaturan')->assertOk()
+            ->assertSee('HUBUNGKAN MOBILE')->assertSee(route('mobile.workspace.show'));
+    }
 }
