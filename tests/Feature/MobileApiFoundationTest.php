@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 use Tests\TestCase;
@@ -244,5 +245,38 @@ class MobileApiFoundationTest extends TestCase
         $token = $this->login();
         $user->update(['vendor_id' => null]);
         $this->withToken($token)->withHeader('X-Workspace-ID', self::WORKSPACE)->getJson('/api/v1/vehicles')->assertForbidden();
+    }
+
+    public function test_connection_qr_requires_web_login(): void
+    {
+        $this->get('/mobile/ruang-kerja')->assertRedirect('/login');
+    }
+
+    public function test_connection_qr_shows_canonical_identity_without_secrets(): void
+    {
+        $this->withoutVite();
+        config(['app.url' => 'https://workspace.example.test']);
+        View::share([
+            'global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_logo' => '',
+            'global_app_nav_bg' => '#212529',
+        ]);
+        $this->actingAs($this->user())->get('/mobile/ruang-kerja')
+            ->assertOk()->assertViewIs('mobile.workspace')
+            ->assertViewHas('connection', fn (array $value): bool => $value === [
+                'type' => 'dsgroup-hauling.workspace', 'version' => 1,
+                'base_url' => 'https://workspace.example.test', 'workspace_id' => self::WORKSPACE,
+            ])->assertSee('Hubungkan DSGroup Hauling')->assertDontSee('secret-pass');
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_connection_qr_rejects_unsupported_role(): void
+    {
+        $this->actingAs($this->user(null, 'customer'))->get('/mobile/ruang-kerja')->assertForbidden();
+    }
+
+    public function test_connection_qr_fails_closed_for_insecure_canonical_url(): void
+    {
+        config(['app.url' => 'http://workspace.example.test']);
+        $this->actingAs($this->user())->get('/mobile/ruang-kerja')->assertStatus(503);
     }
 }

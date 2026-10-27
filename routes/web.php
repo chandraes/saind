@@ -35,6 +35,7 @@ use App\Http\Controllers\KategoriFilterOliMesinController;
 use App\Http\Controllers\KonfigurasiController;
 use App\Http\Controllers\KontrakController;
 use App\Http\Controllers\LegalitasController;
+use App\Http\Controllers\MobileConnectionController;
 use App\Http\Controllers\OperasionalController;
 use App\Http\Controllers\PajakController;
 use App\Http\Controllers\PasswordKonfirmasiController;
@@ -85,6 +86,8 @@ Auth::routes([
 ]);
 
 Route::group(['middleware' => ['auth']], function () {
+    Route::get('/mobile/ruang-kerja', [MobileConnectionController::class, 'show'])->name('mobile.workspace.show');
+
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::group(['middleware' => 'role:user'], function () {});

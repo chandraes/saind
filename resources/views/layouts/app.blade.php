@@ -84,6 +84,9 @@
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                @if (in_array(auth()->user()->role, config('mobile.roles'), true))
+                                <a class="dropdown-item" href="{{ route('mobile.workspace.show') }}">Hubungkan aplikasi mobile</a>
+                                @endif
                                 <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
                                     {{ __('Logout') }}
