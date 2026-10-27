@@ -44,6 +44,9 @@ class MobileApiFoundationTest extends TestCase
         Schema::create('vendors', function (Blueprint $table): void {
             $table->id();
             $table->string('nama');
+            foreach (['nickname', 'perusahaan', 'status', 'tipe', 'jabatan', 'npwp', 'alamat', 'no_hp', 'email', 'bank', 'no_rekening', 'nama_rekening', 'pembayaran'] as $field) {
+                $table->string($field)->nullable();
+            }
         });
         Schema::create('vehicles', function (Blueprint $table): void {
             $table->id();
@@ -51,6 +54,9 @@ class MobileApiFoundationTest extends TestCase
             $table->string('nomor_lambung');
             $table->string('status')->default('aktif');
             $table->string('no_rekening')->nullable();
+            foreach (['nopol', 'tipe', 'tahun', 'nama_stnk', 'no_rangka', 'no_mesin', 'tanggal_pajak_stnk', 'tanggal_kir', 'tanggal_kimper', 'tanggal_sim'] as $field) {
+                $table->string($field)->nullable();
+            }
             $table->timestamps();
         });
         (require database_path('migrations/2019_12_14_000001_create_personal_access_tokens_table.php'))->up();
@@ -291,5 +297,59 @@ class MobileApiFoundationTest extends TestCase
         });
         $this->actingAs($this->user(null, 'admin'))->get('/pengaturan')->assertOk()
             ->assertSee('HUBUNGKAN MOBILE')->assertSee(route('mobile.workspace.show'));
+    }
+
+    public function test_database_directory_is_available_only_to_admin_and_su(): void
+    {
+        foreach (['admin', 'su', 'user', 'asisten-user', 'vendor-operational'] as $role) {
+            $user = User::factory()->create(['username' => $role, 'role' => $role, 'vendor_id' => 1, 'password' => 'secret-pass']);
+            DB::table('vendors')->insertOrIgnore(['id' => 1, 'nama' => 'Vendor 1']);
+            $token = $user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken;
+            $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$token];
+            $this->app['auth']->forgetGuards();
+            $allowed = in_array($role, ['admin', 'su'], true);
+            foreach (['vendors', 'vehicles'] as $directory) {
+                $response = $this->getJson('/api/v1/database/'.$directory, $headers);
+                $response->assertStatus($allowed ? 200 : 403);
+                $this->getJson('/api/v1/database/'.$directory.'/1', $headers)
+                    ->assertStatus($allowed ? ($directory === 'vendors' ? 200 : 404) : 403);
+            }
+            $this->getJson('/api/v1/me', $headers)
+                ->assertOk()->assertJsonPath('data.permissions.database', $allowed);
+        }
+    }
+
+    public function test_database_directory_requires_a_token_and_matching_workspace(): void
+    {
+        $this->getJson('/api/v1/database/vendors', ['X-Workspace-ID' => self::WORKSPACE])->assertUnauthorized();
+        $user = $this->user(null, 'admin');
+        $token = $user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken;
+        $this->getJson('/api/v1/database/vendors', ['Authorization' => 'Bearer '.$token,
+            'X-Workspace-ID' => 'e1bca759-224f-4f48-bbe7-76904c3434fa'])->assertStatus(409);
+    }
+
+    public function test_database_lists_are_searchable_paginated_and_details_use_explicit_fields(): void
+    {
+        $user = $this->user(null, 'admin');
+        DB::table('vendors')->insert([
+            ['id' => 1, 'nama' => 'Alpha', 'nickname' => 'A', 'perusahaan' => 'PT Alpha', 'status' => 'aktif', 'no_rekening' => '001234', 'npwp' => '01002'],
+            ['id' => 2, 'nama' => 'Beta', 'nickname' => 'B', 'perusahaan' => 'PT Beta', 'status' => 'aktif', 'no_rekening' => '56789', 'npwp' => null],
+        ]);
+        DB::table('vehicles')->insert(['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '169', 'nopol' => 'BG 1234 AA', 'no_rekening' => 'private-value']);
+        $token = $user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken;
+        $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$token];
+        $this->getJson('/api/v1/database/vendors?per_page=1', $headers)->assertOk()
+            ->assertJsonPath('meta.total', 2)->assertJsonPath('meta.last_page', 2)
+            ->assertJsonPath('data.0.nama', 'Alpha')->assertJsonMissingPath('data.0.no_rekening');
+        $this->getJson('/api/v1/database/vendors?search=Beta', $headers)->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 2);
+        $this->getJson('/api/v1/database/vendors/1', $headers)->assertOk()
+            ->assertJsonPath('data.no_rekening', '001234')->assertJsonPath('data.jumlah_vehicle', 1);
+        $this->getJson('/api/v1/database/vehicles?search=BG%201234', $headers)->assertOk()
+            ->assertJsonPath('data.0.vendor.nama', 'Alpha')->assertJsonMissingPath('data.0.no_rekening');
+        $this->getJson('/api/v1/database/vehicles/1', $headers)->assertOk()
+            ->assertJsonPath('data.nopol', 'BG 1234 AA')->assertJsonMissingPath('data.no_rekening');
+        $this->getJson('/api/v1/database/vehicles?search=0', $headers)->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/database/vendors?per_page=1000', $headers)->assertUnprocessable();
     }
 }

@@ -7,5 +7,6 @@ return [
     'workspace_name' => env('MOBILE_WORKSPACE_NAME'),
     'company_name' => env('MOBILE_COMPANY_NAME'),
     'token_expiration_minutes' => (int) env('MOBILE_TOKEN_EXPIRATION_MINUTES', 43200),
+    'database_roles' => ['admin', 'su'],
     'roles' => ['admin', 'su', 'user', 'asisten-user', 'vendor-operational'],
 ];
