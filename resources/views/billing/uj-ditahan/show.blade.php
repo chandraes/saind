@@ -38,7 +38,7 @@
                     </a>
                 @else
                     <a href="{{ route('billing.uj-ditahan') }}" class="btn btn-sm btn-secondary shadow-sm">
-                        <i class="fa fa-arrow-left"></i> Kembali ke UJ Ditahan
+                        <i class="fa fa-arrow-left"></i> Kembali ke UJ Ditahan Sparepart
                     </a>
                 @endif
 
@@ -133,7 +133,7 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="modalCairkanLabel">Form Pencairan Saldo UJ Ditahan</h5>
+                    <h5 class="modal-title" id="modalCairkanLabel">Form Pencairan Saldo UJ Ditahan Sparepart</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

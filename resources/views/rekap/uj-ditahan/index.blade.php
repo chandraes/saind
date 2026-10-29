@@ -5,7 +5,7 @@
     <div class="row mb-4">
         <div class="col-12 text-center">
             <h2 class="fw-bold text-uppercase" style="letter-spacing: 2px;">
-                <i class="fa fa-archive text-secondary me-2"></i> Rekapitulasi Data Cutoff (Saldo 0)
+                <i class="fa fa-archive text-secondary me-2"></i> Rekap UJ Ditahan Sparepart (Saldo 0)
             </h2>
             <hr class="w-25 mx-auto text-muted">
         </div>

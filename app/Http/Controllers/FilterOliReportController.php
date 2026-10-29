@@ -25,7 +25,7 @@ class FilterOliReportController extends Controller
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'status' => ['nullable', 'in:approved,rejected'],
-            'pembayaran' => ['nullable', 'in:kas_besar,dibayar_sendiri'],
+            'pembayaran' => ['nullable', 'in:kas_besar,dibayar_sendiri,uj_ditahan'],
         ]);
         $startDate = $filters['start_date'] ?? now()->startOfMonth()->toDateString();
         $endDate = $filters['end_date'] ?? now()->endOfMonth()->toDateString();

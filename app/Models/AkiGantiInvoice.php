@@ -11,18 +11,24 @@ class AkiGantiInvoice extends Model
 
     protected $guarded = ['id'];
 
-    const STATUS_PENDING  = 'pending';
+    const STATUS_PENDING = 'pending';
+
     const STATUS_APPROVED = 'approved';
+
     const STATUS_REJECTED = 'rejected';
 
-    const PEMBAYARAN_KAS_BESAR     = 'kas_besar';
+    public const PEMBAYARAN_UJ_DITAHAN = 'uj_ditahan';
+
+    const PEMBAYARAN_KAS_BESAR = 'kas_besar';
+
     const PEMBAYARAN_DIBAYAR_SENDIRI = 'dibayar_sendiri';
 
     public static function getMetodePembayaranOptions(): array
     {
         return [
+            self::PEMBAYARAN_UJ_DITAHAN => 'UJ Ditahan',
             self::PEMBAYARAN_DIBAYAR_SENDIRI => 'Dibayar Sendiri',
-            self::PEMBAYARAN_KAS_BESAR       => 'Kas Besar',
+            self::PEMBAYARAN_KAS_BESAR => 'Kas Besar',
         ];
     }
 

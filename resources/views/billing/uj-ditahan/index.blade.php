@@ -5,7 +5,7 @@
     <div class="row mb-4">
         <div class="col-12 text-center">
             <h2 class="fw-bold text-uppercase" style="letter-spacing: 2px;">
-                <i class="fa fa-truck text-primary me-2"></i> Rekapitulasi Uang Jalan Ditahan
+                <i class="fa fa-truck text-primary me-2"></i> Rekapitulasi UJ Ditahan Sparepart
             </h2>
             <hr class="w-25 mx-auto text-muted">
         </div>
@@ -122,7 +122,7 @@
 
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Data Detail Uang Jalan Ditahan</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Data Detail UJ Ditahan Sparepart</h6>
         </div>
         <div class="card-body">
             <!-- Form Filter -->
@@ -162,7 +162,7 @@
 
             <hr>
 
-            <!-- Table List UJ Ditahan -->
+            <!-- Table List UJ Ditahan Sparepart -->
             <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover" id="dataTable" width="100%" cellspacing="0">
                     <thead class="table-success">
@@ -207,7 +207,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4">Tidak ada pencatatan Uang Jalan Ditahan (dengan saldo aktif) pada periode ini.</td>
+                            <td colspan="7" class="text-center py-4">Tidak ada pencatatan UJ Ditahan Sparepart (dengan saldo aktif) pada periode ini.</td>
                         </tr>
                         @endforelse
                     </tbody>

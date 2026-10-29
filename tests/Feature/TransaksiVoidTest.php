@@ -103,6 +103,10 @@ class TransaksiVoidTest extends TestCase
             $table->timestamps();
         });
         (require database_path('migrations/2023_09_06_160726_create_group_was_table.php'))->up();
+        foreach (['2026_10_29_102252_create_uj_ditahan_bans_table.php', '2026_10_29_102253_create_uj_ditahan_ban_details_table.php'] as $file) {
+            (require database_path('migrations/'.$file))->up();
+        }
+
         $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
     }
 
@@ -220,7 +224,7 @@ class TransaksiVoidTest extends TestCase
         $this->post(route('transaksi.tagihan.void.store', $transaction), ['alasan' => 'Batal'])->assertSessionHas('success');
         $this->assertCount(1, $messenger->sent);
         $this->assertSame('held-test', $messenger->sent[0]['destination']);
-        $this->assertStringContainsString('*Void UJ Ditahan*', $messenger->sent[0]['message']);
+        $this->assertStringContainsString('*Void UJ Ditahan Sparepart*', $messenger->sent[0]['message']);
         $this->assertStringContainsString('100.000', $messenger->sent[0]['message']);
     }
 

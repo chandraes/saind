@@ -14,6 +14,7 @@ class VendorUangJalan extends Model
         'rute_id',
         'hk_uang_jalan',
         'uj_ditahan',
+        'uj_ditahan_ban',
     ];
 
     protected $appends = [

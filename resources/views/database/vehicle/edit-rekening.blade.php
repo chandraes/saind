@@ -15,7 +15,7 @@
                     @method('PATCH')
 
                     <div class="mb-4">
-                        <label class="form-label small fw-bold">APAKAH UJ DITAHAN?</label>
+                        <label class="form-label small fw-bold">UJ DITAHAN SPAREPART &amp; BAN?</label>
                         <select class="form-select border-info" name="uj_ditahan" id="uj_ditahan_{{$d->id}}" onchange="toggleUjEdit('{{$d->id}}')" required>
                             <option value="1" {{$d->uj_ditahan == 1 ? 'selected' : ''}}>Ya (Potong via Driver)</option>
                             <option value="0" {{$d->uj_ditahan == 0 ? 'selected' : ''}}>Tidak (Transfer Rekening)</option>

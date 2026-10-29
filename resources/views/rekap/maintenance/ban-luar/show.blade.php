@@ -29,7 +29,11 @@
         </div>
     </div>
 
-    @include('swal')
+    @include('billing.form-maintenance.filter-oli.feedback')
+
+    @if($invoice->pembayaran === \App\Models\BanGantiInvoice::PEMBAYARAN_UJ_DITAHAN_BAN)
+    <div class="card border-success shadow-sm mb-4"><div class="card-body p-4"><h5 class="fw-bold text-success">Pembayaran dari UJ Ditahan Ban</h5><p class="mb-2">Seluruh saldo positif kendaraan saat ini: <strong>Rp {{ number_format($saldoUjDitahanBan, 0, ',', '.') }}</strong></p><div class="small text-muted">Rekening tujuan: {{ $invoice->nama_bank }} · {{ $invoice->nomor_rekening }} · {{ $invoice->nama_rekening }}</div>@if($invoice->status === 'pending')<div class="small text-muted mt-1">Saldo diperiksa ulang dan dipotong dari bulan tertua saat disetujui.</div>@endif</div></div>
+    @endif
 
     <!-- ROW 1: INFORMASI KENDARAAN & STATUS PEMBAYARAN (KIRI - KANAN) -->
     <div class="row g-3 mb-4">
@@ -87,12 +91,14 @@
                             <td class="text-end">
                                 @if($invoice->pembayaran === \App\Models\BanGantiInvoice::PEMBAYARAN_KAS_BESAR)
                                 <span class="badge bg-primary fs-7">Kas Besar</span>
+                                    @elseif($invoice->pembayaran === \App\Models\BanGantiInvoice::PEMBAYARAN_UJ_DITAHAN_BAN)
+                                        <span class="badge bg-success fs-7">UJ Ditahan Ban</span>
                                 @else
                                 <span class="badge bg-secondary fs-7">Dibayar Sendiri</span>
                                 @endif
                             </td>
                         </tr>
-                        @if($invoice->pembayaran === \App\Models\BanGantiInvoice::PEMBAYARAN_KAS_BESAR)
+                        @if($invoice->pembayaran !== \App\Models\BanGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI)
                         <tr>
                             <td class="text-muted">Total Nominal</td>
                             <td class="fw-bold text-success text-end fs-6">
@@ -119,7 +125,7 @@
                     <div class="table-responsive">
                         <table class="table table-hover align-middle text-center mb-0 fs-7">
                             <thead>
-                                <tr class="table-light">
+                                <tr class="table-success">
                                     <th rowspan="2" class="align-middle">NO</th>
                                     <th rowspan="2" class="align-middle">POSISI</th>
                                     <th colspan="3" class="bg-warning bg-opacity-25 border-bottom-0 text-dark fw-bold">

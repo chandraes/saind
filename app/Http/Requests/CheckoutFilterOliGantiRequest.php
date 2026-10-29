@@ -15,15 +15,22 @@ class CheckoutFilterOliGantiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vehicle_id' => ['required', 'exists:vehicles,id'],
-            'items' => ['required', 'array', 'min:1'],
+            'vehicle_id' => ['required', 'integer', 'exists:vehicles,id'],
+            'items' => ['bail', 'required', 'array', 'min:1', function (string $attribute, mixed $value, \Closure $fail): void {
+                foreach (array_keys($value) as $id) {
+                    if (! ctype_digit((string) $id) || (int) $id < 1) {
+                        $fail('Item keranjang tidak valid. Muat ulang dan periksa kembali.');
+                        break;
+                    }
+                }
+            }],
             'items.*' => ['required', 'array:tanggal_ganti'],
             'items.*.tanggal_ganti' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'pembayaran' => ['required', Rule::in(config('maintenance.filter_oli.kas_besar_enabled') ? ['dibayar_sendiri', 'kas_besar'] : ['dibayar_sendiri'])],
-            'total_nominal' => ['exclude_unless:pembayaran,kas_besar', 'required', 'integer', 'min:1', 'max:9999999999999'],
-            'nama_bank' => ['exclude_unless:pembayaran,kas_besar', 'required', 'string', 'max:50'],
-            'nomor_rekening' => ['exclude_unless:pembayaran,kas_besar', 'required', 'string', 'max:50'],
-            'nama_rekening' => ['exclude_unless:pembayaran,kas_besar', 'required', 'string', 'max:100'],
+            'pembayaran' => ['required', Rule::in(config('maintenance.filter_oli.kas_besar_enabled') ? ['dibayar_sendiri', 'kas_besar', 'uj_ditahan'] : ['dibayar_sendiri', 'uj_ditahan'])],
+            'total_nominal' => ['exclude_unless:pembayaran,kas_besar,uj_ditahan', 'bail', 'required', 'regex:/\A[1-9][0-9]*\z/', 'integer', 'min:1', 'max:9999999999999'],
+            'nama_bank' => ['exclude_unless:pembayaran,kas_besar,uj_ditahan', 'required', 'string', 'max:50'],
+            'nomor_rekening' => ['exclude_unless:pembayaran,kas_besar,uj_ditahan', 'required', 'string', 'max:50'],
+            'nama_rekening' => ['exclude_unless:pembayaran,kas_besar,uj_ditahan', 'required', 'string', 'max:100'],
         ];
     }
 }

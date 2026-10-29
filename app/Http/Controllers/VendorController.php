@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Vendor;
+use App\Http\Requests\StoreVendorUangJalanRequest;
 use App\Models\Customer;
-use App\Models\VendorUangJalan;
 use App\Models\Rute;
 use App\Models\Sponsor;
-use Illuminate\Support\Facades\DB;
+use App\Models\Vendor;
+use App\Models\VendorUangJalan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Yajra\DataTables\DataTables;
 
 class VendorController extends Controller
 {
-
     public function index(Request $request)
     {
         // Jika ada request AJAX dari Datatables
@@ -30,11 +32,12 @@ class VendorController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn() // Untuk nomor urut otomatis (DT_RowIndex)
                 ->editColumn('nama', function ($d) {
-                    return '<a href="' . route('vendor.show', $d->id) . '"><strong>' . $d->nama . '</strong></a>';
+                    return '<a href="'.route('vendor.show', $d->id).'"><strong>'.$d->nama.'</strong></a>';
                 })
                 ->editColumn('pembayaran', function ($d) {
                     $class = in_array($d->pembayaran, ['titipan', 'titipan_khusus']) ? 'text-danger' : '';
-                    return '<span class="' . $class . '">' . strtoupper(str_replace('_', ' ', $d->pembayaran)) . '</span>';
+
+                    return '<span class="'.$class.'">'.strtoupper(str_replace('_', ' ', $d->pembayaran)).'</span>';
                 })
                 ->editColumn('support_operational', function ($d) {
                     return $d->support_operational == 1 ? '<i class="fa fa-check-circle text-success" style="font-size: 25px"></i>' : '';
@@ -47,21 +50,24 @@ class VendorController extends Controller
                 })
                 ->editColumn('plafon_titipan', function ($d) {
                     $class = $d->pembayaran == 'titipan' ? 'text-danger' : '';
-                    return '<span class="' . $class . '">' . number_format($d->plafon_titipan, 0, ',', '.') . '</span>';
+
+                    return '<span class="'.$class.'">'.number_format($d->plafon_titipan, 0, ',', '.').'</span>';
                 })
                 ->editColumn('plafon_lain', function ($d) {
                     $class = $d->plafon_lain > 10000000 ? 'text-danger' : '';
-                    return '<span class="' . $class . '">' . number_format($d->plafon_lain, 0, ',', '.') . '</span>';
+
+                    return '<span class="'.$class.'">'.number_format($d->plafon_lain, 0, ',', '.').'</span>';
                 })
                 ->editColumn('status', function ($d) {
-                    if ($d->status == "aktif") {
+                    if ($d->status == 'aktif') {
                         return '<span class="badge badge-xl rounded-pill text-bg-success">Aktif</span>';
-                    } elseif ($d->status === "nonaktif") {
+                    } elseif ($d->status === 'nonaktif') {
                         return '<span class="badge rounded-pill text-bg-danger">Non Aktif</span>';
                     }
+
                     return '';
                 })
-              ->editColumn('limit_tonase', function ($d) {
+                ->editColumn('limit_tonase', function ($d) {
                     // Cek apakah nilainya 1/true di database
                     $checked = $d->limit_tonase ? 'checked' : '';
                     // Simpan URL route ke dalam data attribute
@@ -77,10 +83,10 @@ class VendorController extends Controller
                     return $d->sponsor ? $d->sponsor->nama : '';
                 })
                 ->addColumn('jatuh_tempo', function ($d) {
-                    return 'HPP: <strong>' . $d->jatuh_tempo_hari . ' Hari </strong><br>' .
-                           'Kompensasi JR: <strong>' . $d->jatuh_tempo_kompensasi_jr . ' Hari</strong><br>' .
-                           'Penyesuaian BBM: <strong>' . $d->jatuh_tempo_penyesuaian_bbm . ' Hari</strong><br>' .
-                           'Achievement: <strong>' . $d->jatuh_tempo_achievement . ' Hari</strong>';
+                    return 'HPP: <strong>'.$d->jatuh_tempo_hari.' Hari </strong><br>'.
+                           'Kompensasi JR: <strong>'.$d->jatuh_tempo_kompensasi_jr.' Hari</strong><br>'.
+                           'Penyesuaian BBM: <strong>'.$d->jatuh_tempo_penyesuaian_bbm.' Hari</strong><br>'.
+                           'Achievement: <strong>'.$d->jatuh_tempo_achievement.' Hari</strong>';
                 })
                 ->addColumn('uang_jalan', function ($d) {
                     // Kita pindahkan tombol dan modal ke view parsial agar controller tetap bersih
@@ -101,12 +107,12 @@ class VendorController extends Controller
     {
         $vendor = Vendor::findOrFail($id);
         // Ubah status kebalikannya (jika 1 jadi 0, jika 0 jadi 1)
-        $vendor->limit_tonase = !$vendor->limit_tonase;
+        $vendor->limit_tonase = ! $vendor->limit_tonase;
         $vendor->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Limit Tonase Muat berhasil diperbarui!'
+            'message' => 'Limit Tonase Muat berhasil diperbarui!',
         ]);
     }
 
@@ -175,7 +181,6 @@ class VendorController extends Controller
             'pph_val' => 'nullable|required_if:pph,on',
         ]);
 
-
         if (array_key_exists('ppn', $data)) {
             $data['ppn'] = 1;
         } else {
@@ -187,10 +192,10 @@ class VendorController extends Controller
         // } else {
         //     $data['pph'] = 0;
         // }
-          if (array_key_exists('pph', $data)) {
+        if (array_key_exists('pph', $data)) {
             $data['pph'] = 1;
             $data['pph_val'] = str_replace(',', '.', $data['pph_val']);
-            if ($data['pph_val'] == 0 ) {
+            if ($data['pph_val'] == 0) {
                 return redirect()->back()->withInput()->withErrors(['pph_val' => 'Nilai PPh harus lebih dari 0 jika PPh dicentang']);
             }
         } else {
@@ -200,7 +205,7 @@ class VendorController extends Controller
 
         // dd($data);
 
-        if(array_key_exists('support_operational', $data)){
+        if (array_key_exists('support_operational', $data)) {
             $data['support_operational'] = 1;
         } else {
             $data['support_operational'] = 0;
@@ -225,6 +230,7 @@ class VendorController extends Controller
     public function show(Vendor $vendor)
     {
         $sponsor = Sponsor::all();
+
         return view('database.vendor.show', [
             'vendor' => $vendor,
             'sponsor' => $sponsor,
@@ -238,6 +244,7 @@ class VendorController extends Controller
     {
         $vendor = Vendor::findOrFail($id);
         $sponsor = Sponsor::all();
+
         return view('database.vendor.edit', [
             'vendor' => $vendor,
             'sponsor' => $sponsor,
@@ -285,11 +292,11 @@ class VendorController extends Controller
             $data['ppn'] = 0;
         }
 
-        if($data['status'] == 'nonaktif'){
+        if ($data['status'] == 'nonaktif') {
             $vendor = Vendor::findOrFail($id);
             // check apakah ada vehicle dengan status selain aktif dan nonaktif
             $vehicle = $vendor->vehicle()->whereNotIn('status', ['aktif', 'nonaktif'])->first();
-            if($vehicle){
+            if ($vehicle) {
                 return redirect()->back()->withInput()->withErrors(['status' => 'Vendor tidak bisa dinonaktifkan karena ada kendaraan yang masih dalam proses!!']);
             }
         }
@@ -297,7 +304,7 @@ class VendorController extends Controller
         if (array_key_exists('pph', $data)) {
             $data['pph'] = 1;
             $data['pph_val'] = str_replace(',', '.', $data['pph_val']);
-            if ($data['pph_val'] == 0 ) {
+            if ($data['pph_val'] == 0) {
                 return redirect()->back()->withInput()->withErrors(['pph_val' => 'Nilai PPh harus lebih dari 0 jika PPh dicentang']);
             }
         } else {
@@ -305,7 +312,7 @@ class VendorController extends Controller
             $data['pph'] = 0;
         }
 
-        if(array_key_exists('support_operational', $data)){
+        if (array_key_exists('support_operational', $data)) {
             $data['support_operational'] = 1;
         } else {
             $data['support_operational'] = 0;
@@ -318,11 +325,11 @@ class VendorController extends Controller
 
         $vendor->update($data);
 
-        if($data['status'] == 'nonaktif'){
+        if ($data['status'] == 'nonaktif') {
             $vendor->vehicle()->update([
                 'status' => 'nonaktif',
             ]);
-        } elseif($data['status'] == 'aktif'){
+        } elseif ($data['status'] == 'aktif') {
             // Permintaan admin, untuk saat vendor di aktifkan kembali, kendaraan tidak otomatis di aktifkan. Jadi kode ini di comment dulu.
             // $vendor->vehicle()->update([
             //     'status' => 'aktif',
@@ -395,8 +402,6 @@ class VendorController extends Controller
     //         return redirect()->back()->with('error', $th->getMessage());
     //     }
 
-
-
     //     return redirect()->route('vendor.index')->with('success', 'Vendor berhasil ditambahkan');
     // }
 
@@ -407,53 +412,13 @@ class VendorController extends Controller
 
         return view('database.vendor.create-uangjalan', [
             'vendor' => $vendor,
-            'rutes'  => $rutes,
+            'rutes' => $rutes,
         ]);
     }
 
-    public function uang_jalan_store(Request $request)
+    public function uang_jalan_store(StoreVendorUangJalanRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'vendor_id'    => 'required|exists:vendors,id',
-            'rute_id'      => 'required|array',
-            'rute_id.*'    => 'required|exists:rutes,id',
-            'uang_jalan'   => 'required|array',
-            'uang_jalan.*' => 'required',
-            'uj_ditahan'   => 'nullable|array',
-            'uj_ditahan.*' => 'nullable',
-        ]);
-
-        $vendorId = $data['vendor_id'];
-        $userId = Auth::id();
-        $now = now();
-
-        DB::beginTransaction();
-        try {
-            $insertData = [];
-            foreach ($data['rute_id'] as $i => $ruteId) {
-                $ujVal = isset($data['uang_jalan'][$i]) ? (int) str_replace('.', '', $data['uang_jalan'][$i]) : 0;
-                $ditahanVal = isset($data['uj_ditahan'][$i]) ? (int) str_replace('.', '', $data['uj_ditahan'][$i]) : 0;
-
-                $insertData[] = [
-                    'vendor_id'     => $vendorId,
-                    'rute_id'       => $ruteId,
-                    'hk_uang_jalan' => $ujVal,
-                    'uj_ditahan'    => $ditahanVal,
-                    'created_at'    => $now,
-                    'updated_at'    => $now,
-                ];
-            }
-
-            // Bulk insert sekaligus dalam 1 query
-            VendorUangJalan::insert($insertData);
-
-            DB::commit();
-        } catch (\Throwable $th) {
-            DB::rollback();
-            return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data: ' . $th->getMessage());
-        }
-
-        return redirect()->route('vendor.index')->with('success', 'Kesepakatan Uang Jalan Vendor berhasil ditambahkan.');
+        return $this->saveUangJalan($request, false);
     }
 
     // public function uang_jalan_edit(Vendor $vendor)
@@ -530,62 +495,53 @@ class VendorController extends Controller
         $rutes = Rute::all();
 
         return view('database.vendor.edit-uangjalan', [
-            'data'        => $vendor,
+            'data' => $vendor,
             'vendorUjMap' => $vendorUjMap,
-            'rutes'       => $rutes,
+            'rutes' => $rutes,
         ]);
     }
 
-    public function uang_jalan_update(Request $request, string $id)
+    public function uang_jalan_update(StoreVendorUangJalanRequest $request, string $id): RedirectResponse
     {
-        $data = $request->validate([
-            'vendor_id'    => 'required|exists:vendors,id',
-            'rute_id'      => 'required|array',
-            'rute_id.*'    => 'required|exists:rutes,id',
-            'uang_jalan'   => 'required|array',
-            'uang_jalan.*' => 'required',
-            'uj_ditahan'   => 'nullable|array',
-            'uj_ditahan.*' => 'nullable',
-        ]);
+        return $this->saveUangJalan($request, true);
+    }
 
-        $vendorId = $data['vendor_id'];
-        $userId = Auth::id();
-        $now = now();
-
-        DB::beginTransaction();
+    private function saveUangJalan(StoreVendorUangJalanRequest $request, bool $updating): RedirectResponse
+    {
+        $data = $request->validated();
         try {
-            // Hapus data lama untuk vendor ini
-            VendorUangJalan::where('vendor_id', $vendorId)->delete();
+            DB::transaction(function () use ($data, $updating): void {
+                Vendor::whereKey($data['vendor_id'])->lockForUpdate()->firstOrFail();
+                $existing = VendorUangJalan::where('vendor_id', $data['vendor_id']);
+                if (! $updating && $existing->exists()) {
+                    throw ValidationException::withMessages(['vendor_id' => 'Kesepakatan vendor ini sudah ada. Gunakan halaman edit.']);
+                }
+                if ($updating) {
+                    $existing->delete();
+                }
+                $timestamp = now();
+                $rows = [];
+                foreach ($data['rute_id'] as $index => $routeId) {
+                    $rows[] = [
+                        'vendor_id' => $data['vendor_id'], 'rute_id' => $routeId,
+                        'hk_uang_jalan' => (int) $data['uang_jalan'][$index],
+                        'uj_ditahan' => (int) $data['uj_ditahan'][$index],
+                        'uj_ditahan_ban' => (int) $data['uj_ditahan_ban'][$index],
+                        'created_at' => $timestamp, 'updated_at' => $timestamp,
+                    ];
+                }
+                VendorUangJalan::insert($rows);
+            }, 3);
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            report($exception);
 
-            // Buat batch array untuk bulk insert yang jauh lebih cepat
-            $insertData = [];
-            foreach ($data['rute_id'] as $i => $ruteId) {
-                $ujVal = isset($data['uang_jalan'][$i]) ? (int) str_replace('.', '', $data['uang_jalan'][$i]) : 0;
-                $ditahanVal = isset($data['uj_ditahan'][$i]) ? (int) str_replace('.', '', $data['uj_ditahan'][$i]) : 0;
-
-                $insertData[] = [
-                    'vendor_id'     => $vendorId,
-                    'rute_id'       => $ruteId,
-                    'hk_uang_jalan' => $ujVal,
-                    'uj_ditahan'    => $ditahanVal,
-                    'created_at'    => $now,
-                    'updated_at'    => $now,
-                ];
-            }
-
-            // Eksekusi 1 query bulk insert
-            VendorUangJalan::insert($insertData);
-
-            DB::commit();
-        } catch (\Throwable $th) {
-            DB::rollback();
-            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data: ' . $th->getMessage());
+            return back()->withInput()->with('error', 'Kesepakatan uang jalan gagal disimpan. Silakan coba kembali.');
         }
 
-        return redirect()->route('vendor.index')->with('success', 'Kesepakatan Uang Jalan Vendor berhasil diperbarui.');
+        return to_route('vendor.index')->with('success', 'Kesepakatan uang jalan, UJ Ditahan Sparepart, dan UJ Ditahan Ban berhasil disimpan.');
     }
-
-
 
     public function biodata_vendor(string $id)
     {
@@ -614,7 +570,7 @@ class VendorController extends Controller
     {
         $data = Vendor::all();
 
-        $pdf = PDF::loadview('database.vendor.prieview-vendor', [
+        $pdf = Pdf::loadview('database.vendor.prieview-vendor', [
             'data' => $data,
         ])->setPaper('a4', 'landscape');
 

@@ -12,6 +12,7 @@ class AkiGantiCart extends Model
     protected $table = 'aki_ganti_carts';
 
     protected $fillable = [
+        'user_id',
         'vehicle_id',
         'posisi_aki_id',
         'merk',

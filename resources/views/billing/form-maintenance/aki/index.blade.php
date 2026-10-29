@@ -134,7 +134,7 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
+                                <thead class="table-success">
                                     <tr>
                                         <th>POSISI AKI</th>
                                         <th class="text-center">MEREK</th>
@@ -187,6 +187,7 @@
             $('#vehicle_id').select2({ theme: 'bootstrap-5', width: '100%' });
         }
 
+        const escapeHtml = (value) => $('<span>').text(value ?? '').html();
         function loadVehicleData(vehicleId) {
             $.ajax({
                 url: "{{ route('billing.form-maintenance.aki.get-vehicle-info') }}",
@@ -208,10 +209,10 @@
                     var tbodyBatteries = '';
                     $.each(response.batteries, function(index, battery) {
                         tbodyBatteries += '<tr>';
-                        tbodyBatteries += '  <td class="fw-semibold text-primary">' + battery.posisi + '</td>';
-                        tbodyBatteries += '  <td class="text-center text-uppercase">' + battery.merk + '</td>';
-                        tbodyBatteries += '  <td class="text-center">' + battery.kondisi + '</td>';
-                        tbodyBatteries += '  <td class="text-center">' + battery.tanggal_ganti + '</td>';
+                        tbodyBatteries += '  <td class="fw-semibold text-primary">' + escapeHtml(battery.posisi) + '</td>';
+                        tbodyBatteries += '  <td class="text-center text-uppercase">' + escapeHtml(battery.merk) + '</td>';
+                        tbodyBatteries += '  <td class="text-center">' + escapeHtml(battery.kondisi) + '</td>';
+                        tbodyBatteries += '  <td class="text-center">' + escapeHtml(battery.tanggal_ganti) + '</td>';
                         tbodyBatteries += '  <td class="text-center">' + (battery.jumlah_hari === null ? '-' : battery.jumlah_hari + ' hari') + '</td>';
                         tbodyBatteries += '</tr>';
                     });
@@ -270,8 +271,8 @@
                 title: 'Tambahkan Aki ke Keranjang?',
                 html: `
                     <div class="text-start">
-                        <p class="mb-1"><b>Posisi Aki:</b> ${posisiNama}</p>
-                        <p class="mb-1"><b>Merek Aki:</b> ${merk.toUpperCase()}</p>
+                        <p class="mb-1"><b>Posisi Aki:</b> ${escapeHtml(posisiNama)}</p>
+                        <p class="mb-1"><b>Merek Aki:</b> ${escapeHtml(merk.toUpperCase())}</p>
                     </div>
                 `,
                 icon: 'question',

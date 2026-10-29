@@ -400,13 +400,10 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('billing.uj-ditahan')}}" class="text-decoration-none">
-                <img src="{{asset('images/uj-ditahan.svg')}}" alt="" width="70">
-                <h4 class="mt-3">UJ DITAHAN
-                    {{-- <span class="text-danger">{{$data->where('status', 2)->count() > 0 ?
-                        "(".$data->where('status', 2)->count().")" : '' }}</span> --}}
-                </h4>
-            </a>
+            <button type="button" class="btn border-0 p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#ujDitahanMenu" aria-haspopup="dialog" aria-controls="ujDitahanMenu">
+                <img src="{{ asset('images/uj-ditahan.svg') }}" alt="" width="70">
+                <h4 class="mt-3">UJ DITAHAN</h4>
+            </button>
         </div>
         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.sales-order')}}" class="text-decoration-none">
@@ -629,6 +626,7 @@
     </div>
 
 </div>
+@include('layouts.uj-ditahan-menu', ['menuArea' => 'billing'])
 @endsection
 @push('css')
 <link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">

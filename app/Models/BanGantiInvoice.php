@@ -10,16 +10,21 @@ class BanGantiInvoice extends Model
 
     // Konstanta Metode Pembayaran
     public const PEMBAYARAN_DIBAYAR_SENDIRI = 'dibayar_sendiri';
-    public const PEMBAYARAN_KAS_BESAR       = 'kas_besar';
 
-    public const STATUS_PENDING  = 'pending';
+    public const PEMBAYARAN_UJ_DITAHAN_BAN = 'uj_ditahan_ban';
+
+    public const PEMBAYARAN_KAS_BESAR = 'kas_besar';
+
+    public const STATUS_PENDING = 'pending';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
 
     public static function getStatusOptions()
     {
         return [
-            self::STATUS_PENDING  => 'Menunggu Otorisasi',
+            self::STATUS_PENDING => 'Menunggu Otorisasi',
             self::STATUS_APPROVED => 'Disetujui',
             self::STATUS_REJECTED => 'Ditolak',
         ];
@@ -33,7 +38,8 @@ class BanGantiInvoice extends Model
     {
         return [
             self::PEMBAYARAN_DIBAYAR_SENDIRI => 'Dibayar Sendiri',
-            self::PEMBAYARAN_KAS_BESAR       => 'Kas Besar',
+            self::PEMBAYARAN_KAS_BESAR => 'Kas Besar',
+            self::PEMBAYARAN_UJ_DITAHAN_BAN => 'UJ Ditahan Ban',
         ];
     }
 

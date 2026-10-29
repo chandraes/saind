@@ -2,28 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CheckoutAkiGantiRequest;
 use App\Models\AkiGantiCart;
 use App\Models\AkiGantiInvoice;
-use App\Models\AkiGantiInvoiceDetail;
 use App\Models\AkiLog;
 use App\Models\PosisiAki;
+use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\MaintenanceUjDitahanService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class AkiGantiController extends Controller
 {
+    private function cart(Request $request): Builder
+    {
+        return AkiGantiCart::where('user_id', $request->user()->id);
+    }
+
+    private function lockCartOwner(Request $request): void
+    {
+        User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
+    }
+
     // Halaman Utama Form Input Penggantian Aki
-    public function form_ganti_aki()
+    public function form_ganti_aki(Request $request): View
     {
         $vehicles = Vehicle::whereNot('status', 'nonaktif')->orderBy('nomor_lambung', 'asc')->get();
         $posisiAkis = PosisiAki::all();
 
         // Cek apakah ada keranjang aktif yang mengunci unit
-        $activeCart = AkiGantiCart::first();
+        $activeCart = $this->cart($request)->first();
         $lockedVehicleId = $activeCart ? $activeCart->vehicle_id : null;
-        $cartCount = AkiGantiCart::count();
+        $cartCount = $this->cart($request)->count();
 
         return view('billing.form-maintenance.aki.index', [
             'vehicles' => $vehicles,
@@ -34,10 +53,10 @@ class AkiGantiController extends Controller
     }
 
     // Get Informasi Kendaraan, Status Aki, & List Posisi Terpakai di Keranjang (AJAX)
-    public function form_ganti_aki_get_vehicle_info(Request $request)
+    public function form_ganti_aki_get_vehicle_info(Request $request): JsonResponse
     {
         $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
+            'vehicle_id' => ['required', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif'))],
         ]);
 
         $vehicleId = $request->vehicle_id;
@@ -49,7 +68,7 @@ class AkiGantiController extends Controller
             ->first();
 
         $akiLogs = AkiLog::where('vehicle_id', $vehicleId)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'desc')->orderByDesc('id')
             ->get()
             ->unique('posisi_aki_id')
             ->keyBy('posisi_aki_id');
@@ -71,7 +90,7 @@ class AkiGantiController extends Controller
         });
 
         // Load item keranjang & ID posisi aki yang sudah digunakan
-        $cartItems = AkiGantiCart::with('posisiAki')
+        $cartItems = $this->cart($request)->with('posisiAki')
             ->where('vehicle_id', $vehicleId)
             ->orderBy('created_at', 'asc')
             ->get();
@@ -91,88 +110,56 @@ class AkiGantiController extends Controller
         ]);
     }
 
-    // 1. Tambah Aki ke Keranjang via AJAX
-    public function form_ganti_aki_cart_add(Request $request)
+    public function form_ganti_aki_cart_add(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'posisi_aki_id' => 'required|exists:posisi_akis,id',
-            'merk' => 'required|string|max:100',
-            'kondisi' => 'required|numeric|min:1|max:100',
+            'vehicle_id' => ['required', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif'))],
+            'posisi_aki_id' => ['required', 'integer', 'exists:posisi_akis,id'],
+            'merk' => ['required', 'string', 'max:100'],
+            'kondisi' => ['required', 'integer', 'min:1', 'max:100'],
         ]);
+        DB::transaction(function () use ($request, $validated): void {
+            $this->lockCartOwner($request);
+            $cart = $this->cart($request)->lockForUpdate()->get();
+            if ($cart->isNotEmpty() && (int) $cart->first()->vehicle_id !== (int) $validated['vehicle_id']) {
+                throw ValidationException::withMessages(['vehicle_id' => 'Selesaikan atau kosongkan keranjang unit sebelumnya.']);
+            }
+            if ($cart->contains('posisi_aki_id', $validated['posisi_aki_id'])) {
+                throw ValidationException::withMessages(['posisi_aki_id' => 'Posisi aki ini sudah ada di keranjang.']);
+            }
+            AkiGantiCart::create($validated + ['user_id' => $request->user()->id, 'no_seri' => '-']);
+        }, 3);
 
-        // Proteksi 1: Kunci kendaraan (Cek apakah ada keranjang unit lain yang menggantung)
-        $existingCart = AkiGantiCart::first();
-        if ($existingCart && $existingCart->vehicle_id != $validated['vehicle_id']) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Selesaikan atau kosongkan keranjang unit sebelumnya terlebih dahulu!',
-            ], 422);
-        }
-
-        // Proteksi 2: Mencegah input posisi aki yang sama lebih dari sekali
-        $existsPosisi = AkiGantiCart::where('vehicle_id', $validated['vehicle_id'])
-            ->where('posisi_aki_id', $validated['posisi_aki_id'])
-            ->exists();
-        if ($existsPosisi) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Posisi aki ini sudah ada di dalam keranjang!',
-            ], 422);
-        }
-
-        try {
-            AkiGantiCart::create([
-                'vehicle_id' => $validated['vehicle_id'],
-                'posisi_aki_id' => $validated['posisi_aki_id'],
-                'merk' => strtoupper($validated['merk']),
-                'no_seri' => '-',
-                'kondisi' => $validated['kondisi'] ?? 100,
-            ]);
-
-            $totalCart = AkiGantiCart::where('vehicle_id', $validated['vehicle_id'])->count();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Aki berhasil ditambahkan ke keranjang.',
-                'cart_count' => $totalCart,
-            ]);
-        } catch (\Throwable $th) {
-            return response()->json(['status' => 'error', 'message' => $th->getMessage()], 500);
-        }
+        return response()->json(['status' => 'success', 'message' => 'Aki berhasil ditambahkan ke keranjang.', 'cart_count' => $this->cart($request)->count()]);
     }
 
-    // 2. Hapus Item dari Keranjang via AJAX
-    public function form_ganti_aki_cart_delete($id)
+    public function form_ganti_aki_cart_delete(Request $request, int $id): JsonResponse
     {
-        $cart = AkiGantiCart::find($id);
-        if ($cart) {
-            $vehicleId = $cart->vehicle_id;
-            $cart->delete();
-            $totalCart = AkiGantiCart::where('vehicle_id', $vehicleId)->count();
-        } else {
-            $totalCart = 0;
-        }
+        DB::transaction(function () use ($request, $id): void {
+            $this->lockCartOwner($request);
+            $this->cart($request)->lockForUpdate()->findOrFail($id)->delete();
+        }, 3);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Item keranjang berhasil dihapus.',
-            'cart_count' => $totalCart,
-        ]);
+        return response()->json(['status' => 'success', 'message' => 'Item keranjang berhasil dihapus.', 'cart_count' => $this->cart($request)->count()]);
     }
 
-    // 3. Kosongkan Keranjang via AJAX
-    public function form_ganti_aki_cart_clear($vehicle_id)
+    public function form_ganti_aki_cart_clear(Request $request, int $vehicle_id): JsonResponse
     {
-        AkiGantiCart::where('vehicle_id', $vehicle_id)->delete();
+        DB::transaction(function () use ($request, $vehicle_id): void {
+            $this->lockCartOwner($request);
+            $items = $this->cart($request)->where('vehicle_id', $vehicle_id)->lockForUpdate()->get();
+            foreach ($items as $item) {
+                $item->delete();
+            }
+        }, 3);
 
         return response()->json(['status' => 'success', 'message' => 'Keranjang berhasil dikosongkan.']);
     }
 
     // 4. Halaman Terpisah: Konfirmasi Invoice & Review Keranjang Aki
-    public function form_ganti_aki_confirm()
+    public function form_ganti_aki_confirm(Request $request): View|RedirectResponse
     {
-        $cartItems = AkiGantiCart::with(['vehicle', 'posisiAki'])->get();
+        $cartItems = $this->cart($request)->with(['vehicle', 'posisiAki'])->orderBy('id')->get();
 
         if ($cartItems->isEmpty()) {
             return redirect()->route('billing.form-maintenance.aki')
@@ -189,75 +176,48 @@ class AkiGantiController extends Controller
         return view('billing.form-maintenance.aki.cart', [
             'vehicle' => $vehicleInfo,
             'cartItems' => $cartItems,
+            'ujDitahanBalance' => app(MaintenanceUjDitahanService::class)->balance($vehicle->id),
         ]);
     }
 
-    // 5. Checkout Submit Form Keranjang Aki
-    public function form_ganti_aki_checkout(Request $request)
+    public function form_ganti_aki_checkout(CheckoutAkiGantiRequest $request, MaintenanceUjDitahanService $ujDitahan): RedirectResponse
     {
-        if ($request->filled('total_nominal')) {
-            $cleanedNominal = preg_replace('/[^0-9]/', '', $request->total_nominal);
-            $request->merge(['total_nominal' => $cleanedNominal]);
-        }
-
-        $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'pembayaran' => ['required', Rule::in(array_keys(AkiGantiInvoice::getMetodePembayaranOptions()))],
-            'total_nominal' => 'required_if:pembayaran,'.AkiGantiInvoice::PEMBAYARAN_KAS_BESAR.'|nullable|numeric|min:1',
-            'nama_bank' => 'required_if:pembayaran,'.AkiGantiInvoice::PEMBAYARAN_KAS_BESAR.'|nullable|string|max:50',
-            'nomor_rekening' => 'required_if:pembayaran,'.AkiGantiInvoice::PEMBAYARAN_KAS_BESAR.'|nullable|string|max:50',
-            'nama_rekening' => 'required_if:pembayaran,'.AkiGantiInvoice::PEMBAYARAN_KAS_BESAR.'|nullable|string|max:100',
-        ]);
-
-        $vehicleId = $validated['vehicle_id'];
-        $vehicleInfo = Vehicle::findOrFail($vehicleId);
-        $cartItems = AkiGantiCart::where('vehicle_id', $vehicleId)->get();
-
-        if ($cartItems->isEmpty()) {
-            return redirect()->route('billing.form-maintenance.aki')->with('error', 'Keranjang masih kosong!');
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $totalNominal = $validated['pembayaran'] === AkiGantiInvoice::PEMBAYARAN_KAS_BESAR ? $validated['total_nominal'] : 0;
-            $noInvoice = 'INV-AKI-'.date('YmdHis').'-'.$vehicleInfo->nomor_lambung;
-
-            // 1. Simpan Header Invoice (Status: Pending)
-            $invoice = AkiGantiInvoice::create([
-                'no_invoice' => $noInvoice,
-                'vehicle_id' => $vehicleId,
-                'pembayaran' => $validated['pembayaran'],
-                'total_nominal' => $totalNominal,
-                'tanggal' => date('Y-m-d'),
-                'status' => AkiGantiInvoice::STATUS_PENDING,
-                'nama_bank' => $request->nama_bank,
-                'nomor_rekening' => $request->nomor_rekening,
-                'nama_rekening' => $request->nama_rekening,
-            ]);
-
-            // 2. Pindahkan data Keranjang ke Detail Invoice
-            foreach ($cartItems as $item) {
-                AkiGantiInvoiceDetail::create([
-                    'aki_ganti_invoice_id' => $invoice->id,
-                    'posisi_aki_id' => $item->posisi_aki_id,
-                    'merk' => $item->merk,
-                    'no_seri' => $item->no_seri,
-                    'kondisi' => $item->kondisi,
-                ]);
+        $data = $request->validated();
+        DB::transaction(function () use ($request, $data, $ujDitahan): void {
+            $this->lockCartOwner($request);
+            $items = $this->cart($request)->orderBy('id')->lockForUpdate()->get();
+            $submittedIds = array_map('intval', array_keys($data['items']));
+            $cartIds = $items->modelKeys();
+            sort($submittedIds);
+            sort($cartIds);
+            if ($items->isEmpty() || $submittedIds !== $cartIds || $items->contains(fn ($item) => (int) $item->vehicle_id !== (int) $data['vehicle_id'])) {
+                throw ValidationException::withMessages(['items' => 'Keranjang berubah atau tidak sesuai. Muat ulang dan periksa kembali.']);
             }
+            $vehicle = Vehicle::whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
+            if ($vehicle->status === 'nonaktif') {
+                throw ValidationException::withMessages(['vehicle_id' => 'Kendaraan sudah nonaktif.']);
+            }
+            if ($data['pembayaran'] === AkiGantiInvoice::PEMBAYARAN_UJ_DITAHAN) {
+                $ujDitahan->assertAvailable($vehicle->id, (int) $data['total_nominal']);
+            }
+            $invoice = AkiGantiInvoice::create([
+                'no_invoice' => 'AKI-'.Str::ulid(), 'vehicle_id' => $vehicle->id,
+                'user_id' => $request->user()->id, 'tanggal' => today()->toDateString(),
+                'pembayaran' => $data['pembayaran'], 'total_nominal' => $data['total_nominal'] ?? 0,
+                'nama_bank' => $data['nama_bank'] ?? null, 'nomor_rekening' => $data['nomor_rekening'] ?? null,
+                'nama_rekening' => $data['nama_rekening'] ?? null, 'status' => AkiGantiInvoice::STATUS_PENDING,
+            ]);
+            $invoice->update(['no_invoice' => 'AKI-'.str_pad((string) $invoice->id, 6, '0', STR_PAD_LEFT)]);
+            foreach ($items as $item) {
+                $invoice->details()->create([
+                    'posisi_aki_id' => $item->posisi_aki_id, 'merk' => $item->merk,
+                    'no_seri' => $item->no_seri, 'kondisi' => $item->kondisi,
+                    'created_at' => Carbon::parse($data['items'][$item->id]['tanggal_ganti'])->startOfDay(),
+                ]);
+                $item->delete();
+            }
+        }, 3);
 
-            // 3. Bersihkan Keranjang
-            AkiGantiCart::where('vehicle_id', $vehicleId)->delete();
-
-            DB::commit();
-        } catch (\Throwable $th) {
-            DB::rollBack();
-
-            return redirect()->back()->with('error', 'Gagal memproses checkout: '.$th->getMessage());
-        }
-
-        return redirect()->route('billing.form-maintenance.aki')
-            ->with('success', 'Penggantian aki berhasil dikirim ke Admin untuk Otorisasi.');
+        return to_route('billing.form-maintenance.aki')->with('success', 'Penggantian aki berhasil dikirim untuk otorisasi.');
     }
 }

@@ -9,13 +9,17 @@ use App\Models\FilterOliGantiInvoice;
 use App\Models\FilterOliGantiInvoiceDetail;
 use App\Models\FilterOliLog;
 use App\Models\KategoriFilterOliMesin;
+use App\Models\UjDitahanDetail;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\FilterOliRitaseService;
 use App\Services\KasBesarService;
 use App\Services\KasVendorService;
+use App\Services\MaintenanceAuthorizationService;
+use App\Services\MaintenanceUjDitahanService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -101,7 +105,7 @@ class FilterOliGantiController extends Controller
             return to_route('billing.form-maintenance.filter-oli')->with('error', 'Keranjang masih kosong.');
         }
 
-        return view('billing.form-maintenance.filter-oli.cart', ['cartItems' => $items, 'vehicle' => $items->first()->vehicle, 'kasBesarEnabled' => (bool) config('maintenance.filter_oli.kas_besar_enabled')]);
+        return view('billing.form-maintenance.filter-oli.cart', ['cartItems' => $items, 'vehicle' => $items->first()->vehicle, 'kasBesarEnabled' => (bool) config('maintenance.filter_oli.kas_besar_enabled'), 'ujDitahanBalance' => app(MaintenanceUjDitahanService::class)->balance($items->first()->vehicle_id)]);
     }
 
     public function checkout(CheckoutFilterOliGantiRequest $request): RedirectResponse
@@ -118,8 +122,11 @@ class FilterOliGantiController extends Controller
                 throw ValidationException::withMessages(['items' => 'Keranjang berubah atau tidak sesuai. Muat ulang dan periksa kembali.']);
             }
             $vehicle = Vehicle::findOrFail($data['vehicle_id']);
-            if ($vehicle->status === 'nonaktif') {
-                throw ValidationException::withMessages(['vehicle_id' => 'Kendaraan sudah nonaktif.']);
+            if ($vehicle->status === 'nonaktif' || ! $vehicle->pembatasan_filter_oli) {
+                throw ValidationException::withMessages(['vehicle_id' => 'Kendaraan sudah nonaktif atau pembatasan filter & oli tidak aktif.']);
+            }
+            if ($data['pembayaran'] === 'uj_ditahan') {
+                app(MaintenanceUjDitahanService::class)->assertAvailable($vehicle->id, (int) $data['total_nominal']);
             }
             $invoice = FilterOliGantiInvoice::create([
                 'no_invoice' => 'INV-FO-'.now()->format('Ymd').'-'.Str::ulid(),
@@ -145,24 +152,13 @@ class FilterOliGantiController extends Controller
         return to_route('billing.form-maintenance.filter-oli')->with('success', 'Penggantian filter & oli mesin dikirim untuk otorisasi.');
     }
 
-    public function authorization(): View
+    public function authorization(Request $request): View|JsonResponse
     {
-        $invoices = FilterOliGantiInvoice::with(['vehicle.vendor', 'details.kategori'])
-            ->where('status', FilterOliGantiInvoice::STATUS_PENDING)->oldest()->get();
-        $logs = FilterOliLog::whereIn('vehicle_id', $invoices->pluck('vehicle_id'))
-            ->orderByDesc('created_at')->orderByDesc('id')->get()->groupBy('vehicle_id');
-        foreach ($invoices as $invoice) {
-            $warnings = [];
-            foreach ($invoice->details as $detail) {
-                $previous = ($logs->get($invoice->vehicle_id) ?? collect())->first(fn ($log) => $log->kategori_filter_oli_mesin_id === $detail->kategori_filter_oli_mesin_id && $log->created_at <= $detail->created_at);
-                if ($previous && (float) $previous->ritase < $detail->kategori->limit_ritase) {
-                    $warnings[] = $detail->kategori->nama.': '.number_format((float) $previous->ritase, 1, ',', '.').' dari '.$detail->kategori->limit_ritase.' rit';
-                }
-            }
-            $invoice->setAttribute('ritase_warning', implode('; ', $warnings));
+        if ($request->ajax()) {
+            return app(MaintenanceAuthorizationService::class)->table($request, 'filter-oli');
         }
 
-        return view('billing.otorisasi-maintenance.filter-oli.index', compact('invoices'));
+        return view('billing.otorisasi-maintenance.filter-oli.index');
     }
 
     public function show(int $id): View
@@ -192,7 +188,10 @@ class FilterOliGantiController extends Controller
             return [$detail->id => $rows];
         });
 
-        return view('billing.otorisasi-maintenance.filter-oli.show', compact('invoice', 'previousLogs', 'ritaseTransactions'));
+        return view('billing.otorisasi-maintenance.filter-oli.show', compact('invoice', 'previousLogs', 'ritaseTransactions'))->with([
+            'ujDitahanBalance' => app(MaintenanceUjDitahanService::class)->balance($invoice->vehicle_id),
+            'ujDitahanPayments' => $invoice->pembayaran === 'uj_ditahan' ? UjDitahanDetail::with('ujDitahan')->where('filter_oli_ganti_invoice_id', $invoice->id)->orderBy('id')->get() : collect(),
+        ]);
     }
 
     public function updateDetail(Request $request, int $id): RedirectResponse
@@ -225,6 +224,9 @@ class FilterOliGantiController extends Controller
             DB::transaction(function () use ($request, $id, $kasBesar, $kasVendor): void {
                 $invoice = FilterOliGantiInvoice::with(['vehicle', 'details'])->lockForUpdate()->findOrFail($id);
                 $this->ensurePending($invoice);
+                if ($invoice->pembayaran === 'uj_ditahan') {
+                    app(MaintenanceUjDitahanService::class)->debit($invoice);
+                }
                 foreach ($invoice->details as $detail) {
                     $log = FilterOliLog::create([
                         'vehicle_id' => $invoice->vehicle_id, 'kategori_filter_oli_mesin_id' => $detail->kategori_filter_oli_mesin_id,

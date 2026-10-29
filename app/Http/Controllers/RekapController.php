@@ -35,18 +35,23 @@ use App\Models\Rekening;
 use App\Models\Sponsor;
 use App\Models\Transaksi;
 use App\Models\UjDitahan;
+use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\MaintenanceBanUjDitahanService;
+use App\Services\MaintenanceUjDitahanService;
 use App\Services\StarSender;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -1467,7 +1472,9 @@ class RekapController extends Controller
             $detail->ritase_lama = $banLama->ritase ?? 0;
         }
 
-        return view('rekap.maintenance.ban-luar.show', compact('invoice'));
+        $saldoUjDitahanBan = $invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_UJ_DITAHAN_BAN ? app(MaintenanceBanUjDitahanService::class)->balance($invoice->vehicle_id) : null;
+
+        return view('rekap.maintenance.ban-luar.show', compact('invoice', 'saldoUjDitahanBan'));
     }
 
     /**
@@ -1548,34 +1555,31 @@ class RekapController extends Controller
             $detail->kondisi_lama = $akiLama->kondisi ?? '-';
         }
 
-        return view('rekap.maintenance.aki.show', compact('invoice'));
+        return view('rekap.maintenance.aki.show', [
+            'invoice' => $invoice,
+            'ujDitahanBalance' => app(MaintenanceUjDitahanService::class)->balance($invoice->vehicle_id),
+            'ujDitahanPayments' => UjDitahanDetail::with('ujDitahan')->where('aki_ganti_invoice_id', $invoice->id)->orderBy('id')->get(),
+        ]);
     }
 
-    public function update_tanggal_detail_aki(Request $request, $detailId)
+    public function update_tanggal_detail_aki(Request $request, int $detailId): RedirectResponse
     {
-        $userRole = Auth::user()->role ?? '';
-        if (! in_array($userRole, ['su', 'admin'])) {
-            return redirect()->back()->with('error', 'Akses ditolak. Hanya Role SU dan Admin yang dapat mengubah tanggal.');
+        abort_unless(in_array($request->user()->role, ['admin', 'su'], true), 403);
+        $data = $request->validate(['tanggal_ganti' => ['required', 'date_format:Y-m-d', 'before_or_equal:today']]);
+        $detail = AkiGantiInvoiceDetail::findOrFail($detailId);
+        try {
+            DB::transaction(function () use ($detail, $data): void {
+                $invoice = AkiGantiInvoice::whereKey($detail->aki_ganti_invoice_id)->lockForUpdate()->firstOrFail();
+                if ($invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
+                    throw ValidationException::withMessages(['invoice' => 'Tanggal aki hanya dapat diubah pada invoice pending.']);
+                }
+                $detail->update(['created_at' => \Illuminate\Support\Carbon::parse($data['tanggal_ganti'])->startOfDay()]);
+            }, 3);
+        } catch (ValidationException $exception) {
+            return back()->with('error', $exception->validator->errors()->first());
         }
 
-        $detail = AkiGantiInvoiceDetail::with('invoice')->findOrFail($detailId);
-
-        if ($detail->invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
-            return redirect()->back()->with('error', 'Gagal: Tanggal ganti aki hanya dapat diubah pada invoice yang berstatus PENDING.');
-        }
-
-        $request->validate([
-            'tanggal_ganti' => 'required|date',
-        ]);
-
-        $timePart = date('H:i:s', strtotime($detail->created_at ?? now()));
-        $newTimestamp = $request->tanggal_ganti.' '.$timePart;
-
-        $detail->update([
-            'created_at' => $newTimestamp,
-        ]);
-
-        return redirect()->back()->with('success', 'Tanggal ganti aki berhasil diperbarui.');
+        return back()->with('success', 'Tanggal ganti aki berhasil diperbarui.');
     }
 
     public function aki(Request $request)

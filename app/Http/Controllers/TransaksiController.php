@@ -31,6 +31,7 @@ use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\FilterOliRitaseService;
+use App\Services\UjDitahanBanService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -500,6 +501,7 @@ class TransaksiController extends Controller
                 $ujDitahan->decrement('saldo', $cekUjDitahan->nominal);
                 $ujDitahan->increment('total_keluar', $cekUjDitahan->nominal);
             }
+            $nominalUjDitahanBan = app(UjDitahanBanService::class)->reverse($transaksi, $vehicle, $data['alasan'], $rek);
 
             DB::commit();
         } catch (\Throwable $th) {
@@ -531,7 +533,7 @@ class TransaksiController extends Controller
                             'Tambang : '.$kuj->customer->singkatan."\n".
                             'Rute : '.$kuj->rute->nama."\n\n".
                             'Alasan : '.$data['alasan']."\n".
-                            'Nilai :  *Rp. '.number_format($kuj->nominal_transaksi - $nominalUjDitahan, 0, ',', '.').",-*\n\n".
+                            'Nilai :  *Rp. '.number_format($kuj->nominal_transaksi - $nominalUjDitahan - $nominalUjDitahanBan, 0, ',', '.').",-*\n\n".
                             "Ditransfer ke rek:\n\n".
                             'Bank     : '.($rek->nama_bank ?? '-')."\n".
                             'Nama    : '.($rek->nama_rekening ?? '-')."\n".
@@ -550,7 +552,7 @@ class TransaksiController extends Controller
 
             if ($cekUjDitahan) {
                 $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                            "*Void UJ Ditahan*\n".
+                            "*Void UJ Ditahan Sparepart*\n".
                             "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                             '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n\n".
                             'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
@@ -572,6 +574,16 @@ class TransaksiController extends Controller
 
                 if ($groupUjDitahan) {
                     $dbWa->sendWa($groupUjDitahan->nama_group, $pesan2);
+                }
+            }
+            if ($nominalUjDitahanBan > 0) {
+                $groupBan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
+                if ($groupBan) {
+                    $dbWa->sendWa($groupBan->nama_group, '*Void UJ Ditahan Ban*'."\n\n".
+                        '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n".
+                        'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
+                        'Nilai : Rp. '.number_format($nominalUjDitahanBan, 0, ',', '.')."\n".
+                        'Alasan : '.$data['alasan']);
                 }
             }
         } catch (\Throwable $th) {

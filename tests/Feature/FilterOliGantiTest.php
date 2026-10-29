@@ -84,6 +84,8 @@ class FilterOliGantiTest extends TestCase
         }
         (require database_path('migrations/2026_10_04_094812_create_kategori_filter_oli_mesins_table.php'))->up();
         foreach ([
+            '2026_08_07_071658_create_uj_ditahans_table.php',
+            '2026_08_07_071708_create_uj_ditahan_details_table.php',
             '2026_10_04_103058_create_filter_oli_logs_table.php',
             '2026_10_04_103100_create_filter_oli_ganti_carts_table.php',
             '2026_10_04_103101_create_filter_oli_ganti_invoices_table.php',
@@ -372,7 +374,7 @@ class FilterOliGantiTest extends TestCase
         $this->assertDatabaseCount('transaksis', 0);
     }
 
-    public function test_replacement_warnings_loop_latest_categories_with_one_or_less_rit_remaining(): void
+    public function test_replacement_warnings_loop_latest_categories_with_two_or_less_rit_remaining(): void
     {
         $this->loginAs('admin');
         $vehicle = $this->vehicle();
@@ -386,7 +388,7 @@ class FilterOliGantiTest extends TestCase
         }
         KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Belum Ada']);
         $this->transaction($vehicle, 100, now());
-        $this->assertSame("Ganti *Filter Satu\nSisa 1 ritase*\n\nGanti *Filter Setengah\nSisa 0,5 ritase*\n\nGanti *Filter Nol\nSisa 0 ritase*\n\nGanti *Filter Lebih\nSisa -1 ritase*\n\nGanti *Filter Lebih Setengah\nSisa -1,5 ritase*\n\n", app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
+        $this->assertSame("Ganti *Filter Satu\nSisa 1 ritase*\n\nGanti *Filter Setengah\nSisa 0,5 ritase*\n\nGanti *Filter Nol\nSisa 0 ritase*\n\nGanti *Filter Lebih\nSisa -1 ritase*\n\nGanti *Filter Lebih Setengah\nSisa -1,5 ritase*\n\nGanti *Filter Aman\nSisa 1,5 ritase*\n\n", app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
     }
 
     public function test_replacement_warning_is_empty_when_vehicle_restriction_is_off(): void
@@ -473,6 +475,10 @@ class FilterOliGantiTest extends TestCase
 
     private function prepareVoidTables(): void
     {
+        foreach (['2026_10_29_102252_create_uj_ditahan_bans_table.php', '2026_10_29_102253_create_uj_ditahan_ban_details_table.php'] as $file) {
+            (require database_path('migrations/'.$file))->up();
+        }
+
         Schema::table('kas_uang_jalans', function (Blueprint $table): void {
             $table->unsignedBigInteger('vehicle_id')->nullable()->change();
             $table->unsignedBigInteger('rute_id')->nullable()->change();
@@ -508,10 +514,7 @@ class FilterOliGantiTest extends TestCase
                 $table->string('untuk');
             });
         }
-        Schema::create('uj_ditahan_details', function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('transaksi_id');
-        });
+
         Schema::create('ban_logs', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('vehicle_id');
@@ -637,7 +640,8 @@ class FilterOliGantiTest extends TestCase
         $this->assertSame($data['items'][$cart->id]['tanggal_ganti'], $invoice->details->first()->created_at->format('Y-m-d'));
         KategoriFilterOliMesin::whereKey($cart->kategori_filter_oli_mesin_id)->update(['limit_ritase' => 999]);
         $admin = $this->loginAs('admin');
-        $this->get(route('billing.otorisasi-maintenance.filter-oli'))->assertSee($invoice->no_invoice)->assertSee('table-success', false);
+        $this->get(route('billing.otorisasi-maintenance.filter-oli'))->assertSee('table-success', false);
+        $this->getJson(route('billing.otorisasi-maintenance.filter-oli'), ['X-Requested-With' => 'XMLHttpRequest'])->assertJsonPath('data.0.no_invoice', $invoice->no_invoice);
         $this->post(route('billing.otorisasi-maintenance.filter-oli.approve', $invoice->id))->assertSessionHas('success');
         $log = FilterOliLog::firstOrFail();
         $this->assertSame(999, $log->kategori->limit_ritase);
@@ -831,8 +835,10 @@ class FilterOliGantiTest extends TestCase
         $invoice = FilterOliGantiInvoice::firstOrFail();
         $detail = $invoice->details->first();
         $this->loginAs('admin');
-        $this->get(route('billing.otorisasi-maintenance.filter-oli'))
-            ->assertSee('Approve')->assertSee('Reject')->assertSee(route('billing.otorisasi-maintenance.filter-oli.show', $invoice->id));
+        $row = $this->getJson(route('billing.otorisasi-maintenance.filter-oli'), ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()->json('data.0.actions');
+        $this->assertStringContainsString('Approve', $row);
+        $this->assertStringContainsString('Reject', $row);
+        $this->assertStringContainsString(route('billing.otorisasi-maintenance.filter-oli.show', $invoice->id), $row);
         $this->get(route('billing.otorisasi-maintenance.filter-oli.show', $invoice->id))
             ->assertSee('Merek Sebelumnya')->assertSee('LAMA (DIGANTI)')->assertSee('BARU (DIPASANG)');
         $data = ['merk' => 'Merek Direvisi', 'kondisi' => 80, 'tanggal_ganti' => today()->subDays(2)->format('Y-m-d')];

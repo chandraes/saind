@@ -56,6 +56,7 @@ use App\Http\Controllers\StatistikController;
 use App\Http\Controllers\TemplateKontrakController;
 use App\Http\Controllers\TemplateSpkController;
 use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\UjDitahanBanController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
@@ -648,6 +649,14 @@ Route::group(['middleware' => ['auth']], function () {
         // Form maintenance
         Route::prefix('billing')->group(function () {
 
+            Route::prefix('uj-ditahan-ban')->group(function () {
+                Route::get('/', [UjDitahanBanController::class, 'index'])->name('billing.uj-ditahan-ban');
+                Route::get('/bukti/{detail}', [UjDitahanBanController::class, 'proof'])->name('billing.uj-ditahan-ban.bukti');
+                Route::get('/{account}', [UjDitahanBanController::class, 'show'])->name('billing.uj-ditahan-ban.show');
+                Route::post('/{account}/cairkan', [UjDitahanBanController::class, 'withdraw'])->name('billing.uj-ditahan-ban.cairkan');
+                Route::post('/{account}/cutoff', [UjDitahanBanController::class, 'cutoff'])->middleware('role:admin,su')->name('billing.uj-ditahan-ban.cutoff');
+            });
+
             Route::prefix('uj-ditahan')->group(function () {
                 Route::get('/', [BillingController::class, 'uj_ditahan'])->name('billing.uj-ditahan');
                 Route::get('/{id}', [BillingController::class, 'uj_ditahan_show'])->name('billing.uj-ditahan.show');
@@ -732,7 +741,7 @@ Route::group(['middleware' => ['auth']], function () {
 
                 Route::get('/', [BillingController::class, 'otorisasi_maintenance'])->name('billing.otorisasi-maintenance');
 
-                Route::prefix('aki')->group(function () {
+                Route::prefix('aki')->middleware('role:admin,su')->group(function () {
                     Route::get('/', [BillingController::class, 'otorisasi_maintenance_aki'])->name('billing.otorisasi-maintenance.aki');
                     Route::post('/{id}/approve', [BillingController::class, 'otorisasi_maintenance_aki_approve'])->name('billing.otorisasi-maintenance.aki.approve');
                     Route::post('/{id}/reject', [BillingController::class, 'otorisasi_maintenance_aki_reject'])->name('billing.otorisasi-maintenance.aki.reject');
@@ -866,6 +875,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::prefix('rekap')->group(function () {
             Route::get('/', [RekapController::class, 'index'])->name('rekap.index');
+
+            Route::get('/uj-ditahan-ban', [UjDitahanBanController::class, 'recap'])->name('rekap.uj-ditahan-ban');
 
             Route::prefix('uj-ditahan')->group(function () {
                 Route::get('/', [RekapController::class, 'uj_ditahan'])->name('rekap.uj-ditahan');

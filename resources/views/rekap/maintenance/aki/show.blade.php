@@ -27,6 +27,7 @@
     </div>
 
     @include('swal')
+    @include('billing.form-maintenance.uj-ditahan-summary')
 
     <!-- ROW 1: INFORMASI KENDARAAN & STATUS PEMBAYARAN -->
     <div class="row g-3 mb-4">
@@ -80,12 +81,14 @@
                             <td class="text-end">
                                 @if($invoice->pembayaran === \App\Models\AkiGantiInvoice::PEMBAYARAN_KAS_BESAR)
                                     <span class="badge bg-primary fs-7">Kas Besar</span>
-                                @else
+                                    @elseif($invoice->pembayaran === 'uj_ditahan')
+                                        <span class="badge bg-success fs-7">UJ Ditahan Sparepart</span>
+                                    @else
                                     <span class="badge bg-secondary fs-7">Dibayar Sendiri</span>
                                 @endif
                             </td>
                         </tr>
-                        @if($invoice->pembayaran === \App\Models\AkiGantiInvoice::PEMBAYARAN_KAS_BESAR)
+                        @if(in_array($invoice->pembayaran, ['kas_besar', 'uj_ditahan'], true))
                         <tr>
                             <td class="text-muted">Total Nominal</td>
                             <td class="fw-bold text-success text-end fs-6">
@@ -194,7 +197,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fs-7 fw-semibold">Tanggal Ganti Aki</label>
-                        <input type="date" class="form-control" name="tanggal_ganti" value="{{ date('Y-m-d', strtotime($detail->created_at)) }}" required>
+                        <input type="date" class="form-control" name="tanggal_ganti" max="{{ today()->toDateString() }}" value="{{ date('Y-m-d', strtotime($detail->created_at)) }}" required>
                         <small class="text-muted fs-8 mt-1 d-block">Tanggal ini akan menjadi tanggal resmi Log Aki setelah disetujui (Approve).</small>
                     </div>
                 </div>
