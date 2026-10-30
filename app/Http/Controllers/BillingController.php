@@ -34,6 +34,7 @@ use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\KasBesarService;
 use App\Services\KasVendorService;
+use App\Services\PayrollService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\UrlGenerator;
@@ -45,15 +46,9 @@ class BillingController extends Controller
 {
     public function index()
     {
-        $check = RekapGaji::orderBy('id', 'desc')->first();
-
-        if (! $check) {
-            $bulan = date('m');
-            $tahun = date('Y');
-        } else {
-            $bulan = $check->bulan + 1 == 13 ? 1 : $check->bulan + 1;
-            $tahun = $check->bulan + 1 == 13 ? $check->tahun + 1 : $check->tahun;
-        }
+        $period = app(PayrollService::class)->nextPeriod();
+        $bulan = $period->month;
+        $tahun = $period->year;
 
         $customer = Customer::all();
 

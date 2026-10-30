@@ -3,13 +3,17 @@
 namespace App\Services;
 
 use App\Models\Karyawan;
+use App\Models\RekapGaji;
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class PayrollAttendanceService
 {
@@ -38,7 +42,7 @@ class PayrollAttendanceService
 
     public function payload(object $period): array
     {
-        return $this->payloadCache[$period->id] ??= json_decode($period->snapshot, true, 512, JSON_THROW_ON_ERROR);
+        return $this->payloadCache[$period->id] ??= ($period->snapshot ? json_decode($period->snapshot, true, 512, JSON_THROW_ON_ERROR) : []);
     }
 
     public function clear(): void
@@ -132,7 +136,69 @@ class PayrollAttendanceService
         return $snapshot;
     }
 
-    public function refresh(int $month, int $year, array $sources): void
+    public function refresh(int $month, int $year, array $sources, string $source = 'manual'): bool
+    {
+        $automatic = $source === 'automatic';
+        $this->clear();
+        if (! $this->enabled() || ($automatic && ! config('attendance.payroll_auto_sync'))) {
+            if ($automatic) {
+                return false;
+            }
+            throw ValidationException::withMessages(['attendance' => 'Integrasi absensi sedang dinonaktifkan.']);
+        }
+        // Manual refresh, adjustments and payment already use this same application lock.
+        $payrollLock = $automatic ? Cache::lock('payroll-generation', 300) : null;
+        if ($payrollLock && ! $payrollLock->get()) {
+            return false;
+        }
+        $refreshLock = Cache::lock('payroll-attendance-refresh:'.$year.'-'.$month, 120);
+        try {
+            if (! $refreshLock->get()) {
+                if ($automatic) {
+                    return false;
+                }
+                throw ValidationException::withMessages(['attendance' => 'Data absensi sedang diperbarui. Tunggu sebentar lalu coba lagi.']);
+            }
+            try {
+                $period = $this->period($month, $year);
+                if ($period?->sealed_at || $period?->remote_locked_at || $period?->lock_attempted_at || RekapGaji::where('tahun', $year)->where('bulan', $month)->exists()) {
+                    if ($automatic) {
+                        return false;
+                    }
+                    throw ValidationException::withMessages(['attendance' => 'Snapshot sudah dikunci atau gaji sudah disahkan. Data tidak dapat diganti.']);
+                }
+                $due = $period?->next_sync_at ?? ($period?->fetched_at ? Carbon::parse($period->fetched_at)->addMinutes(15) : null);
+                if ($automatic && $due && Carbon::parse($due)->isFuture()) {
+                    return false;
+                }
+                $dates = $this->dates($month, $year);
+                DB::table('payroll_attendance_periods')->insertOrIgnore(['year' => $year, 'month' => $month, 'from_date' => $dates['from'], 'to_date' => $dates['to'], 'request_id' => (string) Str::uuid(), 'created_at' => now(), 'updated_at' => now()]);
+                $query = fn () => DB::table('payroll_attendance_periods')->where('year', $year)->where('month', $month)->whereNull('sealed_at')->whereNull('remote_locked_at')->whereNull('lock_attempted_at');
+                $query()->update(['sync_attempted_at' => now(), 'sync_source' => $source]);
+                $started = hrtime(true);
+                try {
+                    $this->refreshSnapshot($month, $year, $sources);
+                    $query()->update(['sync_failures' => 0, 'sync_last_error' => null, 'sync_duration_ms' => (int) round((hrtime(true) - $started) / 1000000), 'next_sync_at' => now()->addMinutes(15)]);
+                } catch (Throwable $exception) {
+                    $failures = min(30, (int) ($query()->value('sync_failures') ?? 0) + 1);
+                    $message = $exception instanceof ValidationException ? $exception->validator->errors()->first() : 'Pembaruan gagal karena gangguan internal. Hubungi pengembang.';
+                    $query()->update(['sync_failures' => $failures, 'sync_failed_at' => now(), 'sync_last_error' => mb_substr($message, 0, 500), 'sync_duration_ms' => (int) round((hrtime(true) - $started) / 1000000), 'next_sync_at' => now()->addMinutes(min(15, 5 * 2 ** min(2, $failures - 1)))]);
+                    Log::warning('Pembaruan snapshot gaji gagal; data terakhir dipertahankan.', ['period' => sprintf('%04d-%02d', $year, $month), 'source' => $source, 'exception_type' => $exception::class, 'attempts' => $failures]);
+                    throw $exception;
+                } finally {
+                    $this->clear();
+                }
+
+                return true;
+            } finally {
+                $refreshLock->release();
+            }
+        } finally {
+            $payrollLock?->release();
+        }
+    }
+
+    private function refreshSnapshot(int $month, int $year, array $sources): void
     {
         $this->clear();
         $period = $this->period($month, $year);
@@ -149,12 +215,14 @@ class PayrollAttendanceService
             $snapshot = $this->request($dates + ['source_employee_ids' => $sources]);
         }
         $overrides = $period?->overrides;
-        if ($period && $this->payload($period)['revision'] !== $snapshot['revision']) {
+        if ($period && ($this->payload($period)['revision'] ?? null) !== $snapshot['revision']) {
             $overrides = null;
         }
-        DB::table('payroll_attendance_periods')->updateOrInsert(['year' => $year, 'month' => $month], ['from_date' => $dates['from'], 'to_date' => $dates['to'], 'request_id' => $period?->request_id ?? (string) Str::uuid(), 'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR), 'overrides' => $overrides, 'fetched_at' => now(), 'created_at' => $period?->created_at ?? now(), 'updated_at' => now()]);
-        $this->clear();
-        $this->event('snapshot.refreshed', ['revision' => $snapshot['revision'], 'issues' => $snapshot['issues']], $this->period($month, $year)->id);
+        DB::transaction(function () use ($month, $year, $dates, $period, $snapshot, $overrides): void {
+            DB::table('payroll_attendance_periods')->updateOrInsert(['year' => $year, 'month' => $month], ['from_date' => $dates['from'], 'to_date' => $dates['to'], 'request_id' => $period?->request_id ?? (string) Str::uuid(), 'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR), 'overrides' => $overrides, 'fetched_at' => now(), 'created_at' => $period?->created_at ?? now(), 'updated_at' => now()]);
+            $this->clear();
+            $this->event('snapshot.refreshed', ['revision' => $snapshot['revision'], 'issues' => $snapshot['issues']], $this->period($month, $year)->id);
+        });
     }
 
     public function calculate(Karyawan $employee, int $month, int $year): array
@@ -211,7 +279,7 @@ class PayrollAttendanceService
             return null;
         }
         $period = $this->period($month, $year);
-        if (! $period || ! $this->payload($period)['ready'] || ($this->payload($period)['monitoring_version'] ?? null) !== 1) {
+        if (! $period || ! ($this->payload($period)['ready'] ?? false) || ($this->payload($period)['monitoring_version'] ?? null) !== 1) {
             throw ValidationException::withMessages(['attendance' => 'Perbarui data absensi dan selesaikan seluruh masalah sebelum menyimpan gaji.']);
         }
         $snapshot = $this->payload($period);

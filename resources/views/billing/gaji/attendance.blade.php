@@ -3,11 +3,30 @@
         <div><h5 class="fw-bold mb-1">Potongan Absensi <span class="badge {{ $attendanceEnabled ? 'bg-success' : 'bg-secondary' }}">{{ $attendanceEnabled ? 'Aktif' : 'Nonaktif' }}</span></h5>
         <p class="small text-muted mb-1">Periode {{ \Carbon\Carbon::parse($attendanceDates['from'])->format('d/m/Y') }}–{{ \Carbon\Carbon::parse($attendanceDates['to'])->format('d/m/Y') }} · pembagi 25 · batas 25% · nilai rupiah bulat.</p>
         <p class="small text-muted mb-1">Istirahat dihitung proporsional tanpa jam mulai. Data disimpan di SAIND; membuka rincian tidak menghubungi server absensi.</p>
-        <p class="small mb-0">{{ $attendancePeriod ? 'Terakhir ditarik: '.$attendancePeriod->fetched_at : 'Data absensi belum ditarik.' }} @if(($attendancePeriod?->remote_locked_at || $attendancePeriod?->lock_attempted_at)) · <strong>Periode terkunci. Lanjutkan penyimpanan transaksi yang sama.</strong> @endif</p></div>
+        <p class="small mb-0">{{ $attendancePeriod?->fetched_at ? 'Terakhir berhasil: '.\Carbon\Carbon::parse($attendancePeriod->fetched_at)->timezone('Asia/Jakarta')->format('d/m/Y H:i').' WIB' : 'Data absensi belum berhasil ditarik.' }} @if(($attendancePeriod?->remote_locked_at || $attendancePeriod?->lock_attempted_at)) · <strong>Periode terkunci. Lanjutkan penyimpanan transaksi yang sama.</strong> @endif</p></div>
         @if($attendanceEnabled && !($attendancePeriod?->remote_locked_at || $attendancePeriod?->lock_attempted_at))
         <form method="post" action="{{ route('billing.gaji.attendance.refresh') }}" data-payroll-operation>@csrf<input type="hidden" name="bulan" value="{{ $bulan }}"><input type="hidden" name="tahun" value="{{ $tahun }}"><button class="btn btn-outline-success"><i class="fa fa-refresh me-1"></i>{{ $attendancePeriod ? 'Perbarui' : 'Tarik' }} Data Absensi</button></form>
         @endif
     </div>
+    @if($attendanceEnabled)
+    <div class="rounded-3 bg-light p-3 mt-3 small" role="status">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-1"><i class="fa fa-refresh text-success" aria-hidden="true"></i><strong>Pembaruan snapshot {{ config('attendance.payroll_auto_sync') ? 'otomatis aktif' : 'manual' }}</strong>@if(config('attendance.payroll_auto_sync'))<span class="badge bg-success-subtle text-success-emphasis">Setiap 15 menit</span>@endif</div>
+        <div class="text-muted">{{ config('attendance.payroll_auto_sync') ? 'Sistem menarik data periode gaji terbuka secara berkala. Tombol perbarui tetap dapat digunakan kapan saja.' : 'Gunakan tombol perbarui untuk mengambil koreksi absensi terbaru.' }} Pembaruan tidak memproses pembayaran gaji.</div>
+        @if($attendancePeriod?->sync_last_error)
+        <div class="text-danger mt-2"><strong>Pembaruan terakhir gagal.</strong> {{ $attendancePeriod->sync_last_error }} Data terakhir yang berhasil tetap dipertahankan.</div>
+        @endif
+        @if($attendancePeriod?->sync_attempted_at)
+        <div class="text-muted mt-1">Percobaan terakhir: {{ \Carbon\Carbon::parse($attendancePeriod->sync_attempted_at)->timezone('Asia/Jakarta')->format('d/m/Y H:i') }} WIB · {{ $attendancePeriod->sync_source === 'automatic' ? 'Otomatis' : 'Manual' }}
+            @if($attendancePeriod->sync_duration_ms !== null)
+                · {{ number_format($attendancePeriod->sync_duration_ms / 1000, 2, ',', '.') }} detik
+            @endif
+        </div>
+        @endif
+        @if(config('attendance.payroll_auto_sync') && $attendancePeriod?->next_sync_at && !$attendancePeriod->sealed_at && !$attendancePeriod->remote_locked_at && !$attendancePeriod->lock_attempted_at)
+        <div class="text-muted mt-1">Jadwal berikutnya: {{ \Carbon\Carbon::parse($attendancePeriod->next_sync_at)->timezone('Asia/Jakarta')->format('d/m/Y H:i') }} WIB. Jika gagal, sistem mencoba lagi bertahap setelah 5, 10, lalu maksimal 15 menit.</div>
+        @endif
+    </div>
+    @endif
     @if($attendanceEnabled && $attendanceSnapshot)
     <div class="row g-2 mt-3">
         <div class="col-md-7"><div class="p-3 rounded-3 bg-light"><strong>{{ ($attendanceSnapshot['ready'] ?? false) ? 'Potongan periode siap ditinjau' : 'Pantauan potongan sementara' }}</strong><div class="small text-muted mt-1">Data sampai {{ isset($attendanceSnapshot['as_of']) ? \Carbon\Carbon::parse($attendanceSnapshot['as_of'])->timezone($attendanceSnapshot['timezone'] ?? config('app.timezone'))->format('d/m/Y H:i') : 'waktu penarikan terakhir' }}. Perbarui data untuk membaca koreksi dan shift terbaru.</div><div class="small text-muted">Tanggal mendatang dan shift yang belum selesai tidak dihitung sebagai tidak masuk. Cuti/sakit yang menunggu HR belum dikenai potongan.</div></div></div>
