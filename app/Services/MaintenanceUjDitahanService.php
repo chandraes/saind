@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\AkiGantiInvoice;
 use App\Models\FilterOliGantiInvoice;
-use App\Models\GroupWa;
 use App\Models\UjDitahan;
 use App\Models\UjDitahanBan;
 use App\Models\UjDitahanDetail;
@@ -12,8 +11,6 @@ use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
-use Throwable;
 
 class MaintenanceUjDitahanService
 {
@@ -93,39 +90,6 @@ class MaintenanceUjDitahanService
             'Grand Total UJ Ditahan: '.$vehicle->nomor_lambung."\n".
             'Rp. '.number_format($sparepart + $ban, 0, ',', '.')."\n\n".
             "Terima kasih 🙏🙏🙏\n";
-        $messenger = app(GroupWa::class);
-        $group = GroupWa::where('untuk', 'kas-uj-ditahan')->first();
-        $failure = null;
-        $recipients = [];
-        if ($group && filled($group->nama_group)) {
-            $recipients[] = $group->nama_group;
-        } else {
-            $failure = new RuntimeException('Grup WA UJ Ditahan belum dikonfigurasi.');
-        }
-        $phone = $this->driverPhone($vehicle->driver?->no_hp);
-        if ($phone !== null) {
-            $recipients[] = $phone;
-        }
-        foreach (array_unique($recipients) as $recipient) {
-            try {
-                $messenger->sendWa($recipient, $text);
-            } catch (Throwable $exception) {
-                report($exception);
-                $failure ??= $exception;
-            }
-        }
-        if ($failure) {
-            throw $failure;
-        }
-    }
-
-    private function driverPhone(?string $value): ?string
-    {
-        $phone = preg_replace('/[\s().-]+/', '', trim($value ?? ''));
-        if (! preg_match('/^(?:\+?62|0)8[1-9][0-9]{7,10}$/D', $phone)) {
-            return null;
-        }
-
-        return ltrim($phone, '+');
+        app(UjDitahanWhatsAppService::class)->sendToGroupAndDriver($vehicle, $text);
     }
 }

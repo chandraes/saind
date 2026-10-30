@@ -42,9 +42,12 @@ class UjDitahanBanManagementTest extends TestCase
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
         });
-        foreach (['2026_08_07_071658_create_uj_ditahans_table.php', '2026_10_29_102252_create_uj_ditahan_bans_table.php', '2026_10_29_102253_create_uj_ditahan_ban_details_table.php', '2026_10_29_121916_add_request_token_to_uj_ditahan_ban_details_table.php', '2023_09_06_160726_create_group_was_table.php'] as $file) {
+        foreach (['2026_08_07_071658_create_uj_ditahans_table.php', '2026_08_07_071708_create_uj_ditahan_details_table.php', '2026_08_07_153001_add_rekening_to_uj_ditahan_details_table.php', '2026_10_29_102252_create_uj_ditahan_bans_table.php', '2026_10_29_102253_create_uj_ditahan_ban_details_table.php', '2026_10_29_121916_add_request_token_to_uj_ditahan_ban_details_table.php', '2023_09_06_160726_create_group_was_table.php'] as $file) {
             (require database_path('migrations/'.$file))->up();
         }
+        Schema::table('uj_ditahan_details', function (Blueprint $table): void {
+            $table->string('file_pdf')->nullable();
+        });
         DB::table('drivers')->insert(['id' => 1, 'nama' => 'Driver Uji', 'bank' => 'BCA', 'no_rek' => '12345', 'nama_rek' => 'Driver Uji']);
         DB::table('vehicles')->insert(['id' => 1, 'nomor_lambung' => 'BAN-01', 'driver_id' => 1]);
         DB::table('uj_ditahans')->insert(['vehicle_id' => 1, 'bulan' => 10, 'tahun' => 2026, 'total_masuk' => 999000, 'saldo' => 999000]);
@@ -329,5 +332,53 @@ class UjDitahanBanManagementTest extends TestCase
         $this->getJson(route('billing.uj-ditahan-ban'), $headers)->assertJsonPath('data.0.cutoff', null);
         $account->update(['saldo' => 0]);
         $this->getJson(route('rekap.uj-ditahan-ban'), $headers)->assertJsonPath('data.0.cutoff', null);
+    }
+
+    #[TestWith(['ban'])]
+    #[TestWith(['sparepart'])]
+    public function test_payout_wa_shares_format_with_both_balances_and_recipient_specific_grand_total(string $fund): void
+    {
+        $account = $this->account();
+        DB::table('drivers')->where('id', 1)->update(['no_hp' => '+62 812-3456-7890']);
+        DB::table('vehicles')->insert(['id' => 2, 'nomor_lambung' => 'OTHER']);
+        DB::table('uj_ditahans')->insert(['vehicle_id' => 2, 'bulan' => 10, 'tahun' => 2026, 'saldo' => 100000]);
+        DB::table('uj_ditahan_bans')->insert(['vehicle_id' => 2, 'bulan' => 10, 'tahun' => 2026, 'saldo' => 200000]);
+        $data = $this->withdrawal();
+        if ($fund === 'ban') {
+            $url = route('billing.uj-ditahan-ban.cairkan', $account);
+        } else {
+            $url = route('billing.uj-ditahan.cairkan');
+            $data['uj_ditahan_id'] = DB::table('uj_ditahans')->where('vehicle_id', 1)->value('id');
+        }
+        $this->post($url, $data)->assertSessionHas('success')->assertSessionMissing('warning');
+        $sent = app(GroupWa::class)->sent;
+        $this->assertCount(2, $sent);
+        $this->assertSame('ditahan-test', $sent[0]['to']);
+        $this->assertSame('6281234567890', $sent[1]['to']);
+        foreach ($sent as $notification) {
+            $text = $notification['text'];
+            $this->assertStringContainsString('*Form Pencairan UJ Ditahan '.($fund === 'ban' ? 'Ban' : 'Sparepart').'*', $text);
+            $this->assertStringContainsString('Nilai :  *Rp. 50.000,-*', $text);
+            $this->assertStringContainsString('Total Saldo UJ Ditahan Sparepart: BAN-01', $text);
+            $this->assertStringContainsString('Total Saldo UJ Ditahan Ban: BAN-01', $text);
+            $this->assertStringContainsString($fund === 'ban' ? 'Rp. 999.000' : 'Rp. 949.000', $text);
+            $this->assertStringContainsString($fund === 'ban' ? 'Rp. 150.000' : 'Rp. 200.000', $text);
+            $this->assertStringContainsString('BRI', $text);
+            $this->assertStringContainsString('Bengkel', $text);
+        }
+        $this->assertStringContainsString("Grand Total UJ Ditahan :\nRp. 1.449.000", $sent[0]['text']);
+        $this->assertStringContainsString("Grand Total UJ Ditahan :\nRp. 1.149.000", $sent[1]['text']);
+        $this->assertStringNotContainsString('1.449.000', $sent[1]['text']);
+    }
+
+    public function test_sparepart_wa_failure_does_not_report_saved_payout_as_failed(): void
+    {
+        $this->account();
+        app(GroupWa::class)->fail = true;
+        $data = $this->withdrawal();
+        $data['uj_ditahan_id'] = DB::table('uj_ditahans')->value('id');
+        $this->post(route('billing.uj-ditahan.cairkan'), $data)->assertSessionHas('success')->assertSessionHas('warning');
+        $this->assertDatabaseHas('uj_ditahans', ['vehicle_id' => 1, 'saldo' => 949000]);
+        $this->assertSame(0, DB::transactionLevel());
     }
 }

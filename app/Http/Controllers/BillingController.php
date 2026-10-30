@@ -36,10 +36,11 @@ use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\KasBesarService;
 use App\Services\KasVendorService;
-use App\Services\PayrollService;
 use App\Services\MaintenanceAuthorizationService;
 use App\Services\MaintenanceBanUjDitahanService;
 use App\Services\MaintenanceUjDitahanService;
+use App\Services\PayrollService;
+use App\Services\UjDitahanWhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -1002,62 +1003,13 @@ class BillingController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: '.$th->getMessage());
         }
 
-        $driver = $master->vehicle->driver;
+        try {
+            app(UjDitahanWhatsAppService::class)->payout($master, $store);
+        } catch (\Throwable $exception) {
+            report($exception);
 
-        $dbWa = new GroupWa;
-
-        $totalUjDitahan = UjDitahan::where('saldo', '>', 0)
-            ->sum('saldo');
-        $ujDitahanVehicle = UjDitahan::where('vehicle_id', $master->vehicle_id)->where('saldo', '>', 0)->sum('saldo');
-
-        $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Form Pencairan UJ Ditahan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    'Nomor Lambung : '.$master->vehicle->nomor_lambung."\n".
-                    'Uraian : '.$store->keterangan."\n\n".
-                    'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.').",-*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    'Bank     : '.$store['bank']."\n".
-                    'Nama    : '.$store['nama_rekening']."\n".
-                    'No. Rek : '.$store['no_rekening']."\n\n".
-                    "==========================\n".
-                     'Total Saldo UJ Ditahan : '.$master->vehicle->nomor_lambung."\n".
-                    'Rp. '.number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
-                    // "Sisa Saldo Kas Uang Jalan : \n".
-                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Grand Total UJ Ditahan : \n".
-                    'Rp. '.number_format($totalUjDitahan, 0, ',', '.')."\n\n".
-                    // $additionalMessage.
-                    "Terima kasih 🙏🙏🙏\n";
-
-        $dbWa->sendWa($dbWa->where('untuk', 'kas-uj-ditahan')->first()->nama_group, $pesan);
-
-        if ($driver && $driver->no_hp != null && $driver->no_hp != '' && $driver->no_hp != '-' && $driver->no_hp != '0' && strlen($driver->no_hp) >= 10) {
-
-            $ujDitahanVehicle = UjDitahan::where('vehicle_id', $master->vehicle_id)->where('saldo', '>', 0)->sum('saldo');
-
-            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                   "*Form Pencairan UJ Ditahan*\n".
-                   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                   'Nomor Lambung : '.$master->vehicle->nomor_lambung."\n".
-                   'Uraian : '.$store->keterangan."\n\n".
-                   'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.').",-*\n\n".
-                   "Ditransfer ke rek:\n\n".
-                   'Bank     : '.$store['bank']."\n".
-                   'Nama    : '.$store['nama_rekening']."\n".
-                   'No. Rek : '.$store['no_rekening']."\n\n".
-                   "==========================\n".
-                   // "Sisa Saldo Kas Uang Jalan : \n".
-                   // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                   "Grand Total UJ Ditahan : \n".
-                   'Rp. '.number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
-                   // $additionalMessage.
-                   "Terima kasih 🙏🙏🙏\n";
-
-            $hpDriver = $driver->no_hp = preg_replace('/\D/', '', $driver->no_hp);
-
-            $dbWa->sendWa($hpDriver, $pesan);
-
+            return back()->with('success', 'Pencairan saldo berhasil dicatat.')
+                ->with('warning', 'Sebagian notifikasi WA belum berhasil dikirim. Pencairan sudah tersimpan; jangan ulangi transaksi.');
         }
 
         return redirect()->back()->with('success', 'Pencairan saldo berhasil dicatat.');

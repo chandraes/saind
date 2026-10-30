@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\WithdrawUjDitahanBanRequest;
-use App\Models\GroupWa;
 use App\Models\UjDitahanBan;
 use App\Models\UjDitahanBanDetail;
 use App\Services\UjDitahanBanPayoutService;
+use App\Services\UjDitahanWhatsAppService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -141,19 +141,7 @@ class UjDitahanBanController extends Controller
     {
         $response = redirect()->route('billing.uj-ditahan-ban.show', $account)->with('success', $message);
         try {
-            $account->refresh()->load('vehicle.driver');
-            $messenger = app(GroupWa::class);
-            $group = GroupWa::where('untuk', 'kas-uj-ditahan')->firstOrFail();
-            $text = "*Pencairan UJ Ditahan Ban*\nNomor Lambung: ".$account->vehicle?->nomor_lambung.
-                "\nPeriode: ".$account->bulan.'/'.$account->tahun."\nUraian: ".$detail->keterangan.
-                "\nNominal: Rp ".number_format($detail->nominal, 0, ',', '.').
-                "\nBank: ".$detail->bank."\nNo. Rekening: ".$detail->no_rekening."\nAtas Nama: ".$detail->nama_rekening.
-                "\nSisa saldo periode: Rp ".number_format($account->saldo, 0, ',', '.');
-            $messenger->sendWa($group->nama_group, $text);
-            $phone = preg_replace('/\D/', '', $account->vehicle?->driver?->no_hp ?? '');
-            if (strlen($phone) >= 10) {
-                $messenger->sendWa($phone, $text);
-            }
+            app(UjDitahanWhatsAppService::class)->payout($account->refresh(), $detail);
         } catch (Throwable $exception) {
             report($exception);
             $response->with('warning', 'Transaksi sudah tersimpan, tetapi notifikasi WA belum berhasil dikirim. Jangan ulangi pencairan.');

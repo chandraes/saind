@@ -400,10 +400,10 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <button type="button" class="btn border-0 p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#ujDitahanMenu" aria-haspopup="dialog" aria-controls="ujDitahanMenu">
+            <a class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ujDitahanMenu" aria-haspopup="dialog" aria-controls="ujDitahanMenu">
                 <img src="{{ asset('images/uj-ditahan.svg') }}" alt="" width="70">
                 <h4 class="mt-3">UJ DITAHAN</h4>
-            </button>
+            </a>
         </div>
         {{-- <div class="col-md-2 text-center mt-5">
             <a href="{{route('transaksi.sales-order')}}" class="text-decoration-none">
