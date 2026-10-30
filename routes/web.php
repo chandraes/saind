@@ -35,6 +35,7 @@ use App\Http\Controllers\KategoriFilterOliMesinController;
 use App\Http\Controllers\KonfigurasiController;
 use App\Http\Controllers\KontrakController;
 use App\Http\Controllers\LegalitasController;
+use App\Http\Controllers\MobileConnectionController;
 use App\Http\Controllers\OperasionalController;
 use App\Http\Controllers\PajakController;
 use App\Http\Controllers\PasswordKonfirmasiController;
@@ -61,6 +62,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WaController;
+use App\Http\Middleware\EnsureVendorOperationalVehicle;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -85,6 +87,8 @@ Auth::routes([
 ]);
 
 Route::group(['middleware' => ['auth']], function () {
+    Route::get('/mobile/ruang-kerja', [MobileConnectionController::class, 'show'])->name('mobile.workspace.show');
+
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::group(['middleware' => 'role:user'], function () {});
@@ -1012,7 +1016,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     });
 
-    Route::group(['middleware' => 'role:vendor-operational'], function () {
+    Route::group(['middleware' => ['role:vendor-operational', EnsureVendorOperationalVehicle::class]], function () {
         Route::prefix('vendor-operational')->group(function () {
             // Route::get('kas-per-vendor/{vendor}', [App\Http\Controllers\RekapController::class, 'kas_per_vendor'])->name('vendor-operational.kas-per-vendor.index');
             // Route::get('kas-per-vendor/{invoiceBayar}/detail', [App\Http\Controllers\RekapController::class, 'kas_per_vendor_detail'])->name('vendor-operational.kas-per-vendor.detail');

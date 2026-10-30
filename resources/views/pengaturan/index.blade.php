@@ -101,6 +101,15 @@ $password = \App\Models\PasswordKonfirmasi::first();
             </a>
         </div>
         @endif
+        @if (in_array(auth()->user()->role, config('mobile.roles'), true))
+        <div class="col-md-3 text-center mt-5">
+            <a href="{{ route('mobile.workspace.show') }}" class="text-decoration-none">
+                <i class="fa fa-qrcode" style="font-size: 70px" aria-hidden="true"></i>
+                <h5 class="mt-3">HUBUNGKAN MOBILE</h5>
+                <p class="small text-muted">QR koneksi DSGroup Hauling</p>
+            </a>
+        </div>
+        @endif
         <div class="col-md-3 text-center mt-5">
             <a href="{{route('home')}}" class="text-decoration-none">
                 <img src="{{asset('images/dashboard.svg')}}" alt="" width="70">

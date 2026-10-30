@@ -28,6 +28,13 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        RateLimiter::for('mobile-login', function (Request $request) {
+            $username = $request->input('username');
+            $key = is_string($username) ? mb_strtolower($username) : '';
+
+            return Limit::perMinute(5)->by(hash('sha256', $key.'|'.$request->ip()));
+        });
+
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')

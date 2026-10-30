@@ -7,6 +7,7 @@ export default defineConfig({
             input: [
                 'resources/sass/app.scss',
                 'resources/js/app.js',
+                'resources/js/workspace-qr.js',
             ],
             refresh: true,
         }),
