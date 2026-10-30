@@ -175,3 +175,9 @@ Deployment integrasi ke environment pengujian yang diminta pengguna berhasil set
 Validasi: 261 tes PHP lulus (1753 assertions), mencakup mobile API, isolasi vendor, maintenance/UJ Ditahan dan payroll. Source hasil merge sama dengan salinan yang diuji. Build aset dan 6 tes JS QR berhasil. Pemeriksaan HTTP memastikan login/aset/workspace tersedia dan endpoint terlindungi menolak pengguna tanpa autentikasi. Tidak dilakukan transaksi finansial atau pengiriman WA nyata untuk QA.
 
 Sebelum menguji UJ keluar untuk kendaraan flag aktif, nominal Ban pada kesepakatan vendor-rute wajib diisi karena default migrasinya nol. Pengujian bisnis manual dilanjutkan pada environment pengujian.
+
+## Perbaikan pengaturan WA — 30 Oktober 2026
+
+Error 500 halaman edit disebabkan pembacaan STARSENDER_KEY melalui env() di service setelah config:cache, ditambah endpoint grup lama dan akses respons tanpa pemeriksaan. Key environment telah dikonfirmasi tersedia tanpa menampilkan nilainya. Pembacaan dipindahkan ke services.starsender.key untuk lookup grup dan pengiriman, lookup memakai endpoint grup Starsender terkini, serta kegagalan provider ditangani dengan notifikasi. Data pengaturan tidak diubah saat lookup gagal.
+
+Validasi lokal: 9 tes regresi pengaturan WA (30 assertions), serta gabungan 120 tes pengaturan/mobile/maintenance/UJ Ditahan (700 assertions) lulus. Tidak ada pesan WA nyata dikirim. Perbaikan berada pada branch integrasi; tidak memasukkan mobile ke main.
