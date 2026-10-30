@@ -165,3 +165,13 @@ Permintaan: judul **Form Pencairan UJ Ditahan Sparepart** / **Form Pencairan UJ 
 DRY: `UjDitahanWhatsAppService` menampung format pencairan bersama dan pengiriman grup+driver dengan validasi nomor seluler Indonesia. `MaintenanceUjDitahanService` memakai fungsi kirim yang sama sehingga validasi nomor dan penanganan exception tidak diduplikasi. Pesan maintenance tidak berubah. Grup/driver dicoba terpisah; error WA tidak membatalkan pencairan yang sudah commit. Ban completed (termasuk cutoff Ban) memakai formatter baru; pencairan manual Sparepart memakainya setelah commit. Cutoff Sparepart lama belum direfaktor. Blade saldo/detail Sparepart memakai feedback bersama agar warning WA terlihat.
 
 Graphify AST lokal pada empat file relevan dipakai untuk penelusuran; cache hanya di /tmp/saind-payout-graph, tanpa API/cloud dan tidak di-commit. Tidak ada migrasi/dependensi/perubahan hitungan debit. 175 tes PHP lulus (1177 assertions), termasuk format kedua pencairan, dua saldo setelah potong, grand total beda grup/driver, isolasi saldo kendaraan lain, WA gagal tetap success+warning dan regresi maintenance/nomor HP. Pint/diff check lulus. Semua pengiriman WA pada pengujian dipalsukan, tidak ada pesan nyata dikirim.
+
+## Hasil pengujian integrasi — 30 Oktober 2026
+
+Perubahan WA terakhir di-commit pada main sebagai 0839f9c. Kode mobile tidak dimasukkan ke main. Branch codex/saind-dev-integration menggabungkan perubahan main dengan codex/mobile-api-foundation untuk pengujian bersama; merge kode e496932. Branch integrasi dipublikasikan sesuai izin pengguna.
+
+Deployment integrasi ke environment pengujian yang diminta pengguna berhasil setelah pencadangan. Tidak dibuat environment atau database baru. Production dan environment pengujian lain tidak diubah. Konfigurasi dan identitas workspace mobile dipertahankan. Dependency mengikuti lock dan migrasi berhasil. Detail infrastruktur/cadangan tidak dipublikasikan dalam catatan ini.
+
+Validasi: 261 tes PHP lulus (1753 assertions), mencakup mobile API, isolasi vendor, maintenance/UJ Ditahan dan payroll. Source hasil merge sama dengan salinan yang diuji. Build aset dan 6 tes JS QR berhasil. Pemeriksaan HTTP memastikan login/aset/workspace tersedia dan endpoint terlindungi menolak pengguna tanpa autentikasi. Tidak dilakukan transaksi finansial atau pengiriman WA nyata untuk QA.
+
+Sebelum menguji UJ keluar untuk kendaraan flag aktif, nominal Ban pada kesepakatan vendor-rute wajib diisi karena default migrasinya nol. Pengujian bisnis manual dilanjutkan pada environment pengujian.
