@@ -19,8 +19,8 @@ class PayrollAttendanceController extends Controller
     private function period(Request $request): array
     {
         $data = $request->validate(['bulan' => ['required', 'integer', 'between:1,12'], 'tahun' => ['required', 'integer', 'between:1901,2155']]);
-        if (Carbon::create($data['tahun'], $data['bulan'], 1)->startOfMonth()->gt(now()->startOfMonth())) {
-            throw ValidationException::withMessages(['bulan' => 'Periode gaji mendatang belum tersedia.']);
+        if (Carbon::create($data['tahun'], $data['bulan'], 1)->startOfMonth()->gt(now()->startOfMonth()->addMonth())) {
+            throw ValidationException::withMessages(['bulan' => 'Preview dibatasi sampai satu periode berikutnya.']);
         }
 
         return $data;
@@ -101,6 +101,6 @@ class PayrollAttendanceController extends Controller
             });
         });
 
-        return back()->with('success','Penyesuaian potongan dicatat beserta alasan.');
+        return back()->with('success', 'Penyesuaian potongan dicatat beserta alasan.');
     }
 }

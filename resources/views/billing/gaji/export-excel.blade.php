@@ -2,7 +2,7 @@
     <thead>
         <tr>
             <th colspan="15" style="text-align: center; font-size: 14pt; font-weight: bold;">
-                REKAP GAJI DIREKSI & STAFF
+                REKAP GAJI DIREKSI &amp; STAFF
             </th>
         </tr>
         <tr>

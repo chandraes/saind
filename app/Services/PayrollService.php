@@ -10,10 +10,28 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\ValidationException;
 
 class PayrollService
 {
     public function __construct(public PayrollAttendanceService $attendance, public BpjsHealthMinimumService $bpjs) {}
+
+    public function processingStartsAt(Carbon $period): Carbon
+    {
+        return $period->copy()->timezone('Asia/Jakarta')->startOfMonth()->day(26)->startOfDay();
+    }
+
+    public function canProcess(Carbon $period): bool
+    {
+        return Carbon::now('Asia/Jakarta')->greaterThanOrEqualTo($this->processingStartsAt($period));
+    }
+
+    public function assertProcessable(Carbon $period): void
+    {
+        if (! $this->canProcess($period)) {
+            throw ValidationException::withMessages(['bulan' => 'Gaji periode '.$period->copy()->locale('id')->translatedFormat('F Y').' baru dapat diproses mulai '.$this->processingStartsAt($period)->locale('id')->translatedFormat('d F Y').' pukul 00.00 WIB. Preview tetap dapat dilihat.']);
+        }
+    }
 
     public function calculateComponent(Karyawan|Direksi $person, ?int $year = null): array
     {

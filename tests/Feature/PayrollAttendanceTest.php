@@ -407,7 +407,7 @@ class PayrollAttendanceTest extends TestCase
         $this->assertNull($period->sealed_at);
         $this->cash();
         $revision = app(PayrollService::class)->revision(10, 2026);
-        $this->post('/billing/gaji/store', ['bulan' => 10, 'tahun' => 2026, 'payroll_revision' => $revision])->assertSessionHasErrors('attendance');
+        $this->post('/billing/gaji/store', ['bulan' => 10, 'tahun' => 2026, 'payroll_revision' => $revision])->assertSessionHasErrors('bulan');
         $this->assertSame(0, RekapGaji::count());
         Http::assertSentCount(2);
     }
