@@ -32,8 +32,8 @@ class FormGajiController extends Controller
     {
         $data = $request->validate(['bulan' => ['required', 'integer', 'between:1,12'], 'tahun' => ['required', 'integer', 'between:1901,2155']]);
         $period = Carbon::create((int) $data['tahun'], (int) $data['bulan'], 1)->startOfDay();
-        if ($period->greaterThan(now()->startOfMonth())) {
-            throw ValidationException::withMessages(['bulan' => 'Form gaji untuk periode mendatang belum dapat dibuat.']);
+        if ($period->greaterThan(now()->startOfMonth()->addMonth())) {
+            throw ValidationException::withMessages(['bulan' => 'Preview dibatasi sampai satu periode berikutnya.']);
         }
 
         return $period;
@@ -61,6 +61,7 @@ class FormGajiController extends Controller
             'data' => $this->payroll->employeesForPeriod($period->month, $period->year),
             'direksi' => $this->payroll->directorsForPeriod($period->month, $period->year),
             'monthName' => $period->copy()->locale('id')->monthName,
+            'payrollDateReady' => $this->payroll->canProcess($period), 'processingStartsAt' => $this->payroll->processingStartsAt($period),
             'bulan' => $period->month, 'tahun' => $period->year, 'payroll' => $this->payroll, 'bpjsSetting' => $this->payroll->bpjs->setting($period->year),
         ];
     }
@@ -147,6 +148,7 @@ class FormGajiController extends Controller
         $this->payroll->attendance->clear();
         $period = $this->period($request);
         $this->ensurePeriodAvailable($period);
+        $this->payroll->assertProcessable($period);
         $this->payroll->bpjs->requireConfigured($period->year);
         try {
             $cash = Cache::lock('payroll-generation', 300)->get(function () use ($period, $request): KasBesar {
@@ -169,6 +171,7 @@ class FormGajiController extends Controller
                 $lockedPeriod = $attendance->lock($period->month, $period->year, $people->modelKeys());
 
                 return DB::transaction(function () use ($period, $lockedPeriod, $checkRevision): KasBesar {
+                    $this->payroll->assertProcessable($period);
                     $this->payroll->bpjs->requireConfigured($period->year, true);
                     $this->ensurePeriodAvailable($period);
                     $kasBesar = KasBesar::orderByDesc('id')->lockForUpdate()->first();
