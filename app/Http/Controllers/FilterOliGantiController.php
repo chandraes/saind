@@ -221,7 +221,7 @@ class FilterOliGantiController extends Controller
     public function approve(Request $request, int $id, KasBesarService $kasBesar, KasVendorService $kasVendor): RedirectResponse
     {
         try {
-            DB::transaction(function () use ($request, $id, $kasBesar, $kasVendor): void {
+            $invoice = DB::transaction(function () use ($request, $id, $kasBesar, $kasVendor): FilterOliGantiInvoice {
                 $invoice = FilterOliGantiInvoice::with(['vehicle', 'details'])->lockForUpdate()->findOrFail($id);
                 $this->ensurePending($invoice);
                 if ($invoice->pembayaran === 'uj_ditahan') {
@@ -255,6 +255,8 @@ class FilterOliGantiController extends Controller
                 }
                 $invoice->update(['status' => FilterOliGantiInvoice::STATUS_APPROVED,
                     'authorized_by' => $request->user()->id, 'authorized_at' => now()]);
+
+                return $invoice;
             });
         } catch (ValidationException $exception) {
             return back()->with('error', $exception->validator->errors()->first());
@@ -264,6 +266,17 @@ class FilterOliGantiController extends Controller
             report($exception);
 
             return back()->with('error', 'Otorisasi gagal. Periksa saldo Kas Besar dan coba kembali.');
+        }
+
+        if ($invoice->pembayaran === 'uj_ditahan') {
+            try {
+                app(MaintenanceUjDitahanService::class)->notify($invoice);
+            } catch (Throwable $exception) {
+                report($exception);
+
+                return back()->with('success', 'Otorisasi berhasil. Histori penggantian filter & oli mesin telah dicatat.')
+                    ->with('warning', 'Sebagian notifikasi WA belum berhasil dikirim. Transaksi sudah tersimpan; jangan ulangi persetujuan.');
+            }
         }
 
         return back()->with('success', 'Otorisasi berhasil. Histori penggantian filter & oli mesin telah dicatat.');

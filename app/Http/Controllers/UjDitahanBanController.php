@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -48,7 +49,7 @@ class UjDitahanBanController extends Controller
         $filtered = (clone $query)->count();
         $summary = (clone $query)->selectRaw('COALESCE(SUM(total_masuk),0) AS masuk, COALESCE(SUM(total_keluar),0) AS keluar, COALESCE(SUM(saldo),0) AS saldo')->first();
         $start = max(0, $request->integer('start'));
-        $rows = $query->with('vehicle:id,nomor_lambung')->orderBy('id')->offset($start)->limit($this->pageLength($request))->get();
+        $rows = $query->with('vehicle:id,nomor_lambung,driver_id', 'vehicle.driver')->orderBy('id')->offset($start)->limit($this->pageLength($request))->get();
 
         return response()->json([
             'draw' => $request->integer('draw'), 'recordsTotal' => $total, 'recordsFiltered' => $filtered,
@@ -57,6 +58,15 @@ class UjDitahanBanController extends Controller
                 'id' => $row->id, 'no' => $start + $index + 1, 'kendaraan' => $row->vehicle?->nomor_lambung ?? '-',
                 'total_masuk' => $row->total_masuk, 'total_keluar' => $row->total_keluar, 'saldo' => $row->saldo,
                 'detail_url' => route('billing.uj-ditahan-ban.show', $row),
+                'cutoff' => ! $recap && $row->saldo > 0 && in_array($request->user()?->role, ['admin', 'su'], true) ? [
+                    'url' => route('billing.uj-ditahan-ban.cutoff', $row),
+                    'token' => (string) Str::uuid(),
+                    'periode' => sprintf('%02d/%d', $row->bulan, $row->tahun),
+                    'driver' => $row->vehicle?->driver?->nama ?? 'Belum diisi',
+                    'bank' => $row->vehicle?->driver?->bank ?: 'Belum diisi',
+                    'rekening' => $row->vehicle?->driver?->no_rek ?: 'Belum diisi',
+                    'nama' => $row->vehicle?->driver?->nama_rek ?: 'Belum diisi',
+                ] : null,
             ]),
         ]);
     }
@@ -85,7 +95,7 @@ class UjDitahanBanController extends Controller
             'draw' => $request->integer('draw'), 'recordsTotal' => $total, 'recordsFiltered' => $filtered,
             'totals' => ['masuk' => (int) $summary->masuk, 'keluar' => (int) $summary->keluar],
             'data' => $rows->values()->map(fn (UjDitahanBanDetail $row, int $index): array => [
-                'no' => $start + $index + 1, 'tanggal' => $row->created_at->format('d-m-Y H:i'),
+                'no' => $start + $index + 1, 'tanggal' => $row->created_at->format('d-m-Y'),
                 'keterangan' => $row->keterangan, 'driver' => $row->driver?->nama ?? '-',
                 'nominal_masuk' => $row->jenis === 'masuk' ? $row->nominal : 0,
                 'nominal_keluar' => $row->jenis === 'keluar' ? $row->nominal : 0,

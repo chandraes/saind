@@ -24,5 +24,8 @@
         </table>
     </div></div>
 </div>
+@if(! $recap && in_array(auth()->user()->role, ['admin', 'su'], true))
+@include('billing.uj-ditahan-ban.cutoff-modal')
+@endif
 @endsection
 @include('billing.uj-ditahan-ban.assets')

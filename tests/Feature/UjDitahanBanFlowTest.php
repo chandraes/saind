@@ -221,7 +221,7 @@ class UjDitahanBanFlowTest extends TestCase
         $this->assertDatabaseHas('uj_ditahan_bans', ['vehicle_id' => 1, 'bulan' => now()->month, 'saldo' => 20000]);
         $this->assertDatabaseHas('uj_ditahan_ban_details', ['jenis' => 'masuk', 'nominal' => 20000, 'transaksi_id' => 2, 'bank' => 'BRI']);
         $messages = implode(' ', array_column(app(GroupWa::class)->sent, 'text'));
-        $this->assertStringContainsString('UJ Ditahan Ban', $messages);
+        $this->assertStringContainsString('Form Uang Jalan Ditahan', $messages);
         $this->assertStringContainsString('300.000', $messages);
     }
 
@@ -342,5 +342,69 @@ class UjDitahanBanFlowTest extends TestCase
         $this->assertDatabaseCount('transaksis', 1);
         $this->assertDatabaseCount('uj_ditahans', 0);
         $this->assertDatabaseCount('uj_ditahan_bans', 0);
+    }
+
+    public function test_exit_combines_held_notifications_and_limits_driver_grand_total_to_own_vehicle(): void
+    {
+        $data = $this->setupExit();
+        DB::table('drivers')->where('id', 2)->update(['no_hp' => '081234567890']);
+        DB::table('vehicles')->insert(['id' => 2, 'nomor_lambung' => 'OTHER']);
+        foreach (['uj_ditahans', 'uj_ditahan_bans'] as $table) {
+            DB::table($table)->insert(['vehicle_id' => 2, 'bulan' => now()->month, 'tahun' => now()->year, 'saldo' => 100000, 'total_masuk' => 100000, 'total_keluar' => 0]);
+        }
+        $this->post(route('kas-uang-jalan.keluar.store'), $data)->assertSessionHas('success');
+        $sent = collect(app(GroupWa::class)->sent);
+        foreach (['uj-test', 'ditahan-test', '081234567890'] as $recipient) {
+            $held = $sent->where('to', $recipient)->filter(fn ($message) => str_contains($message['text'], '*Form Uang Jalan Ditahan*'));
+            $this->assertCount(1, $held);
+            $text = $held->first()['text'];
+            $this->assertStringContainsString('Nilai :  *Rp. 70.000,-*', $text);
+            $this->assertStringContainsString("Total Saldo Sparepart: UJI\nRp. 50.000", $text);
+            $this->assertStringContainsString("Total Saldo Ban: UJI\nRp. 20.000", $text);
+            $this->assertStringContainsString("Grand Total UJ Ditahan : \nRp. ".($recipient === '081234567890' ? '70.000' : '270.000'), $text);
+            $this->assertStringContainsString('Tanggal KIMPER belum diinput.', $text);
+        }
+        $this->assertCount(2, $sent->where('to', 'uj-test'));
+        $this->assertCount(1, $sent->where('to', 'ditahan-test'));
+        $this->assertCount(2, $sent->where('to', '081234567890'));
+        $all = $sent->pluck('text')->implode(' ');
+        $this->assertStringNotContainsString('*Form UJ Ditahan Ban*', $all);
+        $this->assertStringNotContainsString('*Form UJ Ditahan Sparepart*', $all);
+    }
+
+    #[TestWith(['transaksi.void.store'])]
+    #[TestWith(['transaksi.tagihan.void.store'])]
+    public function test_void_sends_one_combined_held_notification(string $route): void
+    {
+        $transaction = $this->fixture();
+        $sparepart = DB::table('uj_ditahans')->insertGetId(['vehicle_id' => 1, 'bulan' => 9, 'tahun' => 2026, 'total_masuk' => 50000, 'saldo' => 50000]);
+        UjDitahanDetail::create(['uj_ditahan_id' => $sparepart, 'transaksi_id' => $transaction->id, 'jenis' => 'masuk', 'nominal' => 50000]);
+        $ban = UjDitahanBan::factory()->create(['vehicle_id' => 1, 'bulan' => 9, 'tahun' => 2026, 'total_masuk' => 20000, 'saldo' => 20000]);
+        UjDitahanBanDetail::factory()->for($ban, 'ujDitahanBan')->create(['transaksi_id' => $transaction->id, 'nominal' => 20000]);
+        GroupWa::create(['untuk' => 'kas-uj-ditahan', 'nama_group' => 'held-test']);
+        $this->post(route($route, $transaction), ['alasan' => 'Salah rute'])->assertSessionHas('success');
+        $sent = collect(app(GroupWa::class)->sent)->where('to', 'held-test');
+        $this->assertCount(1, $sent);
+        $text = $sent->first()['text'];
+        $this->assertStringContainsString('*Void Uang Jalan Ditahan*', $text);
+        $this->assertStringContainsString('Nilai :  *Rp. 70.000,-*', $text);
+        $this->assertStringContainsString('Sparepart : Rp. 50.000', $text);
+        $this->assertStringContainsString('Ban : Rp. 20.000', $text);
+        $this->assertStringContainsString('Salah rute', $text);
+        $this->assertSame(0, $ban->fresh()->saldo);
+    }
+
+    public function test_ban_only_void_still_sends_combined_notification(): void
+    {
+        $transaction = $this->fixture();
+        $ban = UjDitahanBan::factory()->create(['vehicle_id' => 1, 'bulan' => 9, 'tahun' => 2026, 'total_masuk' => 20000, 'saldo' => 20000]);
+        UjDitahanBanDetail::factory()->for($ban, 'ujDitahanBan')->create(['transaksi_id' => $transaction->id, 'nominal' => 20000]);
+        GroupWa::create(['untuk' => 'kas-uj-ditahan', 'nama_group' => 'held-test']);
+        $this->post(route('transaksi.void.store', $transaction), ['alasan' => 'Batal'])->assertSessionHas('success');
+        $sent = collect(app(GroupWa::class)->sent)->where('to', 'held-test');
+        $this->assertCount(1, $sent);
+        $this->assertStringContainsString('*Void Uang Jalan Ditahan*', $sent->first()['text']);
+        $this->assertStringContainsString('Nilai :  *Rp. 20.000,-*', $sent->first()['text']);
+        $this->assertStringContainsString('Sparepart : Rp. 0', $sent->first()['text']);
     }
 }

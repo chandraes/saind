@@ -224,7 +224,7 @@ class TransaksiVoidTest extends TestCase
         $this->post(route('transaksi.tagihan.void.store', $transaction), ['alasan' => 'Batal'])->assertSessionHas('success');
         $this->assertCount(1, $messenger->sent);
         $this->assertSame('held-test', $messenger->sent[0]['destination']);
-        $this->assertStringContainsString('*Void UJ Ditahan Sparepart*', $messenger->sent[0]['message']);
+        $this->assertStringContainsString('*Void Uang Jalan Ditahan*', $messenger->sent[0]['message']);
         $this->assertStringContainsString('100.000', $messenger->sent[0]['message']);
     }
 

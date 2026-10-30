@@ -581,53 +581,34 @@ class FormKasUangJalanController extends Controller
         $pesan2 = '';
 
         if ($kendaraan->uj_ditahan == 1) {
-
             $rekeningUjDitahan = Rekening::where('untuk', 'uang-jalan-ditahan')->first();
-
-            $totalUjDitahan = UjDitahan::where('saldo', '>', '0')->sum('saldo');
-            $ujDitahanVehicle = UjDitahan::where('vehicle_id', $data['vehicle_id'])->where('saldo', '>', 0)->sum('saldo');
-
-            $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Form UJ Ditahan Sparepart*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
-                    'Nomor Lambung : '.Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
-                    'Vendor : '.$store->vendor->nama."\n\n".
-                    'Tambang : '.$store->customer->singkatan."\n".
-                    'Rute : '.$store->rute->nama."\n\n".
-                    'Nilai :  *Rp. '.number_format($nominalDitahan, 0, ',', '.').",-*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    'Bank     : '.$rekeningUjDitahan['nama_bank']."\n".
-                    'Nama    : '.$rekeningUjDitahan['nama_rekening']."\n".
-                    'No. Rek : '.$rekeningUjDitahan['nomor_rekening']."\n\n".
-                    "==========================\n".
-                    'Total Saldo UJ Ditahan : '.$kendaraan->nomor_lambung."\n".
-                    'Rp. '.number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
-                    "Grand Total UJ Ditahan : \n".
-                    'Rp. '.number_format($totalUjDitahan, 0, ',', '.')."\n\n".
-                    $additionalMessage.
-                    "Terima kasih 🙏🙏🙏\n";
-
-            $pesanMasuk2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                "*Form UJ Ditahan Sparepart*\n".
-                "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
-                'Nomor Lambung : '.Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+            $totalSparepart = UjDitahan::where('saldo', '>', 0)->sum('saldo');
+            $totalBan = UjDitahanBan::where('saldo', '>', 0)->sum('saldo');
+            $saldoSparepartVehicle = UjDitahan::where('vehicle_id', $kendaraan->id)->where('saldo', '>', 0)->sum('saldo');
+            $saldoBanVehicle = UjDitahanBan::where('vehicle_id', $kendaraan->id)->where('saldo', '>', 0)->sum('saldo');
+            $rincianUjDitahan = '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
+                'Nomor Lambung : '.$kendaraan->nomor_lambung."\n".
                 'Vendor : '.$store->vendor->nama."\n\n".
                 'Tambang : '.$store->customer->singkatan."\n".
                 'Rute : '.$store->rute->nama."\n\n".
-                'Nilai :  *Rp. '.number_format($nominalDitahan, 0, ',', '.').",-*\n\n".
+                'Nilai :  *Rp. '.number_format($nominalDitahan + $nominalDitahanBan, 0, ',', '.').",-*\n\n".
                 "Ditransfer ke rek:\n\n".
-                'Bank     : '.$rekeningUjDitahan['nama_bank']."\n".
-                'Nama    : '.$rekeningUjDitahan['nama_rekening']."\n".
-                'No. Rek : '.$rekeningUjDitahan['nomor_rekening']."\n\n".
+                'Bank     : '.$rekeningUjDitahan->nama_bank."\n".
+                'Nama    : '.$rekeningUjDitahan->nama_rekening."\n".
+                'No. Rek : '.$rekeningUjDitahan->nomor_rekening."\n\n".
                 "==========================\n".
-                'Total Saldo UJ Ditahan : '.$kendaraan->nomor_lambung."\n".
-                'Rp. '.number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
-                "Grand Total UJ Ditahan : \n".
-                'Rp. '.number_format($totalUjDitahan, 0, ',', '.')."\n\n".
-                $additionalMessage.
-                "Terima kasih 🙏🙏🙏\n";
+                'Total Saldo Sparepart: '.$kendaraan->nomor_lambung."\n".
+                'Rp. '.number_format($saldoSparepartVehicle, 0, ',', '.')."\n\n".
+                'Total Saldo Ban: '.$kendaraan->nomor_lambung."\n".
+                'Rp. '.number_format($saldoBanVehicle, 0, ',', '.')."\n\n";
+            $grandTotalGroup = "Grand Total UJ Ditahan : \n".
+                'Rp. '.number_format($totalSparepart + $totalBan, 0, ',', '.')."\n\n";
+            $grandTotalDriver = "Grand Total UJ Ditahan : \n".
+                'Rp. '.number_format($saldoSparepartVehicle + $saldoBanVehicle, 0, ',', '.')."\n\n";
+            $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n*Form Uang Jalan Ditahan*\n🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                $rincianUjDitahan.$grandTotalGroup.$additionalMessage."Terima kasih 🙏🙏🙏\n";
+            $pesanMasuk2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n*Form Uang Jalan Ditahan*\n🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                $rincianUjDitahan.$grandTotalGroup.$additionalMessage."Terima kasih 🙏🙏🙏\n";
         }
 
         $send = $dbWa->sendWa($group->nama_group, $pesan);
@@ -638,20 +619,6 @@ class FormKasUangJalanController extends Controller
 
             $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
             $send2 = $dbWa->sendWa($groupUjDitahan->nama_group, $pesanMasuk2);
-            $saldoBanVehicle = UjDitahanBan::where('vehicle_id', $kendaraan->id)->where('saldo', '>', 0)->sum('saldo');
-            $saldoBanTotal = UjDitahanBan::where('saldo', '>', 0)->sum('saldo');
-            $pesanBan = "*Form UJ Ditahan Ban*\n\n".
-                '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n".
-                'Nomor Lambung : '.$kendaraan->nomor_lambung."\n".
-                'Nilai : *Rp. '.number_format($nominalDitahanBan, 0, ',', '.')."*\n".
-                'Bank : '.($rekeningUjDitahan->nama_bank ?? '-')."\n".
-                'Nama : '.($rekeningUjDitahan->nama_rekening ?? '-')."\n".
-                'No. Rek : '.($rekeningUjDitahan->nomor_rekening ?? '-')."\n\n".
-                'Saldo UJ Ditahan Ban Kendaraan : Rp. '.number_format($saldoBanVehicle, 0, ',', '.')."\n".
-                'Grand Total UJ Ditahan Ban : Rp. '.number_format($saldoBanTotal, 0, ',', '.');
-            $dbWa->sendWa($group->nama_group, $pesanBan);
-            $dbWa->sendWa($groupUjDitahan->nama_group, $pesanBan);
-
             if ($dbVehicle->driver && $dbVehicle->driver->no_hp != null && $dbVehicle->driver->no_hp != '' && $dbVehicle->driver->no_hp != '-' && $dbVehicle->driver->no_hp != '0' && strlen($dbVehicle->driver->no_hp) >= 10) {
 
                 $pesanDriver = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
@@ -671,28 +638,8 @@ class FormKasUangJalanController extends Controller
                                 $additionalMessage.
                                 "Terima kasih 🙏🙏🙏\n";
 
-                $ujDitahanVehicle = UjDitahan::where('vehicle_id', $data['vehicle_id'])->where('saldo', '>', 0)->sum('saldo');
-
-                $pesanDriver2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-                    "*Form UJ Ditahan Sparepart*\n".
-                    "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
-                    'Nomor Lambung : '.Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
-                    'Vendor : '.$store->vendor->nama."\n\n".
-                    'Tambang : '.$store->customer->singkatan."\n".
-                    'Rute : '.$store->rute->nama."\n\n".
-                    'Nilai :  *Rp. '.number_format($nominalDitahan, 0, ',', '.').",-*\n\n".
-                    "Ditransfer ke rek:\n\n".
-                    'Bank     : '.$rekeningUjDitahan['nama_bank']."\n".
-                    'Nama    : '.$rekeningUjDitahan['nama_rekening']."\n".
-                    'No. Rek : '.$rekeningUjDitahan['nomor_rekening']."\n\n".
-                    "==========================\n".
-                    // "Sisa Saldo Kas Uang Jalan : \n".
-                    // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                    "Grand Total UJ Ditahan : \n".
-                    'Rp. '.number_format($ujDitahanVehicle, 0, ',', '.')."\n\n".
-                    $additionalMessage.
-                    "Terima kasih 🙏🙏🙏\n";
+                $pesanDriver2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n*Form Uang Jalan Ditahan*\n🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                    $rincianUjDitahan.$grandTotalDriver.$additionalMessage."Terima kasih 🙏🙏🙏\n";
                 // delete all non numeric and space characters from $dbVehicle->driver->no_hp
 
                 $hpDriver = $dbVehicle->driver->no_hp = preg_replace('/\D/', '', $dbVehicle->driver->no_hp);

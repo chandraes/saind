@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AkiGantiCart;
 use App\Models\FilterOliGantiCart;
+use App\Models\GroupWa;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -34,9 +35,13 @@ class AkiMaintenanceTest extends TestCase
                     $table->string('status')->default('aktif');
                     $table->boolean('pembatasan_filter_oli')->default(true);
                     $table->unsignedBigInteger('vendor_id')->nullable();
+                    $table->unsignedBigInteger('driver_id')->nullable();
                 }
                 if (in_array($name, ['vendors', 'posisi_akis'])) {
                     $table->string('nama')->default('Posisi 1');
+                }
+                if ($name === 'drivers') {
+                    $table->string('no_hp')->nullable();
                 }
                 if ($name === 'transaksis') {
                     $table->unsignedBigInteger('kas_uang_jalan_id');
@@ -93,6 +98,26 @@ class AkiMaintenanceTest extends TestCase
         Schema::create('kas_vendors', function (Blueprint $table): void {
             $table->id();
         });
+        (require database_path('migrations/2026_10_29_102252_create_uj_ditahan_bans_table.php'))->up();
+        (require database_path('migrations/2023_09_06_160726_create_group_was_table.php'))->up();
+        GroupWa::create(['untuk' => 'kas-uj-ditahan', 'nama_group' => 'uj-ditahan-test']);
+        $messenger = new class extends GroupWa
+        {
+            public array $sent = [];
+
+            public bool $fail = false;
+
+            public array $failTargets = [];
+
+            public function sendWa($tujuan, $pesan)
+            {
+                if ($this->fail || in_array($tujuan, $this->failTargets, true)) {
+                    throw new \RuntimeException('Simulated WA failure');
+                }
+                $this->sent[] = ['to' => $tujuan, 'text' => $pesan, 'transaction_level' => DB::transactionLevel()];
+            }
+        };
+        $this->app->instance(GroupWa::class, $messenger);
         DB::table('vehicles')->insert(['id' => 1]);
         DB::table('posisi_akis')->insert(['id' => 1]);
         DB::table('kategori_filter_oli_mesins')->insert(['id' => 1, 'nama' => 'Filter Oli', 'limit_ritase' => 34]);
@@ -394,5 +419,114 @@ class AkiMaintenanceTest extends TestCase
             $this->assertTrue($element->hasAttribute('hidden'));
         }
         $this->assertStringNotContainsString('@hidden(', $html);
+    }
+
+    #[TestWith(['aki'])]
+    #[TestWith(['filter-oli'])]
+    public function test_uj_sparepart_approval_notifies_group_after_commit_with_vehicle_wallet_totals(string $type): void
+    {
+        $user = $this->actor('admin');
+        $this->balance(8, 100000);
+        $this->balance(9, 100000);
+        DB::table('uj_ditahan_bans')->insert(['vehicle_id' => 1, 'bulan' => 8, 'tahun' => 2026, 'saldo' => 70000]);
+        DB::table('vehicles')->insert(['id' => 2, 'nomor_lambung' => 'OTHER']);
+        DB::table('uj_ditahans')->insert(['vehicle_id' => 2, 'bulan' => 8, 'tahun' => 2026, 'saldo' => 999000]);
+        DB::table('uj_ditahan_bans')->insert(['vehicle_id' => 2, 'bulan' => 8, 'tahun' => 2026, 'saldo' => 999000]);
+        $id = $this->cart($user, $type);
+        $this->post(route('billing.form-maintenance.'.$type.'.checkout'), $this->payload($id))->assertSessionHasNoErrors();
+        $messenger = app(GroupWa::class);
+        $this->assertCount(0, $messenger->sent);
+        $url = route('billing.otorisasi-maintenance.'.$type.'.approve', 1);
+        $this->post($url)->assertSessionHas('success')->assertSessionMissing('warning');
+        $this->assertCount(1, $messenger->sent);
+        $notification = $messenger->sent[0];
+        $this->assertSame('uj-ditahan-test', $notification['to']);
+        $this->assertSame(0, $notification['transaction_level']);
+        $this->assertStringContainsString($type === 'aki' ? '*FORM PENGGANTIAN AKI*' : '*FORM PENGGANTIAN FILTER & OLI MESIN*', $notification['text']);
+        $this->assertStringContainsString('Rp. 150.000', $notification['text']);
+        $this->assertStringContainsString('BCA', $notification['text']);
+        $this->assertStringContainsString('123456', $notification['text']);
+        $this->assertStringContainsString('Bengkel', $notification['text']);
+        $this->assertStringContainsString("Total UJ Ditahan Sparepart: A01\nRp. 50.000", $notification['text']);
+        $this->assertStringContainsString("Total UJ Ditahan Ban: A01\nRp. 70.000", $notification['text']);
+        $this->assertStringContainsString("Grand Total UJ Ditahan: A01\nRp. 120.000", $notification['text']);
+        $this->assertStringNotContainsString('Modal Investor', $notification['text']);
+        $this->assertStringNotContainsString('999.000', $notification['text']);
+        $this->post($url)->assertSessionHas('error');
+        $this->assertCount(1, $messenger->sent);
+    }
+
+    #[TestWith(['aki'])]
+    #[TestWith(['filter-oli'])]
+    public function test_notification_failure_keeps_approved_sparepart_payment_and_warns_against_retry(string $type): void
+    {
+        $user = $this->actor('admin');
+        $this->balance(8, 200000);
+        $id = $this->cart($user, $type);
+        $this->post(route('billing.form-maintenance.'.$type.'.checkout'), $this->payload($id))->assertSessionHasNoErrors();
+        app(GroupWa::class)->fail = true;
+        $this->post(route('billing.otorisasi-maintenance.'.$type.'.approve', 1))->assertSessionHas('success')->assertSessionHas('warning');
+        $this->assertEquals(50000, DB::table('uj_ditahans')->sum('saldo'));
+        $table = $type === 'aki' ? 'aki_ganti_invoices' : 'filter_oli_ganti_invoices';
+        $this->assertDatabaseHas($table, ['id' => 1, 'status' => 'approved']);
+    }
+
+    #[TestWith(['aki'])]
+    #[TestWith(['filter-oli'])]
+    public function test_uj_sparepart_notification_is_also_sent_to_vehicle_driver(string $type): void
+    {
+        DB::table('drivers')->insert(['id' => 1, 'no_hp' => '0812-3456-7890']);
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => 1]);
+        $user = $this->actor('admin');
+        $this->balance(8, 200000);
+        $id = $this->cart($user, $type);
+        $this->post(route('billing.form-maintenance.'.$type.'.checkout'), $this->payload($id))->assertSessionHasNoErrors();
+        $this->post(route('billing.otorisasi-maintenance.'.$type.'.approve', 1))->assertSessionHas('success')->assertSessionMissing('warning');
+        $sent = app(GroupWa::class)->sent;
+        $this->assertCount(2, $sent);
+        $this->assertSame(['uj-ditahan-test', '081234567890'], array_column($sent, 'to'));
+        $this->assertSame($sent[0]['text'], $sent[1]['text']);
+        $this->assertSame(0, $sent[1]['transaction_level']);
+    }
+
+    #[TestWith([null])]
+    #[TestWith([''])]
+    #[TestWith(['-'])]
+    #[TestWith(['0'])]
+    #[TestWith(['abcdefghij'])]
+    #[TestWith(['1234567890'])]
+    #[TestWith(['0812ABC567890'])]
+    #[TestWith(['021234567890'])]
+    #[TestWith(['081234567890999999'])]
+    public function test_invalid_driver_phone_is_skipped_but_group_still_notified(?string $phone): void
+    {
+        DB::table('drivers')->insert(['id' => 1, 'no_hp' => $phone]);
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => 1]);
+        $user = $this->actor('admin');
+        $this->balance(8, 200000);
+        $id = $this->cart($user);
+        $this->post(route('billing.form-maintenance.aki.checkout'), $this->payload($id))->assertSessionHasNoErrors();
+        $this->post(route('billing.otorisasi-maintenance.aki.approve', 1))->assertSessionHas('success')->assertSessionMissing('warning');
+        $sent = app(GroupWa::class)->sent;
+        $this->assertCount(1, $sent);
+        $this->assertSame('uj-ditahan-test', $sent[0]['to']);
+    }
+
+    #[TestWith(['+62 812-3456-7890'])]
+    #[TestWith(['6281234567890'])]
+    public function test_group_failure_does_not_prevent_sending_to_valid_driver_phone(string $phone): void
+    {
+        DB::table('drivers')->insert(['id' => 1, 'no_hp' => $phone]);
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => 1]);
+        $user = $this->actor('admin');
+        $this->balance(8, 200000);
+        $id = $this->cart($user);
+        $this->post(route('billing.form-maintenance.aki.checkout'), $this->payload($id))->assertSessionHasNoErrors();
+        app(GroupWa::class)->failTargets = ['uj-ditahan-test'];
+        $this->post(route('billing.otorisasi-maintenance.aki.approve', 1))->assertSessionHas('success')->assertSessionHas('warning');
+        $sent = app(GroupWa::class)->sent;
+        $this->assertCount(1, $sent);
+        $this->assertSame('6281234567890', $sent[0]['to']);
+        $this->assertDatabaseHas('aki_ganti_invoices', ['id' => 1, 'status' => 'approved']);
     }
 }

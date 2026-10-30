@@ -243,7 +243,8 @@ class UjDitahanBanManagementTest extends TestCase
         $this->post(route('billing.uj-ditahan-ban.cutoff', $account), ['request_token' => (string) Str::uuid()])->assertForbidden();
         $this->assertSame(200000, $account->fresh()->saldo);
         $this->actor('su');
-        $this->get(route('billing.uj-ditahan-ban.show', $account))->assertSee('Cutoff saldo');
+        $this->get(route('billing.uj-ditahan-ban.show', $account))->assertDontSee('Cutoff saldo');
+        $this->getJson(route('billing.uj-ditahan-ban'), ['X-Requested-With' => 'XMLHttpRequest'])->assertJsonPath('data.0.cutoff.url', route('billing.uj-ditahan-ban.cutoff', $account));
         $this->post(route('billing.uj-ditahan-ban.cutoff', $account), ['request_token' => (string) Str::uuid()])->assertSessionHas('success');
     }
 
@@ -311,5 +312,22 @@ class UjDitahanBanManagementTest extends TestCase
                 ->assertViewHas('activeBalanceMonths', [7])
                 ->assertSee('Juli ❗')->assertDontSee('September ❗');
         }
+    }
+
+    public function test_cutoff_action_is_on_positive_balance_list_only_for_privileged_roles(): void
+    {
+        $account = $this->account();
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+        $this->get(route('billing.uj-ditahan-ban'))->assertOk()->assertSee('id="cutoff-ban"', false);
+        $this->get(route('billing.uj-ditahan-ban.show', $account))->assertOk()->assertDontSee('id="cutoff-ban"', false);
+        $this->getJson(route('billing.uj-ditahan-ban'), $headers)->assertJsonPath('data.0.cutoff.driver', 'Driver Uji')->assertJsonPath('data.0.cutoff.bank', 'BCA');
+        $this->actor('user');
+        $this->get(route('billing.uj-ditahan-ban'))->assertDontSee('id="cutoff-ban"', false);
+        $this->getJson(route('billing.uj-ditahan-ban'), $headers)->assertJsonPath('data.0.cutoff', null);
+        $this->actor('admin');
+        $account->update(['saldo' => -1]);
+        $this->getJson(route('billing.uj-ditahan-ban'), $headers)->assertJsonPath('data.0.cutoff', null);
+        $account->update(['saldo' => 0]);
+        $this->getJson(route('rekap.uj-ditahan-ban'), $headers)->assertJsonPath('data.0.cutoff', null);
     }
 }

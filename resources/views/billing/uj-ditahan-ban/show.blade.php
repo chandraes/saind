@@ -6,9 +6,7 @@
         <div class="ban-hero-heading">@include('billing.uj-ditahan-ban.wheel')<div><span class="ban-period"><i class="fa fa-calendar" aria-hidden="true"></i>{{ \Carbon\Carbon::createFromDate($account->tahun, $account->bulan, 1)->translatedFormat('F Y') }}</span><h3>UJ Ditahan Ban · {{ $account->vehicle?->nomor_lambung ?? '-' }}</h3><p><i class="fa fa-user-circle-o me-2" aria-hidden="true"></i>Driver: {{ $account->vehicle?->driver?->nama ?? '-' }}</p></div></div>
         <div class="d-flex gap-2 flex-wrap ban-hero-actions"><a class="btn btn-outline-light" href="{{ route('billing.uj-ditahan-ban', ['bulan' => $account->bulan, 'tahun' => $account->tahun]) }}"><i class="fa fa-arrow-left me-2" aria-hidden="true"></i>Kembali</a>
             @if($account->saldo > 0)<button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#withdraw-ban"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Cairkan saldo</button>@endif
-            @if($account->saldo > 0 && in_array(auth()->user()->role, ['admin', 'su'], true))
-            <button class="btn btn-light" type="button" data-bs-toggle="modal" data-bs-target="#cutoff-ban"><i class="fa fa-scissors me-2" aria-hidden="true"></i>Cutoff saldo</button>
-            @endif
+
         </div>
     </div></div>
     @include('billing.uj-ditahan-ban.totals', ['masuk' => $account->total_masuk, 'keluar' => $account->total_keluar, 'saldo' => $account->saldo])
@@ -30,17 +28,6 @@
 </div></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-success"><i class="fa fa-check-circle me-2" aria-hidden="true"></i>Simpan pencairan</button></div>
 </form></div></div></div>
 @endif
-@if($account->saldo > 0 && in_array(auth()->user()->role, ['admin', 'su'], true))
-<div class="modal fade ban-modal ban-modal--cutoff" id="cutoff-ban" tabindex="-1" aria-labelledby="cutoff-ban-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
-<div class="modal-header"><h5 class="modal-title fw-bold" id="cutoff-ban-title"><i class="fa fa-scissors" aria-hidden="true"></i>Cutoff UJ Ditahan Ban</h5><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
-<form method="POST" action="{{ route('billing.uj-ditahan-ban.cutoff', $account) }}" data-maintenance-form data-confirm="Catat seluruh saldo UJ Ditahan Ban periode ini keluar ke rekening driver? Saldo akan menjadi nol." novalidate>@csrf
-<input type="hidden" name="request_token" value="{{ \Illuminate\Support\Str::uuid() }}">
-<div class="modal-body p-4"><p>Seluruh saldo periode ini dicatat sebagai mutasi keluar ke rekening driver berikut.</p>
-<div class="bg-light rounded p-3 mb-3"><div class="text-muted small">Saldo yang akan di-cutoff</div><div class="fs-4 fw-bold text-danger">Rp {{ number_format($account->saldo, 0, ',', '.') }}</div></div>
-<dl class="row mb-0"><dt class="col-4">Driver</dt><dd class="col-8">{{ $account->vehicle?->driver?->nama ?? 'Belum diisi' }}</dd><dt class="col-4">Bank</dt><dd class="col-8">{{ $account->vehicle?->driver?->bank ?: 'Belum diisi' }}</dd><dt class="col-4">No. rekening</dt><dd class="col-8">{{ $account->vehicle?->driver?->no_rek ?: 'Belum diisi' }}</dd><dt class="col-4">Atas nama</dt><dd class="col-8">{{ $account->vehicle?->driver?->nama_rek ?: 'Belum diisi' }}</dd></dl>
-<div class="small text-muted mt-3">Rekening driver wajib lengkap. Saldo dan rekening diperiksa ulang saat proses disimpan.</div></div>
-<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-danger"><i class="fa fa-check-circle me-2" aria-hidden="true"></i>Proses cutoff</button></div>
-</form></div></div></div>
-@endif
+
 @endsection
 @include('billing.uj-ditahan-ban.assets')

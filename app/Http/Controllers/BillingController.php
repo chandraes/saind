@@ -710,7 +710,7 @@ class BillingController extends Controller
     {
         abort_unless(in_array($request->user()->role, ['admin', 'su'], true), 403);
         try {
-            $kb = DB::transaction(function () use ($request, $id) {
+            [$kb, $invoice] = DB::transaction(function () use ($request, $id) {
                 $invoice = AkiGantiInvoice::with(['vehicle', 'details'])->lockForUpdate()->findOrFail($id);
                 if ($invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
                     throw ValidationException::withMessages(['invoice' => 'Invoice ini sudah diproses sebelumnya.']);
@@ -744,7 +744,7 @@ class BillingController extends Controller
                 }
                 $invoice->update(['status' => AkiGantiInvoice::STATUS_APPROVED, 'authorized_by' => $request->user()->id, 'authorized_at' => now()]);
 
-                return $kb;
+                return [$kb, $invoice];
             }, 3);
         } catch (ValidationException $exception) {
             return back()->with('error', $exception->validator->errors()->first());
@@ -754,6 +754,16 @@ class BillingController extends Controller
             report($exception);
 
             return back()->with('error', 'Otorisasi gagal. Periksa saldo pembayaran dan coba kembali.');
+        }
+        if ($invoice->pembayaran === AkiGantiInvoice::PEMBAYARAN_UJ_DITAHAN) {
+            try {
+                app(MaintenanceUjDitahanService::class)->notify($invoice);
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return back()->with('success', 'Otorisasi berhasil. Histori aki dan pembayaran telah dicatat.')
+                    ->with('warning', 'Sebagian notifikasi WA belum berhasil dikirim. Transaksi sudah tersimpan; jangan ulangi persetujuan.');
+            }
         }
         if ($kb) {
             $this->kirimWaNotifikasiAki($kb);

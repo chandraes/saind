@@ -550,9 +550,9 @@ class TransaksiController extends Controller
                 }
             }
 
-            if ($cekUjDitahan) {
+            if ($cekUjDitahan || $nominalUjDitahanBan > 0) {
                 $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                            "*Void UJ Ditahan Sparepart*\n".
+                            "*Void Uang Jalan Ditahan*\n".
                             "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                             '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n\n".
                             'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
@@ -560,7 +560,9 @@ class TransaksiController extends Controller
                             'Tambang : '.$kuj->customer->singkatan."\n".
                             'Rute : '.$kuj->rute->nama."\n\n".
                             'Alasan : '.$data['alasan']."\n".
-                            'Nilai :  *Rp. '.number_format($nominalUjDitahan, 0, ',', '.').",-*\n\n".
+                            'Nilai :  *Rp. '.number_format($nominalUjDitahan + $nominalUjDitahanBan, 0, ',', '.').",-*\n\n".
+                            'Sparepart : Rp. '.number_format($nominalUjDitahan, 0, ',', '.')."\n".
+                            'Ban : Rp. '.number_format($nominalUjDitahanBan, 0, ',', '.')."\n\n".
                             "Ditransfer ke rek:\n\n".
                             'Bank     : '.($rek->nama_bank ?? '-')."\n".
                             'Nama    : '.($rek->nama_rekening ?? '-')."\n".
@@ -574,16 +576,6 @@ class TransaksiController extends Controller
 
                 if ($groupUjDitahan) {
                     $dbWa->sendWa($groupUjDitahan->nama_group, $pesan2);
-                }
-            }
-            if ($nominalUjDitahanBan > 0) {
-                $groupBan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
-                if ($groupBan) {
-                    $dbWa->sendWa($groupBan->nama_group, '*Void UJ Ditahan Ban*'."\n\n".
-                        '*UJ'.sprintf('%02d', $kuj->nomor_uang_jalan)."*\n".
-                        'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
-                        'Nilai : Rp. '.number_format($nominalUjDitahanBan, 0, ',', '.')."\n".
-                        'Alasan : '.$data['alasan']);
                 }
             }
         } catch (\Throwable $th) {
