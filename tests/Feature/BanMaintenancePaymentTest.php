@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\BanGantiCart;
 use App\Models\BanGantiInvoice;
+use App\Models\GroupWa;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -248,5 +249,82 @@ class BanMaintenancePaymentTest extends TestCase
         $this->post(route('billing.form-maintenance.ban-luar.checkout'), $this->payload('kas_besar'))->assertSessionHas('success');
         $this->assertDatabaseHas('ban_ganti_invoices', ['pembayaran' => 'kas_besar', 'total_nominal' => 150000]);
         $this->assertDatabaseCount('uj_ditahan_ban_details', 0);
+    }
+
+    private function configureWhatsApp(?string $phone): void
+    {
+        Schema::table('drivers', function (Blueprint $table): void {
+            $table->string('no_hp')->nullable();
+        });
+        Schema::create('group_was', function (Blueprint $table): void {
+            $table->id();
+            $table->string('untuk');
+            $table->string('nama_group');
+        });
+        Schema::create('uj_ditahans', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vehicle_id');
+            $table->integer('saldo');
+        });
+        DB::table('group_was')->insert(['untuk' => 'kas-uj-ditahan', 'nama_group' => 'uj-ditahan-test']);
+        DB::table('drivers')->insert(['id' => 1, 'no_hp' => $phone]);
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => 1]);
+        DB::table('vehicles')->insert(['id' => 2, 'nomor_lambung' => 'OTHER']);
+        DB::table('uj_ditahans')->insert([['vehicle_id' => 1, 'saldo' => 70000], ['vehicle_id' => 2, 'saldo' => 999000]]);
+        DB::table('uj_ditahan_bans')->insert(['vehicle_id' => 2, 'bulan' => 9, 'tahun' => 2026, 'saldo' => 999000]);
+    }
+
+    public function test_ban_payment_notifies_group_and_driver_after_commit_with_both_vehicle_balances(): void
+    {
+        $this->configureWhatsApp('+62 812-3456-7890');
+        $this->balance(9, 100000);
+        $this->balance(10, 100000);
+        $this->cart();
+        $sent = [];
+        $this->mock(GroupWa::class)->shouldReceive('sendWa')->twice()->andReturnUsing(function (string $to, string $text) use (&$sent): void {
+            $sent[] = ['to' => $to, 'text' => $text, 'transaction_level' => DB::transactionLevel()];
+        });
+        $this->post(route('billing.form-maintenance.ban-luar.checkout'), $this->payload())->assertSessionHas('success');
+        $this->assertSame([], $sent);
+        $invoice = BanGantiInvoice::firstOrFail();
+        $url = route('billing.otorisasi-maintenance.ban-luar.approve', $invoice);
+        $this->post($url)->assertSessionHas('success')->assertSessionMissing('warning');
+        $this->assertSame(['uj-ditahan-test', '6281234567890'], array_column($sent, 'to'));
+        $this->assertSame([0, 0], array_column($sent, 'transaction_level'));
+        $this->assertSame($sent[0]['text'], $sent[1]['text']);
+        $text = $sent[0]['text'];
+        foreach (['*FORM PENGGANTIAN BAN LUAR*', 'Invoice : '.$invoice->no_invoice, 'Pembayaran : UJ Ditahan Ban', '*Rp. 150.000*', 'Bank     : BCA', 'Nama    : Bengkel', 'No. Rek : 123', "Total UJ Ditahan Sparepart: B01\nRp. 70.000", "Total UJ Ditahan Ban: B01\nRp. 50.000", "Grand Total UJ Ditahan: B01\nRp. 120.000"] as $expected) {
+            $this->assertStringContainsString($expected, $text);
+        }
+        $this->assertStringNotContainsString('999.000', $text);
+        $this->assertDatabaseCount('uj_ditahan_ban_details', 2);
+        $this->post($url)->assertSessionHas('error');
+        $this->assertCount(2, $sent);
+    }
+
+    #[TestWith([null])]
+    #[TestWith(['0812ABC567890'])]
+    public function test_ban_notification_skips_missing_or_invalid_driver_number(?string $phone): void
+    {
+        $this->configureWhatsApp($phone);
+        $this->balance(10, 200000);
+        $invoice = $this->invoice('uj_ditahan_ban', 150000);
+        $this->mock(GroupWa::class)->shouldReceive('sendWa')->once()->with('uj-ditahan-test', \Mockery::type('string'));
+        $this->post(route('billing.otorisasi-maintenance.ban-luar.approve', $invoice))->assertSessionHas('success')->assertSessionMissing('warning');
+    }
+
+    public function test_group_failure_still_attempts_driver_and_does_not_reverse_ban_approval(): void
+    {
+        $this->configureWhatsApp('0812-3456-7890');
+        $this->balance(10, 200000);
+        $invoice = $this->invoice('uj_ditahan_ban', 150000);
+        $messenger = $this->mock(GroupWa::class);
+        $messenger->shouldReceive('sendWa')->once()->with('uj-ditahan-test', \Mockery::type('string'))->andThrow(new \RuntimeException('Simulated group failure'));
+        $messenger->shouldReceive('sendWa')->once()->with('081234567890', \Mockery::type('string'));
+        $this->post(route('billing.otorisasi-maintenance.ban-luar.approve', $invoice))->assertSessionHas('success')->assertSessionHas('warning');
+        $this->assertSame('approved', $invoice->fresh()->status);
+        $this->assertDatabaseHas('uj_ditahan_bans', ['vehicle_id' => 1, 'saldo' => 50000]);
+        $this->assertDatabaseHas('uj_ditahans', ['vehicle_id' => 1, 'saldo' => 70000]);
+        $this->assertDatabaseCount('uj_ditahan_ban_details', 1);
     }
 }

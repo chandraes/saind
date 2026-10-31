@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\BanGantiInvoice;
-use App\Models\GroupWa;
 use App\Models\UjDitahanBan;
 use App\Models\UjDitahanBanDetail;
 use App\Models\Vehicle;
@@ -68,13 +67,6 @@ class MaintenanceBanUjDitahanService
 
     public function notify(BanGantiInvoice $invoice): void
     {
-        $messenger = app(GroupWa::class);
-        $group = GroupWa::where('untuk', 'kas-uj-ditahan')->firstOrFail();
-        $text = "*Pembayaran Ban Luar — UJ Ditahan Ban*\nInvoice: ".$invoice->no_invoice.
-            "\nNomor lambung: ".$invoice->vehicle?->nomor_lambung.
-            "\nNominal: Rp ".number_format((int) $invoice->total_nominal, 0, ',', '.').
-            "\nBank: ".$invoice->nama_bank."\nNo. rekening: ".$invoice->nomor_rekening."\nAtas nama: ".$invoice->nama_rekening.
-            "\nSisa seluruh saldo Ban kendaraan: Rp ".number_format($this->balance($invoice->vehicle_id), 0, ',', '.');
-        $messenger->sendWa($group->nama_group, $text);
+        app(UjDitahanWhatsAppService::class)->maintenance($invoice);
     }
 }

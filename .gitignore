@@ -18,3 +18,12 @@ yarn-error.log
 /.idea
 /.vscode
 **/.DS_Store
+
+# Graphify: share only the three source graphs; keep cache and local metadata out of Git.
+/graphify-out/**
+!/graphify-out/backend/
+!/graphify-out/resources/
+!/graphify-out/support/
+!/graphify-out/backend/graph.json
+!/graphify-out/resources/graph.json
+!/graphify-out/support/graph.json
