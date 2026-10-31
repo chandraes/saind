@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#111e29"/><stop offset="1" stop-color="#273842"/></linearGradient>
+ <linearGradient id="ground" x2="0" y2="1"><stop stop-color="#22333b"/><stop offset="1" stop-color="#14232b"/></linearGradient>
+ <pattern id="road-marks" width="62" height="6" patternUnits="userSpaceOnUse"><path d="M0 3H25" stroke="#a18a4c" stroke-width="2" opacity=".45"/></pattern>
+</defs>
+<path fill="url(#sky)" d="M0 0H1600V900H0Z"/>
+<!-- Long, irregular contours form the distant open-pit mine. -->
+<path d="M0 270 125 257 236 281 361 247 459 261 542 238 663 257 782 228 876 243 985 218 1096 246 1207 202 1304 215 1420 185 1519 206 1600 193V640H0Z" fill="#263944"/>
+<path d="M0 317 139 298 251 315 347 296 435 314 561 285 660 303 767 278 898 295 1001 262 1100 279 1211 250 1320 274 1454 231 1600 246V690H0Z" fill="#21333e"/>
+<path d="M0 363 144 350 249 370 398 346 524 363 640 343 768 360 890 330 1025 344 1170 313 1326 325 1480 292 1600 307V690H0Z" fill="#1c2f3b"/>
+<!-- Cut benches slope into the pit rather than forming straight walls. -->
+<path d="M0 351 120 366 242 409 350 445 462 487 536 544 680 601 790 631H0Z" fill="#1b2b35"/>
+<path d="m0 402 132 13 101 34 118 29 132 60 65 39 123 41" fill="none" stroke="#354750" stroke-width="5"/>
+<path d="m0 441 115 16 112 28 124 45 103 39 90 55" fill="none" stroke="#2b3f49" stroke-width="4"/>
+<path d="m0 490 126 13 118 38 139 48 90 42" fill="none" stroke="#384750" stroke-width="4"/>
+<path d="m0 544 126 8 145 43 91 36" fill="none" stroke="#2e424c" stroke-width="4"/>
+<path d="m1260 331 103-36 135 15 102-30v374H776l99-60 117-41 49-46 108-32 57-53Z" fill="#263740"/>
+<path d="m1600 354-121 14-109 30-99-1-94 49-93 22-50 43-129 46-66 43" fill="none" stroke="#49545a" stroke-width="5"/>
+<path d="m1600 411-135 17-111 38-98-10-80 45-95 29-72 51-99 33" fill="none" stroke="#3d4b54" stroke-width="5"/>
+<path d="m1600 463-131 25-95 28-96-8-86 45-95 18-70 48" fill="none" stroke="#34464f" stroke-width="5"/>
+<path d="m1600 520-122 17-109 41-84-11-81 39-107 20" fill="none" stroke="#41515a" stroke-width="4"/>
+<path d="m1600 576-111 19-94 32-81-7-75 24" fill="none" stroke="#354852" stroke-width="4"/>
+<!-- Sparse warm guide lights along the benches. -->
+<g fill="#b2924b"><circle cx="1538" cy="364" r="2.5"/><circle cx="1405" cy="389" r="2.5"/><circle cx="1243" cy="412" r="2.5"/><circle cx="1137" cy="457" r="2.5"/><circle cx="1028" cy="514" r="2.5"/><circle cx="925" cy="556" r="2.5"/><circle cx="843" cy="602" r="2.5"/><circle cx="1461" cy="487" r="2.5"/><circle cx="1290" cy="509" r="2.5"/><circle cx="1102" cy="570" r="2.5"/></g>
+<!-- Stockpiles and processing structure: the same flat geometry as the truck. -->
+<g stroke="#5f6c6e" stroke-width="1.4" stroke-linejoin="round">
+ <path d="m1090 342 69-62 49 12 69 50Z" fill="#101f29"/>
+ <path d="m1210 342 98-97 54 31 95 66Z" fill="#14242d"/>
+ <path d="m1359 343 91-65 60 20 61 45Z" fill="#182831"/>
+ <path d="m1168 282 36 10 51 46m60-83 45 26 63 48m34-45 52 25 36 27" fill="none" stroke="#344953"/>
+ <path d="M1090 204h48v81h-48z" fill="#2b3d44"/><path d="M1102 212h25v28h-25z" fill="#47564f"/>
+ <path d="M1077 285h73v10h-73z" fill="#182c37"/>
+ <path d="M1084 295v50m55-50v50m-55-42 55 42m0-42-55 42" fill="none"/>
+ <path d="m1114 206 361 50v13l-361-50Z" fill="#1c2c34"/>
+ <path d="m1114 206 361 50" fill="none" stroke="#b18d43" stroke-width="2"/>
+ <path d="M1201 232v100m117-81v81m121-65v65M1201 251l117 81m-117 0 117-70m0 15 121 55m-121 0 121-55" fill="none"/>
+ <path d="M1453 238h43v36h-43z" fill="#263b45"/><path d="M1462 244h24v10h-24z" fill="#b29553" stroke="none"/>
+ <path d="M1475 274v67m-19-67-13 67m0-16h47" fill="none"/>
+ <path d="M1031 271h37v53h-37z" fill="#253841"/><path d="M1031 279h37M1031 294h37" stroke="#778072"/>
+ <path d="M1512 260v73m0-65h36v65m-36-43h36m-36 23h36" fill="none"/>
+</g>
+<g fill="#c8a354"><path d="M1096 197h12v4h-12zM1131 202h11v4h-11zM1259 224h9v4h-9zM1397 244h9v4h-9zM1469 231h12v4h-12z"/></g>
+<!-- Forecourt kept clear for the foreground illustrations. -->
+<path d="M0 632 122 617 263 633 407 624 560 643 711 631 866 639 1004 629 1169 642 1322 629 1484 643 1600 635V900H0Z" fill="url(#ground)"/>
+<path d="m0 649 210 15 212-10 234 17 249-13 245 16 223-11 227 11" fill="none" stroke="#53636a" stroke-opacity=".3" stroke-width="1.4"/>
+<path d="M0 799H1600" stroke="#6b787a" stroke-opacity=".24"/>
+<path d="M0 845H1600" stroke="#101e27" stroke-width="2"/>
+<path d="M0 802H1600V808H0Z" fill="url(#road-marks)" opacity=".7"/>
+<g fill="#101f28" stroke="#33454e" stroke-width="1"><path d="m0 850 38-14 25 9 30-6 33 19 25 3 30 39H0Z"/><path d="m1600 855-43-16-29 8-28-3-40 33-39 23h179Z"/></g>
+</svg>
