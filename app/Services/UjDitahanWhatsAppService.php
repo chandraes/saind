@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\AkiGantiInvoice;
+use App\Models\BanGantiInvoice;
+use App\Models\FilterOliGantiInvoice;
 use App\Models\GroupWa;
 use App\Models\UjDitahan;
 use App\Models\UjDitahanBan;
@@ -13,6 +16,40 @@ use Throwable;
 
 class UjDitahanWhatsAppService
 {
+    public function maintenance(AkiGantiInvoice|FilterOliGantiInvoice|BanGantiInvoice $invoice): void
+    {
+        $invoice->loadMissing('vehicle.driver');
+        $vehicle = $invoice->vehicle;
+        $sparepart = (int) UjDitahan::where('vehicle_id', $invoice->vehicle_id)->sum('saldo');
+        $ban = (int) UjDitahanBan::where('vehicle_id', $invoice->vehicle_id)->sum('saldo');
+        $maintenance = match (true) {
+            $invoice instanceof AkiGantiInvoice => 'AKI',
+            $invoice instanceof BanGantiInvoice => 'BAN LUAR',
+            default => 'FILTER & OLI MESIN',
+        };
+        $fund = $invoice instanceof BanGantiInvoice ? 'Ban' : 'Sparepart';
+        $text = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+            '*FORM PENGGANTIAN '.$maintenance."*\n".
+            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+            'Invoice : '.$invoice->no_invoice."\n".
+            'Uraian : Penggantian '.$maintenance.' Unit '.$vehicle->nomor_lambung."\n".
+            'Pembayaran : UJ Ditahan '.$fund."\n".
+            'Nilai : *Rp. '.number_format((int) $invoice->total_nominal, 0, ',', '.')."*\n\n".
+            "Ditransfer ke rek:\n\n".
+            'Bank     : '.$invoice->nama_bank."\n".
+            'Nama    : '.$invoice->nama_rekening."\n".
+            'No. Rek : '.$invoice->nomor_rekening."\n\n".
+            "==========================\n".
+            'Total UJ Ditahan Sparepart: '.$vehicle->nomor_lambung."\n".
+            'Rp. '.number_format($sparepart, 0, ',', '.')."\n\n".
+            'Total UJ Ditahan Ban: '.$vehicle->nomor_lambung."\n".
+            'Rp. '.number_format($ban, 0, ',', '.')."\n\n".
+            'Grand Total UJ Ditahan: '.$vehicle->nomor_lambung."\n".
+            'Rp. '.number_format($sparepart + $ban, 0, ',', '.')."\n\n".
+            "Terima kasih 🙏🙏🙏\n";
+        $this->sendToGroupAndDriver($vehicle, $text);
+    }
+
     public function payout(UjDitahan|UjDitahanBan $account, UjDitahanDetail|UjDitahanBanDetail $detail): void
     {
         $account->loadMissing('vehicle.driver');
