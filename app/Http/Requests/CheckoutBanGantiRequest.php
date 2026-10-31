@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\BanGantiInvoice;
+use App\Services\MaintenancePaymentService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,10 +15,7 @@ class CheckoutBanGantiRequest extends FormRequest
 
     public function rules(): array
     {
-        $methods = array_keys(BanGantiInvoice::getMetodePembayaranOptions());
-        if (! in_array($this->user()?->role, ['admin', 'su'], true)) {
-            $methods = array_values(array_diff($methods, [BanGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI]));
-        }
+        $methods = array_keys(MaintenancePaymentService::optionsFor($this->user()?->role, 'uj_ditahan_ban'));
         $paid = 'required_if:pembayaran,kas_besar,uj_ditahan_ban';
 
         return [

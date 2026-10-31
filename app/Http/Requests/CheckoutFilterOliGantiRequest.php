@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\MaintenancePaymentService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +27,7 @@ class CheckoutFilterOliGantiRequest extends FormRequest
             }],
             'items.*' => ['required', 'array:tanggal_ganti'],
             'items.*.tanggal_ganti' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'pembayaran' => ['required', Rule::in(config('maintenance.filter_oli.kas_besar_enabled') ? ['dibayar_sendiri', 'kas_besar', 'uj_ditahan'] : ['dibayar_sendiri', 'uj_ditahan'])],
+            'pembayaran' => ['required', Rule::in(array_keys(MaintenancePaymentService::optionsFor($this->user()?->role, 'uj_ditahan')))],
             'total_nominal' => ['exclude_unless:pembayaran,kas_besar,uj_ditahan', 'bail', 'required', 'regex:/\A[1-9][0-9]*\z/', 'integer', 'min:1', 'max:9999999999999'],
             'nama_bank' => ['exclude_unless:pembayaran,kas_besar,uj_ditahan', 'required', 'string', 'max:50'],
             'nomor_rekening' => ['exclude_unless:pembayaran,kas_besar,uj_ditahan', 'required', 'string', 'max:50'],

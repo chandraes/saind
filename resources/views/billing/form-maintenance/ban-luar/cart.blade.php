@@ -99,9 +99,10 @@
                         <div class="row g-3">
                             <div class="col-md-6"><label for="ban-payment" class="form-label fw-semibold">Metode pembayaran</label>
                                 <select id="ban-payment" name="pembayaran" class="form-select maintenance-select" data-payment-method required>
-                                    <option value="kas_besar" @selected(old('pembayaran', 'kas_besar') === 'kas_besar')>Kas Besar</option>
-                                    <option value="uj_ditahan_ban" @selected(old('pembayaran') === 'uj_ditahan_ban')>UJ Ditahan Ban</option>
-                                    @if(in_array(auth()->user()->role, ['admin', 'su'], true))<option value="dibayar_sendiri" @selected(old('pembayaran') === 'dibayar_sendiri')>Dibayar Sendiri</option>@endif
+                                    @php($paymentOptions = \App\Services\MaintenancePaymentService::optionsFor(auth()->user()?->role, 'uj_ditahan_ban'))
+                                    @foreach ($paymentOptions as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('pembayaran', array_key_first($paymentOptions)) === $value)>{{ $label }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-6 d-none" data-uj-balance hidden><div class="border border-success rounded p-3 h-100 bg-white"><span class="small text-muted d-block">Seluruh saldo UJ Ditahan Ban kendaraan</span><strong class="text-success fs-4">Rp {{ number_format($saldoUjDitahanBan, 0, ',', '.') }}</strong><div class="small text-muted">Saldo positif seluruh bulan. Dipotong dari bulan tertua saat disetujui.</div></div></div>

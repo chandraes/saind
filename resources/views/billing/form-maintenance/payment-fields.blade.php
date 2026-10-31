@@ -3,13 +3,9 @@
         <label for="pembayaran" class="form-label fw-semibold">Metode pembayaran</label>
         <select id="pembayaran" name="pembayaran" class="form-select maintenance-select" data-payment-method required>
             <option value="" disabled @selected(!old('pembayaran'))>Pilih metode pembayaran</option>
-            <option value="uj_ditahan" @selected(old('pembayaran') === 'uj_ditahan')>UJ Ditahan Sparepart</option>
-            @if ($kasBesarEnabled)
-                <option value="kas_besar" @selected(old('pembayaran') === 'kas_besar')>Kas Besar</option>
-            @endif
-            @if (config('maintenance.dibayar_sendiri_visible'))
-                <option value="dibayar_sendiri" @selected(old('pembayaran') === 'dibayar_sendiri')>Dibayar Sendiri</option>
-            @endif
+            @foreach (\App\Services\MaintenancePaymentService::optionsFor(auth()->user()?->role, 'uj_ditahan') as $value => $label)
+                <option value="{{ $value }}" @selected(old('pembayaran') === $value)>{{ $label }}</option>
+            @endforeach
         </select>
     </div>
     <div @class(['col-12', 'd-none' => old('pembayaran') !== 'uj_ditahan']) data-uj-balance @if(old('pembayaran') !== 'uj_ditahan') hidden @endif>

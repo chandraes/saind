@@ -67,7 +67,7 @@
                 <div class="p-3 p-md-4 border-bottom"><span class="cart-eyebrow">LANGKAH 2 DARI 3</span><h2 id="paymentTitle" class="h5 fw-bold mt-2 mb-1">Informasi pembayaran</h2><p class="small text-muted mb-0">Pilih sumber dana dan lengkapi tujuan pembayaran.</p></div>
                 <form id="checkoutForm" method="post" action="{{ route($baseRoute.'.checkout') }}" data-maintenance-form data-confirm="Kirim penggantian {{ $title }} untuk otorisasi?" class="p-3 p-md-4" novalidate>
                     @csrf<input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
-                    @include('billing.form-maintenance.payment-fields', ['kasBesarEnabled' => $isAki || $kasBesarEnabled])
+                    @include('billing.form-maintenance.payment-fields')
                     <div class="pt-3 border-top"><button type="submit" class="btn btn-success cart-button w-100 fw-semibold"><i class="fa fa-paper-plane-o me-2" aria-hidden="true"></i>Kirim untuk Otorisasi</button><p class="small text-muted text-center mt-3 mb-0">Periksa kembali data sebelum melanjutkan.</p></div>
                 </form>
             </section>

@@ -105,7 +105,7 @@ class FilterOliGantiController extends Controller
             return to_route('billing.form-maintenance.filter-oli')->with('error', 'Keranjang masih kosong.');
         }
 
-        return view('billing.form-maintenance.filter-oli.cart', ['cartItems' => $items, 'vehicle' => $items->first()->vehicle, 'kasBesarEnabled' => (bool) config('maintenance.filter_oli.kas_besar_enabled'), 'ujDitahanBalance' => app(MaintenanceUjDitahanService::class)->balance($items->first()->vehicle_id)]);
+        return view('billing.form-maintenance.filter-oli.cart', ['cartItems' => $items, 'vehicle' => $items->first()->vehicle, 'ujDitahanBalance' => app(MaintenanceUjDitahanService::class)->balance($items->first()->vehicle_id)]);
     }
 
     public function checkout(CheckoutFilterOliGantiRequest $request): RedirectResponse
