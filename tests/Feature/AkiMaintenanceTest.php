@@ -312,9 +312,9 @@ class AkiMaintenanceTest extends TestCase
         $this->postJson(route('billing.form-maintenance.aki.cart.add'), $data)->assertUnprocessable()->assertJsonValidationErrors('vehicle_id');
     }
 
-    public function test_self_payment_remains_supported_for_existing_flow(): void
+    public function test_admin_self_payment_remains_supported_for_existing_flow(): void
     {
-        $user = $this->actor();
+        $user = $this->actor('admin');
         $id = $this->cart($user);
         $data = $this->payload($id);
         $data['pembayaran'] = 'dibayar_sendiri';
@@ -528,5 +528,60 @@ class AkiMaintenanceTest extends TestCase
         $this->assertCount(1, $sent);
         $this->assertSame('6281234567890', $sent[0]['to']);
         $this->assertDatabaseHas('aki_ganti_invoices', ['id' => 1, 'status' => 'approved']);
+    }
+
+    #[TestWith(['aki', 'user', 'uj_ditahan'])]
+    #[TestWith(['aki', 'user', 'kas_besar'])]
+    #[TestWith(['aki', 'user', 'dibayar_sendiri'])]
+    #[TestWith(['aki', 'admin', 'uj_ditahan'])]
+    #[TestWith(['aki', 'admin', 'kas_besar'])]
+    #[TestWith(['aki', 'admin', 'dibayar_sendiri'])]
+    #[TestWith(['aki', 'su', 'uj_ditahan'])]
+    #[TestWith(['aki', 'su', 'kas_besar'])]
+    #[TestWith(['aki', 'su', 'dibayar_sendiri'])]
+    #[TestWith(['aki', 'user', 'uj_ditahan_ban'])]
+    #[TestWith(['filter-oli', 'user', 'uj_ditahan'])]
+    #[TestWith(['filter-oli', 'user', 'kas_besar'])]
+    #[TestWith(['filter-oli', 'user', 'dibayar_sendiri'])]
+    #[TestWith(['filter-oli', 'admin', 'uj_ditahan'])]
+    #[TestWith(['filter-oli', 'admin', 'kas_besar'])]
+    #[TestWith(['filter-oli', 'admin', 'dibayar_sendiri'])]
+    #[TestWith(['filter-oli', 'su', 'uj_ditahan'])]
+    #[TestWith(['filter-oli', 'su', 'kas_besar'])]
+    #[TestWith(['filter-oli', 'su', 'dibayar_sendiri'])]
+    #[TestWith(['filter-oli', 'user', 'uj_ditahan_ban'])]
+    public function test_payment_methods_follow_role_in_both_form_and_checkout(string $type, string $role, string $payment): void
+    {
+        $actor = $this->actor($role);
+        $this->balance(10, 200000);
+        $id = $this->cart($actor, $type);
+        $payload = array_replace($this->payload($id), ['pembayaran' => $payment]);
+        $cartTable = $type === 'aki' ? 'aki_ganti_carts' : 'filter_oli_ganti_carts';
+        $invoiceTable = $type === 'aki' ? 'aki_ganti_invoices' : 'filter_oli_ganti_invoices';
+        $expected = $role === 'user' ? ['uj_ditahan'] : ['uj_ditahan', 'kas_besar', 'dibayar_sendiri'];
+
+        $html = $this->get(route('billing.form-maintenance.'.$type.'.confirm'))->assertOk()->getContent();
+        $document = new \DOMDocument;
+        $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+        $options = (new \DOMXPath($document))->query('//select[@name="pembayaran"]/option[not(@disabled)]/@value');
+        $visible = [];
+        foreach ($options as $option) {
+            if ($option->nodeValue !== '') {
+                $visible[] = $option->nodeValue;
+            }
+        }
+        sort($visible);
+        $sortedExpected = $expected;
+        sort($sortedExpected);
+        $this->assertSame($sortedExpected, $visible);
+        $response = $this->post(route('billing.form-maintenance.'.$type.'.checkout'), $payload);
+        if (! in_array($payment, $expected, true)) {
+            $response->assertSessionHasErrors('pembayaran');
+            $this->assertDatabaseCount($invoiceTable, 0);
+            $this->assertDatabaseCount($cartTable, 1);
+        } else {
+            $response->assertSessionHasNoErrors()->assertSessionHas('success');
+            $this->assertDatabaseHas($invoiceTable, ['pembayaran' => $payment, 'status' => 'pending']);
+        }
     }
 }

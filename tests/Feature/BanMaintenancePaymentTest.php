@@ -242,10 +242,10 @@ class BanMaintenancePaymentTest extends TestCase
         $this->get(route('rekap.maintenance.ban-luar.show', $invoice))->assertOk()->assertSee('UJ Ditahan Ban')->assertSee('150.000')->assertSee('Bengkel');
     }
 
-    public function test_kas_besar_checkout_remains_available_without_ban_balance(): void
+    public function test_admin_kas_besar_checkout_remains_available_without_ban_balance(): void
     {
         $this->cart();
-        $this->actor('user');
+        $this->actor('admin');
         $this->post(route('billing.form-maintenance.ban-luar.checkout'), $this->payload('kas_besar'))->assertSessionHas('success');
         $this->assertDatabaseHas('ban_ganti_invoices', ['pembayaran' => 'kas_besar', 'total_nominal' => 150000]);
         $this->assertDatabaseCount('uj_ditahan_ban_details', 0);
@@ -326,5 +326,50 @@ class BanMaintenancePaymentTest extends TestCase
         $this->assertDatabaseHas('uj_ditahan_bans', ['vehicle_id' => 1, 'saldo' => 50000]);
         $this->assertDatabaseHas('uj_ditahans', ['vehicle_id' => 1, 'saldo' => 70000]);
         $this->assertDatabaseCount('uj_ditahan_ban_details', 1);
+    }
+
+    #[TestWith(['ban-luar', 'user', 'uj_ditahan_ban'])]
+    #[TestWith(['ban-luar', 'user', 'kas_besar'])]
+    #[TestWith(['ban-luar', 'user', 'dibayar_sendiri'])]
+    #[TestWith(['ban-luar', 'admin', 'uj_ditahan_ban'])]
+    #[TestWith(['ban-luar', 'admin', 'kas_besar'])]
+    #[TestWith(['ban-luar', 'admin', 'dibayar_sendiri'])]
+    #[TestWith(['ban-luar', 'su', 'uj_ditahan_ban'])]
+    #[TestWith(['ban-luar', 'su', 'kas_besar'])]
+    #[TestWith(['ban-luar', 'su', 'dibayar_sendiri'])]
+    #[TestWith(['ban-luar', 'user', 'uj_ditahan'])]
+    public function test_payment_methods_follow_role_in_both_form_and_checkout(string $type, string $role, string $payment): void
+    {
+        $this->actor($role);
+        $this->balance(10, 200000);
+        $this->cart();
+        $payload = $this->payload($payment);
+        $cartTable = 'ban_ganti_carts';
+        $invoiceTable = 'ban_ganti_invoices';
+        $expected = $role === 'user' ? ['uj_ditahan_ban'] : ['uj_ditahan_ban', 'kas_besar', 'dibayar_sendiri'];
+
+        $html = $this->get(route('billing.form-maintenance.'.$type.'.confirm'))->assertOk()->getContent();
+        $document = new \DOMDocument;
+        $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+        $options = (new \DOMXPath($document))->query('//select[@name="pembayaran"]/option[not(@disabled)]/@value');
+        $visible = [];
+        foreach ($options as $option) {
+            if ($option->nodeValue !== '') {
+                $visible[] = $option->nodeValue;
+            }
+        }
+        sort($visible);
+        $sortedExpected = $expected;
+        sort($sortedExpected);
+        $this->assertSame($sortedExpected, $visible);
+        $response = $this->post(route('billing.form-maintenance.'.$type.'.checkout'), $payload);
+        if (! in_array($payment, $expected, true)) {
+            $response->assertSessionHasErrors('pembayaran');
+            $this->assertDatabaseCount($invoiceTable, 0);
+            $this->assertDatabaseCount($cartTable, 1);
+        } else {
+            $response->assertSessionHasNoErrors()->assertSessionHas('success');
+            $this->assertDatabaseHas($invoiceTable, ['pembayaran' => $payment, 'status' => 'pending']);
+        }
     }
 }
