@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class StarSender
 {
     private $apikey;
@@ -37,7 +39,8 @@ class StarSender
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 20,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
@@ -62,16 +65,20 @@ class StarSender
         // ));
 
         $response = curl_exec($curl);
+        $httpStatus = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curlError = curl_errno($curl);
 
         curl_close($curl);
 
         $result = json_decode($response, true);
+
         // dd($result);
-        if ($result['success'] == true) {
-            return true;
-        } else {
-            return false;
+        $accepted = is_array($result) && ($result['success'] ?? false) === true;
+        if (! $accepted) {
+            Log::warning('Starsender tidak menerima pengiriman WA.', ['http_status' => $httpStatus, 'curl_errno' => $curlError]);
         }
+
+        return $accepted;
 
     }
 

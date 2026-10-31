@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class GroupWa extends Model
 {
     use HasFactory;
+
     protected $guarded = [];
 
     public function sendWa($tujuan, $pesan)
@@ -19,12 +20,18 @@ class GroupWa extends Model
             'status' => 0,
         ]);
 
-        $send = new StarSender($tujuan, $pesan);
-        $res = $send->sendGroup();
+        $this->sendRecordedMessage($storeWa);
+    }
 
-        if ($res == 'true') {
-            $storeWa->update(['status' => 1]);
+    public function sendRecordedMessage(PesanWa $message): bool
+    {
+        $sent = (new StarSender($message->tujuan, $message->pesan))->sendGroup();
+        if ($sent === true) {
+            $message->update(['status' => 1]);
+
+            return true;
         }
 
+        return false;
     }
 }
