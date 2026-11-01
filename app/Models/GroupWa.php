@@ -20,7 +20,7 @@ class GroupWa extends Model
             'status' => 0,
         ]);
 
-        $this->sendRecordedMessage($storeWa);
+        return $this->sendRecordedMessage($storeWa);
     }
 
     public function sendRecordedMessage(PesanWa $message): bool

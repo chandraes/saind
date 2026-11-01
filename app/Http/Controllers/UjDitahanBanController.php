@@ -89,7 +89,7 @@ class UjDitahanBanController extends Controller
         $filtered = (clone $query)->count();
         $summary = (clone $query)->selectRaw("COALESCE(SUM(CASE WHEN jenis = 'masuk' THEN nominal ELSE 0 END),0) AS masuk, COALESCE(SUM(CASE WHEN jenis = 'keluar' THEN nominal ELSE 0 END),0) AS keluar")->first();
         $start = max(0, $request->integer('start'));
-        $rows = $query->with('driver:id,nama')->orderByDesc('created_at')->orderByDesc('id')->offset($start)->limit($this->pageLength($request))->get();
+        $rows = $query->with(['driver:id,nama', 'cancellation.actor'])->orderByDesc('created_at')->orderByDesc('id')->offset($start)->limit($this->pageLength($request))->get();
 
         return response()->json([
             'draw' => $request->integer('draw'), 'recordsTotal' => $total, 'recordsFiltered' => $filtered,
@@ -99,6 +99,10 @@ class UjDitahanBanController extends Controller
                 'keterangan' => $row->keterangan, 'driver' => $row->driver?->nama ?? '-',
                 'nominal_masuk' => $row->jenis === 'masuk' ? $row->nominal : 0,
                 'nominal_keluar' => $row->jenis === 'keluar' ? $row->nominal : 0,
+                'cancelled' => $row->cancellation ? ['reason' => $row->cancellation->reason, 'by' => $row->cancellation->actor?->name, 'at' => $row->cancellation->created_at->format('d-m-Y H:i')] : null,
+                'original_nominal' => $row->nominal,
+                'is_reversal' => $row->payout_origin === 'payout_reversal',
+                'cancel_url' => in_array(request()->user()?->role, ['admin', 'su'], true) && $row->isManualPayout() && ! $row->cancellation ? route('billing.uj-ditahan.cancel', ['fund' => 'ban', 'detail' => $row->id]) : null,
                 'rekening' => implode(' / ', array_filter([$row->bank, $row->no_rekening, $row->nama_rekening])),
                 'proof_url' => $row->file_pdf ? route('billing.uj-ditahan-ban.bukti', $row) : null,
             ]),

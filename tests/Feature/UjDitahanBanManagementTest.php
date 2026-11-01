@@ -48,6 +48,21 @@ class UjDitahanBanManagementTest extends TestCase
         Schema::table('uj_ditahan_details', function (Blueprint $table): void {
             $table->string('file_pdf')->nullable();
         });
+        foreach (['uj_ditahan_details', 'uj_ditahan_ban_details'] as $table) {
+            Schema::table($table, function (Blueprint $t): void {
+                $t->string('payout_origin')->nullable();
+            });
+        }
+        Schema::create('uj_ditahan_payout_cancellations', function (Blueprint $t): void {
+            $t->id();
+            $t->string('fund');
+            $t->unsignedBigInteger('detail_id');
+            $t->unsignedBigInteger('account_id');
+            $t->bigInteger('nominal');
+            $t->text('reason');
+            $t->unsignedBigInteger('cancelled_by');
+            $t->timestamps();
+        });
         DB::table('drivers')->insert(['id' => 1, 'nama' => 'Driver Uji', 'bank' => 'BCA', 'no_rek' => '12345', 'nama_rek' => 'Driver Uji']);
         DB::table('vehicles')->insert(['id' => 1, 'nomor_lambung' => 'BAN-01', 'driver_id' => 1]);
         DB::table('uj_ditahans')->insert(['vehicle_id' => 1, 'bulan' => 10, 'tahun' => 2026, 'total_masuk' => 999000, 'saldo' => 999000]);

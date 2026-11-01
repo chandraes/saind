@@ -10,6 +10,7 @@ use App\Models\UjDitahan;
 use App\Models\UjDitahanBan;
 use App\Models\UjDitahanBanDetail;
 use App\Models\UjDitahanDetail;
+use App\Models\UjDitahanPayoutCancellation;
 use App\Models\Vehicle;
 use RuntimeException;
 use Throwable;
@@ -52,6 +53,16 @@ class UjDitahanWhatsAppService
 
     public function payout(UjDitahan|UjDitahanBan $account, UjDitahanDetail|UjDitahanBanDetail $detail): void
     {
+        $this->sendPayout($account, $detail);
+    }
+
+    public function payoutCancellation(UjDitahan|UjDitahanBan $account, UjDitahanDetail|UjDitahanBanDetail $detail, UjDitahanPayoutCancellation $cancellation): void
+    {
+        $this->sendPayout($account, $detail, $cancellation);
+    }
+
+    private function sendPayout(UjDitahan|UjDitahanBan $account, UjDitahanDetail|UjDitahanBanDetail $detail, ?UjDitahanPayoutCancellation $cancellation = null): void
+    {
         $account->loadMissing('vehicle.driver');
         $vehicle = $account->vehicle;
         $sparepart = UjDitahan::where('saldo', '>', 0);
@@ -60,9 +71,10 @@ class UjDitahanWhatsAppService
         $vehicleSparepart = (int) $sparepart->where('vehicle_id', $vehicle->id)->sum('saldo');
         $vehicleBan = (int) $ban->where('vehicle_id', $vehicle->id)->sum('saldo');
         $fund = $account instanceof UjDitahanBan ? 'Ban' : 'Sparepart';
-        $body = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-            '*Form Pencairan UJ Ditahan '.$fund."*\n".
-            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+        $border = $cancellation ? '🔵🔵🔵🔵🔵🔵🔵🔵🔵' : '🔴🔴🔴🔴🔴🔴🔴🔴🔴';
+        $title = $cancellation ? 'Form Pembatalan Pencairan UJ Ditahan ' : 'Form Pencairan UJ Ditahan ';
+        $audit = $cancellation ? 'Referensi pencairan : #'.$detail->id."\n".'Alasan pembatalan : '.$cancellation->reason."\n".'Dibatalkan oleh : '.$cancellation->actor?->name."\nSaldo dikembalikan ke periode asal.\n\n" : '';
+        $body = $border."\n*".$title.$fund."*\n".$border."\n\n".$audit.
             'Nomor Lambung : '.$vehicle->nomor_lambung."\n".
             'Periode : '.sprintf('%02d/%d', $account->bulan, $account->tahun)."\n".
             'Uraian : '.$detail->keterangan."\n\n".
@@ -98,7 +110,9 @@ class UjDitahanWhatsAppService
         }
         foreach ($messages as $message) {
             try {
-                $messenger->sendWa($message['to'], $message['text']);
+                if ($messenger->sendWa($message['to'], $message['text']) === false) {
+                    throw new RuntimeException('Notifikasi WA belum diterima provider. Periksa Histori WA.');
+                }
             } catch (Throwable $exception) {
                 report($exception);
                 $failure ??= $exception;

@@ -42,7 +42,7 @@ class UjDitahanBanPayoutService
                     throw new RuntimeException('Bukti pencairan gagal disimpan.');
                 }
                 $detail = $locked->details()->create([
-                    'jenis' => 'keluar', 'nominal' => $nominal, 'driver_id' => $locked->vehicle->driver_id,
+                    'payout_origin' => 'manual', 'jenis' => 'keluar', 'nominal' => $nominal, 'driver_id' => $locked->vehicle->driver_id,
                     'keterangan' => $data['keterangan'], 'bank' => $data['bank'],
                     'no_rekening' => $data['no_rekening'], 'nama_rekening' => $data['nama_rekening'],
                     'request_token' => $data['request_token'], 'file_pdf' => $path,

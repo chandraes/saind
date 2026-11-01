@@ -913,7 +913,7 @@ class BillingController extends Controller
         $master = UjDitahan::with(['vehicle.driver'])->findOrFail($id);
 
         // Ambil detail dan urutkan dari yang paling lama ke baru agar seperti rekening koran
-        $details = UjDitahanDetail::where('uj_ditahan_id', $id)
+        $details = UjDitahanDetail::with(['driver', 'cancellation.actor'])->where('uj_ditahan_id', $id)
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -983,6 +983,7 @@ class BillingController extends Controller
             $store = UjDitahanDetail::create([
                 'uj_ditahan_id' => $master->id,
                 'jenis' => 'keluar',
+                'payout_origin' => 'manual',
                 'nominal' => $nominalCair,
                 'keterangan' => $request->keterangan,
                 'bank' => $request->bank,

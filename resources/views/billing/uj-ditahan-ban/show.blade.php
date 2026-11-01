@@ -11,7 +11,7 @@
     </div></div>
     @include('billing.uj-ditahan-ban.totals', ['masuk' => $account->total_masuk, 'keluar' => $account->total_keluar, 'saldo' => $account->saldo])
     <div class="ban-panel"><div class="ban-panel-head"><div class="d-flex align-items-center gap-3"><span class="ban-section-icon"><i class="fa fa-history" aria-hidden="true"></i></span><div><h5 class="ban-section-title">Riwayat mutasi</h5><p class="ban-section-subtitle">Transaksi terbaru ditampilkan lebih dahulu. Gunakan pencarian untuk menelusuri uraian atau rekening.</p></div></div><span class="ban-count"><i class="fa fa-list-ul me-1" aria-hidden="true"></i><span data-ban-count>0</span> mutasi</span></div><div class="ban-table-wrap">
-        <table class="table table-hover align-middle w-100" data-ban-table data-kind="details" data-url="{{ route('billing.uj-ditahan-ban.show', $account) }}"><thead class="table-success"><tr><th>No</th><th>Tanggal</th><th>Uraian</th><th>Driver</th><th>Nominal Masuk</th><th>Nominal Keluar</th><th>Rekening</th><th>Bukti</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand total hasil pencarian</th><th data-total-masuk></th><th data-total-keluar></th><th colspan="2"></th></tr></tfoot></table>
+        <table class="table table-hover align-middle w-100" data-ban-table data-kind="details" data-url="{{ route('billing.uj-ditahan-ban.show', $account) }}"><thead class="table-success"><tr><th>No</th><th>Tanggal</th><th>Uraian</th><th>Driver</th><th>Nominal Masuk</th><th>Nominal Keluar</th><th>Rekening</th><th>Bukti</th><th>Aksi</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand total hasil pencarian</th><th data-total-masuk></th><th data-total-keluar></th><th colspan="3"></th></tr></tfoot></table>
     </div></div>
 </div>
 @if($account->saldo > 0)
@@ -29,5 +29,6 @@
 </form></div></div></div>
 @endif
 
+@include('billing.uj-ditahan.payout-cancellation')
 @endsection
 @include('billing.uj-ditahan-ban.assets')

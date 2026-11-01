@@ -57,6 +57,7 @@ use App\Http\Controllers\TemplateKontrakController;
 use App\Http\Controllers\TemplateSpkController;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\UjDitahanBanController;
+use App\Http\Controllers\UjDitahanPayoutCancellationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
@@ -648,6 +649,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         // Form maintenance
         Route::prefix('billing')->group(function () {
+
+            Route::post('/uj-ditahan-pencairan/{fund}/{detail}/batalkan', [UjDitahanPayoutCancellationController::class, 'store'])->whereIn('fund', ['sparepart', 'ban'])->whereNumber('detail')->middleware('role:admin,su')->name('billing.uj-ditahan.cancel');
 
             Route::prefix('uj-ditahan-ban')->group(function () {
                 Route::get('/', [UjDitahanBanController::class, 'index'])->name('billing.uj-ditahan-ban');
