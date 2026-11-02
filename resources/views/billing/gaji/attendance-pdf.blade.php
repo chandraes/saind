@@ -13,6 +13,15 @@ body{font-family:DejaVu Sans,sans-serif;font-size:9px;color:#24352f}h1{font-size
 @endphp
 @if($detail['provisional'] ?? false)<p>Potongan sementara. Jadwal mendatang, shift berjalan dan pengajuan menunggu HR belum dikenai potongan.</p>@endif
 @if($detail['as_of'] ?? null)<p class="muted">Data ditarik: {{ $stamp($detail['as_of']) }} ({{ $zone }})</p>@endif
+<p class="note">Pola kerja pengupahan:
+@if(($detail['payroll_work_pattern']['mode'] ?? null) === 'weekly')
+Mingguan · {{ $detail['payroll_work_pattern']['workdays'] }} hari/minggu.
+@elseif(($detail['payroll_work_pattern']['mode'] ?? null) === 'shift')
+Shift.
+@else
+Belum tercatat pada rincian ini.
+@endif
+Pembagi upah harian: {{ array_key_exists('divisor', $detail) ? ($detail['divisor'] ?? 'belum ditentukan') : 25 }}.</p>
 <div class="summary"><span>Nilai harian: <strong>{{ $money($detail['daily'] ?? 0) }}</strong></span><span>Sebelum batas: <strong>{{ $money($detail['raw']) }}</strong></span><span>Batas 25%: <strong>{{ $money($detail['cap'] ?? 0) }}</strong></span><span>Potongan akhir: <strong>{{ $money($detail['amount']) }}</strong></span></div>
 <p class="muted">Tanggal kerja mengikuti tanggal mulai jadwal, termasuk shift malam yang pulang keesokan hari. Semua jam dalam zona {{ $zone }}.</p>
 <table><thead><tr><th>Hari / tanggal</th><th>Jadwal & kehadiran</th><th>Keterangan</th><th>Perhitungan</th><th>Potongan harian</th></tr></thead><tbody>

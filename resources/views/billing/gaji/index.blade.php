@@ -94,7 +94,7 @@
 </style>
 @endpush
 @push('js')
-<script src="{{ asset('assets/js/payroll-attendance-detail.js') }}"></script>
+<script src="{{ asset('assets/js/payroll-attendance-detail.js') }}?v={{ filemtime(public_path('assets/js/payroll-attendance-detail.js')) }}"></script>
 <script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script>
 <script src="{{ asset('assets/js/dt5.min.js') }}"></script>
 <script src="https://cdn.datatables.net/scroller/2.2.0/js/dataTables.scroller.min.js"></script>
