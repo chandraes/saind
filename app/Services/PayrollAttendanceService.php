@@ -225,6 +225,33 @@ class PayrollAttendanceService
         });
     }
 
+    public function workPatternsReady(array $snapshot, ?object $period = null): bool
+    {
+        foreach ($snapshot['employees'] ?? [] as $person) {
+            if (($person['attendance_required'] ?? true) && $this->workDivisor($snapshot, $person, $period) === null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function workDivisor(array $snapshot, array $person, ?object $period): ?int
+    {
+        if (! isset($snapshot['payroll_work_pattern_version']) && ($period?->lock_attempted_at || $period?->remote_locked_at || $period?->sealed_at)) {
+            return 25;
+        }
+        $pattern = $person['payroll_work_pattern'] ?? [];
+        if (($snapshot['payroll_work_pattern_version'] ?? null) !== 1 || ($pattern['mode'] ?? null) !== 'weekly' || ! is_int($pattern['workdays'] ?? null)) {
+            return null;
+        }
+        $expected = match ($pattern['workdays']) {
+            5 => 21, 6, 7 => 25, default => null
+        };
+
+        return $expected !== null && ($pattern['divisor'] ?? null) === $expected ? $expected : null;
+    }
+
     public function calculate(Karyawan $employee, int $month, int $year): array
     {
         $empty = ['amount' => 0, 'raw' => 0, 'cap' => 0, 'daily' => 0, 'days' => [], 'ready' => true];
@@ -247,7 +274,9 @@ class PayrollAttendanceService
             return array_replace($empty, ['ready' => false]);
         }
         $base = (int) $employee->gaji_pokok + (int) $employee->tunjangan_jabatan + (int) $employee->tunjangan_keluarga;
-        $daily = (int) round($base / 25);
+        $divisor = $this->workDivisor($snapshot, $person, $period);
+        $patternReady = ! $person['attendance_required'] || $divisor !== null;
+        $daily = $divisor === null ? 0 : (int) round($base / $divisor);
         $cap = intdiv($base, 4);
         $days = [];
         $raw = 0;
@@ -269,7 +298,7 @@ class PayrollAttendanceService
             $raw += $applied;
         }
 
-        return ['as_of' => $snapshot['as_of'] ?? null, 'provisional' => ! $snapshot['ready'], 'waiting_hr_days' => count(array_filter($person['days'], fn ($day): bool => $day['status'] === 'pending_leave')), 'unfinished_shifts' => count(array_filter($person['days'], fn ($day): bool => in_array($day['status'], ['pending', 'upcoming', 'in_progress'], true))), 'timezone' => $snapshot['timezone'] ?? 'Asia/Jakarta', 'from' => $snapshot['from'], 'to' => $snapshot['to'], 'amount' => min($cap, $raw), 'raw' => $raw, 'cap' => $cap, 'daily' => $daily, 'days' => $days, 'ready' => $snapshot['ready']];
+        return ['divisor' => $divisor, 'payroll_work_pattern' => $person['payroll_work_pattern'] ?? null, 'pattern_ready' => $patternReady, 'as_of' => $snapshot['as_of'] ?? null, 'provisional' => ! $snapshot['ready'], 'waiting_hr_days' => count(array_filter($person['days'], fn ($day): bool => $day['status'] === 'pending_leave')), 'unfinished_shifts' => count(array_filter($person['days'], fn ($day): bool => in_array($day['status'], ['pending', 'upcoming', 'in_progress'], true))), 'timezone' => $snapshot['timezone'] ?? 'Asia/Jakarta', 'from' => $snapshot['from'], 'to' => $snapshot['to'], 'amount' => min($cap, $raw), 'raw' => $raw, 'cap' => $cap, 'daily' => $daily, 'days' => $days, 'ready' => $snapshot['ready'] && $patternReady];
     }
 
     public function lock(int $month, int $year, array $sources): ?object
@@ -283,6 +312,9 @@ class PayrollAttendanceService
             throw ValidationException::withMessages(['attendance' => 'Perbarui data absensi dan selesaikan seluruh masalah sebelum menyimpan gaji.']);
         }
         $snapshot = $this->payload($period);
+        if (! $this->workPatternsReady($snapshot, $period)) {
+            throw ValidationException::withMessages(['attendance' => 'Pembagi pengupahan belum ditentukan. Periksa jadwal mingguan pegawai, lalu perbarui snapshot absensi.']);
+        }
         $sources = array_map('strval', $sources);
         sort($sources, SORT_STRING);
         if ($sources !== $snapshot['source_employee_ids']) {

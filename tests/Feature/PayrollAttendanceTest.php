@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PayrollAttendanceTest extends TestCase
@@ -76,7 +77,7 @@ class PayrollAttendanceTest extends TestCase
             $key = $date->toDateString();
             $days[] = array_replace(['date' => $key, 'status' => 'present', 'scheduled_minutes' => 540, 'break_minutes' => 60, 'late_minutes' => 0, 'early_minutes' => 0], $changes[$key] ?? []);
         }
-        $snapshot = ['schema_version' => 1, 'monitoring_version' => 1, 'from' => '2026-09-26', 'to' => '2026-10-25', 'timezone' => 'Asia/Jakarta', 'source_employee_ids' => [(string) $employee->id], 'employees' => [['source_employee_id' => (string) $employee->id, 'employee_id' => 19, 'attendance_required' => true, 'days' => $days]], 'issues' => [], 'ready' => true, 'revision' => str_repeat('a', 64)];
+        $snapshot = ['payroll_work_pattern_version' => 1, 'schema_version' => 1, 'monitoring_version' => 1, 'from' => '2026-09-26', 'to' => '2026-10-25', 'timezone' => 'Asia/Jakarta', 'source_employee_ids' => [(string) $employee->id], 'employees' => [['source_employee_id' => (string) $employee->id, 'employee_id' => 19, 'payroll_work_pattern' => ['mode' => 'weekly', 'workdays' => 6, 'divisor' => 25], 'attendance_required' => true, 'days' => $days]], 'issues' => [], 'ready' => true, 'revision' => str_repeat('a', 64)];
 
         return $snapshot;
     }
@@ -101,6 +102,58 @@ class PayrollAttendanceTest extends TestCase
     {
         $this->fake($snapshot);
         $this->post('/billing/gaji/attendance/refresh', ['bulan' => 10, 'tahun' => 2026])->assertRedirect()->assertSessionHasNoErrors();
+    }
+
+    public function test_five_day_pattern_uses_21_and_unconfigured_pattern_blocks_payroll(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $snapshot = $this->snapshot($employee, ['2026-10-01' => ['status' => 'absent']]);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'weekly', 'workdays' => 5, 'divisor' => 21];
+        $this->refresh($employee, $snapshot);
+        $service = app(PayrollAttendanceService::class);
+        $detail = $service->calculate($employee, 10, 2026);
+        $this->assertSame(238095, $detail['daily']);
+        $this->assertSame(238095, $detail['amount']);
+        $this->assertSame(21, $detail['divisor']);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'shift', 'workdays' => null, 'divisor' => null];
+        $this->refresh($employee, $snapshot);
+        $service->clear();
+        $this->assertFalse($service->calculate($employee, 10, 2026)['ready']);
+        $this->expectException(ValidationException::class);
+        $service->lock(10, 2026, [(string) $employee->id]);
+    }
+
+    public function test_legacy_snapshot_requires_refresh_unless_already_locked_with_original_divisor(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $snapshot = $this->snapshot($employee, ['2026-10-01' => ['status' => 'absent']]);
+        unset($snapshot['payroll_work_pattern_version'], $snapshot['employees'][0]['payroll_work_pattern']);
+        $this->refresh($employee, $snapshot);
+        $service = app(PayrollAttendanceService::class);
+        $this->assertFalse($service->calculate($employee, 10, 2026)['ready']);
+        DB::table('payroll_attendance_periods')->update(['lock_attempted_at' => now()]);
+        $service->clear();
+        $detail = $service->calculate($employee, 10, 2026);
+        $this->assertTrue($detail['ready']);
+        $this->assertSame(25, $detail['divisor']);
+        $this->assertSame(200000, $detail['amount']);
+    }
+
+    public function test_inconsistent_workdays_and_divisor_cannot_be_used_for_payroll(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $snapshot = $this->snapshot($employee);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'weekly', 'workdays' => 5, 'divisor' => 25];
+        $this->refresh($employee, $snapshot);
+        $service = app(PayrollAttendanceService::class);
+        $this->assertFalse($service->workPatternsReady($snapshot));
+        $this->assertFalse($service->calculate($employee, 10, 2026)['ready']);
+        $this->get('/billing/gaji?bulan=10&tahun=2026')->assertOk()->assertSee('Pembagi pengupahan belum ditentukan');
+        $this->expectException(ValidationException::class);
+        $service->lock(10, 2026, [(string) $employee->id]);
     }
 
     private function cash(): void

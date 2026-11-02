@@ -96,6 +96,11 @@ class FormGajiController extends Controller
             $snapshot['issues'][] = 'Perbarui snapshot untuk mengaktifkan pantauan berjalan.';
         }
 
+        if ($snapshot && ! $this->payroll->attendance->workPatternsReady($snapshot, $record)) {
+            $snapshot['ready'] = false;
+            $snapshot['issues'][] = 'Pembagi pengupahan belum ditentukan. Periksa jadwal mingguan pegawai, lalu perbarui snapshot absensi.';
+        }
+
         return view('billing.gaji.index', [...$preview,
             'attendanceEnabled' => $this->payroll->attendance->enabled(), 'attendancePeriod' => $record,
             'attendanceDates' => $this->payroll->attendance->dates($period->month, $period->year),

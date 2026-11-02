@@ -53,5 +53,5 @@ body{font-family:DejaVu Sans,sans-serif;font-size:9px;color:#24352f}h1{font-size
 </td></tr>
 @empty<tr><td colspan="5">Tidak ada rincian.</td></tr>@endforelse
 </tbody></table>
-<p class="note">Pembagi upah harian 25. Istirahat dihitung proporsional tanpa jam mulai. Nilai harian dan potongan per hari dibulatkan ke rupiah. Potongan harian di atas sebelum batas 25%; batas diterapkan pada total periode. Jam dalam zona {{ $zone }}. {{ $saved ? 'Dokumen menggunakan rincian yang dibekukan saat gaji disahkan.' : 'Data dapat berubah sampai gaji disahkan.' }}</p>
+<p class="note">Pembagi upah harian {{ array_key_exists('divisor', $detail) ? ($detail['divisor'] ?? 'belum ditentukan') : 25 }}. Istirahat dihitung proporsional tanpa jam mulai. Nilai harian dan potongan per hari dibulatkan ke rupiah. Potongan harian di atas sebelum batas 25%; batas diterapkan pada total periode. Jam dalam zona {{ $zone }}. {{ $saved ? 'Dokumen menggunakan rincian yang dibekukan saat gaji disahkan.' : 'Data dapat berubah sampai gaji disahkan.' }}</p>
 </body></html>

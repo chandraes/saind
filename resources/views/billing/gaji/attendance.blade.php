@@ -1,7 +1,7 @@
 <div class="card border-0 shadow-sm rounded-4 mb-4"><div class="card-body p-3 p-md-4">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
         <div><h5 class="fw-bold mb-1">Potongan Absensi <span class="badge {{ $attendanceEnabled ? 'bg-success' : 'bg-secondary' }}">{{ $attendanceEnabled ? 'Aktif' : 'Nonaktif' }}</span></h5>
-        <p class="small text-muted mb-1">Periode {{ \Carbon\Carbon::parse($attendanceDates['from'])->format('d/m/Y') }}–{{ \Carbon\Carbon::parse($attendanceDates['to'])->format('d/m/Y') }} · pembagi 25 · batas 25% · nilai rupiah bulat.</p>
+        <p class="small text-muted mb-1">Periode {{ \Carbon\Carbon::parse($attendanceDates['from'])->format('d/m/Y') }}–{{ \Carbon\Carbon::parse($attendanceDates['to'])->format('d/m/Y') }} · pembagi 21/25 sesuai pola mingguan · batas 25% · nilai rupiah bulat.</p>
         <p class="small text-muted mb-1">Istirahat dihitung proporsional tanpa jam mulai. Data disimpan di SAIND; membuka rincian tidak menghubungi server absensi.</p>
         <p class="small mb-0">{{ $attendancePeriod?->fetched_at ? 'Terakhir berhasil: '.\Carbon\Carbon::parse($attendancePeriod->fetched_at)->timezone('Asia/Jakarta')->format('d/m/Y H:i').' WIB' : 'Data absensi belum berhasil ditarik.' }} @if(($attendancePeriod?->remote_locked_at || $attendancePeriod?->lock_attempted_at)) · <strong>Periode terkunci. Lanjutkan penyimpanan transaksi yang sama.</strong> @endif</p></div>
         @if($attendanceEnabled && !($attendancePeriod?->remote_locked_at || $attendancePeriod?->lock_attempted_at))
