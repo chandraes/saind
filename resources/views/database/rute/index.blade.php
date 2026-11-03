@@ -47,6 +47,7 @@
             </div>
         </div>
     </div>
+    @include('database.rute.nota-alias')
 </div>
 @endsection
 

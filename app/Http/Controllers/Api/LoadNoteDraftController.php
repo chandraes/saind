@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InspectLoadNoteRequest;
 use App\Http\Requests\StoreLoadNoteDraftRequest;
 use App\Http\Resources\MobileLoadNoteDraftResource;
 use App\Http\Resources\MobileVehicleResource;
 use App\Models\LoadNoteDraft;
 use App\Models\Vehicle;
 use App\Services\LoadNoteDraftService;
+use App\Services\LoadNoteMatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -36,6 +38,12 @@ class LoadNoteDraftController extends Controller
         }
 
         return MobileVehicleResource::collection($query->orderBy('nomor_lambung')->orderBy('id')->paginate(25));
+    }
+
+    public function inspect(InspectLoadNoteRequest $request, LoadNoteMatcher $matcher): JsonResponse
+    {
+        return response()->json(['data' => $matcher->inspect($request->user(), $request->validated()),
+            'decision' => ['accepted' => true, 'action' => 'confirm_vehicle']]);
     }
 
     public function store(StoreLoadNoteDraftRequest $request, LoadNoteDraftService $service): JsonResponse

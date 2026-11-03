@@ -49,11 +49,17 @@ abstract class MobileApiTestCase extends TestCase
             $table->unsignedBigInteger('vendor_id');
             $table->string('nomor_lambung');
             $table->string('status')->default('aktif');
+            $table->unsignedInteger('do_count')->default(0);
             $table->string('no_rekening')->nullable();
             foreach (['nopol', 'tipe', 'tahun', 'nama_stnk', 'no_rangka', 'no_mesin', 'tanggal_pajak_stnk', 'tanggal_kir', 'tanggal_kimper', 'tanggal_sim'] as $field) {
                 $table->string($field)->nullable();
             }
             $table->timestamps();
+        });
+        Schema::create('konfigurasis', function (Blueprint $table): void {
+            $table->id();
+            $table->string('kode');
+            $table->boolean('status')->default(false);
         });
         (require database_path('migrations/2019_12_14_000001_create_personal_access_tokens_table.php'))->up();
     }

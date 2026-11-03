@@ -213,6 +213,20 @@ class UjDitahanBanFlowTest extends TestCase
         return ['vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 1, 'p_vendor' => 1, 'nominal_transaksi' => '300000', 'transfer_ke' => 'Driver', 'bank' => 'BCA', 'no_rekening' => '123', 'nota_muat' => 'NEW', 'tonase' => 30, 'tanggal_muat' => today()->toDateString()];
     }
 
+    #[TestWith(['d-m-Y'])]
+    #[TestWith(['Y-m-d'])]
+    public function test_exit_rejects_dates_outside_shared_backdate_limit_in_both_web_formats(string $format): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 3)->setTime(12, 0));
+        $data = $this->setupExit();
+        DB::table('konfigurasis')->insert(['kode' => 'nota-muat', 'status' => 1]);
+        $data['tanggal_muat'] = today()->subDays(3)->format($format);
+        $this->post(route('kas-uang-jalan.keluar.store'), $data)
+            ->assertSessionHas('error', 'Tanggal muat tidak boleh lebih dari H-2 dari hari ini.');
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+        $this->assertDatabaseCount('transaksis', 1);
+    }
+
     public function test_exit_credits_both_funds_and_gross_cash_in_one_transaction(): void
     {
         $this->post(route('kas-uang-jalan.keluar.store'), $this->setupExit())->assertSessionHas('success');

@@ -16,7 +16,7 @@ class StoreLoadNoteDraftRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $weight = ['required', 'numeric', 'min:0', 'max:1000', 'regex:/^\d{1,4}(?:\.\d{1,3})?$/'];
+        $weight = self::weightRules();
 
         return ['request_id' => ['required', 'uuid'],
             'vehicle_id' => ['required', 'integer', Rule::exists('vehicles', 'id')->where('vendor_id', $this->user()->vendor_id)],
@@ -25,6 +25,12 @@ class StoreLoadNoteDraftRequest extends FormRequest
             'gross_weight' => [...$weight, 'gt:0'], 'tare_weight' => [...$weight, 'lt:gross_weight'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'photo' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192', 'dimensions:max_width=8000,max_height=8000']];
+    }
+
+    /** @return list<string> */
+    public static function weightRules(): array
+    {
+        return ['required', 'numeric', 'min:0', 'max:1000', 'regex:/^\d{1,4}(?:\.\d{1,3})?$/'];
     }
 
     /** @return array<string, string> */

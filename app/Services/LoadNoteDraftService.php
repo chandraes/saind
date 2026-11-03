@@ -52,6 +52,9 @@ class LoadNoteDraftService
                     return [$existing->load('creator:id,name'), false];
                 }
                 $vehicle = Vehicle::whereKey($attributes['vehicle_id'])->where('vendor_id', $user->vendor_id)->lockForUpdate()->firstOrFail();
+                app(LoadNoteRules::class)->assertVehicle($vehicle);
+                app(LoadNoteRules::class)->assertTicket((int) $user->vendor_id, $attributes['ticket_number']);
+                app(LoadNoteDateRule::class)->assertAllowed($attributes['loaded_on']);
                 $path = $photo->storeAs('mobile/load-notes/'.$user->vendor_id, Str::uuid().'.'.$photo->extension(), 'local');
                 if (! is_string($path)) {
                     throw new RuntimeException('Foto nota belum dapat disimpan.');

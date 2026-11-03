@@ -143,4 +143,31 @@ class MobileLoadNoteDraftTest extends MobileApiTestCase
         $this->assertDatabaseCount('load_note_drafts', 1);
         $this->assertCount(1, Storage::disk('local')->allFiles());
     }
+
+    public function test_rechecks_vehicle_status_do_count_and_pending_notes_before_storing_photos(): void
+    {
+        $headers = $this->headers($this->actor());
+        DB::table('vehicles')->where('id', 1)->update(['status' => 'proses']);
+        $this->postJson('/api/v1/load-notes', $this->payload(), $headers)->assertUnprocessable()->assertJsonValidationErrors('vehicle_id');
+        DB::table('vehicles')->where('id', 1)->update(['status' => 'aktif', 'do_count' => 2]);
+        $this->postJson('/api/v1/load-notes', $this->payload(), $headers)->assertUnprocessable()->assertJsonValidationErrors('vehicle_id');
+        $this->assertCount(0, Storage::disk('local')->allFiles());
+        DB::table('vehicles')->where('id', 1)->update(['do_count' => 1]);
+        $this->postJson('/api/v1/load-notes', $this->payload(), $headers)->assertCreated();
+        $next = $this->payload();
+        $next['ticket_number'] = 'SJB-NEXT';
+        $this->postJson('/api/v1/load-notes', $next, $headers)->assertUnprocessable()->assertJsonValidationErrors('vehicle_id');
+        $this->assertDatabaseCount('load_note_drafts', 1);
+        $this->assertCount(1, Storage::disk('local')->allFiles());
+    }
+
+    public function test_store_enforces_backdate_before_photo_storage(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 3)->setTime(12, 0));
+        DB::table('konfigurasis')->insert(['kode' => 'nota-muat', 'status' => 1]);
+        $this->postJson('/api/v1/load-notes', $this->payload(), $this->headers($this->actor()))
+            ->assertUnprocessable()->assertJsonValidationErrors('loaded_on');
+        $this->assertDatabaseCount('load_note_drafts', 0);
+        $this->assertCount(0, Storage::disk('local')->allFiles());
+    }
 }

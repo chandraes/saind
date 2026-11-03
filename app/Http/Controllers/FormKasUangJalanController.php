@@ -21,6 +21,7 @@ use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Models\VendorUangJalan;
 use App\Services\FilterOliRitaseService;
+use App\Services\LoadNoteDateRule;
 use App\Services\UjDitahanBanService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -224,7 +225,7 @@ class FormKasUangJalanController extends Controller
 
             'nota_muat' => 'required',
             'tonase' => 'required|numeric',
-            'tanggal_muat' => 'required',
+            'tanggal_muat' => 'required|date_format:d-m-Y,Y-m-d',
             'gross_muat' => 'nullable|numeric',
             'tarra_muat' => 'nullable|numeric',
         ]);
@@ -245,20 +246,12 @@ class FormKasUangJalanController extends Controller
             $data['tarra_muat'] = str_replace(',', '.', $data['tarra_muat']);
         }
 
-        $konfigurasi = Konfigurasi::where('kode', 'nota-muat')->first()->status ?? 0;
-
-        if ($konfigurasi == 1) {
-            // check if tanggal muat is older than 2 day from today, if true then return error
-            $tanggalMuat = strtotime($data['tanggal_muat']);
-            $today = strtotime(date('Y-m-d'));
-
-            $diff = $today - $tanggalMuat;
-            $diff = $diff / (60 * 60 * 24);
-
-            if ($diff > 2) {
-                return redirect()->back()->withInput()->with('error', 'Tanggal muat tidak boleh lebih dari H-2 dari hari ini!!');
-            }
-
+        $dateFormat = preg_match('/^\d{4}-/', $data['tanggal_muat']) ? 'Y-m-d' : 'd-m-Y';
+        $data['tanggal_muat'] = Carbon::createFromFormat('!'.$dateFormat, $data['tanggal_muat'])->format('Y-m-d');
+        try {
+            app(LoadNoteDateRule::class)->assertAllowed($data['tanggal_muat'], 'tanggal_muat');
+        } catch (ValidationException $exception) {
+            return back()->withInput()->with('error', $exception->validator->errors()->first());
         }
 
         $customerTagihan = CustomerTagihan::where('customer_id', $data['customer_id'])->where('rute_id', $data['rute_id'])->first();

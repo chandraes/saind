@@ -389,7 +389,7 @@
         // Datepicker
         $( "#tanggal_muat" ).datepicker({
             dateFormat: "dd-mm-yy",
-            minDate: {{$konfigurasi}} == 1 ? -2 : null,
+            minDate: {{$konfigurasi}} == 1 ? -{{ max(0, (int) config('mobile.load_note_rules.backdate_days', 2)) }} : null,
             maxDate: 0
         }).attr('readonly', 'readonly');
 

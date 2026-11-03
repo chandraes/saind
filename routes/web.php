@@ -320,6 +320,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::get('/vendor/biodata-vendor/{id}', [VendorController::class, 'biodata_vendor'])->name('uj.vendor.biodata-vendor');
 
+        Route::post('rute/{rute}/nota-alias', [RuteController::class, 'storeAlias'])->name('rute.nota-alias.store');
+        Route::delete('rute/{rute}/nota-alias/{alias}', [RuteController::class, 'destroyAlias'])->name('rute.nota-alias.destroy');
         Route::resource('rute', RuteController::class)->only([
             'index', 'store', 'update', 'destroy',
         ]);
