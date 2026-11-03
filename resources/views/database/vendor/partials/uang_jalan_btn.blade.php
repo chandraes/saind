@@ -3,7 +3,7 @@
 </button>
 
 <div class="modal fade" id="modal-uang{{$d->id}}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId{{$d->id}}" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg" role="document">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl" role="document">
         <div class="modal-content text-start">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalTitleId{{$d->id}}">Kesepakatan Uang Jalan - {{ $d->nama }}</h5>
@@ -13,12 +13,13 @@
                 @if ($d->vendor_uang_jalan->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle mb-0">
-                        <thead class="table-dark text-center">
+                        <thead class="table-success text-center">
                             <tr>
                                 <th style="width: 5%;">No</th>
                                 <th>Rute</th>
-                                <th style="width: 30%;">Harga Uang Jalan</th>
-                                <th style="width: 30%;">UJ Ditahan</th>
+                                <th class="text-nowrap">Harga Uang Jalan</th>
+                                <th class="text-nowrap">UJ Ditahan Sparepart</th>
+                                <th class="text-nowrap">UJ Ditahan Ban</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -27,7 +28,8 @@
                                 <td class="text-center fw-bold">{{$loop->iteration}}</td>
                                 <td>{{$item->rute ? $item->rute->nama : '-'}}</td>
                                 <td class="text-end">Rp. {{number_format($item->hk_uang_jalan, 0, ',', '.')}}</td>
-                                <td class="text-end">Rp. {{number_format($item->uj_ditahan ?? 0, 0, ',', '.')}}</td>
+                                <td class="text-end text-nowrap">Rp. {{number_format($item->uj_ditahan ?? 0, 0, ',', '.')}}</td>
+                                <td class="text-end text-nowrap">Rp. {{number_format($item->uj_ditahan_ban ?? 0, 0, ',', '.')}}</td>
                             </tr>
                             @endforeach
                         </tbody>

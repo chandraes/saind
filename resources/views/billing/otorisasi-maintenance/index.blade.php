@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    @include('swal')
+    @include('billing.form-maintenance.filter-oli.feedback')
 
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
@@ -42,6 +42,8 @@
                                 <td>
                                     @if($item->pembayaran === \App\Models\BanGantiInvoice::PEMBAYARAN_KAS_BESAR)
                                         <span class="badge bg-primary fs-7">Kas Besar</span>
+                                    @elseif($item->pembayaran === \App\Models\BanGantiInvoice::PEMBAYARAN_UJ_DITAHAN_BAN)
+                                        <span class="badge bg-success fs-7">UJ Ditahan Ban</span><div class="small text-muted mt-1">Saldo: Rp {{ number_format($item->saldo_uj_ditahan_ban, 0, ',', '.') }}</div>
                                     @else
                                         <span class="badge bg-secondary fs-7">Dibayar Sendiri</span>
                                     @endif
@@ -55,6 +57,7 @@
                                         <a href="{{ route('rekap.maintenance.ban-luar.show', $item->id) }}" class="btn btn-sm btn-outline-secondary">
                                             <i class="fa fa-eye"></i> Detail
                                         </a>
+                                        @if(in_array(auth()->user()->role, ['admin', 'su'], true))
                                         <form action="{{ route('billing.otorisasi-maintenance.ban-luar.approve', $item->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="button"
@@ -63,12 +66,15 @@
                                                 <i class="fa fa-check"></i> Approve
                                             </button>
                                         </form>
+                                        @endif
+                                        @if(in_array(auth()->user()->role, ['admin', 'su'], true))
                                         <form action="{{ route('billing.otorisasi-maintenance.ban-luar.reject', $item->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="button" class="btn btn-sm btn-danger btn-reject">
                                                 <i class="fa fa-times"></i> Reject
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -107,12 +113,13 @@
                         Terdapat ban yang akan diganti dengan ritase di bawah 80:
                         <ul class="mb-0 mt-1 ps-3">
                 `;
+                const escape = value => $('<div>').text(value ?? '').html();
                 lowRitase.forEach(item => {
-                    htmlContent += `<li><b>${item.posisi}</b> (${item.merk} - ${item.no_seri}): <span class="badge bg-danger">${item.ritase} Ritase</span></li>`;
+                    htmlContent += `<li><b>${escape(item.posisi)}</b> (${escape(item.merk)} - ${escape(item.no_seri)}): <span class="badge bg-danger">${escape(item.ritase)} Ritase</span></li>`;
                 });
                 htmlContent += `</ul></div><p class="mb-0">Apakah Anda yakin ingin menyetujui invoice ini?</p>`;
             } else {
-                htmlContent = '<p class="mb-0">Saldo Kas Besar (jika ada) akan dipotong dan Log Ban akan diperbarui secara permanen.</p>';
+                htmlContent = '<p class="mb-0">Saldo sesuai metode pembayaran akan dipotong dan Log Ban akan diperbarui secara permanen.</p>';
             }
 
             Swal.fire({

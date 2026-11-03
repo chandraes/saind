@@ -84,6 +84,8 @@ class FilterOliGantiTest extends TestCase
         }
         (require database_path('migrations/2026_10_04_094812_create_kategori_filter_oli_mesins_table.php'))->up();
         foreach ([
+            '2026_08_07_071658_create_uj_ditahans_table.php',
+            '2026_08_07_071708_create_uj_ditahan_details_table.php',
             '2026_10_04_103058_create_filter_oli_logs_table.php',
             '2026_10_04_103100_create_filter_oli_ganti_carts_table.php',
             '2026_10_04_103101_create_filter_oli_ganti_invoices_table.php',
@@ -372,7 +374,7 @@ class FilterOliGantiTest extends TestCase
         $this->assertDatabaseCount('transaksis', 0);
     }
 
-    public function test_replacement_warnings_loop_latest_categories_with_one_or_less_rit_remaining(): void
+    public function test_replacement_warnings_loop_latest_categories_with_two_or_less_rit_remaining(): void
     {
         $this->loginAs('admin');
         $vehicle = $this->vehicle();
@@ -386,7 +388,7 @@ class FilterOliGantiTest extends TestCase
         }
         KategoriFilterOliMesin::factory()->create(['nama' => 'Filter Belum Ada']);
         $this->transaction($vehicle, 100, now());
-        $this->assertSame("Ganti *Filter Satu\nSisa 1 ritase*\n\nGanti *Filter Setengah\nSisa 0,5 ritase*\n\nGanti *Filter Nol\nSisa 0 ritase*\n\nGanti *Filter Lebih\nSisa -1 ritase*\n\nGanti *Filter Lebih Setengah\nSisa -1,5 ritase*\n\n", app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
+        $this->assertSame("Ganti *Filter Satu\nSisa 1 ritase*\n\nGanti *Filter Setengah\nSisa 0,5 ritase*\n\nGanti *Filter Nol\nSisa 0 ritase*\n\nGanti *Filter Lebih\nSisa -1 ritase*\n\nGanti *Filter Lebih Setengah\nSisa -1,5 ritase*\n\nGanti *Filter Aman\nSisa 1,5 ritase*\n\n", app(FilterOliRitaseService::class)->replacementWarnings(Vehicle::findOrFail($vehicle)));
     }
 
     public function test_replacement_warning_is_empty_when_vehicle_restriction_is_off(): void
@@ -473,6 +475,10 @@ class FilterOliGantiTest extends TestCase
 
     private function prepareVoidTables(): void
     {
+        foreach (['2026_10_29_102252_create_uj_ditahan_bans_table.php', '2026_10_29_102253_create_uj_ditahan_ban_details_table.php'] as $file) {
+            (require database_path('migrations/'.$file))->up();
+        }
+
         Schema::table('kas_uang_jalans', function (Blueprint $table): void {
             $table->unsignedBigInteger('vehicle_id')->nullable()->change();
             $table->unsignedBigInteger('rute_id')->nullable()->change();
@@ -508,10 +514,7 @@ class FilterOliGantiTest extends TestCase
                 $table->string('untuk');
             });
         }
-        Schema::create('uj_ditahan_details', function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('transaksi_id');
-        });
+
         Schema::create('ban_logs', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('vehicle_id');
@@ -615,15 +618,20 @@ class FilterOliGantiTest extends TestCase
         return Transaksi::factory()->create(['kas_uang_jalan_id' => $kujId, 'void' => $void, 'created_at' => $date]);
     }
 
-    private function checkoutData(FilterOliGantiCart $cart): array
+    private function checkoutData(FilterOliGantiCart $cart, string $payment = 'dibayar_sendiri'): array
     {
-        return ['vehicle_id' => $cart->vehicle_id, 'pembayaran' => 'dibayar_sendiri',
+        $data = ['vehicle_id' => $cart->vehicle_id, 'pembayaran' => $payment,
             'items' => [$cart->id => ['tanggal_ganti' => today()->subDays(3)->format('Y-m-d')]]];
+        if ($payment === 'uj_ditahan') {
+            $data += ['total_nominal' => 500000, 'nama_bank' => 'BCA', 'nomor_rekening' => '0123456', 'nama_rekening' => 'Vendor'];
+        }
+
+        return $data;
     }
 
     public function test_checkout_waits_for_approval_and_keeps_selected_date_and_limit(): void
     {
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $limit = $cart->kategori->limit_ritase;
         $data = $this->checkoutData($cart);
@@ -637,7 +645,8 @@ class FilterOliGantiTest extends TestCase
         $this->assertSame($data['items'][$cart->id]['tanggal_ganti'], $invoice->details->first()->created_at->format('Y-m-d'));
         KategoriFilterOliMesin::whereKey($cart->kategori_filter_oli_mesin_id)->update(['limit_ritase' => 999]);
         $admin = $this->loginAs('admin');
-        $this->get(route('billing.otorisasi-maintenance.filter-oli'))->assertSee($invoice->no_invoice)->assertSee('table-success', false);
+        $this->get(route('billing.otorisasi-maintenance.filter-oli'))->assertSee('table-success', false);
+        $this->getJson(route('billing.otorisasi-maintenance.filter-oli'), ['X-Requested-With' => 'XMLHttpRequest'])->assertJsonPath('data.0.no_invoice', $invoice->no_invoice);
         $this->post(route('billing.otorisasi-maintenance.filter-oli.approve', $invoice->id))->assertSessionHas('success');
         $log = FilterOliLog::firstOrFail();
         $this->assertSame(999, $log->kategori->limit_ritase);
@@ -652,7 +661,7 @@ class FilterOliGantiTest extends TestCase
 
     public function test_reject_does_not_create_history_or_debit_cash(): void
     {
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $this->post(route('billing.form-maintenance.filter-oli.checkout'), $this->checkoutData($cart));
         $invoice = FilterOliGantiInvoice::firstOrFail();
@@ -685,7 +694,7 @@ class FilterOliGantiTest extends TestCase
         $user = $this->loginAs();
         $ownCart = $this->cart($user, $this->vehicle());
         $this->delete(route('billing.form-maintenance.filter-oli.cart.delete', $cart->id))->assertNotFound();
-        $this->post(route('billing.form-maintenance.filter-oli.checkout'), $this->checkoutData($cart))->assertSessionHasErrors('items');
+        $this->post(route('billing.form-maintenance.filter-oli.checkout'), $this->checkoutData($cart, 'uj_ditahan'))->assertSessionHasErrors('items');
         $this->assertDatabaseCount('filter_oli_ganti_invoices', 0);
         $this->delete(route('billing.form-maintenance.filter-oli.cart.clear'))->assertSessionHas('success');
         $this->assertModelExists($cart);
@@ -696,7 +705,7 @@ class FilterOliGantiTest extends TestCase
     {
         $user = $this->loginAs();
         $cart = $this->cart($user, $this->vehicle());
-        $data = $this->checkoutData($cart);
+        $data = $this->checkoutData($cart, 'uj_ditahan');
         $data['items'][$cart->id]['tanggal_ganti'] = today()->addDay()->format('Y-m-d');
         $this->post(route('billing.form-maintenance.filter-oli.checkout'), $data)->assertSessionHasErrors('items.'.$cart->id.'.tanggal_ganti');
         $this->post(route('billing.form-maintenance.filter-oli.cart.add'), [
@@ -720,8 +729,7 @@ class FilterOliGantiTest extends TestCase
 
     public function test_kas_besar_approval_debits_once_and_records_vendor_debt(): void
     {
-        config(['maintenance.filter_oli.kas_besar_enabled' => true]);
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $data = array_replace($this->checkoutData($cart), ['pembayaran' => 'kas_besar', 'total_nominal' => 500000,
             'nama_bank' => 'BCA', 'nomor_rekening' => '0123456', 'nama_rekening' => 'Vendor']);
@@ -739,8 +747,7 @@ class FilterOliGantiTest extends TestCase
 
     public function test_insufficient_cash_rolls_back_logs_and_authorization(): void
     {
-        config(['maintenance.filter_oli.kas_besar_enabled' => true]);
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $data = array_replace($this->checkoutData($cart), ['pembayaran' => 'kas_besar', 'total_nominal' => 500000,
             'nama_bank' => 'BCA', 'nomor_rekening' => '0123456', 'nama_rekening' => 'Vendor']);
@@ -759,8 +766,7 @@ class FilterOliGantiTest extends TestCase
 
     public function test_checkout_requires_bank_details_and_exact_cart_items(): void
     {
-        config(['maintenance.filter_oli.kas_besar_enabled' => true]);
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $data = $this->checkoutData($cart);
         $data['pembayaran'] = 'kas_besar';
@@ -775,7 +781,7 @@ class FilterOliGantiTest extends TestCase
 
     public function test_each_item_preserves_its_own_date_brand_condition_and_ritase(): void
     {
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $first = $this->cart($user, $this->vehicle());
         $second = FilterOliGantiCart::factory()->create([
             'user_id' => $user->id, 'vehicle_id' => $first->vehicle_id,
@@ -803,7 +809,7 @@ class FilterOliGantiTest extends TestCase
         $this->post(route('billing.otorisasi-maintenance.filter-oli.reject', 999))->assertNotFound();
     }
 
-    public function test_kas_besar_is_hidden_and_rejected_until_enabled(): void
+    public function test_user_kas_besar_is_rejected_but_admin_sees_all_methods(): void
     {
         $user = $this->loginAs();
         $cart = $this->cart($user, $this->vehicle());
@@ -815,13 +821,14 @@ class FilterOliGantiTest extends TestCase
         $this->post(route('billing.form-maintenance.filter-oli.checkout'), $data)->assertSessionHasErrors('pembayaran');
         $this->assertModelExists($cart);
         $this->assertDatabaseCount('filter_oli_ganti_invoices', 0);
-        config(['maintenance.filter_oli.kas_besar_enabled' => true]);
-        $this->get(route('billing.form-maintenance.filter-oli.confirm'))->assertSee('value="kas_besar"', false);
+        $user->update(['role' => 'admin']);
+        $this->actingAs($user->fresh());
+        $this->get(route('billing.form-maintenance.filter-oli.confirm'))->assertSee('value="kas_besar"', false)->assertSee('value="dibayar_sendiri"', false);
     }
 
     public function test_authorization_detail_compares_previous_replacement_and_locks_after_approval(): void
     {
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         FilterOliLog::factory()->create([
             'vehicle_id' => $cart->vehicle_id, 'kategori_filter_oli_mesin_id' => $cart->kategori_filter_oli_mesin_id,
@@ -831,8 +838,10 @@ class FilterOliGantiTest extends TestCase
         $invoice = FilterOliGantiInvoice::firstOrFail();
         $detail = $invoice->details->first();
         $this->loginAs('admin');
-        $this->get(route('billing.otorisasi-maintenance.filter-oli'))
-            ->assertSee('Approve')->assertSee('Reject')->assertSee(route('billing.otorisasi-maintenance.filter-oli.show', $invoice->id));
+        $row = $this->getJson(route('billing.otorisasi-maintenance.filter-oli'), ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()->json('data.0.actions');
+        $this->assertStringContainsString('Approve', $row);
+        $this->assertStringContainsString('Reject', $row);
+        $this->assertStringContainsString(route('billing.otorisasi-maintenance.filter-oli.show', $invoice->id), $row);
         $this->get(route('billing.otorisasi-maintenance.filter-oli.show', $invoice->id))
             ->assertSee('Merek Sebelumnya')->assertSee('LAMA (DIGANTI)')->assertSee('BARU (DIPASANG)');
         $data = ['merk' => 'Merek Direvisi', 'kondisi' => 80, 'tanggal_ganti' => today()->subDays(2)->format('Y-m-d')];
@@ -882,7 +891,7 @@ class FilterOliGantiTest extends TestCase
     public function test_short_invoice_and_backdated_replacement_count_only_valid_vehicle_transactions(): void
     {
         $this->travelTo(today()->setTime(12, 0));
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $from = today()->subDays(3);
         $half = $this->transaction($cart->vehicle_id, 50, $from);
@@ -916,7 +925,7 @@ class FilterOliGantiTest extends TestCase
     public function test_editing_date_recalculates_and_approval_includes_later_transactions(): void
     {
         $this->travelTo(today()->setTime(12, 0));
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $old = $this->transaction($cart->vehicle_id, 80, today()->subDay());
         $current = $this->transaction($cart->vehicle_id, 50, today()->setTime(9, 0));
@@ -941,7 +950,7 @@ class FilterOliGantiTest extends TestCase
     public function test_new_transactions_and_void_changes_keep_log_and_audit_in_sync(): void
     {
         $this->travelTo(today()->setTime(12, 0));
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $cart = $this->cart($user, $this->vehicle());
         $this->post(route('billing.form-maintenance.filter-oli.checkout'), $this->checkoutData($cart));
         $invoice = FilterOliGantiInvoice::firstOrFail();
@@ -963,7 +972,7 @@ class FilterOliGantiTest extends TestCase
     public function test_successive_replacements_allocate_each_transaction_to_its_own_period(): void
     {
         $this->travelTo(today()->setTime(12, 0));
-        $user = $this->loginAs();
+        $user = $this->loginAs('admin');
         $vehicleId = $this->vehicle();
         $category = KategoriFilterOliMesin::factory()->create();
         $older = FilterOliLog::factory()->create(['vehicle_id' => $vehicleId, 'kategori_filter_oli_mesin_id' => $category->id, 'created_at' => today()->subDays(10)]);

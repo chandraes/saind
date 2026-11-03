@@ -12,9 +12,11 @@ use App\Services\PayrollAttendanceService;
 use App\Services\PayrollService;
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PayrollAttendanceTest extends TestCase
@@ -46,6 +48,7 @@ class PayrollAttendanceTest extends TestCase
             (require database_path('migrations/'.$migration))->up();
         }
         (require glob(database_path('migrations/*_create_bpjs_health_minimums_table.php'))[0])->up();
+        (require glob(database_path('migrations/*_add_sync_monitoring_to_payroll_attendance_periods_table.php'))[0])->up();
         foreach (range(2020, 2030) as $year) {
             DB::table('bpjs_health_minimums')->insert(['year' => $year, 'minimum_wage' => 1, 'basis' => 'UMK', 'reference' => 'Fixture pengujian']);
         }
@@ -74,7 +77,7 @@ class PayrollAttendanceTest extends TestCase
             $key = $date->toDateString();
             $days[] = array_replace(['date' => $key, 'status' => 'present', 'scheduled_minutes' => 540, 'break_minutes' => 60, 'late_minutes' => 0, 'early_minutes' => 0], $changes[$key] ?? []);
         }
-        $snapshot = ['schema_version' => 1, 'monitoring_version' => 1, 'from' => '2026-09-26', 'to' => '2026-10-25', 'timezone' => 'Asia/Jakarta', 'source_employee_ids' => [(string) $employee->id], 'employees' => [['source_employee_id' => (string) $employee->id, 'employee_id' => 19, 'attendance_required' => true, 'days' => $days]], 'issues' => [], 'ready' => true, 'revision' => str_repeat('a', 64)];
+        $snapshot = ['payroll_work_pattern_version' => 1, 'schema_version' => 1, 'monitoring_version' => 1, 'from' => '2026-09-26', 'to' => '2026-10-25', 'timezone' => 'Asia/Jakarta', 'source_employee_ids' => [(string) $employee->id], 'employees' => [['source_employee_id' => (string) $employee->id, 'employee_id' => 19, 'payroll_work_pattern' => ['mode' => 'weekly', 'workdays' => 6, 'divisor' => 25], 'attendance_required' => true, 'days' => $days]], 'issues' => [], 'ready' => true, 'revision' => str_repeat('a', 64)];
 
         return $snapshot;
     }
@@ -99,6 +102,58 @@ class PayrollAttendanceTest extends TestCase
     {
         $this->fake($snapshot);
         $this->post('/billing/gaji/attendance/refresh', ['bulan' => 10, 'tahun' => 2026])->assertRedirect()->assertSessionHasNoErrors();
+    }
+
+    public function test_five_day_pattern_uses_21_and_unconfigured_pattern_blocks_payroll(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $snapshot = $this->snapshot($employee, ['2026-10-01' => ['status' => 'absent']]);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'weekly', 'workdays' => 5, 'divisor' => 21];
+        $this->refresh($employee, $snapshot);
+        $service = app(PayrollAttendanceService::class);
+        $detail = $service->calculate($employee, 10, 2026);
+        $this->assertSame(238095, $detail['daily']);
+        $this->assertSame(238095, $detail['amount']);
+        $this->assertSame(21, $detail['divisor']);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'shift', 'workdays' => null, 'divisor' => null];
+        $this->refresh($employee, $snapshot);
+        $service->clear();
+        $this->assertFalse($service->calculate($employee, 10, 2026)['ready']);
+        $this->expectException(ValidationException::class);
+        $service->lock(10, 2026, [(string) $employee->id]);
+    }
+
+    public function test_legacy_snapshot_requires_refresh_unless_already_locked_with_original_divisor(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $snapshot = $this->snapshot($employee, ['2026-10-01' => ['status' => 'absent']]);
+        unset($snapshot['payroll_work_pattern_version'], $snapshot['employees'][0]['payroll_work_pattern']);
+        $this->refresh($employee, $snapshot);
+        $service = app(PayrollAttendanceService::class);
+        $this->assertFalse($service->calculate($employee, 10, 2026)['ready']);
+        DB::table('payroll_attendance_periods')->update(['lock_attempted_at' => now()]);
+        $service->clear();
+        $detail = $service->calculate($employee, 10, 2026);
+        $this->assertTrue($detail['ready']);
+        $this->assertSame(25, $detail['divisor']);
+        $this->assertSame(200000, $detail['amount']);
+    }
+
+    public function test_inconsistent_workdays_and_divisor_cannot_be_used_for_payroll(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $snapshot = $this->snapshot($employee);
+        $snapshot['employees'][0]['payroll_work_pattern'] = ['mode' => 'weekly', 'workdays' => 5, 'divisor' => 25];
+        $this->refresh($employee, $snapshot);
+        $service = app(PayrollAttendanceService::class);
+        $this->assertFalse($service->workPatternsReady($snapshot));
+        $this->assertFalse($service->calculate($employee, 10, 2026)['ready']);
+        $this->get('/billing/gaji?bulan=10&tahun=2026')->assertOk()->assertSee('Pembagi pengupahan belum ditentukan');
+        $this->expectException(ValidationException::class);
+        $service->lock(10, 2026, [(string) $employee->id]);
     }
 
     private function cash(): void
@@ -407,7 +462,7 @@ class PayrollAttendanceTest extends TestCase
         $this->assertNull($period->sealed_at);
         $this->cash();
         $revision = app(PayrollService::class)->revision(10, 2026);
-        $this->post('/billing/gaji/store', ['bulan' => 10, 'tahun' => 2026, 'payroll_revision' => $revision])->assertSessionHasErrors('attendance');
+        $this->post('/billing/gaji/store', ['bulan' => 10, 'tahun' => 2026, 'payroll_revision' => $revision])->assertSessionHasErrors('bulan');
         $this->assertSame(0, RekapGaji::count());
         Http::assertSentCount(2);
     }
@@ -436,5 +491,133 @@ class PayrollAttendanceTest extends TestCase
         $this->refresh($employee, $snapshot);
         $this->assertSame(0, $service->calculate($employee, 10, 2026)['amount']);
         Http::assertSentCount(1);
+    }
+
+    public function test_automatic_snapshot_respects_interval_and_manual_refresh_remains_available(): void
+    {
+        $employee = $this->employee();
+        $this->fake($this->snapshot($employee));
+        config(['attendance.payroll_auto_sync' => true]);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(1);
+        $period = DB::table('payroll_attendance_periods')->sole();
+        $this->assertSame('automatic', $period->sync_source);
+        $this->assertSame(0, $period->sync_failures);
+        $this->assertSame('2026-10-31 10:15:00', $period->next_sync_at);
+        $this->travel(15)->minutes();
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(2);
+        $this->login();
+        $this->post('/billing/gaji/attendance/refresh', ['bulan' => 10, 'tahun' => 2026])->assertSessionHasNoErrors();
+        Http::assertSentCount(3);
+        $this->assertSame('manual', DB::table('payroll_attendance_periods')->sole()->sync_source);
+        $this->assertSame(0, RekapGaji::count());
+        $this->assertSame(0, KasBesar::count());
+    }
+
+    public function test_failed_automatic_refresh_keeps_snapshot_and_retries_with_backoff(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $this->refresh($employee, $this->snapshot($employee));
+        $before = DB::table('payroll_attendance_periods')->sole()->snapshot;
+        config(['attendance.payroll_auto_sync' => true]);
+        $this->fakeStatus = 503;
+        $this->travel(15)->minutes();
+        $this->artisan('attendance:refresh-payroll')->assertFailed();
+        $failed = DB::table('payroll_attendance_periods')->sole();
+        $this->assertSame($before, $failed->snapshot);
+        $this->assertSame(1, $failed->sync_failures);
+        $this->assertSame('2026-10-31 10:20:00', $failed->next_sync_at);
+        $this->assertNotEmpty($failed->sync_last_error);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        Http::assertSentCount(2);
+        $this->travel(5)->minutes();
+        $this->artisan('attendance:refresh-payroll')->assertFailed();
+        $this->assertSame('2026-10-31 10:30:00', DB::table('payroll_attendance_periods')->sole()->next_sync_at);
+        $this->travel(10)->minutes();
+        $this->fakeStatus = 200;
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        $recovered = DB::table('payroll_attendance_periods')->sole();
+        $this->assertSame(0, $recovered->sync_failures);
+        $this->assertNull($recovered->sync_last_error);
+        $this->assertSame(1, DB::table('payroll_attendance_periods')->count());
+        $this->assertSame(0, RekapGaji::count());
+    }
+
+    public function test_first_sync_failure_can_be_viewed_and_retried_without_duplicate_periods(): void
+    {
+        $employee = $this->employee();
+        $this->fake($this->snapshot($employee));
+        config(['attendance.payroll_auto_sync' => true]);
+        $this->fakeStatus = 503;
+        $this->artisan('attendance:refresh-payroll')->assertFailed();
+        $this->login();
+        $this->get('/billing/gaji?bulan=10&tahun=2026')->assertOk()->assertSee('Pembaruan terakhir gagal');
+        $this->assertFalse(app(PayrollAttendanceService::class)->calculate($employee, 10, 2026)['ready']);
+        $this->fakeStatus = 200;
+        $this->post('/billing/gaji/attendance/refresh', ['bulan' => 10, 'tahun' => 2026])->assertSessionHasNoErrors();
+        $this->assertSame(1, DB::table('payroll_attendance_periods')->count());
+        $this->assertNotNull(DB::table('payroll_attendance_periods')->sole()->snapshot);
+    }
+
+    public function test_automatic_refresh_skips_disabled_integrations_and_active_payroll_transactions(): void
+    {
+        $employee = $this->employee();
+        $this->fake($this->snapshot($employee));
+        config(['attendance.payroll_auto_sync' => false]);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        config(['attendance.payroll_auto_sync' => true, 'attendance.enabled' => false]);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        config(['attendance.enabled' => true]);
+        DB::table('payroll_attendance_settings')->where('id', 1)->update(['enabled' => false]);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        DB::table('payroll_attendance_settings')->where('id', 1)->update(['enabled' => true]);
+        $lock = Cache::lock('payroll-generation', 300);
+        $lock->get();
+        try {
+            $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        } finally {
+            $lock->release();
+        }
+        Http::assertNothingSent();
+        $this->assertSame(0, DB::table('payroll_attendance_periods')->count());
+    }
+
+    public function test_automatic_refresh_never_changes_a_locked_period(): void
+    {
+        $this->login();
+        $employee = $this->employee();
+        $this->refresh($employee, $this->snapshot($employee));
+        config(['attendance.payroll_auto_sync' => true]);
+        $before = DB::table('payroll_attendance_periods')->sole()->snapshot;
+        foreach (['lock_attempted_at', 'remote_locked_at', 'sealed_at'] as $field) {
+            DB::table('payroll_attendance_periods')->update(['lock_attempted_at' => null, 'remote_locked_at' => null, 'sealed_at' => null, $field => now(), 'next_sync_at' => now()->subMinute()]);
+            $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+            $this->assertSame($before, DB::table('payroll_attendance_periods')->sole()->snapshot);
+        }
+        Http::assertSentCount(1);
+    }
+
+    public function test_automatic_refresh_selects_the_same_next_period_as_the_payroll_preview(): void
+    {
+        $employee = $this->employee();
+        RekapGaji::create(['bulan' => 10, 'tahun' => 2026, 'uraian' => 'Sudah dibayar', 'total' => 0]);
+        $snapshot = $this->snapshot($employee);
+        $snapshot['from'] = '2026-10-26';
+        $snapshot['to'] = '2026-11-25';
+        $snapshot['ready'] = false;
+        $snapshot['employees'][0]['days'] = [];
+        for ($date = Carbon::parse($snapshot['from']); $date->toDateString() <= $snapshot['to']; $date->addDay()) {
+            $snapshot['employees'][0]['days'][] = ['date' => $date->toDateString(), 'status' => 'upcoming', 'scheduled_minutes' => 540, 'break_minutes' => 60, 'late_minutes' => 0, 'early_minutes' => 0];
+        }
+        $this->fake($snapshot);
+        config(['attendance.payroll_auto_sync' => true]);
+        $this->artisan('attendance:refresh-payroll')->assertSuccessful();
+        $this->assertDatabaseHas('payroll_attendance_periods', ['year' => 2026, 'month' => 11]);
+        $this->assertDatabaseMissing('payroll_attendance_periods', ['year' => 2026, 'month' => 10]);
+        Http::assertSent(fn ($request): bool => $request['from'] === '2026-10-26' && ! isset($request['request_id']));
+        $this->assertSame(1, RekapGaji::count());
     }
 }

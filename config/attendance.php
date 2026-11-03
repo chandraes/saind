@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'payroll_auto_sync' => env('ATTENDANCE_PAYROLL_AUTO_SYNC', false),
     'enabled' => env('ATTENDANCE_ENABLED', false),
     'url' => env('ATTENDANCE_URL'),
     'token' => env('ATTENDANCE_TOKEN'),

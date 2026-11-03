@@ -1,5 +1,9 @@
 
-@if (session('success'))
+@if (session('warning'))
+<script>
+    Swal.fire({title: 'Perhatian', text: @json(session('warning')), icon: 'warning'});
+</script>
+@elseif (session('success'))
 <script>
     Swal.fire({
         title: 'Berhasil!',

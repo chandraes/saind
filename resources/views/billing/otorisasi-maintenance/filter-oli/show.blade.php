@@ -15,6 +15,7 @@
     </div>
 
     @include('billing.form-maintenance.filter-oli.feedback')
+    @include('billing.form-maintenance.uj-ditahan-summary')
 
     <!-- ROW 1: INFORMASI KENDARAAN & STATUS PEMBAYARAN (KIRI - KANAN) -->
     <div class="row g-3 mb-4">
@@ -72,12 +73,14 @@
                             <td class="text-end">
                                 @if($invoice->pembayaran === 'kas_besar')
                                 <span class="badge bg-primary fs-7">Kas Besar</span>
-                                @else
+                                    @elseif($invoice->pembayaran === 'uj_ditahan')
+                                        <span class="badge bg-success fs-7">UJ Ditahan Sparepart</span>
+                                    @else
                                 <span class="badge bg-secondary fs-7">Dibayar Sendiri</span>
                                 @endif
                             </td>
                         </tr>
-                        @if($invoice->pembayaran === 'kas_besar')
+                        @if(in_array($invoice->pembayaran, ['kas_besar', 'uj_ditahan'], true))
                         <tr>
                             <td class="text-muted">Total Nominal</td>
                             <td class="fw-bold text-success text-end fs-6">

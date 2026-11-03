@@ -85,7 +85,7 @@ class FilterOliRitaseService
                 continue;
             }
             $remaining = $category->limit_ritase - (float) $log->ritase;
-            if ($remaining <= 1) {
+            if ($remaining <= 2) {
                 $remaining = rtrim(rtrim(number_format($remaining, 1, ',', ''), '0'), ',');
                 $message .= "Ganti *{$category->nama}\nSisa {$remaining} ritase*\n\n";
             }

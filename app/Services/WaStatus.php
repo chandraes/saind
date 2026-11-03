@@ -2,24 +2,22 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-
 class WaStatus
 {
     private $apikey;
 
-    function __construct()
+    public function __construct()
     {
-        $this->apikey = env('STARSENDER_KEY');
+        $this->apikey = config('services.starsender.key');
     }
 
     public function getStatusWa()
     {
-        $apikey=$this->apikey;
+        $apikey = $this->apikey;
 
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://starsender.online/api/v1/getDevice',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -28,10 +26,10 @@ class WaStatus
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => array(
-                'apikey: '.$apikey
-            ),
-        ));
+            CURLOPT_HTTPHEADER => [
+                'apikey: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 
@@ -49,11 +47,11 @@ class WaStatus
 
     public function getRelog()
     {
-        $apikey=$this->apikey;
+        $apikey = $this->apikey;
 
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://starsender.online/api/relogDevice',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -62,10 +60,10 @@ class WaStatus
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => array(
-                'apikey: '.$apikey
-            ),
-        ));
+            CURLOPT_HTTPHEADER => [
+                'apikey: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 
@@ -78,11 +76,11 @@ class WaStatus
 
     public function getGroup()
     {
-        $apikey=$this->apikey;
+        $apikey = $this->apikey;
 
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://starsender.online/api/device/group',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -91,10 +89,10 @@ class WaStatus
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => array(
-                'apikey: '.$apikey
-            ),
-        ));
+            CURLOPT_HTTPHEADER => [
+                'apikey: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 

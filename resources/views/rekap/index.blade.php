@@ -231,10 +231,10 @@
             </a>
         </div>
         <div class="col-md-2 text-center mt-5">
-            <a href="{{route('rekap.uj-ditahan')}}" class="text-decoration-none">
-                <img src="{{asset('images/uj-ditahan.svg')}}" alt="" width="70">
+            <button type="button" class="btn border-0 p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#ujDitahanMenu" aria-haspopup="dialog" aria-controls="ujDitahanMenu">
+                <img src="{{ asset('images/uj-ditahan.svg') }}" alt="" width="70">
                 <h5 class="mt-3">UJ DITAHAN</h5>
-            </a>
+            </button>
         </div>
     </div>
     <hr>
@@ -285,6 +285,7 @@
     </div>
     @endif
 </div>
+@include('layouts.uj-ditahan-menu', ['menuArea' => 'rekap'])
 @endsection
 @push('css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />

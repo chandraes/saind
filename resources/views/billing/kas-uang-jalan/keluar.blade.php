@@ -91,8 +91,9 @@
                         <label for="hk_uang_jalan" class="form-label" id="label_hk_uang_jalan">Uang Jalan <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text fw-bold text-success">Rp</span>
-                            <input type="text" class="form-control fw-bold text-success @error('nominal_transaksi') is-invalid @enderror" name="nominal_transaksi" id="hk_uang_jalan" required
+                            <input type="text" class="form-control fw-bold text-success @error('nominal_transaksi') is-invalid @enderror" id="hk_uang_jalan" inputmode="numeric" required
                                 @if(!in_array(auth()->user()->role, ['admin', 'su'], true)) readonly @endif data-thousands="." value="{{ old('nominal_transaksi') }}">
+                            <input type="hidden" name="nominal_transaksi" id="nominal_transaksi_raw" value="{{ old('nominal_transaksi') }}">
                             @error('nominal_transaksi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
@@ -108,11 +109,15 @@
 
                     <!-- Potongan UJ Ditahan - Sembunyi secara default -->
                     <div class="col-md-4 mt-3" id="div_potongan_uj" style="display: none;">
-                        <label for="potongan_uj" class="form-label">Potongan UJ Ditahan</label>
+                        <label for="potongan_uj" class="form-label">UJ Ditahan Sparepart</label>
                         <div class="input-group">
                             <span class="input-group-text text-danger">- Rp</span>
                             <input type="text" class="form-control text-danger bg-light" name="potongan_uj" id="potongan_uj" readonly value="0">
                         </div>
+                    </div>
+                    <div class="col-md-4 mt-3" id="div_potongan_uj_ban" style="display: none;">
+                        <label for="potongan_uj_ban" class="form-label">UJ Ditahan Ban</label>
+                        <div class="input-group"><span class="input-group-text text-danger">- Rp</span><input type="text" class="form-control text-danger bg-light" id="potongan_uj_ban" readonly value="0"></div>
                     </div>
 
                 </div>
@@ -274,13 +279,13 @@
 
                 if (statusUjDitahan == 1) {
                     $('#div_uang_jalan_kotor').fadeIn();
-                    $('#div_potongan_uj').fadeIn();
+                    $('#div_potongan_uj, #div_potongan_uj_ban').fadeIn();
                     $('#label_hk_uang_jalan').html('Sisa Transfer (Netto) <span class="text-danger">*</span>');
                 } else {
                     $('#div_uang_jalan_kotor').hide();
-                    $('#div_potongan_uj').hide();
+                    $('#div_potongan_uj, #div_potongan_uj_ban').hide();
                     $('#label_hk_uang_jalan').html('Uang Jalan <span class="text-danger">*</span>');
-                    $('#uang_jalan_kotor, #potongan_uj').val('');
+                    $('#uang_jalan_kotor, #potongan_uj, #potongan_uj_ban').val('');
                 }
                 // ------------------------------------------
 
@@ -330,10 +335,11 @@
 
                 $.each(data.rute, function (index, value) {
                     let nominalUjDitahan = value.uj_ditahan || 0;
+                    let nominalUjDitahanBan = value.uj_ditahan_ban || 0;
                     let uangJalanKotor = value.hk_uang_jalan || 0; // Ambil nilai uang_jalan dari tabel rutes
 
                     // Sisipkan kedua nilai tersebut ke dalam tag option
-                    $('#rute_id').append('<option value="' + value.id + '" data-nominal="' + nominalUjDitahan + '" data-uang-jalan="' + uangJalanKotor + '">' + value.nama + '</option>');
+                    $('#rute_id').append('<option value="' + value.id + '" data-nominal="' + nominalUjDitahan + '" data-nominal-ban="' + nominalUjDitahanBan + '" data-uang-jalan="' + uangJalanKotor + '">' + value.nama + '</option>');
                 });
 
                 // (Logika Tampilan Disable/Enable Tonase tetap sama)
@@ -363,7 +369,10 @@
             numeral: true,
             numeralThousandsGroupStyle: 'thousand',
             numeralDecimalMark: ',',
-            delimiter: '.'
+            numeralDecimalScale: 0,
+            numeralPositiveOnly: true,
+            delimiter: '.',
+            onValueChanged: function (event) { $('#nominal_transaksi_raw').val(event.target.rawValue); }
         });
 
         function updateUangJalanKotor() {
@@ -371,7 +380,8 @@
 
             var transfer = parseFloat(nominal.getRawValue().replace(',', '.')) || 0;
             var ditahan = parseFloat($('#rute_id').find(':selected').attr('data-nominal')) || 0;
-            $('#uang_jalan_kotor').val((transfer + ditahan).toLocaleString('id-ID'));
+            var ditahanBan = parseFloat($('#rute_id').find(':selected').attr('data-nominal-ban')) || 0;
+            $('#uang_jalan_kotor').val((transfer + ditahan + ditahanBan).toLocaleString('id-ID'));
         }
 
         $('#hk_uang_jalan').on('input', updateUangJalanKotor);
@@ -421,7 +431,7 @@
         $('#vehicle_id').on('change', function () {
             var previousRute = $('#rute_id').val();
             $('#rute_id').empty().append('<option value="">-- Pilih Rute --</option>').trigger('change.select2');
-            $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
+            $('#uang_jalan_kotor, #potongan_uj, #potongan_uj_ban, #hk_uang_jalan, #nominal_transaksi_raw').val('');
             loadVehicle($(this).val(), function() {
                 if ($('#customer_id').val()) {
                     loadCustomer($('#customer_id').val(), function() {
@@ -437,7 +447,7 @@
         $('#customer_id').on('change', function () {
             loadCustomer($(this).val(), function() {
                 // Reset form uang jalan
-                $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
+                $('#uang_jalan_kotor, #potongan_uj, #potongan_uj_ban, #hk_uang_jalan, #nominal_transaksi_raw').val('');
             });
         });
 
@@ -449,7 +459,7 @@
 
             // Jika rute dikosongkan, reset semua nilai
             if (!rute_id) {
-                $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
+                $('#uang_jalan_kotor, #potongan_uj, #potongan_uj_ban, #hk_uang_jalan, #nominal_transaksi_raw').val('');
                 return;
             }
 
@@ -457,20 +467,22 @@
                 // JIKA UJ DITAHAN: Ambil nilai langsung dari atribut opsi rute (tanpa AJAX VendorUangJalan)
                 var nominalRute = parseFloat($(this).find(':selected').attr('data-nominal')) || 0;
                 var uangJalanKotor = parseFloat($(this).find(':selected').attr('data-uang-jalan')) || 0;
+                var nominalBan = parseFloat($(this).find(':selected').attr('data-nominal-ban')) || 0;
 
-                if (nominalRute <= 0) {
+                if (nominalRute <= 0 || nominalBan <= 0) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Validasi Gagal!',
-                        text: 'Nominal Kesepakan UJ ditahan pada rute ini belum di isi. silahkan hubungi admin!!',
+                        text: 'Nominal UJ Ditahan Sparepart dan Ban pada vendor–rute ini harus diisi. Silakan hubungi admin.',
                     });
 
                     $(this).val('').trigger('change.select2');
-                    $('#uang_jalan_kotor, #potongan_uj, #hk_uang_jalan').val('');
+                    $('#uang_jalan_kotor, #potongan_uj, #potongan_uj_ban, #hk_uang_jalan, #nominal_transaksi_raw').val('');
                     return false;
                 }
 
                 $('#potongan_uj').val(nominalRute.toLocaleString('id-ID'));
+                $('#potongan_uj_ban').val(nominalBan.toLocaleString('id-ID'));
                 nominal.setRawValue(restoredNominal !== undefined && restoredNominal !== ''
                     ? restoredNominal.replace(/\./g, '')
                     : String(uangJalanKotor));

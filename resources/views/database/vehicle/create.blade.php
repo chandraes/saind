@@ -103,7 +103,7 @@
 
                         <h6 class="text-primary border-bottom pb-2 mt-4 mb-3 fw-bold"><i class="fa fa-wallet me-2"></i> Pengaturan Uang Jalan (UJ)</h6>
                         <div class="mb-4">
-                            <label class="form-label small fw-bold">APAKAH UJ DITAHAN?</label>
+                            <label class="form-label small fw-bold">UJ DITAHAN SPAREPART &amp; BAN?</label>
                             <select class="form-select border-primary" name="uj_ditahan" id="uj_ditahan_create" onchange="toggleUjCreate()" required>
                                 <option value="">-- Pilih Pengaturan UJ --</option>
                                 <option value="1">Ya (Potong via Driver)</option>

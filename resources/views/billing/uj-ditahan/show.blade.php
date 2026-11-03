@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid">
     <!-- SweetAlert Session Handler dari layout/include -->
-    @include('swal')
+    @include('billing.form-maintenance.filter-oli.feedback')
 
     <!-- Header Card: Info Master -->
     <div class="card shadow mb-4 border-left-info">
@@ -38,7 +38,7 @@
                     </a>
                 @else
                     <a href="{{ route('billing.uj-ditahan') }}" class="btn btn-sm btn-secondary shadow-sm">
-                        <i class="fa fa-arrow-left"></i> Kembali ke UJ Ditahan
+                        <i class="fa fa-arrow-left"></i> Kembali ke UJ Ditahan Sparepart
                     </a>
                 @endif
 
@@ -61,7 +61,7 @@
                             <th width="15%">Info Rekening</th>
                             <th class="text-center" width="15%">Bukti Dokumen</th>
                             <th class="text-right text-success" width="15%">Masuk (+)</th>
-                            <th class="text-right text-danger" width="15%">Keluar (-)</th>
+                            <th class="text-right text-danger" width="15%">Keluar (-)</th><th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -71,6 +71,10 @@
                             <td class="align-middle">{{ $d->created_at->format('d-m-Y') }}</td>
                             <td class="align-middle">
                                 {{ $d->keterangan }}
+                                @if($d->payout_origin === 'payout_reversal')<div><span class="badge bg-primary">Transaksi pembalik</span></div>@endif
+                                @if($d->cancellation)
+                                    <div class="mt-2"><span class="badge bg-danger">Dibatalkan</span><div class="small text-muted mt-1">{{ $d->cancellation->reason }}<br>Oleh {{ $d->cancellation->actor?->name ?? '-' }} · {{ $d->cancellation->created_at->format('d-m-Y H:i') }}</div></div>
+                                @endif
                                 @if($d->driver)
                                     <br><small class="text-muted">Driver: {{ $d->driver->nama }}</small>
                                 @endif
@@ -104,10 +108,15 @@
                             <td class="text-right align-middle font-weight-bold text-danger">
                                 {{ $d->jenis == 'keluar' ? 'Rp ' . number_format($d->nominal, 0, ',', '.') : '-' }}
                             </td>
+                            <td class="align-middle">
+                                @if(in_array(auth()->user()?->role, ['admin', 'su'], true) && $d->isManualPayout() && ! $d->cancellation)
+                                <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" data-payout-cancel-url="{{ route('billing.uj-ditahan.cancel', ['fund' => 'sparepart', 'detail' => $d->id]) }}" data-payout-amount="Rp {{ number_format($d->nominal, 0, ',', '.') }}"><i class="fa fa-undo me-1" aria-hidden="true"></i>Batalkan</button>
+                                @else<span class="text-muted">—</span>@endif
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4">Belum ada histori transaksi untuk data ini.</td>
+                            <td colspan="8" class="text-center py-4">Belum ada histori transaksi untuk data ini.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -116,7 +125,7 @@
                             <!-- Colspan disesuaikan dari 4 menjadi 5 karena ada kolom baru -->
                             <td colspan="5" class="text-right">Total Kumulatif:</td>
                             <td class="text-right text-success">Rp {{ number_format($master->total_masuk, 0, ',', '.') }}</td>
-                            <td class="text-right text-danger">Rp {{ number_format($master->total_keluar, 0, ',', '.') }}</td>
+                            <td class="text-right text-danger">Rp {{ number_format($master->total_keluar, 0, ',', '.') }}</td><td></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -133,7 +142,7 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="modalCairkanLabel">Form Pencairan Saldo UJ Ditahan</h5>
+                    <h5 class="modal-title" id="modalCairkanLabel">Form Pencairan Saldo UJ Ditahan Sparepart</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -189,6 +198,7 @@
     </div>
 </div>
 @endif
+@include('billing.uj-ditahan.payout-cancellation')
 @endsection
 
 @push('js')

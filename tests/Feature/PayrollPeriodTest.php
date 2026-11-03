@@ -126,7 +126,7 @@ class PayrollPeriodTest extends TestCase
     public function test_all_endpoints_reject_invalid_and_future_periods(string $endpoint): void
     {
         $this->login();
-        foreach ([[13, 2026], [0, 2026], [11, 2026], [1, 2027]] as [$month, $year]) {
+        foreach ([[13, 2026], [0, 2026], [12, 2026], [1, 2027]] as [$month, $year]) {
             $response = $endpoint === 'store' ? $this->post('/billing/gaji/store', ['bulan' => $month, 'tahun' => $year]) : $this->get('/billing/gaji'.($endpoint === 'index' ? '' : '/'.$endpoint).'?bulan='.$month.'&tahun='.$year);
             $response->assertSessionHasErrors('bulan');
         }
@@ -328,5 +328,36 @@ class PayrollPeriodTest extends TestCase
         $this->post('/billing/gaji/store', ['bulan' => 9, 'tahun' => 2026])->assertSessionHas('success');
         $this->assertSame(2, RekapGaji::count());
         $this->assertDatabaseHas('rekap_gajis', ['bulan' => 9, 'tahun' => 2026, 'total' => 5000000]);
+    }
+
+    public function test_next_period_preview_opens_after_payment_but_cannot_be_processed_before_the_26th(): void
+    {
+        $this->login();
+        $this->employee();
+        $this->cash();
+        RekapGaji::create(['bulan' => 10, 'tahun' => 2026, 'uraian' => 'Oktober sudah diproses', 'total' => 0]);
+        $this->travelTo(Carbon::parse('2026-10-30 12:00:00'));
+        $this->get('/billing/gaji?bulan=11&tahun=2026')->assertOk()->assertViewHas('payrollDateReady', false)->assertSee('26 November 2026');
+        $this->get('/billing/gaji/preview-excel?bulan=11&tahun=2026')->assertOk()->assertDownload('Preview_Gaji_11_2026.xlsx');
+        $this->travelTo(Carbon::parse('2026-11-25 23:59:59'));
+        $this->post('/billing/gaji/store', ['bulan' => 11, 'tahun' => 2026])->assertSessionHasErrors('bulan');
+        $this->assertSame(1, RekapGaji::count());
+        $this->assertSame(1, KasBesar::count());
+        Http::assertNothingSent();
+        $this->travelTo(Carbon::parse('2026-11-26 00:00:00'));
+        $this->post('/billing/gaji/store', ['bulan' => 11, 'tahun' => 2026])->assertSessionHasNoErrors()->assertSessionHas('success');
+        $this->assertSame(2, RekapGaji::count());
+    }
+
+    public function test_january_preview_crosses_the_year_without_allowing_early_payment(): void
+    {
+        $this->login();
+        $this->employee();
+        $this->cash();
+        $this->travelTo(Carbon::parse('2026-12-30 12:00:00'));
+        RekapGaji::create(['bulan' => 12, 'tahun' => 2026, 'uraian' => 'Desember sudah diproses', 'total' => 0]);
+        $this->get('/billing/gaji?bulan=1&tahun=2027')->assertOk()->assertViewHas('payrollDateReady', false);
+        $this->post('/billing/gaji/store', ['bulan' => 1, 'tahun' => 2027])->assertSessionHasErrors('bulan');
+        $this->assertSame(1, RekapGaji::count());
     }
 }

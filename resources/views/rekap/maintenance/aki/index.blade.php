@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    @include('swal')
+    @include('billing.form-maintenance.filter-oli.feedback')
 
     <!-- RINGKASAN METRIK -->
     <div class="row g-3 mb-4">
@@ -90,15 +90,16 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold fs-7 mb-1">Metode Pembayaran</label>
-                    <select name="pembayaran" class="form-select">
+                    <select name="pembayaran" class="form-select maintenance-select">
                         <option value="">-- Semua Metode --</option>
+                        <option value="uj_ditahan" @selected($pembayaran === 'uj_ditahan')>UJ Ditahan Sparepart</option>
                         <option value="{{ \App\Models\AkiGantiInvoice::PEMBAYARAN_KAS_BESAR }}" {{ $pembayaran === \App\Models\AkiGantiInvoice::PEMBAYARAN_KAS_BESAR ? 'selected' : '' }}>Kas Besar</option>
                         <option value="{{ \App\Models\AkiGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI }}" {{ $pembayaran === \App\Models\AkiGantiInvoice::PEMBAYARAN_DIBAYAR_SENDIRI ? 'selected' : '' }}>Dibayar Sendiri</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold fs-7 mb-1">Status Otorisasi</label>
-                    <select name="status" class="form-select">
+                    <select name="status" class="form-select maintenance-select">
                         <option value="">-- Semua Status --</option>
                         <option value="{{ \App\Models\AkiGantiInvoice::STATUS_APPROVED }}" {{ $statusFilter === \App\Models\AkiGantiInvoice::STATUS_APPROVED ? 'selected' : '' }}>Disetujui (Approved)</option>
                         <option value="{{ \App\Models\AkiGantiInvoice::STATUS_REJECTED }}" {{ $statusFilter === \App\Models\AkiGantiInvoice::STATUS_REJECTED ? 'selected' : '' }}>Ditolak (Rejected)</option>
@@ -150,15 +151,19 @@
                                 <td>
                                     @if($item->pembayaran === \App\Models\AkiGantiInvoice::PEMBAYARAN_KAS_BESAR)
                                         <span class="badge bg-primary fs-7"><i class="fa fa-university me-1"></i> Kas Besar</span>
+                                    @elseif($item->pembayaran === 'uj_ditahan')
+                                        <span class="badge bg-success fs-7">UJ Ditahan Sparepart</span>
                                     @else
                                         <span class="badge bg-secondary fs-7"><i class="fa fa-user me-1"></i> Bayar Sendiri</span>
                                     @endif
                                 </td>
                                 <td class="fw-bold text-end pe-4">
-                                    @if($item->pembayaran === \App\Models\AkiGantiInvoice::PEMBAYARAN_KAS_BESAR)
+                                    @if(in_array($item->pembayaran, ['kas_besar', 'uj_ditahan'], true))
                                         <span class="{{ $item->status === \App\Models\AkiGantiInvoice::STATUS_REJECTED ? 'text-decoration-line-through text-muted' : 'text-dark' }}">
                                             Rp {{ number_format($item->total_nominal, 0, ',', '.') }}
                                         </span>
+                                    @elseif($item->pembayaran === 'uj_ditahan')
+                                        <span class="badge bg-success fs-7">UJ Ditahan Sparepart</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif

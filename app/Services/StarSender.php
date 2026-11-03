@@ -2,14 +2,21 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 
 class StarSender
 {
-    private $apikey, $tujuan, $pesan, $file;
+    private $apikey;
 
-    function __construct($tujuan, $pesan, $file = null)
+    private $tujuan;
+
+    private $pesan;
+
+    private $file;
+
+    public function __construct($tujuan, $pesan, $file = null)
     {
-        $this->apikey = env('STARSENDER_KEY');
+        $this->apikey = config('services.starsender.key');
         $this->tujuan = $tujuan;
         $this->pesan = $pesan;
         $this->file = $file;
@@ -17,7 +24,7 @@ class StarSender
 
     public function sendGroup()
     {
-        $apikey=$this->apikey;
+        $apikey = $this->apikey;
 
         $pesan = [
             'messageType' => 'text',
@@ -27,22 +34,22 @@ class StarSender
 
         $curl = curl_init();
 
-
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://api.starsender.online/api/send',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 20,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => json_encode($pesan),
-            CURLOPT_HTTPHEADER => array(
+            CURLOPT_HTTPHEADER => [
                 'Content-Type:application/json',
-                'Authorization: '.$apikey
-            ),
-        ));
+                'Authorization: '.$apikey,
+            ],
+        ]);
 
         // curl_setopt_array($curl, array(
         //     CURLOPT_URL => 'https://starsender.online/api/group/sendText?message='.rawurlencode($pesan).'&tujuan='.rawurlencode($tujuan),
@@ -58,28 +65,32 @@ class StarSender
         // ));
 
         $response = curl_exec($curl);
+        $httpStatus = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curlError = curl_errno($curl);
 
         curl_close($curl);
 
         $result = json_decode($response, true);
+
         // dd($result);
-        if ($result['success'] == true) {
-            return true;
-        } else {
-            return false;
+        $accepted = is_array($result) && ($result['success'] ?? false) === true;
+        if (! $accepted) {
+            Log::warning('Starsender tidak menerima pengiriman WA.', ['http_status' => $httpStatus, 'curl_errno' => $curlError]);
         }
+
+        return $accepted;
 
     }
 
     public function sendWa()
     {
-        $apikey=$this->apikey;
-        $tujuan=$this->tujuan; //atau $tujuan="Group Chat Name";
-        $pesan=$this->pesan;
+        $apikey = $this->apikey;
+        $tujuan = $this->tujuan; // atau $tujuan="Group Chat Name";
+        $pesan = $this->pesan;
 
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://starsender.online/api/sendText?message='.rawurlencode($pesan).'&tujuan='.rawurlencode($tujuan.'@s.whatsapp.net'),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -88,10 +99,10 @@ class StarSender
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => array(
-                'apikey: '.$apikey
-            ),
-        ));
+            CURLOPT_HTTPHEADER => [
+                'apikey: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 
@@ -109,11 +120,11 @@ class StarSender
 
     public function sendWaLama()
     {
-        $apikey=$this->apikey;
-        $tujuan=$this->tujuan;
-        $pesan=$this->pesan;
+        $apikey = $this->apikey;
+        $tujuan = $this->tujuan;
+        $pesan = $this->pesan;
 
-        $filePath=$this->file;
+        $filePath = $this->file;
 
         if ($filePath != null) {
             $this->sendGroup();
@@ -124,7 +135,7 @@ class StarSender
 
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://starsender.online/api/v2/sendFilesUpload?message='.rawurlencode($pesan).'&tujuan='.rawurlencode($tujuan.'@s.whatsapp.net'),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -133,11 +144,11 @@ class StarSender
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => array('file'=> curl_file_create($filePath)),
-            CURLOPT_HTTPHEADER => array(
-              'apikey: '.$apikey
-            ),
-        ));
+            CURLOPT_POSTFIELDS => ['file' => curl_file_create($filePath)],
+            CURLOPT_HTTPHEADER => [
+                'apikey: '.$apikey,
+            ],
+        ]);
 
         $response = curl_exec($curl);
 
@@ -145,7 +156,7 @@ class StarSender
 
         $result = json_decode($response, true);
 
-        if(isset($result['status'])){
+        if (isset($result['status'])) {
             if ($result['status'] == true) {
                 return $result;
             } else {
@@ -160,5 +171,4 @@ class StarSender
 
         }
     }
-
 }

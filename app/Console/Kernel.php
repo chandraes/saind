@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('attendance:flush')->everyMinute()->withoutOverlapping(5)->when(fn (): bool => (bool) config('attendance.enabled'));
         $schedule->command('attendance:sync-employees')->everyFiveMinutes()->withoutOverlapping(5)->when(fn (): bool => (bool) config('attendance.enabled'));
+        $schedule->command('attendance:refresh-payroll')->everyMinute()->runInBackground()->withoutOverlapping(5)->when(fn (): bool => (bool) config('attendance.enabled') && (bool) config('attendance.payroll_auto_sync'));
         $schedule->command('app:loan-vendor')->monthly();
         // inspire every minute
         $schedule->command('app:check-konfigurasi')->everyMinute();

@@ -103,7 +103,7 @@
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 @endpush
 @push('js')
-<script src="{{ asset('assets/js/payroll-attendance-detail.js') }}"></script>
+<script src="{{ asset('assets/js/payroll-attendance-detail.js') }}?v={{ filemtime(public_path('assets/js/payroll-attendance-detail.js')) }}"></script>
 {{-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script> --}}
 <script src="{{asset('assets/js/dt5.min.js')}}"></script>
 <script>

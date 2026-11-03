@@ -17,6 +17,7 @@
         const root = element('div', 'payroll-attendance-popup');
         root.append(element('p', 'payroll-attendance-person', name + ' · ' + period));
         if (detail.from && detail.to) root.append(element('p', 'small text-muted', 'Periode absensi: ' + detail.from + ' sampai ' + detail.to));
+        if (detail.pattern_ready === false) root.append(element('p', 'small text-danger', 'Pembagi pengupahan belum ditentukan. Periksa jadwal dan perbarui snapshot sebelum memproses gaji.'));
         if (detail.provisional) {
             root.append(element('p','small text-warning','Potongan sementara. Shift mendatang/berjalan dan cuti/sakit menunggu HR belum dikenai potongan.'));
         }
@@ -45,8 +46,14 @@
             });
             root.append(download);
         }
+        const divisor = Object.hasOwn(detail, 'divisor') ? detail.divisor : 25;
+        const pattern = detail.payroll_work_pattern;
+        const patternLabel = pattern?.mode === 'weekly'
+            ? 'Mingguan · ' + pattern.workdays + ' hari/minggu'
+            : (pattern?.mode === 'shift' ? 'Shift · pembagi belum ditentukan' : 'Pola kerja belum tercatat pada rincian ini');
+        root.append(element('p', 'small text-muted', 'Pola kerja pengupahan: ' + patternLabel));
         const summary = element('div', 'payroll-attendance-summary');
-        [['Nilai satu hari · pembagi 25', detail.daily], ['Total sebelum batas', detail.raw], ['Batas periode · 25%', detail.cap], ['Potongan akhir', detail.amount]].forEach(([label, value], index) => {
+        [['Nilai satu hari · pembagi ' + (divisor ?? 'belum ditentukan'), detail.daily], ['Total sebelum batas', detail.raw], ['Batas periode · 25%', detail.cap], ['Potongan akhir', detail.amount]].forEach(([label, value], index) => {
             const card = element('div', 'payroll-attendance-stat' + (index === 3 ? ' is-final' : ''));
             card.append(element('span', '', label), element('strong', '', rupiah(value)));
             summary.append(card);
