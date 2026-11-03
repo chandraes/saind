@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Rute extends Model
 {
@@ -21,6 +22,11 @@ class Rute extends Model
     protected $appends = [
         'nf_uang_jalan',
     ];
+
+    public function noteAliases(): HasMany
+    {
+        return $this->hasMany(RuteNoteAlias::class)->orderBy('name');
+    }
 
     public function user()
     {
@@ -42,6 +48,4 @@ class Rute extends Model
     {
         return number_format($this->uang_jalan, 0, ',', '.');
     }
-
-
 }

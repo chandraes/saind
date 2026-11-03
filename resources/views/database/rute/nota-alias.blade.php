@@ -1,49 +1,35 @@
-<section class="card shadow-sm border-0 mt-4" aria-labelledby="note-alias-title">
-    <div class="card-body">
-        <h3 id="note-alias-title" class="h5">Referensi rute pada nota muat</h3>
-        <p class="text-muted">Satu rute dapat memiliki beberapa alias. Alias harus unik di seluruh rute; spasi, kapitalisasi, dan tanda baca diabaikan, sedangkan angka tetap dibedakan.</p>
-        @if ($errors->any())
-            <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
-        @endif
-        @if ($routeChoices->isNotEmpty())
-            @php($selectedAliasRoute = $routeChoices->firstWhere('id', (int) old('alias_rute_id')) ?? $routeChoices->first())
-            <form method="POST" action="{{ route('rute.nota-alias.store', $selectedAliasRoute->id) }}" class="row g-3 align-items-end mb-4">
-                @csrf
-                <div class="col-md-5">
-                    <label for="note-alias-route" class="form-label">Rute SAIND</label>
-                    <select id="note-alias-route" name="alias_rute_id" class="form-select" required onchange="this.form.action = this.selectedOptions[0].dataset.action">
-                        @foreach ($routeChoices as $routeChoice)
-                            <option value="{{ $routeChoice->id }}" @selected($selectedAliasRoute->id === $routeChoice->id) data-action="{{ route('rute.nota-alias.store', $routeChoice->id) }}">{{ $routeChoice->nama }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label for="note-alias-name" class="form-label">Alias pada nota</label>
-                    <input id="note-alias-name" class="form-control" name="name" value="{{ old('name') }}" maxlength="191" placeholder="Contoh: STP CPP-02 - SDJ" required>
-                </div>
-                <div class="col-md-2"><button class="btn btn-primary" type="submit">Tambah alias</button></div>
-            </form>
-        @else
-            <p>Tambahkan rute terlebih dahulu untuk mengatur alias nota.</p>
-        @endif
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead><tr><th>Alias pada nota</th><th>Rute SAIND</th><th>Aksi</th></tr></thead>
-                <tbody>
-                    @forelse ($noteAliases as $noteAlias)
-                        <tr>
-                            <td>{{ $noteAlias->name }}</td><td>{{ $noteAlias->rute->nama }}</td>
-                            <td><form method="POST" action="{{ route('rute.nota-alias.destroy', [$noteAlias->rute_id, $noteAlias->id]) }}">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Hapus alias</button>
-                            </form></td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="3" class="text-muted">Belum ada alias nota yang terdaftar.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        {{ $noteAliases->links() }}
+<div class="note-alias-context mb-4">
+    <span class="text-muted small d-block mb-1">Rute SAIND</span>
+    <h3 class="h6 mb-0">{{ $rute->nama }}</h3>
+</div>
+<p class="small text-muted">Gunakan nama rute yang tercetak pada nota. Satu rute dapat memiliki beberapa alias, dan setiap alias harus unik.</p>
+<form id="note-alias-form" method="POST" action="{{ route('rute.nota-alias.store', $rute) }}" data-create-url="{{ route('rute.nota-alias.store', $rute) }}">
+    @csrf
+    <label for="note-alias-name" class="form-label fw-semibold" id="note-alias-field-label">Tambah alias</label>
+    <input id="note-alias-name" name="name" class="form-control" maxlength="191" placeholder="Contoh: STP CPP-02 - SDJ" aria-describedby="note-alias-hint note-alias-error" required>
+    <div class="form-text" id="note-alias-hint">Spasi dan tanda baca diabaikan saat pencocokan. Angka tetap dibedakan.</div>
+    <div class="invalid-feedback" id="note-alias-error" aria-live="polite"></div>
+    <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary" id="note-alias-submit">Tambah alias</button>
+        <button type="button" class="btn btn-outline-secondary" id="note-alias-cancel-edit" hidden>Batal edit</button>
     </div>
-</section>
+</form>
+<div class="d-flex align-items-center justify-content-between border-top pt-4 mt-4 mb-3">
+    <h3 class="h6 mb-0">Alias terdaftar</h3><span class="badge bg-light text-dark border">{{ $rute->noteAliases->count() }}</span>
+</div>
+<div class="list-group list-group-flush">
+    @forelse ($rute->noteAliases as $alias)
+        <div class="list-group-item px-0 d-flex align-items-start justify-content-between gap-3">
+            <span class="note-alias-value py-2">{{ $alias->name }}</span>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <button type="button" class="btn btn-outline-primary btn-sm note-alias-edit" data-name="{{ $alias->name }}" data-update-url="{{ route('rute.nota-alias.update', [$rute, $alias]) }}">Edit</button>
+                <form method="POST" class="note-alias-delete" action="{{ route('rute.nota-alias.destroy', [$rute, $alias]) }}">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Hapus</button>
+                </form>
+            </div>
+        </div>
+    @empty
+        <div class="text-center py-4 text-muted"><i class="fa fa-tags mb-2" aria-hidden="true"></i><p class="mb-0">Belum ada alias untuk rute ini.</p></div>
+    @endforelse
+</div>

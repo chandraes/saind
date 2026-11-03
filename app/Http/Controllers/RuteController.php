@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Rute;
 use App\Models\RuteNoteAlias;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +21,7 @@ class RuteController extends Controller
     {
         // Implementasi Server-Side Yajra DataTables
         if ($request->ajax()) {
-            $data = Rute::with(['user'])->select('rutes.*');
+            $data = Rute::with(['user', 'noteAliases'])->select('rutes.*');
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -30,50 +32,70 @@ class RuteController extends Controller
                     return 'Rp '.number_format($row->uj_ditahan, 0, ',', '.');
                 })
 
-                ->addColumn('action', function ($row) {
-                    $btn = '<div class="d-flex justify-content-center">';
-                    // Melempar data ke fungsi javascript untuk modal edit
-                    $btn .= '<button type="button" class="btn btn-warning btn-sm me-2 rounded shadow-sm" onclick="editRute('.$row->id.', \''.$row->nama.'\', '.$row->jarak.', '.$row->uang_jalan.', '.$row->uj_ditahan.')"><i class="fa fa-edit"></i> Ubah</button>';
-
-                    $btn .= '<form action="'.route('rute.destroy', $row->id).'" method="POST" class="deleteForm d-inline">';
-                    $btn .= csrf_field().method_field('DELETE');
-                    $btn .= '<button type="submit" class="btn btn-danger btn-sm rounded shadow-sm"><i class="fa fa-trash"></i> Hapus</button>';
-                    $btn .= '</form></div>';
-
-                    return $btn;
-                })
-                ->rawColumns(['action'])
+                ->addColumn('note_aliases', fn (Rute $row): string => view('database.rute.nota-alias-cell', ['rute' => $row])->render())
+                ->addColumn('action', fn (Rute $row): string => view('database.rute.actions', ['rute' => $row])->render())
+                ->rawColumns(['action', 'note_aliases'])
                 ->make(true);
         }
 
-        return view('database.rute.index', [
-            'routeChoices' => Rute::select(['id', 'nama'])->orderBy('nama')->get(),
-            'noteAliases' => RuteNoteAlias::with('rute:id,nama')->orderBy('name')->paginate(20, ['*'], 'alias_page'),
-        ]);
+        return view('database.rute.index');
     }
 
-    public function storeAlias(Request $request, Rute $rute): RedirectResponse
+    public function aliases(Rute $rute): View
     {
-        $request->merge(['alias_rute_id' => $rute->id]);
+        return view('database.rute.nota-alias', ['rute' => $rute->load('noteAliases')]);
+    }
+
+    /** @return array{name: string} */
+    private function validateAlias(Request $request, ?RuteNoteAlias $alias = null): array
+    {
         $data = $request->validate(['name' => ['required', 'string', 'max:191']]);
-        $normalized = RuteNoteAlias::normalize($data['name']);
-        Validator::make(['name' => $normalized], ['name' => ['required', Rule::unique('rute_note_aliases', 'normalized_name')]],
+        $unique = Rule::unique('rute_note_aliases', 'normalized_name');
+        if ($alias !== null) {
+            $unique->ignore($alias);
+        }
+        Validator::make(['name' => RuteNoteAlias::normalize($data['name'])], ['name' => ['required', $unique]],
             ['name.required' => 'Alias harus mengandung huruf atau angka.', 'name.unique' => 'Alias nota sudah digunakan pada rute lain atau rute ini.'])->validate();
+
+        return $data;
+    }
+
+    private function aliasResponse(Request $request, string $message): JsonResponse|RedirectResponse
+    {
+        return $request->expectsJson() ? response()->json(['message' => $message]) : to_route('rute.index')->with('success', $message);
+    }
+
+    public function storeAlias(Request $request, Rute $rute): JsonResponse|RedirectResponse
+    {
+        $data = $this->validateAlias($request);
         try {
-            RuteNoteAlias::create(['rute_id' => $rute->id, 'name' => $data['name']]);
+            $rute->noteAliases()->create($data);
         } catch (UniqueConstraintViolationException $exception) {
             throw ValidationException::withMessages(['name' => 'Alias nota sudah digunakan pada rute lain atau rute ini.']);
         }
 
-        return to_route('rute.index')->with('success', 'Alias nota berhasil ditambahkan.');
+        return $this->aliasResponse($request, 'Alias nota berhasil ditambahkan.');
     }
 
-    public function destroyAlias(Rute $rute, RuteNoteAlias $alias): RedirectResponse
+    public function updateAlias(Request $request, Rute $rute, RuteNoteAlias $alias): JsonResponse|RedirectResponse
+    {
+        abort_unless((int) $alias->rute_id === (int) $rute->id, 404);
+        $data = $this->validateAlias($request, $alias);
+        try {
+            $alias->update($data);
+        } catch (UniqueConstraintViolationException $exception) {
+            throw ValidationException::withMessages(['name' => 'Alias nota sudah digunakan pada rute lain atau rute ini.']);
+        }
+
+        return $this->aliasResponse($request, 'Alias nota berhasil diubah.');
+    }
+
+    public function destroyAlias(Request $request, Rute $rute, RuteNoteAlias $alias): JsonResponse|RedirectResponse
     {
         abort_unless((int) $alias->rute_id === (int) $rute->id, 404);
         $alias->delete();
 
-        return to_route('rute.index')->with('success', 'Alias nota berhasil dihapus.');
+        return $this->aliasResponse($request, 'Alias nota berhasil dihapus.');
     }
 
     public function store(Request $request)
