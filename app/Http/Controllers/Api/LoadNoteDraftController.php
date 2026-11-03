@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreLoadNoteDraftRequest;
+use App\Http\Resources\MobileLoadNoteDraftResource;
+use App\Http\Resources\MobileVehicleResource;
+use App\Models\LoadNoteDraft;
+use App\Models\Vehicle;
+use App\Services\LoadNoteDraftService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+class LoadNoteDraftController extends Controller
+{
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $this->authorize('viewAny', LoadNoteDraft::class);
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+        $query = LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with('creator:id,name');
+        $query->search($filters['search'] ?? '');
+
+        return MobileLoadNoteDraftResource::collection($query->latest('id')->paginate(20));
+    }
+
+    public function vehicles(Request $request): AnonymousResourceCollection
+    {
+        $this->authorize('create', LoadNoteDraft::class);
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+        $query = Vehicle::select(['id', 'nomor_lambung', 'vendor_id', 'status'])->where('vendor_id', $request->user()->vendor_id);
+        if (($filters['search'] ?? '') !== '') {
+            $query->where('nomor_lambung', 'like', '%'.$filters['search'].'%');
+        }
+
+        return MobileVehicleResource::collection($query->orderBy('nomor_lambung')->orderBy('id')->paginate(25));
+    }
+
+    public function store(StoreLoadNoteDraftRequest $request, LoadNoteDraftService $service): JsonResponse
+    {
+        [$draft, $created] = $service->store($request->user(), $request->validated(), $request->file('photo'));
+
+        return (new MobileLoadNoteDraftResource($draft))->response()->setStatusCode($created ? 201 : 200);
+    }
+
+    private function draft(Request $request, int $note): LoadNoteDraft
+    {
+        $this->authorize('viewAny', LoadNoteDraft::class);
+
+        return LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with('creator:id,name')->findOrFail($note);
+    }
+
+    public function show(Request $request, int $note): MobileLoadNoteDraftResource
+    {
+        return new MobileLoadNoteDraftResource($this->draft($request, $note));
+    }
+
+    public function photo(Request $request, int $note, LoadNoteDraftService $service): StreamedResponse
+    {
+        return $service->photo($this->draft($request, $note));
+    }
+}

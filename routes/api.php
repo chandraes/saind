@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DatabaseController;
+use App\Http\Controllers\Api\LoadNoteDraftController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Middleware\EnsureMobileToken;
+use App\Http\Middleware\EnsureMobileVendorContext;
 use App\Http\Middleware\EnsureMobileWorkspace;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +17,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::middleware(['auth:sanctum', EnsureMobileToken::class])->group(function (): void {
             Route::get('me', [AuthController::class, 'show'])->name('me');
             Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
+            Route::middleware(EnsureMobileVendorContext::class)->group(function (): void {
+                Route::get('load-notes/vehicles', [LoadNoteDraftController::class, 'vehicles'])->name('load-notes.vehicles');
+                Route::get('load-notes', [LoadNoteDraftController::class, 'index'])->name('load-notes.index');
+                Route::post('load-notes', [LoadNoteDraftController::class, 'store'])->middleware('throttle:30,1')->name('load-notes.store');
+                Route::get('load-notes/{note}', [LoadNoteDraftController::class, 'show'])->whereNumber('note')->name('load-notes.show');
+                Route::get('load-notes/{note}/photo', [LoadNoteDraftController::class, 'photo'])->whereNumber('note')->name('load-notes.photo');
+            });
             Route::prefix('database')->name('database.')->middleware('role:'.implode(',', config('mobile.database_roles')))->group(function (): void {
                 Route::get('vendors', [DatabaseController::class, 'vendors'])->name('vendors.index');
                 Route::get('vendors/{vendor}', [DatabaseController::class, 'vendor'])->whereNumber('vendor')->name('vendors.show');

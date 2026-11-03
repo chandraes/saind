@@ -35,6 +35,7 @@ use App\Http\Controllers\KategoriFilterOliMesinController;
 use App\Http\Controllers\KonfigurasiController;
 use App\Http\Controllers\KontrakController;
 use App\Http\Controllers\LegalitasController;
+use App\Http\Controllers\LoadNoteInboxController;
 use App\Http\Controllers\MobileConnectionController;
 use App\Http\Controllers\OperasionalController;
 use App\Http\Controllers\PajakController;
@@ -64,6 +65,7 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\WaController;
 use App\Http\Middleware\EnsureVendorOperationalVehicle;
+use App\Models\LoadNoteDraft;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -472,6 +474,12 @@ Route::group(['middleware' => ['auth']], function () {
 
         });
 
+    });
+
+    Route::prefix('billing/nota-muat')->name('billing.nota-muat.')->middleware('can:reviewAny,'.LoadNoteDraft::class)->group(function (): void {
+        Route::get('/', [LoadNoteInboxController::class, 'index'])->name('index');
+        Route::get('/{note}', [LoadNoteInboxController::class, 'show'])->whereNumber('note')->name('show');
+        Route::get('/{note}/foto', [LoadNoteInboxController::class, 'photo'])->whereNumber('note')->name('photo');
     });
 
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index')->middleware('role:admin,user,su');

@@ -360,6 +360,7 @@
     <br>
     <div class="row justify-content-left">
         <h4 class="mt-3">TRANSAKSI</h4>
+        @include('billing.nota-muat.menu')
         <div class="col-md-2 text-center mt-5">
             <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#uangJalan">
                 <img src="{{asset('images/uang-jalan.svg')}}" alt="" width="70">
