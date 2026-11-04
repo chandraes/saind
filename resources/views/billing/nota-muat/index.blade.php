@@ -41,11 +41,12 @@
             <table class="table table-bordered table-hover align-middle mb-0">
                 <caption class="px-3">Nota terbaru ditampilkan lebih dahulu. Berat dalam ton.</caption>
                 <thead class="table-success"><tr>
-                    <th scope="col">Tiket / tanggal muat</th><th scope="col">Vendor / unit</th><th scope="col">Tambang</th><th scope="col">Netto (ton)</th><th scope="col">Pengirim / waktu kirim</th><th scope="col">Status</th><th scope="col">Aksi</th>
+                    <th scope="col" class="text-center text-nowrap" style="width: 48px">No.</th><th scope="col">Tiket / tanggal muat</th><th scope="col">Vendor / unit</th><th scope="col">Tambang</th><th scope="col">Netto (ton)</th><th scope="col">Pengirim / waktu kirim</th><th scope="col">Status</th><th scope="col">Aksi</th>
                 </tr></thead>
                 <tbody>
                     @forelse($notes as $note)
                     <tr>
+                        <td class="text-center text-nowrap">{{ $notes->firstItem() + $loop->index }}</td>
                         <td class="text-break"><strong>{{ $note->ticket_number }}</strong><br><small class="text-muted">{{ $note->loaded_on->format('d-m-Y') }}</small></td>
                         <td class="text-break">{{ $note->vendor?->nama ?? '-' }}<br><small class="text-muted">Unit {{ $note->vehicle_number }}</small></td>
                         <td class="text-break">{{ $note->mine_name }}</td>
@@ -55,7 +56,7 @@
                         <td><a href="{{ route('billing.nota-muat.show', ['note' => $note, ...$filters]) }}" class="btn btn-outline-primary btn-sm" aria-label="Lihat detail nota {{ $note->ticket_number }}">Detail</a></td>
                     </tr>
                     @empty
-                    <tr><td colspan="7" class="text-center py-5 text-muted">Belum ada nota yang sesuai. Nota akan tampil setelah vendor mengirimkannya dari aplikasi mobile.</td></tr>
+                    <tr><td colspan="8" class="text-center py-5 text-muted">Belum ada nota yang sesuai. Nota akan tampil setelah vendor mengirimkannya dari aplikasi mobile.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -1,12 +1,17 @@
 @if ($note->status === 'draft')
 <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
-    <a class="btn btn-primary" href="{{ route('kas-uang-jalan.keluar', ['load_note_id' => $note->id]) }}"><i class="fa fa-arrow-right me-1" aria-hidden="true"></i> Teruskan ke uang jalan</a>
+    @php($paymentReady = $note->customer_id && $note->rute_id && $paymentPreview['transfer'] !== null && $paymentPreview['gross'] !== null && filled($paymentPreview['recipient']) && filled($paymentPreview['bank']) && filled($paymentPreview['account']))
+    <form method="POST" action="{{ route('billing.nota-muat.process', $note) }}" class="m-0" data-note-review data-note-process data-success-url="{{ route('transaksi.nota-bongkar') }}" data-confirm="Proses uang jalan nota {{ $note->ticket_number }}?" data-confirm-details="Unit {{ $note->vehicle_number }}. Transfer Rp {{ number_format($paymentPreview['transfer'] ?? 0, 0, ',', '.') }} ke {{ $paymentPreview['recipient'] }} — {{ $paymentPreview['bank'] }} {{ $paymentPreview['account'] }}. Total pengeluaran Rp {{ number_format($paymentPreview['gross'] ?? 0, 0, ',', '.') }}, termasuk tahanan aktif. Pengeluaran akan dicatat dan nota masuk ke Nota Bongkar.">
+        @csrf<input type="hidden" name="load_note_revision" value="{{ $note->revision }}"><input type="hidden" name="payment_fingerprint" value="{{ $paymentFingerprint }}">
+        <button type="submit" class="btn btn-primary" @disabled(! $paymentReady)><i class="fa fa-check-circle me-1" aria-hidden="true"></i>Proses uang jalan</button>
+    </form>
     <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#note-edit-modal"><i class="fa fa-pencil me-1" aria-hidden="true"></i> Edit nota</button>
     <div class="ms-sm-auto d-flex gap-2">
         <button type="button" class="btn btn-outline-danger" data-note-decision="reject" data-bs-toggle="modal" data-bs-target="#note-decision-modal">Tolak</button>
         <button type="button" class="btn btn-outline-secondary" data-note-decision="cancel" data-bs-toggle="modal" data-bs-target="#note-decision-modal">Batalkan</button>
     </div>
 </div>
+@if (! $paymentReady)<p class="text-danger small mb-3">Lengkapi customer, rute, nominal dan rekening tujuan sebelum memproses uang jalan.</p>@endif
 <div class="modal fade" id="note-edit-modal" tabindex="-1" aria-labelledby="note-edit-title" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content border-0 shadow">
         <div class="modal-header"><h2 class="modal-title fs-5" id="note-edit-title">Koreksi nota {{ $note->ticket_number }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>

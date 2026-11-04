@@ -50,14 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('submit', async event => {
             event.preventDefault();
             if (saving) return;
-            const target = form.closest('.modal');
+            const target = form.closest('.modal') || document.body;
             if (!form.checkValidity()) {
                 await Swal.fire({icon: 'warning', title: 'Data belum lengkap', text: 'Lengkapi data wajib dan alasan sebelum melanjutkan.', target});
                 return;
             }
             saving = true;
             const action = form.querySelector('[name="action"]')?.value;
-            const reason = form.querySelector('[name="reason"]').value;
+            const reason = form.querySelector('[name="reason"]')?.value || form.dataset.confirmDetails || '';
             let buttons = [];
             let navigating = false;
             try {
@@ -75,7 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 await Swal.fire({icon: 'success', title: 'Berhasil', text: data.message, target, confirmButtonText: 'Baik'});
                 navigating = true;
-                window.location.reload();
+                if (form.hasAttribute('data-note-process')) {
+                    window.location.assign(form.dataset.successUrl);
+                } else {
+                    window.location.reload();
+                }
             } catch (error) {
                 await Swal.fire({icon: 'error', title: 'Nota belum dapat diproses', text: error instanceof TypeError || error instanceof SyntaxError ? 'Respons belum dapat dipastikan. Muat ulang nota sebelum mencoba kembali.' : error.message, target});
             } finally {

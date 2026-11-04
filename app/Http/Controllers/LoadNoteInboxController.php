@@ -41,8 +41,11 @@ class LoadNoteInboxController extends Controller
 
     public function show(Request $request, LoadNoteDraft $note, LoadNotePaymentPreview $payments): View
     {
+        $paymentPreview = $payments->forNote($note);
+
         return view('billing.nota-muat.show', [
-            'paymentPreview' => $payments->forNote($note),
+            'paymentPreview' => $paymentPreview,
+            'paymentFingerprint' => $payments->confirmationHash($note, $paymentPreview),
             'returnFilters' => $request->only(['search', 'vendor_id', 'page']),
             'note' => $note->load(['vendor:id,nama', 'creator:id,name', 'customer:id,nama', 'rute:id,nama', 'events.actor:id,name']),
             'vehicles' => Vehicle::where('vendor_id', $note->vendor_id)->select(['id', 'nomor_lambung'])->orderBy('nomor_lambung')->get(),

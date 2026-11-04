@@ -10,6 +10,7 @@ use App\Models\GroupWa;
 use App\Models\KasBesar;
 use App\Models\KasUangJalan;
 use App\Models\Konfigurasi;
+use App\Models\LoadNoteDraft;
 use App\Models\Pengaturan;
 use App\Models\Rekening;
 use App\Models\Rute;
@@ -22,12 +23,16 @@ use App\Models\Vendor;
 use App\Models\VendorUangJalan;
 use App\Services\FilterOliRitaseService;
 use App\Services\LoadNoteDateRule;
+use App\Services\LoadNotePaymentPreview;
 use App\Services\LoadNoteReviewService;
 use App\Services\UjDitahanBanService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class FormKasUangJalanController extends Controller
@@ -217,7 +222,77 @@ class FormKasUangJalanController extends Controller
         return response()->json($data);
     }
 
-    public function keluar_store(Request $request, FilterOliRitaseService $filterOliRitase)
+    public function keluar_store(Request $request, FilterOliRitaseService $filterOliRitase): RedirectResponse|JsonResponse
+    {
+        return $this->storeExit($request, $filterOliRitase);
+    }
+
+    public function processNote(Request $request, LoadNoteDraft $note, FilterOliRitaseService $filterOliRitase, LoadNoteReviewService $notes, LoadNotePaymentPreview $payments): JsonResponse
+    {
+        Gate::authorize('review', $note);
+        $input = $request->validate(['load_note_revision' => ['required', 'integer', 'min:0'],
+            'payment_fingerprint' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/']]);
+        if ($this->isProcessedRetry($note, (int) $input['load_note_revision'])) {
+            return $this->processedNoteResponse($note);
+        }
+        try {
+            $note = $notes->forForward($request->user(), $note->id);
+            $preview = $payments->forNote($note);
+            $this->assertPaymentConfirmation($input['payment_fingerprint'], $note, $preview, $payments);
+            if ($preview['transfer'] === null || $preview['gross'] === null) {
+                throw ValidationException::withMessages(['nominal_transaksi' => 'Nominal uang jalan atau tahanan belum lengkap. Periksa pengaturan vendor–rute.']);
+            }
+            foreach (['recipient' => 'transfer_ke', 'bank' => 'bank', 'account' => 'no_rekening'] as $key => $field) {
+                if (trim((string) $preview[$key]) === '') {
+                    throw ValidationException::withMessages([$field => 'Rekening tujuan transfer belum lengkap. Lengkapi data driver atau kendaraan terlebih dahulu.']);
+                }
+            }
+            $request->replace([...$notes->formData($note), ...$input, 'load_note_id' => $note->id,
+                'nominal_transaksi' => (string) $preview['transfer'], 'transfer_ke' => $preview['recipient'],
+                'bank' => $preview['bank'], 'no_rekening' => $preview['account']]);
+
+            return $this->storeExit($request, $filterOliRitase, true);
+        } catch (ValidationException $exception) {
+            $fresh = $note->fresh();
+            if ($fresh !== null && $this->isProcessedRetry($fresh, (int) $input['load_note_revision'])) {
+                return $this->processedNoteResponse($fresh);
+            }
+
+            throw $exception;
+        }
+    }
+
+    private function assertPaymentConfirmation(string $fingerprint, LoadNoteDraft $note, array $preview, LoadNotePaymentPreview $payments): void
+    {
+        if (! hash_equals($payments->confirmationHash($note, $preview), $fingerprint)) {
+            throw ValidationException::withMessages(['payment_fingerprint' => 'Rincian nota, nominal atau rekening telah berubah. Muat ulang dan periksa kembali sebelum memproses uang jalan.']);
+        }
+    }
+
+    private function isProcessedRetry(LoadNoteDraft $note, int $revision): bool
+    {
+        return $note->status === 'processed' && $note->transaksi_id !== null && $note->revision === $revision + 1;
+    }
+
+    private function processedNoteResponse(LoadNoteDraft $note, bool $notificationWarning = false): JsonResponse
+    {
+        return response()->json(['message' => $notificationWarning
+            ? 'Transaksi uang jalan sudah tersimpan dan masuk Nota Bongkar. Notifikasi belum berhasil dikirim; jangan memproses ulang.'
+            : 'Uang jalan berhasil diproses. Nota sudah masuk daftar Nota Bongkar.',
+            'data' => ['transaction_id' => $note->transaksi_id], 'notification_warning' => $notificationWarning]);
+    }
+
+    private function exitFailure(bool $direct, string $message, bool $withInput = false, array $extra = []): RedirectResponse|JsonResponse
+    {
+        if ($direct) {
+            return response()->json(['message' => $message, ...$extra], 422);
+        }
+        $response = redirect()->back()->with('error', $message)->with($extra);
+
+        return $withInput ? $response->withInput() : $response;
+    }
+
+    private function storeExit(Request $request, FilterOliRitaseService $filterOliRitase, bool $direct = false): RedirectResponse|JsonResponse
     {
         $noteInput = $request->validate(['load_note_id' => ['nullable', 'integer', 'min:1'],
             'load_note_revision' => ['required_with:load_note_id', 'integer', 'min:0']]);
@@ -248,8 +323,7 @@ class FormKasUangJalanController extends Controller
         try {
             $filterOliRitase->assertWithinLimits($kendaraan, $request->user());
         } catch (ValidationException $exception) {
-            return back()->withInput()->with('error', $exception->validator->errors()->first())
-                ->with('filter_oli_limit_issues', $exception instanceof FilterOliLimitException ? $exception->issues : null);
+            return $this->exitFailure($direct, $exception->validator->errors()->first(), true, ['filter_oli_limit_issues' => $exception instanceof FilterOliLimitException ? $exception->issues : null]);
         }
 
         $data['tonase'] = str_replace(',', '.', $data['tonase']);
@@ -269,12 +343,12 @@ class FormKasUangJalanController extends Controller
                 app(LoadNoteDateRule::class)->assertAllowed($data['tanggal_muat'], 'tanggal_muat');
             }
         } catch (ValidationException $exception) {
-            return back()->withInput()->with('error', $exception->validator->errors()->first());
+            return $this->exitFailure($direct, $exception->validator->errors()->first(), true);
         }
 
         $customerTagihan = CustomerTagihan::where('customer_id', $data['customer_id'])->where('rute_id', $data['rute_id'])->first();
         if (! $customerTagihan) {
-            return redirect()->back()->withInput()->with('error', 'Tagihan untuk Customer dan Rute ini belum diatur di database!');
+            return $this->exitFailure($direct, 'Tagihan untuk Customer dan Rute ini belum diatur di database!', true);
         }
         $dbCustomer = Customer::find($data['customer_id']);
         $dbRute = $customerTagihan->rute;
@@ -307,9 +381,7 @@ class FormKasUangJalanController extends Controller
         $minTonase = Pengaturan::where('untuk', 'limit-tonase-muat')->first()->nilai ?? 0;
 
         if (Auth::user()->role != 'admin' && $dbVendor->limit_tonase == 1 && $request->tonase < $minTonase) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Gagal! Tonase muat minimum untuk vendor ini adalah '.$minTonase.' Ton.');
+            return $this->exitFailure($direct, 'Gagal! Tonase muat minimum untuk vendor ini adalah '.$minTonase.' Ton.', true);
         }
 
         $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
@@ -325,11 +397,11 @@ class FormKasUangJalanController extends Controller
 
         if ($kendaraan->uj_ditahan == 1) {
             if (! $vendorKesepakatanUJ || $vendorKesepakatanUJ->uj_ditahan <= 0) {
-                return redirect()->back()->with('error', 'Nominal UJ ditahan pada rute ini belum di isi. silahkan hubungi admin!!');
+                return $this->exitFailure($direct, 'Nominal UJ ditahan pada rute ini belum di isi. silahkan hubungi admin!!');
             }
 
             if ($vendorKesepakatanUJ->uj_ditahan_ban <= 0) {
-                return back()->withInput()->with('error', 'Nominal UJ Ditahan Ban pada vendor dan rute ini belum diisi. Silakan hubungi admin.');
+                return $this->exitFailure($direct, 'Nominal UJ Ditahan Ban pada vendor dan rute ini belum diisi. Silakan hubungi admin.', true);
             }
             $data['nominal_transaksi'] = $data['nominal_transaksi'] + $vendorKesepakatanUJ->uj_ditahan + $vendorKesepakatanUJ->uj_ditahan_ban;
         }
@@ -362,7 +434,7 @@ class FormKasUangJalanController extends Controller
             }
 
             if ($expectedNominal != $data['nominal_transaksi']) {
-                return redirect()->back()->with('error', 'Nominal Uang Jalan Tidak Sesuai dengan Sistem!');
+                return $this->exitFailure($direct, 'Nominal Uang Jalan Tidak Sesuai dengan Sistem!');
             }
 
         }
@@ -385,9 +457,9 @@ class FormKasUangJalanController extends Controller
         $last = KasUangJalan::latest()->orderBy('id', 'desc')->first();
 
         if (! $last && $data['nominal_transaksi'] > 0) {
-            return redirect()->back()->with('error', 'Saldo Kas Uang Jalan Tidak Cukup');
+            return $this->exitFailure($direct, 'Saldo Kas Uang Jalan Tidak Cukup');
         } elseif ($last && $last->saldo < $data['nominal_transaksi']) {
-            return redirect()->back()->with('error', 'Saldo Kas Uang Jalan Tidak Cukup');
+            return $this->exitFailure($direct, 'Saldo Kas Uang Jalan Tidak Cukup');
         } else {
             $data['saldo'] = $last ? $last->saldo - $data['nominal_transaksi'] : 0;
         }
@@ -405,7 +477,7 @@ class FormKasUangJalanController extends Controller
             if ($kimperExpired || $simExpired || $kimperNotSet || $simNotSet) {
                 $m = ($kimperExpired || $simExpired) ? 'KIMPER atau SIM sudah kadaluarsa! ' : 'Tanggal kadaluarsa KIMPER atau SIM belum diinput! ';
 
-                return redirect()->back()->with('error', $m);
+                return $this->exitFailure($direct, $m);
             }
         }
 
@@ -413,9 +485,9 @@ class FormKasUangJalanController extends Controller
         $nextMonth = Carbon::today()->addMonth();
 
         if ($dbVehicle->tanggal_pajak_stnk == null) {
-            return redirect()->back()->with('error', 'Tanggal Pajak STNK belum diinput!');
+            return $this->exitFailure($direct, 'Tanggal Pajak STNK belum diinput!');
         } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($nextMonth) && Auth::user()->role != 'admin') {
-            return redirect()->back()->withInput()->with('error', 'Permintaan uang jalan ditolak. Pajak STNK jatuh tempo pada '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').' dan sudah masuk periode pembatasan, mulai satu bulan sebelum jatuh tempo. Silakan hubungi Admin.');
+            return $this->exitFailure($direct, 'Permintaan uang jalan ditolak. Pajak STNK jatuh tempo pada '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').' dan sudah masuk periode pembatasan, mulai satu bulan sebelum jatuh tempo. Silakan hubungi Admin.', true);
         }
 
         try {
@@ -426,6 +498,10 @@ class FormKasUangJalanController extends Controller
             $lockedNote = $loadNote ? $notes->lockForProcessing($request->user(), $loadNote, (int) $noteInput['load_note_revision']) : null;
             $kendaraan = Vehicle::whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
             $filterOliRitase->assertWithinLimits($kendaraan, $request->user());
+            if ($direct) {
+                $payments = app(LoadNotePaymentPreview::class);
+                $this->assertPaymentConfirmation($request->input('payment_fingerprint'), $lockedNote, $payments->forNote($lockedNote), $payments);
+            }
 
             $store = KasUangJalan::create([
                 'tanggal' => $data['tanggal'],
@@ -516,131 +592,172 @@ class FormKasUangJalanController extends Controller
             DB::commit();
         } catch (ValidationException $exception) {
             DB::rollBack();
+            if ($direct && $this->isProcessedRetry($loadNote->fresh(), (int) $noteInput['load_note_revision'])) {
+                return $this->processedNoteResponse($loadNote->fresh());
+            }
 
-            return back()->withInput()->with('error', $exception->validator->errors()->first())
-                ->with('filter_oli_limit_issues', $exception instanceof FilterOliLimitException ? $exception->issues : null);
+            return $this->exitFailure($direct, $exception->validator->errors()->first(), true, ['filter_oli_limit_issues' => $exception instanceof FilterOliLimitException ? $exception->issues : null]);
         } catch (\Throwable $th) {
             // throw $th;
 
             DB::rollback();
 
-            return redirect()->back()->with('error', 'Data Gagal Ditambahkan. '.$th->getMessage());
+            if ($direct) {
+                report($th);
+
+                return response()->json(['message' => 'Uang jalan belum dapat diproses. Pencatatan dibatalkan; periksa kembali nota atau hubungi admin.'], 500);
+            }
+
+            return $this->exitFailure(false, 'Data Gagal Ditambahkan. '.$th->getMessage());
         }
 
-        $additionalMessage = '';
-        $today = Carbon::today();
-        $nextMonth = $today->copy()->addMonth();
-        $monthAndHalf = $today->copy()->addDays(45);
+        try {
+            $additionalMessage = '';
+            $today = Carbon::today();
+            $nextMonth = $today->copy()->addMonth();
+            $monthAndHalf = $today->copy()->addDays(45);
 
-        $additionalMessage = '';
+            $additionalMessage = '';
 
-        // Check if dates are input
-        if ($dbVehicle->tanggal_kimper == null) {
-            $additionalMessage .= "Tanggal KIMPER belum diinput. \n\n";
-        } elseif (Carbon::parse($dbVehicle->tanggal_kimper)->lessThan($today)) {
-            $additionalMessage .= 'KIMPER sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_kimper)->format('d-m-Y').".\n\n ";
-        } elseif (Carbon::parse($dbVehicle->tanggal_kimper)->lessThanOrEqualTo($nextMonth)) {
-            $additionalMessage .= 'KIMPER akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_kimper)->format('d-m-Y').".\n\n ";
-        }
+            // Check if dates are input
+            if ($dbVehicle->tanggal_kimper == null) {
+                $additionalMessage .= "Tanggal KIMPER belum diinput. \n\n";
+            } elseif (Carbon::parse($dbVehicle->tanggal_kimper)->lessThan($today)) {
+                $additionalMessage .= 'KIMPER sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_kimper)->format('d-m-Y').".\n\n ";
+            } elseif (Carbon::parse($dbVehicle->tanggal_kimper)->lessThanOrEqualTo($nextMonth)) {
+                $additionalMessage .= 'KIMPER akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_kimper)->format('d-m-Y').".\n\n ";
+            }
 
-        if ($dbVehicle->tanggal_sim == null) {
-            $additionalMessage .= 'Tanggal SIM belum diinput. ';
-        } elseif (Carbon::parse($dbVehicle->tanggal_sim)->lessThan($today)) {
-            $additionalMessage .= 'SIM sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_sim)->format('d-m-Y').".\n\n ";
-        } elseif (Carbon::parse($dbVehicle->tanggal_sim)->lessThanOrEqualTo($nextMonth)) {
-            $additionalMessage .= 'SIM akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_sim)->format('d-m-Y').".\n\n ";
-        }
+            if ($dbVehicle->tanggal_sim == null) {
+                $additionalMessage .= 'Tanggal SIM belum diinput. ';
+            } elseif (Carbon::parse($dbVehicle->tanggal_sim)->lessThan($today)) {
+                $additionalMessage .= 'SIM sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_sim)->format('d-m-Y').".\n\n ";
+            } elseif (Carbon::parse($dbVehicle->tanggal_sim)->lessThanOrEqualTo($nextMonth)) {
+                $additionalMessage .= 'SIM akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_sim)->format('d-m-Y').".\n\n ";
+            }
 
-        if ($dbVehicle->tanggal_pajak_stnk == null) {
-            $additionalMessage .= 'Tanggal Pajak STNK belum diinput. ';
-        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThan($today)) {
-            $additionalMessage .= 'Pajak STNK sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').".\n\n ";
-        } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($monthAndHalf)) {
-            $additionalMessage .= 'Pajak STNK akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').".\n\n ";
-        }
+            if ($dbVehicle->tanggal_pajak_stnk == null) {
+                $additionalMessage .= 'Tanggal Pajak STNK belum diinput. ';
+            } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThan($today)) {
+                $additionalMessage .= 'Pajak STNK sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').".\n\n ";
+            } elseif (Carbon::parse($dbVehicle->tanggal_pajak_stnk)->lessThanOrEqualTo($monthAndHalf)) {
+                $additionalMessage .= 'Pajak STNK akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_pajak_stnk)->format('d-m-Y').".\n\n ";
+            }
 
-        if ($dbVehicle->tanggal_kir == null) {
-            $additionalMessage .= 'Tanggal KIR belum diinput. ';
-        } elseif (Carbon::parse($dbVehicle->tanggal_kir)->lessThan($today)) {
-            $additionalMessage .= 'KIR sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_kir)->format('d-m-Y').".\n\n ";
-        } elseif (Carbon::parse($dbVehicle->tanggal_kir)->lessThanOrEqualTo($nextMonth)) {
-            $additionalMessage .= 'KIR akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_kir)->format('d-m-Y').".\n\n ";
-        }
+            if ($dbVehicle->tanggal_kir == null) {
+                $additionalMessage .= 'Tanggal KIR belum diinput. ';
+            } elseif (Carbon::parse($dbVehicle->tanggal_kir)->lessThan($today)) {
+                $additionalMessage .= 'KIR sudah expired sejak '.Carbon::parse($dbVehicle->tanggal_kir)->format('d-m-Y').".\n\n ";
+            } elseif (Carbon::parse($dbVehicle->tanggal_kir)->lessThanOrEqualTo($nextMonth)) {
+                $additionalMessage .= 'KIR akan kadaluarsa pada '.Carbon::parse($dbVehicle->tanggal_kir)->format('d-m-Y').".\n\n ";
+            }
 
-        $additionalMessage .= $filterOliRitase->replacementWarnings($kendaraan);
+            $additionalMessage .= $filterOliRitase->replacementWarnings($kendaraan);
 
-        if ($additionalMessage != '') {
-            // tambahkan "==========================\n" pada awal pesan
-            $additionalMessage = "==========================\n".$additionalMessage;
-            // tambankan "\n" pada akhir pesan
-        }
+            if ($additionalMessage != '') {
+                // tambahkan "==========================\n" pada awal pesan
+                $additionalMessage = "==========================\n".$additionalMessage;
+                // tambankan "\n" pada akhir pesan
+            }
 
-        $dbWa = app(GroupWa::class);
-        $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
+            $dbWa = app(GroupWa::class);
+            $group = $dbWa->where('untuk', 'kas-uang-jalan')->first();
 
-        $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                    "*Form Pengeluaran Uang Jalan*\n".
-                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                    '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
-                    'Nomor Lambung : '.Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                        "*Form Pengeluaran Uang Jalan*\n".
+                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                        '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
+                        'Nomor Lambung : '.Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+                        'Vendor : '.$store->vendor->nama."\n\n".
+                        'Tambang : '.$store->customer->singkatan."\n".
+                        'Rute : '.$store->rute->nama."\n\n".
+                        'Nilai :  *Rp. '.number_format($data['nominal_transaksi'] - $nominalDitahan - $nominalDitahanBan, 0, ',', '.').",-*\n\n".
+                        "Ditransfer ke rek:\n\n".
+                        'Bank     : '.$data['bank']."\n".
+                        'Nama    : '.$data['transfer_ke']."\n".
+                        'No. Rek : '.$data['no_rekening']."\n\n".
+                        "==========================\n".
+                        "Sisa Saldo Kas Uang Jalan : \n".
+                        'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
+                        $additionalMessage.
+                        "Terima kasih 🙏🙏🙏\n";
+
+            $pesan2 = '';
+
+            if ($kendaraan->uj_ditahan == 1) {
+                $rekeningUjDitahan = Rekening::where('untuk', 'uang-jalan-ditahan')->first();
+                $totalSparepart = UjDitahan::where('saldo', '>', 0)->sum('saldo');
+                $totalBan = UjDitahanBan::where('saldo', '>', 0)->sum('saldo');
+                $saldoSparepartVehicle = UjDitahan::where('vehicle_id', $kendaraan->id)->where('saldo', '>', 0)->sum('saldo');
+                $saldoBanVehicle = UjDitahanBan::where('vehicle_id', $kendaraan->id)->where('saldo', '>', 0)->sum('saldo');
+                $rincianUjDitahan = '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
+                    'Nomor Lambung : '.$kendaraan->nomor_lambung."\n".
                     'Vendor : '.$store->vendor->nama."\n\n".
                     'Tambang : '.$store->customer->singkatan."\n".
                     'Rute : '.$store->rute->nama."\n\n".
-                    'Nilai :  *Rp. '.number_format($data['nominal_transaksi'] - $nominalDitahan - $nominalDitahanBan, 0, ',', '.').",-*\n\n".
+                    'Nilai :  *Rp. '.number_format($nominalDitahan + $nominalDitahanBan, 0, ',', '.').",-*\n\n".
                     "Ditransfer ke rek:\n\n".
-                    'Bank     : '.$data['bank']."\n".
-                    'Nama    : '.$data['transfer_ke']."\n".
-                    'No. Rek : '.$data['no_rekening']."\n\n".
+                    'Bank     : '.$rekeningUjDitahan->nama_bank."\n".
+                    'Nama    : '.$rekeningUjDitahan->nama_rekening."\n".
+                    'No. Rek : '.$rekeningUjDitahan->nomor_rekening."\n\n".
                     "==========================\n".
-                    "Sisa Saldo Kas Uang Jalan : \n".
-                    'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
-                    $additionalMessage.
-                    "Terima kasih 🙏🙏🙏\n";
+                    'Total Saldo Sparepart: '.$kendaraan->nomor_lambung."\n".
+                    'Rp. '.number_format($saldoSparepartVehicle, 0, ',', '.')."\n\n".
+                    'Total Saldo Ban: '.$kendaraan->nomor_lambung."\n".
+                    'Rp. '.number_format($saldoBanVehicle, 0, ',', '.')."\n\n";
+                $grandTotalGroup = "Grand Total UJ Ditahan : \n".
+                    'Rp. '.number_format($totalSparepart + $totalBan, 0, ',', '.')."\n\n";
+                $grandTotalDriver = "Grand Total UJ Ditahan : \n".
+                    'Rp. '.number_format($saldoSparepartVehicle + $saldoBanVehicle, 0, ',', '.')."\n\n";
+                $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n*Form Uang Jalan Ditahan*\n🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                    $rincianUjDitahan.$grandTotalGroup.$additionalMessage."Terima kasih 🙏🙏🙏\n";
+                $pesanMasuk2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n*Form Uang Jalan Ditahan*\n🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                    $rincianUjDitahan.$grandTotalGroup.$additionalMessage."Terima kasih 🙏🙏🙏\n";
+            }
 
-        $pesan2 = '';
+            $send = $dbWa->sendWa($group->nama_group, $pesan);
 
-        if ($kendaraan->uj_ditahan == 1) {
-            $rekeningUjDitahan = Rekening::where('untuk', 'uang-jalan-ditahan')->first();
-            $totalSparepart = UjDitahan::where('saldo', '>', 0)->sum('saldo');
-            $totalBan = UjDitahanBan::where('saldo', '>', 0)->sum('saldo');
-            $saldoSparepartVehicle = UjDitahan::where('vehicle_id', $kendaraan->id)->where('saldo', '>', 0)->sum('saldo');
-            $saldoBanVehicle = UjDitahanBan::where('vehicle_id', $kendaraan->id)->where('saldo', '>', 0)->sum('saldo');
-            $rincianUjDitahan = '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
-                'Nomor Lambung : '.$kendaraan->nomor_lambung."\n".
-                'Vendor : '.$store->vendor->nama."\n\n".
-                'Tambang : '.$store->customer->singkatan."\n".
-                'Rute : '.$store->rute->nama."\n\n".
-                'Nilai :  *Rp. '.number_format($nominalDitahan + $nominalDitahanBan, 0, ',', '.').",-*\n\n".
-                "Ditransfer ke rek:\n\n".
-                'Bank     : '.$rekeningUjDitahan->nama_bank."\n".
-                'Nama    : '.$rekeningUjDitahan->nama_rekening."\n".
-                'No. Rek : '.$rekeningUjDitahan->nomor_rekening."\n\n".
-                "==========================\n".
-                'Total Saldo Sparepart: '.$kendaraan->nomor_lambung."\n".
-                'Rp. '.number_format($saldoSparepartVehicle, 0, ',', '.')."\n\n".
-                'Total Saldo Ban: '.$kendaraan->nomor_lambung."\n".
-                'Rp. '.number_format($saldoBanVehicle, 0, ',', '.')."\n\n";
-            $grandTotalGroup = "Grand Total UJ Ditahan : \n".
-                'Rp. '.number_format($totalSparepart + $totalBan, 0, ',', '.')."\n\n";
-            $grandTotalDriver = "Grand Total UJ Ditahan : \n".
-                'Rp. '.number_format($saldoSparepartVehicle + $saldoBanVehicle, 0, ',', '.')."\n\n";
-            $pesan2 = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n*Form Uang Jalan Ditahan*\n🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                $rincianUjDitahan.$grandTotalGroup.$additionalMessage."Terima kasih 🙏🙏🙏\n";
-            $pesanMasuk2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n*Form Uang Jalan Ditahan*\n🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                $rincianUjDitahan.$grandTotalGroup.$additionalMessage."Terima kasih 🙏🙏🙏\n";
-        }
+            if ($pesan2 != '') {
 
-        $send = $dbWa->sendWa($group->nama_group, $pesan);
+                $dbWa->sendWa($group->nama_group, $pesan2);
 
-        if ($pesan2 != '') {
+                $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
+                $send2 = $dbWa->sendWa($groupUjDitahan->nama_group, $pesanMasuk2);
+                if ($dbVehicle->driver && $dbVehicle->driver->no_hp != null && $dbVehicle->driver->no_hp != '' && $dbVehicle->driver->no_hp != '-' && $dbVehicle->driver->no_hp != '0' && strlen($dbVehicle->driver->no_hp) >= 10) {
 
-            $dbWa->sendWa($group->nama_group, $pesan2);
+                    $pesanDriver = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                                    "*Form Pengeluaran Uang Jalan*\n".
+                                    "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
+                                    '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
+                                    'Nomor Lambung : '.Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
+                                    'Vendor : '.$store->vendor->nama."\n\n".
+                                    'Tambang : '.$store->customer->singkatan."\n".
+                                    'Rute : '.$store->rute->nama."\n\n".
+                                    'Nilai :  *Rp. '.number_format($data['nominal_transaksi'] - $nominalDitahan - $nominalDitahanBan, 0, ',', '.').",-*\n\n".
+                                    "Ditransfer ke rek:\n\n".
+                                    'Bank     : '.$data['bank']."\n".
+                                    'Nama    : '.$data['transfer_ke']."\n".
+                                    'No. Rek : '.$data['no_rekening']."\n\n".
+                                    "==========================\n".
+                                    $additionalMessage.
+                                    "Terima kasih 🙏🙏🙏\n";
 
-            $groupUjDitahan = $dbWa->where('untuk', 'kas-uj-ditahan')->first();
-            $send2 = $dbWa->sendWa($groupUjDitahan->nama_group, $pesanMasuk2);
-            if ($dbVehicle->driver && $dbVehicle->driver->no_hp != null && $dbVehicle->driver->no_hp != '' && $dbVehicle->driver->no_hp != '-' && $dbVehicle->driver->no_hp != '0' && strlen($dbVehicle->driver->no_hp) >= 10) {
+                    $pesanDriver2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n*Form Uang Jalan Ditahan*\n🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
+                        $rincianUjDitahan.$grandTotalDriver.$additionalMessage."Terima kasih 🙏🙏🙏\n";
+                    // delete all non numeric and space characters from $dbVehicle->driver->no_hp
 
-                $pesanDriver = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
+                    $hpDriver = $dbVehicle->driver->no_hp = preg_replace('/\D/', '', $dbVehicle->driver->no_hp);
+
+                    $dbWa->sendWa($hpDriver, $pesanDriver2);
+                    $dbWa->sendWa($hpDriver, $pesanDriver);
+                }
+
+            }
+
+            $dbVendor = Vendor::find($vendor);
+
+            if ($dbVendor->no_hp != null || $dbVendor->no_hp != '' || $dbVendor->no_hp != '-') {
+                $pesanVendor = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
                                 "*Form Pengeluaran Uang Jalan*\n".
                                 "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
                                 '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
@@ -657,39 +774,19 @@ class FormKasUangJalanController extends Controller
                                 $additionalMessage.
                                 "Terima kasih 🙏🙏🙏\n";
 
-                $pesanDriver2 = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n*Form Uang Jalan Ditahan*\n🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-                    $rincianUjDitahan.$grandTotalDriver.$additionalMessage."Terima kasih 🙏🙏🙏\n";
-                // delete all non numeric and space characters from $dbVehicle->driver->no_hp
-
-                $hpDriver = $dbVehicle->driver->no_hp = preg_replace('/\D/', '', $dbVehicle->driver->no_hp);
-
-                $dbWa->sendWa($hpDriver, $pesanDriver2);
-                $dbWa->sendWa($hpDriver, $pesanDriver);
+                $sendVendor = $dbWa->sendWa($dbVendor->no_hp, $pesanVendor);
             }
 
+        } catch (\Throwable $exception) {
+            if (! $direct) {
+                throw $exception;
+            }
+            report($exception);
+
+            return $this->processedNoteResponse($lockedNote, true);
         }
-
-        $dbVendor = Vendor::find($vendor);
-
-        if ($dbVendor->no_hp != null || $dbVendor->no_hp != '' || $dbVendor->no_hp != '-') {
-            $pesanVendor = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                            "*Form Pengeluaran Uang Jalan*\n".
-                            "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                            '*UJ'.sprintf('%02d', $data['nomor_uang_jalan'])."*\n\n".
-                            'Nomor Lambung : '.Vehicle::find($data['vehicle_id'])->nomor_lambung."\n".
-                            'Vendor : '.$store->vendor->nama."\n\n".
-                            'Tambang : '.$store->customer->singkatan."\n".
-                            'Rute : '.$store->rute->nama."\n\n".
-                            'Nilai :  *Rp. '.number_format($data['nominal_transaksi'] - $nominalDitahan - $nominalDitahanBan, 0, ',', '.').",-*\n\n".
-                            "Ditransfer ke rek:\n\n".
-                            'Bank     : '.$data['bank']."\n".
-                            'Nama    : '.$data['transfer_ke']."\n".
-                            'No. Rek : '.$data['no_rekening']."\n\n".
-                            "==========================\n".
-                            $additionalMessage.
-                            "Terima kasih 🙏🙏🙏\n";
-
-            $sendVendor = $dbWa->sendWa($dbVendor->no_hp, $pesanVendor);
+        if ($direct) {
+            return $this->processedNoteResponse($lockedNote);
         }
 
         return redirect()->route('billing.index')->with('success', 'Data Berhasil Ditambahkan');

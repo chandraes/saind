@@ -9,6 +9,8 @@ use App\Models\UjDitahanBan;
 use App\Models\UjDitahanBanDetail;
 use App\Models\UjDitahanDetail;
 use App\Models\User;
+use App\Services\LoadNotePaymentPreview;
+use App\Services\LoadNoteReviewService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -327,6 +329,122 @@ class UjDitahanBanFlowTest extends TestCase
         $this->assertDatabaseHas('kas_uang_jalans', ['nomor_uang_jalan' => 13, 'nominal_transaksi' => $gross]);
         $this->assertSame('processed', $note->fresh()->status);
         $this->assertSame(350000, $note->fresh()->transfer_override);
+    }
+
+    private function directNote(): array
+    {
+        $this->setupExit();
+        $note = $this->noteForExit();
+        $note->update(['transfer_override' => 350000]);
+        Schema::table('vehicles', function (Blueprint $table): void {
+            foreach (['transfer_ke', 'bank', 'no_rekening'] as $column) {
+                $table->string($column)->nullable();
+            }
+        });
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => null, 'transfer_ke' => 'Penerima unit', 'bank' => 'BCA', 'no_rekening' => '123456789']);
+        $payments = app(LoadNotePaymentPreview::class);
+
+        return [$note, ['load_note_revision' => 0, 'payment_fingerprint' => $payments->confirmationHash($note, $payments->forNote($note))]];
+    }
+
+    #[TestWith(['admin'])]
+    #[TestWith(['su'])]
+    #[TestWith(['user'])]
+    public function test_note_processes_cash_and_enters_unloading_list_with_one_request_and_safe_retry(string $role): void
+    {
+        [$note, $payload] = $this->directNote();
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => $role, 'password' => 'password']));
+        $url = '/billing/nota-muat/'.$note->id.'/process';
+        $response = $this->postJson($url, [...$payload, 'nominal_transaksi' => '1', 'no_rekening' => 'TAMPERED']);
+        $response->assertOk();
+        $this->assertDatabaseHas('kas_uang_jalans', ['nomor_uang_jalan' => 13, 'nominal_transaksi' => 420000, 'no_rekening' => '123456789']);
+        $this->assertDatabaseHas('vehicles', ['id' => 1, 'status' => 'proses']);
+        $this->assertSame('processed', $note->fresh()->status);
+        $this->assertContains($note->fresh()->transaksi_id, Transaksi::getNotaBongkar()->modelKeys());
+        $sent = count(app(GroupWa::class)->sent);
+        $this->postJson($url, $payload)->assertOk()->assertJsonPath('data.transaction_id', $note->fresh()->transaksi_id);
+        $this->assertDatabaseCount('transaksis', 2);
+        $this->assertDatabaseCount('kas_uang_jalans', 2);
+        $this->assertDatabaseCount('load_note_events', 1);
+        $this->assertCount($sent, app(GroupWa::class)->sent);
+    }
+
+    #[TestWith(['bank'])]
+    #[TestWith(['amount'])]
+    public function test_direct_processing_rejects_payment_details_changed_after_confirmation(string $change): void
+    {
+        [$note, $payload] = $this->directNote();
+        if ($change === 'bank') {
+            DB::table('vehicles')->where('id', 1)->update(['no_rekening' => '987654321']);
+        } else {
+            DB::table('vendor_uang_jalans')->update(['uj_ditahan_ban' => 30000]);
+        }
+        $this->postJson('/billing/nota-muat/'.$note->id.'/process', $payload)->assertUnprocessable()->assertJsonValidationErrors('payment_fingerprint');
+        $this->assertSame('draft', $note->fresh()->status);
+        $this->assertDatabaseCount('transaksis', 1);
+    }
+
+    #[TestWith([1])]
+    #[TestWith([2])]
+    public function test_concurrent_completion_during_preflight_returns_existing_success(int $duringRead): void
+    {
+        [$note, $payload] = $this->directNote();
+        $url = '/billing/nota-muat/'.$note->id.'/process';
+        $real = new LoadNoteReviewService;
+        $calls = 0;
+        $this->partialMock(LoadNoteReviewService::class, function ($mock) use (&$calls, $duringRead, $real, $url, $payload): void {
+            $mock->shouldReceive('forForward')->andReturnUsing(function ($user, $id) use (&$calls, $duringRead, $real, $url, $payload) {
+                $calls++;
+                if ($calls === $duringRead) {
+                    $this->postJson($url, $payload)->assertOk();
+                }
+
+                return $real->forForward($user, $id);
+            });
+        });
+        $this->postJson($url, $payload)->assertOk()->assertJsonPath('data.transaction_id', $note->fresh()->transaksi_id);
+        $this->assertDatabaseCount('transaksis', 2);
+        $this->assertDatabaseCount('kas_uang_jalans', 2);
+        $this->assertDatabaseCount('load_note_events', 1);
+    }
+
+    public function test_direct_processing_failure_rolls_back_all_records_and_returns_json(): void
+    {
+        [$note, $payload] = $this->directNote();
+        DB::unprepared("CREATE TRIGGER fail_direct_ban BEFORE INSERT ON uj_ditahan_ban_details BEGIN SELECT RAISE(ABORT, 'failure'); END");
+        $this->postJson('/billing/nota-muat/'.$note->id.'/process', $payload)->assertStatus(500);
+        $this->assertSame('draft', $note->fresh()->status);
+        $this->assertDatabaseCount('transaksis', 1);
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+        $this->assertDatabaseCount('load_note_events', 0);
+        $this->assertDatabaseCount('uj_ditahan_bans', 0);
+    }
+
+    public function test_direct_processing_keeps_insufficient_balance_and_role_restrictions(): void
+    {
+        [$note, $payload] = $this->directNote();
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'vendor-operational', 'password' => 'password']));
+        $this->postJson('/billing/nota-muat/'.$note->id.'/process', $payload)->assertForbidden();
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        DB::table('kas_uang_jalans')->update(['saldo' => 0]);
+        $this->postJson('/billing/nota-muat/'.$note->id.'/process', $payload)->assertUnprocessable()->assertJsonPath('message', 'Saldo Kas Uang Jalan Tidak Cukup');
+        $this->assertSame('draft', $note->fresh()->status);
+        $this->assertDatabaseCount('transaksis', 1);
+    }
+
+    public function test_direct_processing_reports_notification_failure_as_saved_transaction(): void
+    {
+        [$note, $payload] = $this->directNote();
+        $this->app->instance(GroupWa::class, new class extends GroupWa
+        {
+            public function sendWa($tujuan, $pesan)
+            {
+                throw new \RuntimeException('Notification unavailable');
+            }
+        });
+        $this->postJson('/billing/nota-muat/'.$note->id.'/process', $payload)->assertOk()->assertJsonPath('notification_warning', true);
+        $this->assertSame('processed', $note->fresh()->status);
+        $this->assertDatabaseCount('transaksis', 2);
     }
 
     public function test_failed_money_transaction_keeps_note_pending_without_audit_or_cash_side_effects(): void

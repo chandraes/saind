@@ -8,6 +8,13 @@ use App\Models\VendorUangJalan;
 
 class LoadNotePaymentPreview
 {
+    public function confirmationHash(LoadNoteDraft $note, array $preview): string
+    {
+        $details = array_intersect_key($preview, array_flip(['held', 'transfer', 'sparepart', 'ban', 'gross', 'recipient', 'bank', 'account']));
+
+        return hash('sha256', json_encode([(int) $note->id, (int) $note->revision, $details], JSON_THROW_ON_ERROR));
+    }
+
     /**
      * Current settings only; reading a note never reserves or pays funds.
      *

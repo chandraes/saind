@@ -235,11 +235,11 @@ class LoadNoteInboxTest extends MobileApiTestCase
         $draft = LoadNoteDraft::firstOrFail();
         LoadNoteDraft::factory()->count(25)->create(['vendor_id' => 1, 'vehicle_id' => $draft->vehicle_id, 'created_by' => $draft->created_by, 'ticket_number' => 'SJB-NEEDLE']);
         $response = $this->get('/billing/nota-muat?vendor_id=1&search=NEEDLE')->assertOk()
-            ->assertSee('SJB-NEEDLE')->assertDontSee('SJB-OTHER-VENDOR')->assertDontSee('SJB-OTHER-TICKET');
+            ->assertSee('SJB-NEEDLE')->assertSee('>1</td>', false)->assertSee('>25</td>', false)->assertDontSee('SJB-OTHER-VENDOR')->assertDontSee('SJB-OTHER-TICKET');
         $this->assertSame(26, $response->viewData('notes')->total());
         $this->assertStringContainsString('vendor_id=1', $response->viewData('notes')->nextPageUrl());
         $this->assertStringContainsString('search=NEEDLE', $response->viewData('notes')->nextPageUrl());
-        $this->get('/billing/nota-muat?vendor_id=1&search=NEEDLE&page=2')->assertOk()->assertViewHas('notes', fn ($notes): bool => $notes->count() === 1);
+        $this->get('/billing/nota-muat?vendor_id=1&search=NEEDLE&page=2')->assertOk()->assertViewHas('notes', fn ($notes): bool => $notes->count() === 1)->assertSee('>26</td>', false);
     }
 
     public function test_invalid_filters_and_missing_records_or_photos_are_handled(): void
