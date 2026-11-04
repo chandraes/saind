@@ -19,7 +19,15 @@
 
     <form action="{{route('kas-uang-jalan.keluar.store')}}" method="post" id="masukForm">
         @csrf
-        <input type="hidden" id="old_rute_id" value="{{ old('rute_id') }}">
+        @if ($loadNote ?? null)
+            <input type="hidden" name="load_note_id" value="{{ $loadNote->id }}">
+            <input type="hidden" name="load_note_revision" value="{{ $loadNote->revision }}">
+            <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span><strong>Nota {{ $loadNote->ticket_number }}</strong> — data muat diisi dari nota yang telah diperiksa. Uang jalan belum dikeluarkan.</span>
+                <a class="btn btn-outline-primary btn-sm" href="{{ route('billing.nota-muat.show', $loadNote) }}">Kembali / koreksi nota</a>
+            </div>
+        @endif
+        <input type="hidden" id="old_rute_id" value="{{ $notePrefill['rute_id'] ?? old('rute_id') }}">
         <input type="hidden" id="min_tonase_config" value="{{ $limitValue }}">
         <input type="hidden" id="vendor_limit_status" value="0">
         <!-- Input hidden untuk status UJ Ditahan -->
@@ -52,7 +60,7 @@
                         <select class="form-select @error('vehicle_id') is-invalid @enderror" name="vehicle_id" id="vehicle_id" required>
                             <option value="" selected disabled>-- Pilih Nomor Lambung --</option>
                             @foreach ($vehicle as $v)
-                            <option value="{{$v->id}}" {{ old('vehicle_id') == $v->id ? 'selected' : '' }}>{{$v->nomor_lambung}}</option>
+                            <option value="{{$v->id}}" {{ ($notePrefill['vehicle_id'] ?? old('vehicle_id')) == $v->id ? 'selected' : '' }}>{{$v->nomor_lambung}}</option>
                             @endforeach
                         </select>
                         @error('vehicle_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -72,7 +80,7 @@
                         <select class="form-select @error('customer_id') is-invalid @enderror" name="customer_id" id="customer_id" required>
                             <option value="" selected disabled>-- Pilih Tambang --</option>
                             @foreach ($customer as $v)
-                            <option value="{{$v->id}}" {{ old('customer_id') == $v->id ? 'selected' : '' }}>{{$v->singkatan}}</option>
+                            <option value="{{$v->id}}" {{ ($notePrefill['customer_id'] ?? old('customer_id')) == $v->id ? 'selected' : '' }}>{{$v->singkatan}}</option>
                             @endforeach
                         </select>
                         @error('customer_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -170,7 +178,7 @@
                         <label for="nota_muat" class="form-label">Nota Muat <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fa fa-file"></i></span>
-                            <input type="text" class="form-control @error('nota_muat') is-invalid @enderror" name="nota_muat" id="nota_muat" required value="{{ old('nota_muat') }}">
+                            <input type="text" class="form-control @error('nota_muat') is-invalid @enderror" name="nota_muat" id="nota_muat" required value="{{ $notePrefill['nota_muat'] ?? old('nota_muat') }}">
                             @error('nota_muat') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
@@ -179,7 +187,7 @@
                         <label for="tanggal_muat" class="form-label">Tanggal Muat <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fa fa-calendar"></i></span>
-                            <input type="text" class="form-control @error('tanggal_muat') is-invalid @enderror" name="tanggal_muat" id="tanggal_muat" required value="{{ old('tanggal_muat') }}">
+                            <input type="text" class="form-control @error('tanggal_muat') is-invalid @enderror" name="tanggal_muat" id="tanggal_muat" required value="{{ isset($loadNote) ? $loadNote->loaded_on->format('d-m-Y') : old('tanggal_muat') }}">
                             @error('tanggal_muat') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
@@ -187,7 +195,7 @@
                     <div class="col-md-12 mt-4" id="gt_muat_disable" hidden>
                         <label for="tonase_disable" class="form-label">Tonase <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input type="text" class="form-control @error('tonase') is-invalid @enderror" name="tonase" id="tonase_disable" value="{{ old('tonase') }}">
+                            <input type="text" class="form-control @error('tonase') is-invalid @enderror" name="tonase" id="tonase_disable" value="{{ $notePrefill['tonase'] ?? old('tonase') }}">
                             <span class="input-group-text">TON</span>
                         </div>
                         <small class="form-text text-danger"><i class="fa fa-info-circle"></i> Gunakan titik (.) untuk pemisah desimal</small>
@@ -199,7 +207,7 @@
                             <div class="col-md-4">
                                 <label for="gross_muat" class="form-label">GROSS <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control @error('gross_muat') is-invalid @enderror" name="gross_muat" id="gross_muat" required oninput="calNetto()" value="{{ old('gross_muat') }}">
+                                    <input type="text" class="form-control @error('gross_muat') is-invalid @enderror" name="gross_muat" id="gross_muat" required oninput="calNetto()" value="{{ $notePrefill['gross_muat'] ?? old('gross_muat') }}">
                                     <span class="input-group-text">TON</span>
                                 </div>
                                 <small class="form-text text-danger"><i class="fa fa-info-circle"></i> Pemisah desimal (.)</small>
@@ -209,7 +217,7 @@
                             <div class="col-md-4">
                                 <label for="tarra_muat" class="form-label">TARRA <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control @error('tarra_muat') is-invalid @enderror" name="tarra_muat" id="tarra_muat" required oninput="calNetto()" value="{{ old('tarra_muat') }}">
+                                    <input type="text" class="form-control @error('tarra_muat') is-invalid @enderror" name="tarra_muat" id="tarra_muat" required oninput="calNetto()" value="{{ $notePrefill['tarra_muat'] ?? old('tarra_muat') }}">
                                     <span class="input-group-text">TON</span>
                                 </div>
                                 <small class="form-text text-danger"><i class="fa fa-info-circle"></i> Pemisah desimal (.)</small>
@@ -219,7 +227,7 @@
                             <div class="col-md-4">
                                 <label for="tonase_enable" class="form-label">NETTO <span class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control bg-light @error('tonase') is-invalid @enderror" name="tonase" id="tonase_enable" required readonly value="{{ old('tonase') }}">
+                                    <input type="text" class="form-control bg-light @error('tonase') is-invalid @enderror" name="tonase" id="tonase_enable" required readonly value="{{ $notePrefill['tonase'] ?? old('tonase') }}">
                                     <span class="input-group-text text-success fw-bold">TON</span>
                                 </div>
                                 <small class="form-text text-muted"><i class="fa fa-calculator"></i> Dihitung otomatis</small>
@@ -389,13 +397,19 @@
         // Datepicker
         $( "#tanggal_muat" ).datepicker({
             dateFormat: "dd-mm-yy",
-            minDate: {{$konfigurasi}} == 1 ? -{{ max(0, (int) config('mobile.load_note_rules.backdate_days', 2)) }} : null,
+            minDate: {{ ($loadNote ?? null) && ! config('mobile.load_note_rules.enforce_mobile_backdate', false) ? 0 : $konfigurasi }} == 1 ? -{{ max(0, (int) config('mobile.load_note_rules.backdate_days', 2)) }} : null,
             maxDate: 0
         }).attr('readonly', 'readonly');
 
         $('#vehicle_id, #customer_id, #rute_id').select2({
             theme: 'bootstrap-5'
         });
+
+        @if ($loadNote ?? null)
+        $('#vehicle_id, #customer_id, #rute_id').prop('disabled', true);
+        $('#nota_muat, #tanggal_muat, #gross_muat, #tarra_muat, #tonase_enable, #tonase_disable').prop('readonly', true);
+        $('#tanggal_muat').datepicker('disable');
+        @endif
 
         // ==========================================
         // PENANGANAN SAAT HALAMAN DI-LOAD
@@ -550,7 +564,7 @@
     function calNetto() {
        var gross = parseFloat(document.getElementById('gross_muat').value || 0);
        var tarra = parseFloat(document.getElementById('tarra_muat').value || 0);
-       var netto = (gross - tarra).toFixed(2);
+       var netto = (gross - tarra).toFixed({{ ($loadNote ?? null) ? 3 : 2 }});
        document.getElementById('tonase_enable').value = netto;
     }
 </script>

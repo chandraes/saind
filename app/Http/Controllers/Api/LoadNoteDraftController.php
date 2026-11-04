@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InspectLoadNoteRequest;
 use App\Http\Requests\StoreLoadNoteDraftRequest;
+use App\Http\Requests\StoreScannedLoadNoteRequest;
 use App\Http\Resources\MobileLoadNoteDraftResource;
 use App\Http\Resources\MobileVehicleResource;
 use App\Models\LoadNoteDraft;
@@ -44,6 +45,13 @@ class LoadNoteDraftController extends Controller
     {
         return response()->json(['data' => $matcher->inspect($request->user(), $request->validated()),
             'decision' => ['accepted' => true, 'action' => 'confirm_vehicle']]);
+    }
+
+    public function storeScanned(StoreScannedLoadNoteRequest $request, LoadNoteDraftService $service): JsonResponse
+    {
+        [$draft, $created] = $service->store($request->user(), $request->validated(), $request->file('photo'));
+
+        return (new MobileLoadNoteDraftResource($draft))->response()->setStatusCode($created ? 201 : 200);
     }
 
     public function store(StoreLoadNoteDraftRequest $request, LoadNoteDraftService $service): JsonResponse

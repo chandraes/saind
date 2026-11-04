@@ -163,6 +163,7 @@ class MobileLoadNoteDraftTest extends MobileApiTestCase
 
     public function test_store_enforces_backdate_before_photo_storage(): void
     {
+        config(['mobile.load_note_rules.enforce_mobile_backdate' => true]);
         $this->travelTo(now()->setDate(2026, 11, 3)->setTime(12, 0));
         DB::table('konfigurasis')->insert(['kode' => 'nota-muat', 'status' => 1]);
         $this->postJson('/api/v1/load-notes', $this->payload(), $this->headers($this->actor()))

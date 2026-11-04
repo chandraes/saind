@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\LoadNoteRuleException;
 use App\Models\LoadNoteDraft;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -24,7 +25,7 @@ class LoadNoteDraftService
             ['Content-Type' => $draft->photo_mime, 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff'], 'inline');
     }
 
-    private function kilograms(string $value): int
+    public function kilograms(string $value): int
     {
         [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '');
 
@@ -36,14 +37,18 @@ class LoadNoteDraftService
      */
     public function store(User $user, array $data, UploadedFile $photo): array
     {
-        $attributes = ['vehicle_id' => (int) $data['vehicle_id'], 'ticket_number' => trim($data['ticket_number']),
-            'mine_name' => trim($data['mine_name']), 'loaded_on' => $data['loaded_on'],
-            'driver_name' => trim($data['driver_name'] ?? ''), 'notes' => trim($data['notes'] ?? ''),
-            'gross_kg' => $this->kilograms((string) $data['gross_weight']), 'tare_kg' => $this->kilograms((string) $data['tare_weight'])];
+        $scanned = isset($data['header_name']);
+        $attributes = $scanned ? ['header_name' => trim($data['header_name']), 'unit_code' => trim($data['unit_code']),
+            'route_reference' => trim($data['route_reference']), 'stampout_date' => $data['stampout_date'],
+            'confirmed_vehicle_id' => (int) $data['confirmed_vehicle_id'], 'ticket_number' => trim($data['ticket_number']),
+            'gross_kg' => $this->kilograms((string) $data['gross_weight']), 'tare_kg' => $this->kilograms((string) $data['tare_weight'])] : ['vehicle_id' => (int) $data['vehicle_id'], 'ticket_number' => trim($data['ticket_number']),
+                'mine_name' => trim($data['mine_name']), 'loaded_on' => $data['loaded_on'],
+                'driver_name' => trim($data['driver_name'] ?? ''), 'notes' => trim($data['notes'] ?? ''),
+                'gross_kg' => $this->kilograms((string) $data['gross_weight']), 'tare_kg' => $this->kilograms((string) $data['tare_weight'])];
         $hash = hash('sha256', json_encode($attributes, JSON_THROW_ON_ERROR).hash_file('sha256', $photo->getRealPath()));
         $path = null;
         try {
-            return DB::transaction(function () use ($user, $data, $photo, $attributes, $hash, &$path): array {
+            return DB::transaction(function () use ($user, $data, $photo, $attributes, $hash, $scanned, &$path): array {
                 Vendor::whereKey($user->vendor_id)->lockForUpdate()->firstOrFail();
                 $existing = LoadNoteDraft::where('vendor_id', $user->vendor_id)->where('request_id', $data['request_id'])->first();
                 if ($existing) {
@@ -51,10 +56,23 @@ class LoadNoteDraftService
 
                     return [$existing->load('creator:id,name'), false];
                 }
+                if ($scanned) {
+                    $matched = app(LoadNoteMatcher::class)->inspect($user, $data);
+                    if ((int) $data['confirmed_vehicle_id'] !== (int) $matched['vehicle_id']) {
+                        throw new LoadNoteRuleException('unit_code', 'Hasil pencocokan kendaraan berubah. Periksa ringkasan dan konfirmasi nomor lambung kembali.', 'vehicle_confirmation_changed', 'confirm_vehicle');
+                    }
+                    $attributes = ['customer_id' => $matched['customer_id'], 'rute_id' => $matched['rute_id'],
+                        'vehicle_id' => $matched['vehicle_id'], 'ticket_number' => $matched['ticket_number'],
+                        'mine_name' => $matched['customer_name'], 'loaded_on' => $matched['loaded_on'],
+                        'header_name' => trim($data['header_name']), 'unit_code' => trim($data['unit_code']),
+                        'route_reference' => trim($data['route_reference']), 'date_source' => 'stampout',
+                        'driver_name' => '', 'notes' => '',
+                        'gross_kg' => $attributes['gross_kg'], 'tare_kg' => $attributes['tare_kg']];
+                }
                 $vehicle = Vehicle::whereKey($attributes['vehicle_id'])->where('vendor_id', $user->vendor_id)->lockForUpdate()->firstOrFail();
                 app(LoadNoteRules::class)->assertVehicle($vehicle);
                 app(LoadNoteRules::class)->assertTicket((int) $user->vendor_id, $attributes['ticket_number']);
-                app(LoadNoteDateRule::class)->assertAllowed($attributes['loaded_on']);
+                app(LoadNoteDateRule::class)->assertMobileAllowed($attributes['loaded_on']);
                 $path = $photo->storeAs('mobile/load-notes/'.$user->vendor_id, Str::uuid().'.'.$photo->extension(), 'local');
                 if (! is_string($path)) {
                     throw new RuntimeException('Foto nota belum dapat disimpan.');

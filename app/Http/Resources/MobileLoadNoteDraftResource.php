@@ -10,7 +10,8 @@ class MobileLoadNoteDraftResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
-        return ['id' => $this->id, 'ticket_number' => $this->ticket_number, 'mine_name' => $this->mine_name,
+        return ['id' => $this->id, 'customer_id' => $this->customer_id, 'rute_id' => $this->rute_id,
+            'header_name' => $this->header_name, 'unit_code' => $this->unit_code, 'route_reference' => $this->route_reference, 'date_source' => $this->date_source, 'ticket_number' => $this->ticket_number, 'mine_name' => $this->mine_name,
             'vehicle_id' => $this->vehicle_id, 'vehicle_number' => $this->vehicle_number,
             'loaded_on' => $this->loaded_on->format('Y-m-d'), 'driver_name' => $this->driver_name,
             'gross_weight' => number_format($this->gross_kg / 1000, 3, '.', ''),

@@ -24,7 +24,7 @@ class LoadNoteMatcher
      */
     public function inspect(User $user, array $data): array
     {
-        app(LoadNoteDateRule::class)->assertAllowed($data['stampout_date'], 'stampout_date');
+        app(LoadNoteDateRule::class)->assertMobileAllowed($data['stampout_date'], 'stampout_date');
         $header = $this->customerName($data['header_name']);
         $candidates = Customer::select(['id', 'nama', 'status'])->get()->map(function (Customer $customer) use ($header): array {
             $name = $this->customerName($customer->nama);

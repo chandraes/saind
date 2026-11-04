@@ -38,9 +38,9 @@
     </div>
     <div class="card shadow-sm">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-bordered table-hover align-middle mb-0">
                 <caption class="px-3">Nota terbaru ditampilkan lebih dahulu. Berat dalam ton.</caption>
-                <thead class="table-light"><tr>
+                <thead class="table-success"><tr>
                     <th scope="col">Tiket / tanggal muat</th><th scope="col">Vendor / unit</th><th scope="col">Tambang</th><th scope="col">Netto (ton)</th><th scope="col">Pengirim / waktu kirim</th><th scope="col">Status</th><th scope="col">Aksi</th>
                 </tr></thead>
                 <tbody>
@@ -51,8 +51,8 @@
                         <td class="text-break">{{ $note->mine_name }}</td>
                         <td class="text-nowrap">{{ number_format($note->net_kg / 1000, 3, ',', '.') }}</td>
                         <td class="text-break">{{ $note->creator?->name ?? '-' }}<br><small class="text-muted">{{ $note->created_at->format('d-m-Y H:i') }}</small></td>
-                        <td><span class="badge bg-warning text-dark">{{ $note->status === 'draft' ? 'Draft' : $note->status }}</span></td>
-                        <td><a href="{{ route('billing.nota-muat.show', $note) }}" class="btn btn-outline-primary btn-sm" aria-label="Lihat detail nota {{ $note->ticket_number }}">Detail</a></td>
+                        <td>@include('billing.nota-muat.status')</td>
+                        <td><a href="{{ route('billing.nota-muat.show', ['note' => $note, ...$filters]) }}" class="btn btn-outline-primary btn-sm" aria-label="Lihat detail nota {{ $note->ticket_number }}">Detail</a></td>
                     </tr>
                     @empty
                     <tr><td colspan="7" class="text-center py-5 text-muted">Belum ada nota yang sesuai. Nota akan tampil setelah vendor mengirimkannya dari aplikasi mobile.</td></tr>

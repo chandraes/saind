@@ -22,6 +22,7 @@ use App\Models\Vendor;
 use App\Models\VendorUangJalan;
 use App\Services\FilterOliRitaseService;
 use App\Services\LoadNoteDateRule;
+use App\Services\LoadNoteReviewService;
 use App\Services\UjDitahanBanService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -136,10 +137,14 @@ class FormKasUangJalanController extends Controller
 
     }
 
-    public function keluar()
+    public function keluar(Request $request, LoadNoteReviewService $notes)
     {
+        $input = $request->validate(['load_note_id' => ['nullable', 'integer', 'min:1']]);
+        $loadNote = isset($input['load_note_id']) ? $notes->forForward($request->user(), (int) $input['load_note_id']) : null;
+        $notePrefill = $loadNote ? $notes->formData($loadNote) : [];
+
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->orderBy('id', 'desc')->first();
-        $vehicle = Vehicle::where('status', 'aktif')->where('do_count', '<', 2)->get();
+        $vehicle = $loadNote ? Vehicle::whereKey($loadNote->vehicle_id)->get() : Vehicle::where('status', 'aktif')->where('do_count', '<', 2)->get();
         $customer = Customer::where('status', 1)->get();
 
         if ($nomor == null) {
@@ -157,6 +162,8 @@ class FormKasUangJalanController extends Controller
             'customer' => $customer,
             'konfigurasi' => $konfigurasi,
             'limitValue' => $limitValue,
+            'loadNote' => $loadNote,
+            'notePrefill' => $notePrefill,
         ]);
     }
 
@@ -212,6 +219,13 @@ class FormKasUangJalanController extends Controller
 
     public function keluar_store(Request $request, FilterOliRitaseService $filterOliRitase)
     {
+        $noteInput = $request->validate(['load_note_id' => ['nullable', 'integer', 'min:1'],
+            'load_note_revision' => ['required_with:load_note_id', 'integer', 'min:0']]);
+        $notes = app(LoadNoteReviewService::class);
+        $loadNote = isset($noteInput['load_note_id']) ? $notes->forForward($request->user(), (int) $noteInput['load_note_id']) : null;
+        if ($loadNote) {
+            $request->merge($notes->formData($loadNote));
+        }
 
         $data = $request->validate([
             'customer_id' => 'required',
@@ -249,7 +263,11 @@ class FormKasUangJalanController extends Controller
         $dateFormat = preg_match('/^\d{4}-/', $data['tanggal_muat']) ? 'Y-m-d' : 'd-m-Y';
         $data['tanggal_muat'] = Carbon::createFromFormat('!'.$dateFormat, $data['tanggal_muat'])->format('Y-m-d');
         try {
-            app(LoadNoteDateRule::class)->assertAllowed($data['tanggal_muat'], 'tanggal_muat');
+            if ($loadNote) {
+                app(LoadNoteDateRule::class)->assertMobileAllowed($data['tanggal_muat'], 'tanggal_muat');
+            } else {
+                app(LoadNoteDateRule::class)->assertAllowed($data['tanggal_muat'], 'tanggal_muat');
+            }
         } catch (ValidationException $exception) {
             return back()->withInput()->with('error', $exception->validator->errors()->first());
         }
@@ -402,6 +420,10 @@ class FormKasUangJalanController extends Controller
 
         try {
             DB::beginTransaction();
+            if (! $loadNote) {
+                Vendor::whereKey($data['vendor_id'])->lockForUpdate()->firstOrFail();
+            }
+            $lockedNote = $loadNote ? $notes->lockForProcessing($request->user(), $loadNote, (int) $noteInput['load_note_revision']) : null;
             $kendaraan = Vehicle::whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
             $filterOliRitase->assertWithinLimits($kendaraan, $request->user());
 
@@ -432,6 +454,10 @@ class FormKasUangJalanController extends Controller
                 'tarra_muat' => isset($data['tarra_muat']) ? $data['tarra_muat'] : 0,
                 'status' => $data['status'],
             ]);
+
+            if ($lockedNote) {
+                $notes->markProcessed($request->user(), $lockedNote, $transaksi);
+            }
 
             Vehicle::find($data['vehicle_id'])->update(['status' => 'proses']);
 

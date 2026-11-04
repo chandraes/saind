@@ -24,7 +24,13 @@ class StoreLoadNoteDraftRequest extends FormRequest
             'loaded_on' => ['required', 'date_format:Y-m-d'], 'driver_name' => ['nullable', 'string', 'max:120'],
             'gross_weight' => [...$weight, 'gt:0'], 'tare_weight' => [...$weight, 'lt:gross_weight'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'photo' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192', 'dimensions:max_width=8000,max_height=8000']];
+            'photo' => self::photoRules()];
+    }
+
+    /** @return list<string> */
+    public static function photoRules(): array
+    {
+        return ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192', 'dimensions:max_width=8000,max_height=8000'];
     }
 
     /** @return list<string> */

@@ -8,8 +8,10 @@ use App\Models\Vehicle;
 use App\Services\LoadNoteDateRule;
 use App\Services\LoadNoteRules;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -19,6 +21,7 @@ class LoadNoteRulesTest extends MobileApiTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['mobile.load_note_rules.enforce_mobile_backdate' => true]);
         $this->travelTo(now()->setDate(2026, 11, 3)->setTime(10, 0));
         (require database_path('migrations/2026_11_03_104025_create_load_note_drafts_table.php'))->up();
         Schema::create('customers', function (Blueprint $table): void {
@@ -200,5 +203,121 @@ class LoadNoteRulesTest extends MobileApiTestCase
         DB::table('vehicles')->where('id', 1)->update(['vendor_id' => 2]);
         $this->postJson('/api/v1/load-notes/inspect', $this->scan(), $this->headersFor($this->actor()))
             ->assertUnprocessable()->assertJsonPath('decision.code', 'unit_not_found');
+    }
+
+    private function submission(): array
+    {
+        $this->alias();
+        (require database_path('migrations/2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php'))->up();
+        Storage::fake('local');
+
+        return $this->scan() + ['request_id' => Str::uuid()->toString(), 'confirmed_vehicle_id' => 1,
+            'photo' => UploadedFile::fake()->image('nota.jpg', 200, 300)];
+    }
+
+    public function test_scanned_submission_persists_backend_matches_and_stampout_ignoring_client_ids(): void
+    {
+        $payload = $this->submission() + ['customer_id' => 999, 'rute_id' => 999, 'vehicle_id' => 999, 'loaded_on' => '2000-01-01'];
+        $headers = $this->headersFor($this->actor());
+        $response = $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertCreated()
+            ->assertJsonPath('data.customer_id', 1)->assertJsonPath('data.rute_id', 1)
+            ->assertJsonPath('data.vehicle_id', 1)->assertJsonPath('data.loaded_on', '2026-11-01')
+            ->assertJsonPath('data.date_source', 'stampout')->assertJsonPath('data.net_weight', '33.330');
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $response->json('data.id'), 'customer_id' => 1, 'rute_id' => 1,
+            'header_name' => $payload['header_name'], 'route_reference' => $payload['route_reference'], 'unit_code' => 'SAI288']);
+        $this->getJson('/api/v1/load-notes/'.$response->json('data.id'), $headers)->assertOk()->assertJsonPath('data.customer_id', 1);
+    }
+
+    public function test_scanned_retry_returns_existing_note_even_after_reference_or_status_changes(): void
+    {
+        $payload = $this->submission();
+        $headers = $this->headersFor($this->actor());
+        $id = $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertCreated()->json('data.id');
+        DB::table('vehicles')->where('id', 1)->update(['status' => 'proses']);
+        DB::table('rute_note_aliases')->delete();
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertOk()->assertJsonPath('data.id', $id);
+        $payload['route_reference'] = 'CHANGED';
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertConflict();
+        $this->assertDatabaseCount('load_note_drafts', 1);
+        $this->assertCount(1, Storage::disk('local')->allFiles());
+    }
+
+    public function test_submission_rechecks_changed_alias_after_successful_inspection_without_storing_photo(): void
+    {
+        $payload = $this->submission();
+        $headers = $this->headersFor($this->actor());
+        $this->postJson('/api/v1/load-notes/inspect', $this->scan(), $headers)->assertOk();
+        DB::table('rute_note_aliases')->delete();
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertUnprocessable()->assertJsonPath('decision.code', 'route_reference_missing');
+        $this->assertDatabaseCount('load_note_drafts', 0);
+        $this->assertCount(0, Storage::disk('local')->allFiles());
+    }
+
+    public function test_confirmation_cannot_silently_switch_to_another_unit(): void
+    {
+        $payload = $this->submission();
+        $payload['confirmed_vehicle_id'] = 2;
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $this->headersFor($this->actor()))->assertUnprocessable()
+            ->assertJsonPath('decision.code', 'vehicle_confirmation_changed');
+        $this->assertDatabaseCount('load_note_drafts', 0);
+    }
+
+    public function test_trial_backdate_switch_allows_old_stampout_and_can_be_reenabled_on_backend(): void
+    {
+        $payload = $this->submission();
+        $payload['stampout_date'] = '2026-10-01';
+        $headers = $this->headersFor($this->actor());
+        config(['mobile.load_note_rules.enforce_mobile_backdate' => true]);
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertUnprocessable()->assertJsonPath('decision.code', 'backdate_limit');
+        config(['mobile.load_note_rules.enforce_mobile_backdate' => false]);
+        $this->postJson('/api/v1/load-notes/inspect', $payload, $headers)->assertOk()->assertJsonPath('data.loaded_on', '2026-10-01');
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertCreated()->assertJsonPath('data.loaded_on', '2026-10-01');
+        $this->expectException(ValidationException::class);
+        app(LoadNoteDateRule::class)->assertAllowed('2026-10-01');
+    }
+
+    public function test_scanned_submission_requires_authentication_valid_ocr_and_a_photo(): void
+    {
+        $payload = $this->submission();
+        $this->postJson('/api/v1/load-notes/scanned', $payload)->assertUnauthorized();
+        unset($payload['photo'], $payload['unit_code']);
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $this->headersFor($this->actor()))->assertUnprocessable()
+            ->assertJsonValidationErrors(['photo', 'unit_code']);
+        $this->assertDatabaseCount('load_note_drafts', 0);
+    }
+
+    public function test_submission_rechecks_do_count_after_preview_and_stores_no_photo_when_blocked(): void
+    {
+        $payload = $this->submission();
+        $headers = $this->headersFor($this->actor());
+        $this->postJson('/api/v1/load-notes/inspect', $this->scan(), $headers)->assertOk();
+        DB::table('vehicles')->where('id', 1)->update(['do_count' => 2]);
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertUnprocessable()->assertJsonPath('decision.code', 'do_limit_reached');
+        $this->assertDatabaseCount('load_note_drafts', 0);
+        $this->assertCount(0, Storage::disk('local')->allFiles());
+    }
+
+    public function test_a_new_submission_is_blocked_by_note_saved_after_preview(): void
+    {
+        $payload = $this->submission();
+        $headers = $this->headersFor($this->actor());
+        $this->postJson('/api/v1/load-notes/inspect', $this->scan(), $headers)->assertOk();
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertCreated();
+        $payload['request_id'] = Str::uuid()->toString();
+        $payload['ticket_number'] = 'SJB-NEXT';
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertUnprocessable()->assertJsonPath('decision.code', 'pending_note');
+        $this->assertDatabaseCount('load_note_drafts', 1);
+        $this->assertCount(1, Storage::disk('local')->allFiles());
+    }
+
+    public function test_scanned_photo_changes_cannot_reuse_an_existing_request_id(): void
+    {
+        $payload = $this->submission();
+        $headers = $this->headersFor($this->actor());
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertCreated();
+        $payload['photo'] = UploadedFile::fake()->image('different.jpg', 201, 301);
+        $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertConflict();
+        $this->assertDatabaseCount('load_note_drafts', 1);
+        $this->assertCount(1, Storage::disk('local')->allFiles());
     }
 }

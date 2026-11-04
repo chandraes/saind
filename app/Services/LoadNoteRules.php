@@ -24,10 +24,11 @@ class LoadNoteRules
         }
     }
 
-    public function assertTicket(int $vendorId, string $ticket): void
+    public function assertTicket(int $vendorId, string $ticket, ?int $exceptNote = null): void
     {
         if (LoadNoteDraft::where('vendor_id', $vendorId)->where('ticket_number', trim($ticket))
-            ->whereNotIn('status', ['rejected', 'cancelled'])->exists()) {
+            ->whereNotIn('status', ['rejected', 'cancelled'])
+            ->when($exceptNote !== null, fn ($query) => $query->whereKeyNot($exceptNote))->exists()) {
             throw new LoadNoteRuleException('ticket_number', 'Nomor nota sudah pernah dikirim. Periksa daftar nota.', 'duplicate_note', 'view_notes');
         }
     }

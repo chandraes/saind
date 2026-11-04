@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\LoadNoteDraft;
 use App\Models\User;
 use App\Models\Vehicle;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -17,6 +19,17 @@ class LoadNoteInboxTest extends MobileApiTestCase
     {
         parent::setUp();
         (require database_path('migrations/2026_11_03_104025_create_load_note_drafts_table.php'))->up();
+        foreach (['customers', 'rutes', 'transaksis'] as $name) {
+            Schema::create($name, function (Blueprint $table) use ($name): void {
+                $table->id();
+                if ($name !== 'transaksis') {
+                    $table->string('nama');
+                    $table->boolean('status')->default(true);
+                }
+            });
+        }
+        (require database_path('migrations/2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php'))->up();
+        (require database_path('migrations/2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'))->up();
         $this->withoutVite();
         View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
     }

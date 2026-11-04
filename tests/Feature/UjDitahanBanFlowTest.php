@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\GroupWa;
+use App\Models\LoadNoteDraft;
 use App\Models\Transaksi;
 use App\Models\UjDitahanBan;
 use App\Models\UjDitahanBanDetail;
@@ -11,6 +12,7 @@ use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
@@ -225,6 +227,105 @@ class UjDitahanBanFlowTest extends TestCase
             ->assertSessionHas('error', 'Tanggal muat tidak boleh lebih dari H-2 dari hari ini.');
         $this->assertDatabaseCount('kas_uang_jalans', 1);
         $this->assertDatabaseCount('transaksis', 1);
+    }
+
+    private function noteForExit(): LoadNoteDraft
+    {
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+        });
+        DB::table('users')->insert(['id' => 1, 'name' => 'Admin']);
+        Schema::table('customers', function (Blueprint $table): void {
+            $table->boolean('status')->default(true);
+        });
+        foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'] as $file) {
+            (require database_path('migrations/'.$file))->up();
+        }
+        DB::table('vehicles')->where('id', 1)->update(['status' => 'aktif', 'do_count' => 0]);
+
+        return LoadNoteDraft::factory()->create(['vendor_id' => 1, 'vehicle_id' => 1, 'created_by' => 1,
+            'customer_id' => 1, 'rute_id' => 1, 'ticket_number' => 'SJB-FORWARD', 'gross_kg' => 45001, 'tare_kg' => 15000, 'net_kg' => 30001]);
+    }
+
+    public function test_opening_forward_form_prefills_note_without_processing_money(): void
+    {
+        $this->setupExit();
+        $note = $this->noteForExit();
+        $this->withoutVite();
+        View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
+        $this->get(route('kas-uang-jalan.keluar', ['load_note_id' => $note->id]))->assertOk()
+            ->assertSee('SJB-FORWARD')->assertSee('45.001')->assertSee('30.001')->assertSee('name="load_note_revision"', false);
+        $this->assertSame('draft', $note->fresh()->status);
+        $this->assertDatabaseCount('load_note_events', 0);
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+        $this->assertDatabaseCount('transaksis', 1);
+    }
+
+    public function test_forward_form_never_combines_stale_note_fields_with_current_revision(): void
+    {
+        $this->setupExit();
+        $note = $this->noteForExit();
+        $note->update(['revision' => 1]);
+        DB::table('customers')->insert(['id' => 2, 'nama' => 'Customer lain', 'singkatan' => 'OTHER']);
+        $this->withoutVite();
+        View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
+        $this->withSession(['_old_input' => ['nota_muat' => 'SJB-STALE', 'gross_muat' => '99', 'vehicle_id' => 999, 'customer_id' => 999, 'rute_id' => 999, 'tanggal_muat' => '01-01-2000', 'load_note_revision' => 0]])
+            ->get(route('kas-uang-jalan.keluar', ['load_note_id' => $note->id]))->assertOk()
+            ->assertSee('value="SJB-FORWARD"', false)->assertSee('value="45.001"', false)
+            ->assertSee('name="load_note_revision" value="1"', false)->assertDontSee('SJB-STALE')->assertDontSee('value="99"', false)->assertDontSee('01-01-2000')->assertDontSee('value="2" selected', false);
+    }
+
+    public function test_trial_backdate_exception_applies_to_forwarded_mobile_note_only(): void
+    {
+        $data = $this->setupExit();
+        $note = $this->noteForExit();
+        $note->update(['loaded_on' => today()->subDays(10)]);
+        DB::table('konfigurasis')->insert(['kode' => 'nota-muat', 'status' => 1]);
+        config(['mobile.load_note_rules.enforce_mobile_backdate' => false]);
+        $this->post(route('kas-uang-jalan.keluar.store'), $data + ['load_note_id' => $note->id, 'load_note_revision' => 0])->assertSessionHas('success');
+        $this->assertSame('processed', $note->fresh()->status);
+    }
+
+    #[TestWith(['admin'])]
+    #[TestWith(['su'])]
+    #[TestWith(['user'])]
+    public function test_forwarded_note_uses_authoritative_values_and_links_once_to_real_money_transaction(string $role): void
+    {
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => $role, 'password' => 'password']));
+        $data = $this->setupExit();
+        $note = $this->noteForExit();
+        $data = array_replace($data, ['load_note_id' => $note->id, 'load_note_revision' => 0, 'nota_muat' => 'TAMPERED', 'tonase' => 999]);
+        $this->post(route('kas-uang-jalan.keluar.store'), $data)->assertSessionHas('success');
+        $this->assertDatabaseHas('transaksis', ['id' => 2, 'nota_muat' => 'SJB-FORWARD', 'tonase' => 30.001, 'gross_muat' => 45.001, 'tarra_muat' => 15]);
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'status' => 'processed', 'transaksi_id' => 2, 'revision' => 1]);
+        $this->assertDatabaseHas('load_note_events', ['load_note_draft_id' => $note->id, 'action' => 'processed']);
+        $this->post(route('kas-uang-jalan.keluar.store'), $data)->assertSessionHasErrors();
+        $this->assertDatabaseCount('kas_uang_jalans', 2);
+        $this->assertDatabaseCount('transaksis', 2);
+        $this->assertDatabaseCount('load_note_events', 1);
+    }
+
+    public function test_failed_money_transaction_keeps_note_pending_without_audit_or_cash_side_effects(): void
+    {
+        $data = $this->setupExit();
+        $note = $this->noteForExit();
+        DB::unprepared("CREATE TRIGGER fail_note_ban BEFORE INSERT ON uj_ditahan_ban_details BEGIN SELECT RAISE(ABORT, 'failure'); END");
+        $this->post(route('kas-uang-jalan.keluar.store'), $data + ['load_note_id' => $note->id, 'load_note_revision' => 0])->assertSessionHas('error');
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'status' => 'draft', 'transaksi_id' => null, 'revision' => 0]);
+        $this->assertDatabaseCount('load_note_events', 0);
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+        $this->assertDatabaseCount('transaksis', 1);
+    }
+
+    public function test_stale_forward_form_cannot_process_a_newer_note_revision(): void
+    {
+        $data = $this->setupExit();
+        $note = $this->noteForExit();
+        $note->update(['revision' => 1]);
+        $this->post(route('kas-uang-jalan.keluar.store'), $data + ['load_note_id' => $note->id, 'load_note_revision' => 0])->assertSessionHas('error');
+        $this->assertDatabaseCount('transaksis', 1);
+        $this->assertSame('draft', $note->fresh()->status);
     }
 
     public function test_exit_credits_both_funds_and_gross_cash_in_one_transaction(): void
