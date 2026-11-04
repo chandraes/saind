@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\DecideLoadNoteRequest;
+use App\Http\Requests\UpdateLoadNotePaymentRequest;
 use App\Http\Requests\UpdateLoadNoteRequest;
 use App\Models\Customer;
 use App\Models\LoadNoteDraft;
@@ -55,6 +56,13 @@ class LoadNoteInboxController extends Controller
         $service->update($request->user(), $note, $request->validated());
 
         return response()->json(['message' => 'Koreksi nota berhasil disimpan.']);
+    }
+
+    public function updatePayment(UpdateLoadNotePaymentRequest $request, LoadNoteDraft $note, LoadNoteReviewService $service): JsonResponse
+    {
+        $service->updatePayment($request->user(), $note, $request->validated());
+
+        return response()->json(['message' => 'Nominal uang jalan nota berhasil disimpan. Belum ada pencairan uang.']);
     }
 
     public function decide(DecideLoadNoteRequest $request, LoadNoteDraft $note, LoadNoteReviewService $service): JsonResponse

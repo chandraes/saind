@@ -239,7 +239,7 @@ class UjDitahanBanFlowTest extends TestCase
         Schema::table('customers', function (Blueprint $table): void {
             $table->boolean('status')->default(true);
         });
-        foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'] as $file) {
+        foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php', '2026_11_04_092518_add_transfer_override_to_load_note_drafts_table.php'] as $file) {
             (require database_path('migrations/'.$file))->up();
         }
         DB::table('vehicles')->where('id', 1)->update(['status' => 'aktif', 'do_count' => 0]);
@@ -304,6 +304,29 @@ class UjDitahanBanFlowTest extends TestCase
         $this->assertDatabaseCount('kas_uang_jalans', 2);
         $this->assertDatabaseCount('transaksis', 2);
         $this->assertDatabaseCount('load_note_events', 1);
+    }
+
+    #[TestWith([true, 420000])]
+    #[TestWith([false, 350000])]
+    public function test_user_can_forward_admin_approved_note_amount_but_cannot_tamper_with_it(bool $held, int $gross): void
+    {
+        $data = $this->setupExit();
+        $note = $this->noteForExit();
+        $note->update(['transfer_override' => 350000]);
+        DB::table('vehicles')->where('id', 1)->update(['uj_ditahan' => $held]);
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'user', 'password' => 'password']));
+        $this->withoutVite();
+        View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
+        $this->get(route('kas-uang-jalan.keluar', ['load_note_id' => $note->id]))->assertOk()
+            ->assertSee('value="350000"', false)->assertViewHas('notePrefill', fn (array $prefill): bool => $prefill['nominal_transaksi'] === 350000);
+        $data = [...$data, 'load_note_id' => $note->id, 'load_note_revision' => 0, 'nominal_transaksi' => '360000'];
+        $this->post(route('kas-uang-jalan.keluar.store'), $data)->assertSessionHas('error');
+        $this->assertSame('draft', $note->fresh()->status);
+        $this->assertDatabaseCount('transaksis', 1);
+        $this->post(route('kas-uang-jalan.keluar.store'), [...$data, 'nominal_transaksi' => '350000'])->assertSessionHas('success');
+        $this->assertDatabaseHas('kas_uang_jalans', ['nomor_uang_jalan' => 13, 'nominal_transaksi' => $gross]);
+        $this->assertSame('processed', $note->fresh()->status);
+        $this->assertSame(350000, $note->fresh()->transfer_override);
     }
 
     public function test_failed_money_transaction_keeps_note_pending_without_audit_or_cash_side_effects(): void

@@ -100,8 +100,8 @@
                         <div class="input-group">
                             <span class="input-group-text fw-bold text-success">Rp</span>
                             <input type="text" class="form-control fw-bold text-success @error('nominal_transaksi') is-invalid @enderror" id="hk_uang_jalan" inputmode="numeric" required
-                                @if(!in_array(auth()->user()->role, ['admin', 'su'], true)) readonly @endif data-thousands="." value="{{ old('nominal_transaksi') }}">
-                            <input type="hidden" name="nominal_transaksi" id="nominal_transaksi_raw" value="{{ old('nominal_transaksi') }}">
+                                @if(!in_array(auth()->user()->role, ['admin', 'su'], true)) readonly @endif data-thousands="." value="{{ old('nominal_transaksi', $notePrefill['nominal_transaksi'] ?? '') }}">
+                            <input type="hidden" name="nominal_transaksi" id="nominal_transaksi_raw" value="{{ old('nominal_transaksi', $notePrefill['nominal_transaksi'] ?? '') }}">
                             @error('nominal_transaksi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>

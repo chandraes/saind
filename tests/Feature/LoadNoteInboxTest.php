@@ -6,6 +6,7 @@ use App\Models\LoadNoteDraft;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -30,6 +31,7 @@ class LoadNoteInboxTest extends MobileApiTestCase
         }
         (require database_path('migrations/2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php'))->up();
         (require database_path('migrations/2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'))->up();
+        (require database_path('migrations/2026_11_04_092518_add_transfer_override_to_load_note_drafts_table.php'))->up();
         Schema::table('vehicles', function (Blueprint $table): void {
             $table->boolean('uj_ditahan')->default(false);
             $table->unsignedBigInteger('driver_id')->nullable();
@@ -74,7 +76,7 @@ class LoadNoteInboxTest extends MobileApiTestCase
         $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'admin', 'vendor_id' => null]));
         $before = $note->fresh()->getAttributes();
         $this->get('/billing/nota-muat/'.$note->id)->assertOk()
-            ->assertSee('Estimasi uang jalan')->assertSee('Driver terdaftar')->assertSee('Nama pada nota')
+            ->assertSee('Rencana uang jalan')->assertSee('Driver terdaftar')->assertSee('Nama pada nota')
             ->assertSee('Rp 300.000')->assertSee('Rp '.number_format($gross, 0, ',', '.'))
             ->assertSee($held ? 'REKENING DRIVER' : 'REKENING UNIT')
             ->assertViewHas('paymentPreview', fn (array $preview): bool => $preview['transfer'] === 300000 && $preview['gross'] === $gross && $preview['sparepart'] === $sparepart && $preview['ban'] === $ban);
@@ -115,6 +117,51 @@ class LoadNoteInboxTest extends MobileApiTestCase
         $this->get('/billing/nota-muat/'.$note->id)->assertOk()
             ->assertSee('Unit tidak ditemukan pada vendor nota')
             ->assertDontSee('FOREIGN PRIVATE DRIVER')->assertDontSee('PRIVATE ACCOUNT');
+    }
+
+    public function test_held_vehicle_without_driver_uses_its_own_transfer_account(): void
+    {
+        $note = $this->draft();
+        DB::table('vehicles')->where('id', $note->vehicle_id)->update(['uj_ditahan' => true, 'transfer_ke' => 'REKENING KENDARAAN', 'bank' => 'BANK UNIT', 'no_rekening' => '123456789']);
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'admin', 'vendor_id' => null]));
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()->assertSee('REKENING KENDARAAN')->assertSee('123456789');
+    }
+
+    public function test_payment_preview_uses_note_override_but_keeps_fund_amounts_and_user_read_only(): void
+    {
+        $note = $this->draft();
+        DB::table('rutes')->insert(['id' => 1, 'nama' => 'Rute preview']);
+        $note->update(['rute_id' => 1, 'transfer_override' => 350000]);
+        DB::table('vehicles')->where('id', $note->vehicle_id)->update(['uj_ditahan' => true]);
+        DB::table('vendor_uang_jalans')->insert(['vendor_id' => 1, 'rute_id' => 1, 'hk_uang_jalan' => 300000, 'uj_ditahan' => 50000, 'uj_ditahan_ban' => 20000]);
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'user', 'vendor_id' => null]));
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()->assertSee('Rp 350.000')->assertSee('Rp 420.000')
+            ->assertSee('Nominal khusus nota ini')->assertDontSee('id="note-payment-modal"', false)
+            ->assertViewHas('paymentPreview', fn (array $preview): bool => $preview['system_transfer'] === 300000 && $preview['transfer'] === 350000 && $preview['sparepart'] === 50000 && $preview['ban'] === 20000);
+    }
+
+    public function test_pending_badge_caches_count_and_excludes_terminal_notes(): void
+    {
+        config(['cache.default' => 'array']);
+        Cache::store('array')->flush();
+        $this->draft();
+        $this->draft(2, ['status' => 'rejected']);
+        $this->draft(3, ['status' => 'cancelled']);
+        $this->draft(4, ['status' => 'processed']);
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $this->assertSame(1, LoadNoteDraft::cachedPendingReviewCount());
+        $this->assertSame(1, LoadNoteDraft::cachedPendingReviewCount());
+        $countQueries = array_filter(DB::getQueryLog(), fn (array $entry): bool => str_contains($entry['query'], 'count(*)') && str_contains($entry['query'], 'load_note_drafts'));
+        $this->assertCount(1, $countQueries);
+        DB::disableQueryLog();
+        $this->draft(5);
+        $this->assertSame(1, LoadNoteDraft::cachedPendingReviewCount());
+        $this->travel(31)->seconds();
+        $this->assertSame(2, LoadNoteDraft::cachedPendingReviewCount());
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'admin']));
+        $this->view('billing.nota-muat.menu', ['pendingLoadNoteCount' => 2])->assertSee('2 nota menunggu pemeriksaan')->assertSee('>2</span>', false);
+        $this->travelBack();
     }
 
     public static function reviewerRoles(): array

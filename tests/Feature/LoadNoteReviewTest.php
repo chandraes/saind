@@ -43,7 +43,7 @@ class LoadNoteReviewTest extends MobileApiTestCase
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
         });
-        foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'] as $file) {
+        foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php', '2026_11_04_092518_add_transfer_override_to_load_note_drafts_table.php'] as $file) {
             (require database_path('migrations/'.$file))->up();
         }
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A'], ['id' => 2, 'nama' => 'Vendor B']]);
@@ -70,6 +70,62 @@ class LoadNoteReviewTest extends MobileApiTestCase
     {
         return ['revision' => 0, 'reason' => 'Koreksi nomor tiket sesuai foto', 'vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 1,
             'ticket_number' => 'SJB-CORRECTED', 'loaded_on' => today()->toDateString(), 'gross_weight' => '45.54', 'tare_weight' => '15.32', 'notes' => 'Diperiksa'];
+    }
+
+    public static function paymentEditors(): array
+    {
+        return [['admin'], ['su']];
+    }
+
+    #[DataProvider('paymentEditors')]
+    public function test_authorized_reviewer_can_save_payment_override_with_audit_and_reset_to_system(string $role): void
+    {
+        $note = $this->note();
+        $actor = $this->actor($role);
+        $this->actingAs($actor)->patchJson('/billing/nota-muat/'.$note->id.'/payment', [
+            'revision' => 0, 'transfer_amount' => 350000, 'use_system_amount' => false, 'reason' => 'Tambahan operasional disetujui',
+        ])->assertOk();
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'transfer_override' => 350000, 'revision' => 1, 'status' => 'draft']);
+        $event = $note->events()->first();
+        $this->assertSame('payment_updated', $event->action);
+        $this->assertSame($actor->id, $event->actor_id);
+        $this->assertSame(350000, $event->after['transfer_override']);
+        $this->assertSame(350000, app(LoadNoteReviewService::class)->paymentFormData($note->fresh())['nominal_transaksi']);
+        $this->patchJson('/billing/nota-muat/'.$note->id.'/payment', [
+            'revision' => 1, 'use_system_amount' => true, 'reason' => 'Kembali ke kesepakatan vendor',
+        ])->assertOk();
+        $this->assertNull($note->fresh()->transfer_override);
+        $this->assertSame(2, $note->fresh()->revision);
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    public function test_user_cannot_change_saved_payment_and_invalid_stale_or_finalized_edits_are_rejected(): void
+    {
+        $note = $this->note();
+        $data = ['revision' => 0, 'transfer_amount' => 350000, 'use_system_amount' => false, 'reason' => 'Persetujuan biaya'];
+        $this->actingAs($this->actor('user'))->patchJson('/billing/nota-muat/'.$note->id.'/payment', $data)->assertForbidden();
+        $this->actingAs($this->actor('admin'));
+        foreach ([-1, '350.000', '3.5', '1000000000000'] as $invalid) {
+            $this->patchJson('/billing/nota-muat/'.$note->id.'/payment', [...$data, 'transfer_amount' => $invalid])->assertUnprocessable()->assertJsonValidationErrors('transfer_amount');
+        }
+        $this->patchJson('/billing/nota-muat/'.$note->id.'/payment', [...$data, 'reason' => ''])->assertUnprocessable()->assertJsonValidationErrors('reason');
+        $this->patchJson('/billing/nota-muat/'.$note->id.'/payment', $data)->assertOk();
+        $this->patchJson('/billing/nota-muat/'.$note->id.'/payment', $data)->assertUnprocessable()->assertJsonValidationErrors('revision');
+        $note->refresh()->update(['status' => 'cancelled']);
+        $this->patchJson('/billing/nota-muat/'.$note->id.'/payment', [...$data, 'revision' => 1])->assertUnprocessable();
+        $this->assertSame(350000, $note->fresh()->transfer_override);
+        $this->assertDatabaseCount('load_note_events', 1);
+    }
+
+    public function test_changing_route_or_unit_clears_old_payment_override_with_audit(): void
+    {
+        $note = $this->note();
+        $note->update(['transfer_override' => 350000]);
+        DB::table('rutes')->insert(['id' => 2, 'nama' => 'Rute lain', 'status' => true]);
+        DB::table('customer_tagihans')->insert(['customer_id' => 1, 'rute_id' => 2]);
+        $this->actingAs($this->actor())->patchJson('/billing/nota-muat/'.$note->id, [...$this->correction(), 'rute_id' => 2])->assertOk();
+        $this->assertNull($note->fresh()->transfer_override);
+        $this->assertSame(350000, $note->events()->first()->before['transfer_override']);
     }
 
     public static function reviewers(): array

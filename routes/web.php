@@ -484,6 +484,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/', [LoadNoteInboxController::class, 'index'])->name('index');
         Route::get('/{note}', [LoadNoteInboxController::class, 'show'])->whereNumber('note')->name('show');
         Route::patch('/{note}', [LoadNoteInboxController::class, 'update'])->whereNumber('note')->name('update');
+        Route::patch('/{note}/payment', [LoadNoteInboxController::class, 'updatePayment'])->whereNumber('note')->name('payment.update');
         Route::post('/{note}/decision', [LoadNoteInboxController::class, 'decide'])->whereNumber('note')->name('decide');
         Route::get('/{note}/foto', [LoadNoteInboxController::class, 'photo'])->whereNumber('note')->name('photo');
     });

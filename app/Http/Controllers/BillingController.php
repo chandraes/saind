@@ -23,6 +23,7 @@ use App\Models\InvoiceBonus;
 use App\Models\InvoiceCsr;
 use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
+use App\Models\LoadNoteDraft;
 use App\Models\PosisiBan;
 use App\Models\RekapGaji;
 use App\Models\Rekening;
@@ -116,6 +117,7 @@ class BillingController extends Controller
                 'bonus' => $bonus,
                 // 'csr' => $csr,
                 'countOB' => $countOB,
+                'pendingLoadNoteCount' => LoadNoteDraft::cachedPendingReviewCount(),
                 'countBanPending' => $countBanPending,
                 'countAkiPending' => $countOA,
                 'countFilterOliPending' => $countFilterOliPending,

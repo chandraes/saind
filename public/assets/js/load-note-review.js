@@ -1,9 +1,35 @@
-/* global Swal */
+/* global Swal, Cleave */
 document.addEventListener('DOMContentLoaded', () => {
     let saving = false;
     document.querySelectorAll('.note-search-select').forEach(select => {
         window.jQuery(select).select2({width: '100%', dropdownParent: window.jQuery(select.closest('.modal'))});
     });
+    const paymentModal = document.getElementById('note-payment-modal');
+    if (paymentModal) {
+        const amount = document.getElementById('note-transfer-input');
+        const raw = document.getElementById('note-transfer-raw');
+        const useSystem = document.getElementById('note-use-system');
+        const systemValue = document.getElementById('note-use-system-value');
+        const total = document.getElementById('note-payment-total');
+        const formatter = new Cleave(amount, {numeral: true, numeralThousandsGroupStyle: 'thousand',
+            delimiter: '.', numeralDecimalMark: ',', numeralDecimalScale: 0, numeralPositiveOnly: true,
+            onValueChanged: event => { raw.value = event.target.rawValue; updatePaymentTotal(); }});
+        function updatePaymentTotal() {
+            const transfer = useSystem.checked ? paymentModal.dataset.systemTransfer : raw.value;
+            const funds = [paymentModal.dataset.sparepart, paymentModal.dataset.ban];
+            const valid = transfer !== '' && /^\d+$/.test(transfer) && funds.every(value => value !== '' && /^\d+$/.test(value));
+            total.textContent = valid ? 'Rp ' + (Number(transfer) + Number(funds[0]) + Number(funds[1])).toLocaleString('id-ID') : 'Belum tersedia';
+        }
+        raw.value = formatter.getRawValue();
+        useSystem.addEventListener('change', () => {
+            systemValue.value = useSystem.checked ? '1' : '0';
+            amount.readOnly = useSystem.checked;
+            amount.required = !useSystem.checked;
+            raw.disabled = useSystem.checked;
+            updatePaymentTotal();
+        });
+        updatePaymentTotal();
+    }
     const decisionModal = document.getElementById('note-decision-modal');
     decisionModal?.addEventListener('show.bs.modal', event => {
         const action = event.relatedTarget?.dataset.noteDecision;
@@ -16,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('note-decision-submit').textContent = label;
         form.dataset.confirm = label + '?';
     });
-    document.querySelectorAll('#note-edit-modal, #note-decision-modal').forEach(modal => {
+    document.querySelectorAll('#note-edit-modal, #note-decision-modal, #note-payment-modal').forEach(modal => {
         modal.addEventListener('hide.bs.modal', event => { if (saving) event.preventDefault(); });
         modal.addEventListener('shown.bs.modal', () => modal.querySelector('input:not([type="hidden"]), textarea')?.focus());
     });
@@ -39,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     icon: action ? 'warning' : 'question', showCancelButton: true, confirmButtonText: 'Ya, lanjutkan', cancelButtonText: 'Kembali', focusCancel: true, target});
                 if (!confirmation.isConfirmed) return;
                 const body = new FormData(form);
-                buttons = [...target.querySelectorAll('input, textarea, select, button')];
-                buttons.forEach(button => { button.disabled = true; });
+                buttons = [...target.querySelectorAll('input, textarea, select, button')].map(element => ({element, disabled: element.disabled}));
+                buttons.forEach(({element}) => { element.disabled = true; });
                 Swal.fire({title: 'Memproses nota…', target, allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, didOpen: () => Swal.showLoading()});
                 const response = await fetch(form.action, {method: 'POST', body, credentials: 'same-origin', redirect: 'error', headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}});
                 const data = await response.json();
@@ -55,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 if (!navigating) {
                     saving = false;
-                    buttons.forEach(button => { button.disabled = false; });
+                    buttons.forEach(({element, disabled}) => { element.disabled = disabled; });
                 }
             }
         });

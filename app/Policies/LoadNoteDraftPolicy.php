@@ -17,6 +17,11 @@ class LoadNoteDraftPolicy
         return $this->reviewAny($user);
     }
 
+    public function adjustPayment(User $user, LoadNoteDraft $note): bool
+    {
+        return $this->review($user, $note) && in_array($user->role, ['admin', 'su'], true);
+    }
+
     public function viewAny(User $user): bool
     {
         return in_array($user->role, config('mobile.load_note_roles', []), true)

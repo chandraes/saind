@@ -141,7 +141,7 @@ class FormKasUangJalanController extends Controller
     {
         $input = $request->validate(['load_note_id' => ['nullable', 'integer', 'min:1']]);
         $loadNote = isset($input['load_note_id']) ? $notes->forForward($request->user(), (int) $input['load_note_id']) : null;
-        $notePrefill = $loadNote ? $notes->formData($loadNote) : [];
+        $notePrefill = $loadNote ? [...$notes->formData($loadNote), ...$notes->paymentFormData($loadNote)] : [];
 
         $nomor = KasUangJalan::whereNotNull('nomor_uang_jalan')->latest()->orderBy('id', 'desc')->first();
         $vehicle = $loadNote ? Vehicle::whereKey($loadNote->vehicle_id)->get() : Vehicle::where('status', 'aktif')->where('do_count', '<', 2)->get();
@@ -348,13 +348,13 @@ class FormKasUangJalanController extends Controller
 
             if ($kendaraan->uj_ditahan == 1) {
 
-                $uang_jalan_kotor = $vendorKesepakatanUJ->hk_uang_jalan ?? 0;
+                $uang_jalan_kotor = $loadNote?->transfer_override ?? $vendorKesepakatanUJ->hk_uang_jalan ?? 0;
                 $potongan = $vendorKesepakatanUJ->uj_ditahan ?? 0;
 
                 $expectedNominal = $uang_jalan_kotor + $potongan + (int) $vendorKesepakatanUJ->uj_ditahan_ban;
             } else {
                 // Jika Normal: Harga dari VendorUangJalan
-                $expectedNominal = $vendorKesepakatanUJ->hk_uang_jalan ?? 0;
+                $expectedNominal = $loadNote?->transfer_override ?? $vendorKesepakatanUJ->hk_uang_jalan ?? 0;
             }
 
             if ($expectedNominal < 0) {

@@ -56,7 +56,7 @@ class LoadNoteReviewService
     private function snapshot(LoadNoteDraft $note): array
     {
         $snapshot = Arr::only($note->getAttributes(), ['vehicle_id', 'vehicle_number', 'customer_id', 'rute_id', 'ticket_number', 'mine_name',
-            'loaded_on', 'gross_kg', 'tare_kg', 'net_kg', 'notes', 'status', 'revision', 'transaksi_id']);
+            'loaded_on', 'gross_kg', 'tare_kg', 'net_kg', 'notes', 'status', 'revision', 'transaksi_id', 'transfer_override']);
         $snapshot['loaded_on'] = $note->loaded_on->format('Y-m-d');
         $snapshot['rute_name'] = $note->rute_id ? Rute::whereKey($note->rute_id)->value('nama') : null;
 
@@ -79,6 +79,9 @@ class LoadNoteReviewService
             app(LoadNoteDateRule::class)->assertMobileAllowed($data['loaded_on']);
             $gross = app(LoadNoteDraftService::class)->kilograms((string) $data['gross_weight']);
             $tare = app(LoadNoteDraftService::class)->kilograms((string) $data['tare_weight']);
+            if ($locked->vehicle_id !== (int) $data['vehicle_id'] || $locked->rute_id !== (int) $data['rute_id'] || $locked->customer_id !== (int) $data['customer_id']) {
+                $locked->transfer_override = null;
+            }
             $locked->fill(['vehicle_id' => $vehicle->id, 'vehicle_number' => (string) $vehicle->nomor_lambung,
                 'customer_id' => (int) $data['customer_id'], 'rute_id' => (int) $data['rute_id'],
                 'mine_name' => Customer::findOrFail($data['customer_id'])->nama, 'ticket_number' => trim($data['ticket_number']),
@@ -90,6 +93,28 @@ class LoadNoteReviewService
 
             return $locked;
         });
+    }
+
+    public function updatePayment(User $user, LoadNoteDraft $note, array $data): LoadNoteDraft
+    {
+        Gate::forUser($user)->authorize('adjustPayment', $note);
+
+        return DB::transaction(function () use ($user, $note, $data): LoadNoteDraft {
+            $locked = $this->lock($note);
+            $this->assertDraft($locked, (int) $data['revision']);
+            $this->assertReferences($locked);
+            $before = $this->snapshot($locked);
+            $locked->update(['transfer_override' => $data['use_system_amount'] ? null : (int) $data['transfer_amount'],
+                'revision' => $locked->revision + 1]);
+            $this->record($user, $locked, 'payment_updated', trim($data['reason']), $before);
+
+            return $locked;
+        });
+    }
+
+    public function paymentFormData(LoadNoteDraft $note): array
+    {
+        return $note->transfer_override === null ? [] : ['nominal_transaksi' => $note->transfer_override];
     }
 
     public function decide(User $user, LoadNoteDraft $note, array $data): LoadNoteDraft

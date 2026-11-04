@@ -11,7 +11,7 @@ class LoadNotePaymentPreview
     /**
      * Current settings only; reading a note never reserves or pays funds.
      *
-     * @return array{held: bool, transfer: ?int, sparepart: ?int, ban: ?int, gross: ?int, driver: ?string, driver_phone: ?string, recipient: ?string, bank: ?string, account: ?string, warnings: list<string>}
+     * @return array{is_custom: bool, system_transfer: ?int, held: bool, transfer: ?int, sparepart: ?int, ban: ?int, gross: ?int, driver: ?string, driver_phone: ?string, account_source: string, recipient: ?string, bank: ?string, account: ?string, warnings: list<string>}
      */
     public function forNote(LoadNoteDraft $note): array
     {
@@ -19,8 +19,9 @@ class LoadNotePaymentPreview
         $held = (int) $vehicle?->uj_ditahan === 1;
         $driver = $vehicle?->driver;
         $useDriverAccount = $held && $driver !== null;
-        $preview = ['held' => $held, 'transfer' => null, 'sparepart' => $held ? null : 0, 'ban' => $held ? null : 0,
+        $preview = ['is_custom' => $note->transfer_override !== null, 'system_transfer' => null, 'held' => $held, 'transfer' => null, 'sparepart' => $held ? null : 0, 'ban' => $held ? null : 0,
             'gross' => null, 'driver' => $driver?->nama, 'driver_phone' => $driver?->no_hp,
+            'account_source' => $useDriverAccount ? 'driver' : 'vehicle',
             'recipient' => $useDriverAccount ? $driver->nama_rek : $vehicle?->transfer_ke,
             'bank' => $useDriverAccount ? $driver->bank : $vehicle?->bank,
             'account' => $useDriverAccount ? $driver->no_rek : $vehicle?->no_rekening, 'warnings' => []];
@@ -35,13 +36,19 @@ class LoadNotePaymentPreview
             return $preview;
         }
         $agreement = VendorUangJalan::where('vendor_id', $note->vendor_id)->where('rute_id', $note->rute_id)->first();
-        if (! $agreement || $agreement->hk_uang_jalan === null || (int) $agreement->hk_uang_jalan < 0) {
+        if (! $agreement) {
             $preview['warnings'][] = 'Kesepakatan uang jalan vendor–rute belum diatur. Hubungi admin.';
 
             return $preview;
         }
         // The existing exit form treats hk_uang_jalan as the transfer, before adding held funds.
-        $preview['transfer'] = (int) $agreement->hk_uang_jalan;
+        $preview['system_transfer'] = $agreement->hk_uang_jalan !== null && (int) $agreement->hk_uang_jalan >= 0 ? (int) $agreement->hk_uang_jalan : null;
+        $preview['transfer'] = $note->transfer_override ?? $preview['system_transfer'];
+        if ($preview['transfer'] === null) {
+            $preview['warnings'][] = 'Nominal uang jalan vendor–rute belum diatur. Hubungi admin.';
+
+            return $preview;
+        }
         if ($held) {
             foreach (['sparepart' => ['uj_ditahan', 'Sparepart'], 'ban' => ['uj_ditahan_ban', 'Ban']] as $key => [$column, $label]) {
                 if ((int) $agreement->{$column} <= 0) {
