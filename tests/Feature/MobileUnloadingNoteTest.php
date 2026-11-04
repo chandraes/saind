@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LoadNoteDraft;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\LoadNoteReviewService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -37,6 +38,14 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
                 $table->string($field)->nullable();
             }
         });
+        foreach (['uj_ditahan_details', 'uj_ditahan_ban_details'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('transaksi_id')->nullable();
+                $table->string('jenis');
+                $table->bigInteger('nominal');
+            });
+        }
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A'], ['id' => 2, 'nama' => 'Vendor B']]);
         DB::table('vehicles')->insert([['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '288'], ['id' => 2, 'vendor_id' => 2, 'nomor_lambung' => '289']]);
         DB::table('customers')->insert(['id' => 1, 'nama' => 'Mine A']);
@@ -78,10 +87,99 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             'money_out_number' => 'UJ07', 'ticket_number' => 'TICKET-100', 'loaded_on' => '2026-11-03', 'unloaded_on' => null, 'unloading_ticket_number' => null,
             'gross_weight' => '45.540', 'tare_weight' => '15.320', 'net_weight' => '30.220', 'unloading_gross_weight' => null, 'unloading_tare_weight' => null, 'unloading_net_weight' => null];
         $this->assertSame($expected, $response->json('data.0'));
-        $this->getJson('/api/v1/unloading-notes/'.$id, $headers)->assertOk()->assertExactJson(['data' => $expected]);
+        $this->getJson('/api/v1/unloading-notes/'.$id, $headers)->assertOk()->assertExactJson(['data' => $expected + ['payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]]]);
         $this->assertEquals($before, DB::table('transaksis')->get()->toArray());
         $this->assertEquals($cashBefore, DB::table('kas_uang_jalans')->get()->toArray());
         $this->assertDatabaseHas('vehicles', ['id' => 1, 'do_count' => 0]);
+    }
+
+    public function test_estimate_reuses_review_amounts_holding_flag_and_override_without_exposing_accounts(): void
+    {
+        foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'] as $file) {
+            (require database_path('migrations/'.$file))->up();
+        }
+        (require database_path('migrations/2026_11_04_092518_add_transfer_override_to_load_note_drafts_table.php'))->up();
+        Schema::table('vehicles', function (Blueprint $table): void {
+            $table->boolean('uj_ditahan')->default(false);
+            $table->string('bank')->nullable();
+            $table->string('transfer_ke')->nullable();
+        });
+        Schema::create('vendor_uang_jalans', function (Blueprint $table): void {
+            $table->id();
+            foreach (['vendor_id', 'rute_id', 'hk_uang_jalan', 'uj_ditahan', 'uj_ditahan_ban'] as $field) {
+                $table->bigInteger($field)->nullable();
+            }
+        });
+        Schema::table('customers', function (Blueprint $table): void {
+            $table->boolean('status')->default(true);
+        });
+        Schema::create('customer_tagihans', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('customer_id');
+            $table->unsignedBigInteger('rute_id');
+        });
+        DB::table('customer_tagihans')->insert(['customer_id' => 1, 'rute_id' => 1]);
+        DB::table('vehicles')->where('id', 1)->update(['uj_ditahan' => 1, 'no_rekening' => 'SECRET-ACCOUNT', 'bank' => 'SECRET-BANK']);
+        DB::table('vendor_uang_jalans')->insert(['vendor_id' => 1, 'rute_id' => 1, 'hk_uang_jalan' => 1000000, 'uj_ditahan' => 100000, 'uj_ditahan_ban' => 200000]);
+        $actor = $this->actor();
+        $note = LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(1), $actor)->create(['rute_id' => 1, 'customer_id' => 1]);
+        $headers = $this->headers($actor);
+        $url = '/api/v1/load-notes/'.$note->id;
+        $response = $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', [
+            'kind' => 'estimate', 'currency' => 'IDR', 'gross_amount' => 1300000,
+            'sparepart_withheld' => 100000, 'tyre_withheld' => 200000, 'net_amount' => 1000000,
+        ]);
+        $this->assertStringNotContainsString('SECRET-', $response->getContent());
+        foreach (['admin', 'su'] as $role) {
+            $note = app(LoadNoteReviewService::class)->updatePayment($this->actor(1, $role), $note, [
+                'revision' => $note->revision, 'use_system_amount' => false, 'transfer_amount' => 900000, 'reason' => 'Approved correction',
+            ]);
+            $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment.gross_amount', 1200000)->assertJsonPath('data.payment.net_amount', 900000);
+        }
+        DB::table('vehicles')->where('id', 1)->update(['uj_ditahan' => 0]);
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment.gross_amount', 900000)
+            ->assertJsonPath('data.payment.sparepart_withheld', 0)->assertJsonPath('data.payment.tyre_withheld', 0);
+        DB::table('vehicles')->where('id', 1)->update(['uj_ditahan' => 1]);
+        DB::table('vendor_uang_jalans')->update(['uj_ditahan_ban' => null]);
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
+        DB::table('vendor_uang_jalans')->delete();
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
+        $note->update(['rute_id' => null]);
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
+        $note->update(['rute_id' => 1, 'status' => 'processed']);
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
+        $this->getJson('/api/v1/load-notes', $headers)->assertOk()->assertJsonMissingPath('data.0.payment');
+    }
+
+    public function test_final_payment_uses_persisted_gross_and_transaction_withholdings_only(): void
+    {
+        $id = $this->journey();
+        $other = $this->journey(2);
+        $sameCashOtherTransaction = DB::table('transaksis')->insertGetId(['kas_uang_jalan_id' => DB::table('transaksis')->where('id', $id)->value('kas_uang_jalan_id'), 'status' => 1]);
+        Schema::table('vehicles', function (Blueprint $table): void {
+            $table->boolean('uj_ditahan')->default(false);
+        });
+        DB::table('kas_uang_jalans')->where('vendor_id', 1)->update(['nominal_transaksi' => 1500000]);
+        DB::table('uj_ditahan_details')->insert([
+            ['transaksi_id' => $id, 'jenis' => 'masuk', 'nominal' => 100000],
+            ['transaksi_id' => $id, 'jenis' => 'keluar', 'nominal' => 50000],
+            ['transaksi_id' => $other, 'jenis' => 'masuk', 'nominal' => 999999],
+            ['transaksi_id' => $sameCashOtherTransaction, 'jenis' => 'masuk', 'nominal' => 888888],
+        ]);
+        DB::table('uj_ditahan_ban_details')->insert(['transaksi_id' => $id, 'jenis' => 'masuk', 'nominal' => 200000]);
+        $headers = $this->headers($this->actor());
+        $this->getJson('/api/v1/unloading-notes/'.$id, $headers)->assertOk()->assertJsonPath('data.payment', [
+            'kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 1500000,
+            'sparepart_withheld' => 100000, 'tyre_withheld' => 200000, 'net_amount' => 1200000,
+        ])->assertJsonMissingPath('data.bank')->assertJsonMissingPath('data.account');
+        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonMissingPath('data.0.payment');
+    }
+
+    public function test_inconsistent_persisted_final_amounts_are_unavailable(): void
+    {
+        $id = $this->journey();
+        DB::table('uj_ditahan_details')->insert(['transaksi_id' => $id, 'jenis' => 'masuk', 'nominal' => 1000000]);
+        $this->getJson('/api/v1/unloading-notes/'.$id, $this->headers($this->actor()))->assertOk()->assertJsonPath('data.payment', null);
     }
 
     public function test_completed_data_and_search_match_tickets_units_and_routes(): void
@@ -147,10 +245,16 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $headers = $this->headers($actor);
         $this->getJson('/api/v1/load-notes', $headers)->assertOk()->assertJsonCount(4, 'data');
         $this->getJson('/api/v1/load-notes?status=all', $headers)->assertOk()->assertJsonCount(4, 'data');
+        $this->getJson('/api/v1/load-notes?status=unprocessed', $headers)->assertOk()->assertJsonCount(3, 'data');
         foreach (['draft', 'rejected', 'cancelled', 'processed'] as $status) {
             $this->getJson('/api/v1/load-notes?status='.$status, $headers)->assertOk()->assertJsonCount(1, 'data')
                 ->assertJsonPath('data.0.status', $status)->assertJsonPath('data.0.transaction_id', $status === 'processed' ? $transaction : null);
         }
+        for ($index = 0; $index < 20; $index++) {
+            LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(1), $actor)->create();
+        }
+        $this->getJson('/api/v1/load-notes?status=unprocessed', $headers)->assertOk()->assertJsonCount(20, 'data')->assertJsonPath('meta.last_page', 2);
+        $this->getJson('/api/v1/load-notes?status=unprocessed&page=2', $headers)->assertOk()->assertJsonCount(3, 'data');
         $this->getJson('/api/v1/load-notes?status=waiting', $headers)->assertUnprocessable()->assertJsonValidationErrors('status');
     }
 

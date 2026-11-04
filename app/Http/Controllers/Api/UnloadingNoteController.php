@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\MobileUnloadingNoteResource;
 use App\Models\LoadNoteDraft;
 use App\Models\Transaksi;
+use App\Services\MobileNotePayment;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -29,11 +30,14 @@ class UnloadingNoteController extends Controller
         return MobileUnloadingNoteResource::collection($query->latest('id')->paginate(20));
     }
 
-    public function show(Request $request, int $transaction): MobileUnloadingNoteResource
+    public function show(Request $request, int $transaction, MobileNotePayment $payments): MobileUnloadingNoteResource
     {
         $this->authorize('viewAny', LoadNoteDraft::class);
 
-        return new MobileUnloadingNoteResource($this->journeys($request)->findOrFail($transaction));
+        $journey = $this->journeys($request)->findOrFail($transaction);
+        $journey->setAttribute('mobile_payment', $payments->final($journey));
+
+        return new MobileUnloadingNoteResource($journey);
     }
 
     private function journeys(Request $request): Builder

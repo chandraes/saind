@@ -12,6 +12,7 @@ use App\Models\LoadNoteDraft;
 use App\Models\Vehicle;
 use App\Services\LoadNoteDraftService;
 use App\Services\LoadNoteMatcher;
+use App\Services\MobileNotePayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,10 +23,12 @@ class LoadNoteDraftController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', LoadNoteDraft::class);
-        $filters = $request->validate(['status' => ['sometimes', 'string', 'in:all,draft,rejected,cancelled,processed'], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+        $filters = $request->validate(['status' => ['sometimes', 'string', 'in:all,unprocessed,draft,rejected,cancelled,processed'], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $query = LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with('creator:id,name');
         $query->search($filters['search'] ?? '');
-        if (($filters['status'] ?? 'all') !== 'all') {
+        if (($filters['status'] ?? 'all') === 'unprocessed') {
+            $query->whereIn('status', ['draft', 'rejected', 'cancelled']);
+        } elseif (($filters['status'] ?? 'all') !== 'all') {
             $query->where('status', $filters['status']);
         }
 
@@ -71,9 +74,12 @@ class LoadNoteDraftController extends Controller
         return LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with('creator:id,name')->findOrFail($note);
     }
 
-    public function show(Request $request, int $note): MobileLoadNoteDraftResource
+    public function show(Request $request, int $note, MobileNotePayment $payments): MobileLoadNoteDraftResource
     {
-        return new MobileLoadNoteDraftResource($this->draft($request, $note));
+        $draft = $this->draft($request, $note);
+        $draft->setAttribute('mobile_payment', $payments->estimate($draft));
+
+        return new MobileLoadNoteDraftResource($draft);
     }
 
     public function photo(Request $request, int $note, LoadNoteDraftService $service): StreamedResponse

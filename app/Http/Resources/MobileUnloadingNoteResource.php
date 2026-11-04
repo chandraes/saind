@@ -13,7 +13,7 @@ class MobileUnloadingNoteResource extends JsonResource
         $journey = $this->kas_uang_jalan;
         $completed = (int) $this->status === 3;
 
-        return ['id' => (int) $this->id, 'status' => $completed ? 'completed' : 'waiting',
+        return ['payment' => $this->whenHas('mobile_payment', fn () => $this->mobile_payment), 'id' => (int) $this->id, 'status' => $completed ? 'completed' : 'waiting',
             'vehicle_id' => (int) $journey->vehicle_id, 'vehicle_number' => $journey->vehicle?->nomor_lambung,
             'route_name' => $journey->rute?->nama, 'mine_name' => $journey->customer?->nama,
             'money_out_number' => 'UJ'.sprintf('%02d', $journey->nomor_uang_jalan), 'ticket_number' => (string) $this->nota_muat,
