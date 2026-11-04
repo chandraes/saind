@@ -22,9 +22,12 @@ class LoadNoteDraftController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', LoadNoteDraft::class);
-        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+        $filters = $request->validate(['status' => ['sometimes', 'string', 'in:all,draft,rejected,cancelled,processed'], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $query = LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with('creator:id,name');
         $query->search($filters['search'] ?? '');
+        if (($filters['status'] ?? 'all') !== 'all') {
+            $query->where('status', $filters['status']);
+        }
 
         return MobileLoadNoteDraftResource::collection($query->latest('id')->paginate(20));
     }

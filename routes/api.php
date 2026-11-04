@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
+use App\Http\Controllers\Api\UnloadingNoteController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Middleware\EnsureMobileToken;
@@ -21,6 +22,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('load-notes/scanned', [LoadNoteDraftController::class, 'storeScanned'])->middleware('throttle:30,1')->name('load-notes.scanned');
                 Route::post('load-notes/inspect', [LoadNoteDraftController::class, 'inspect'])->middleware('throttle:30,1')->name('load-notes.inspect');
                 Route::get('load-notes/vehicles', [LoadNoteDraftController::class, 'vehicles'])->name('load-notes.vehicles');
+                Route::get('unloading-notes', [UnloadingNoteController::class, 'index'])->name('unloading-notes.index');
+                Route::get('unloading-notes/{transaction}', [UnloadingNoteController::class, 'show'])->whereNumber('transaction')->name('unloading-notes.show');
                 Route::get('load-notes', [LoadNoteDraftController::class, 'index'])->name('load-notes.index');
                 Route::post('load-notes', [LoadNoteDraftController::class, 'store'])->middleware('throttle:30,1')->name('load-notes.store');
                 Route::get('load-notes/{note}', [LoadNoteDraftController::class, 'show'])->whereNumber('note')->name('load-notes.show');
