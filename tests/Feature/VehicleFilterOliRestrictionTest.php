@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\KasUangJalan;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
@@ -92,6 +94,24 @@ class VehicleFilterOliRestrictionTest extends TestCase
         $vehicle->update(['pembatasan_filter_oli' => true]);
         $response = $this->getJson(route('vehicle.index'), ['X-Requested-With' => 'XMLHttpRequest'])->assertOk();
         $this->assertStringContainsString('checked', $response->json('data.0.pembatasan_filter_oli'));
+    }
+
+    public function test_vehicle_table_marks_missing_transactions_without_loading_transaction_models(): void
+    {
+        $this->loginAs('admin');
+        $withTransactions = $this->vehicle();
+        $withoutTransactions = $this->vehicle();
+        DB::table('kas_uang_jalans')->insert(array_fill(0, 250, ['vehicle_id' => $withTransactions->id]));
+        $loaded = 0;
+        Event::listen('eloquent.retrieved: '.KasUangJalan::class, function () use (&$loaded): void {
+            $loaded++;
+        });
+        $response = $this->getJson(route('vehicle.index', ['draw' => 1, 'start' => 0, 'length' => 10]), ['X-Requested-With' => 'XMLHttpRequest'])->assertOk();
+        $this->assertSame(0, $loaded, 'The vehicle directory must not hydrate travel-cash history.');
+        $rows = collect($response->json('data'))->keyBy('id');
+        $this->assertSame('', $rows[$withTransactions->id]['DT_RowClass']);
+        $this->assertSame('table-warning', $rows[$withoutTransactions->id]['DT_RowClass']);
+        $this->assertArrayNotHasKey('kas_uang_jalan', $rows[$withTransactions->id]);
     }
 
     public function test_flag_validation_and_missing_vehicle_are_handled(): void

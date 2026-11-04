@@ -22,14 +22,14 @@ class VehicleController extends Controller
         // 1. Tangani Request AJAX dari DataTables
         if ($request->ajax()) {
             // Gunakan select('vehicles.*') untuk mencegah bentrok ID dengan tabel relasi
-            $data = Vehicle::with(['vendor', 'kas_uang_jalan'])->select('vehicles.*');
+            $data = Vehicle::with('vendor')->select('vehicles.*')->withExists('kas_uang_jalan');
 
             return DataTables::of($data)
                 ->addIndexColumn() // Menambahkan kolom DT_RowIndex (Nomor Urut)
 
                 // Kondisi: Row class 'table-warning' jika kas_uang_jalan kosong
                 ->setRowClass(function ($row) {
-                    return $row->kas_uang_jalan->first() == null ? 'table-warning' : '';
+                    return $row->kas_uang_jalan_exists ? '' : 'table-warning';
                 })
 
                 // Kondisi: Teks merah dan link modal untuk Nomor Lambung
