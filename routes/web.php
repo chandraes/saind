@@ -325,7 +325,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::prefix('pengaturan')->group(function () {
             Route::get('/wa', [WaController::class, 'wa'])->name('pengaturan.wa');
-            Route::get('/wa/edit/{id}', [WaController::class, 'edit'])->name('pengaturan.wa.edit');
+            Route::get('/wa/edit/{id}', [WaController::class, 'edit'])->whereNumber('id')->name('pengaturan.wa.edit');
             Route::patch('/wa/update/{id}', [WaController::class, 'update'])->name('pengaturan.wa.update');
             Route::get('/nota-transaksi', [KonfigurasiController::class, 'index'])->name('pengaturan.nota-transaksi');
             Route::patch('/nota-transaksi/update/{konfigurasi}', [KonfigurasiController::class, 'update'])->name('pengaturan.konfigurasi-transaksi.update');
