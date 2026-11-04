@@ -30,8 +30,91 @@ class LoadNoteInboxTest extends MobileApiTestCase
         }
         (require database_path('migrations/2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php'))->up();
         (require database_path('migrations/2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'))->up();
+        Schema::table('vehicles', function (Blueprint $table): void {
+            $table->boolean('uj_ditahan')->default(false);
+            $table->unsignedBigInteger('driver_id')->nullable();
+            $table->string('transfer_ke')->nullable();
+            $table->string('bank')->nullable();
+        });
+        Schema::create('drivers', function (Blueprint $table): void {
+            $table->id();
+            foreach (['nama', 'no_hp', 'nama_rek', 'bank', 'no_rek'] as $field) {
+                $table->string($field)->nullable();
+            }
+        });
+        Schema::create('vendor_uang_jalans', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vendor_id');
+            $table->unsignedBigInteger('rute_id');
+            foreach (['hk_uang_jalan', 'uj_ditahan', 'uj_ditahan_ban'] as $field) {
+                $table->bigInteger($field)->nullable();
+            }
+        });
         $this->withoutVite();
         View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
+    }
+
+    public static function paymentModes(): array
+    {
+        return [[true, 370000, 50000, 20000], [false, 300000, 0, 0]];
+    }
+
+    #[DataProvider('paymentModes')]
+    public function test_note_shows_vendor_route_payment_driver_and_enabled_funds_without_paying(bool $held, int $gross, int $sparepart, int $ban): void
+    {
+        $note = $this->draft(1, ['driver_name' => 'Nama pada nota']);
+        DB::table('rutes')->insert(['id' => 1, 'nama' => 'Rute preview']);
+        $note->update(['rute_id' => 1]);
+        DB::table('drivers')->insert(['id' => 1, 'nama' => 'Driver terdaftar', 'no_hp' => '0812345678', 'bank' => 'BANK DRIVER', 'nama_rek' => 'REKENING DRIVER', 'no_rek' => '111222333']);
+        DB::table('vehicles')->where('id', $note->vehicle_id)->update(['uj_ditahan' => $held, 'driver_id' => 1, 'transfer_ke' => 'REKENING UNIT', 'bank' => 'BANK UNIT', 'no_rekening' => '444555666']);
+        DB::table('vendor_uang_jalans')->insert([
+            ['vendor_id' => 2, 'rute_id' => 1, 'hk_uang_jalan' => 999999, 'uj_ditahan' => 1, 'uj_ditahan_ban' => 1],
+            ['vendor_id' => 1, 'rute_id' => 1, 'hk_uang_jalan' => 300000, 'uj_ditahan' => 50000, 'uj_ditahan_ban' => 20000],
+        ]);
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'admin', 'vendor_id' => null]));
+        $before = $note->fresh()->getAttributes();
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()
+            ->assertSee('Estimasi uang jalan')->assertSee('Driver terdaftar')->assertSee('Nama pada nota')
+            ->assertSee('Rp 300.000')->assertSee('Rp '.number_format($gross, 0, ',', '.'))
+            ->assertSee($held ? 'REKENING DRIVER' : 'REKENING UNIT')
+            ->assertViewHas('paymentPreview', fn (array $preview): bool => $preview['transfer'] === 300000 && $preview['gross'] === $gross && $preview['sparepart'] === $sparepart && $preview['ban'] === $ban);
+        $this->assertDatabaseCount('transaksis', 0);
+        $this->assertSame('draft', $note->fresh()->status);
+        $this->assertSame($before, $note->fresh()->getAttributes());
+    }
+
+    public function test_missing_route_agreement_is_not_presented_as_zero_payment(): void
+    {
+        $note = $this->draft();
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'admin', 'vendor_id' => null]));
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()
+            ->assertSee('Pilih rute pada nota terlebih dahulu')
+            ->assertViewHas('paymentPreview', fn (array $preview): bool => $preview['gross'] === null && $preview['transfer'] === null);
+    }
+
+    public function test_enabled_fund_missing_amount_warns_and_does_not_invent_a_gross_total(): void
+    {
+        $note = $this->draft();
+        DB::table('rutes')->insert(['id' => 1, 'nama' => 'Rute preview']);
+        $note->update(['rute_id' => 1]);
+        DB::table('vehicles')->where('id', $note->vehicle_id)->update(['uj_ditahan' => true]);
+        DB::table('vendor_uang_jalans')->insert(['vendor_id' => 1, 'rute_id' => 1, 'hk_uang_jalan' => 300000, 'uj_ditahan' => 50000, 'uj_ditahan_ban' => 0]);
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'user', 'vendor_id' => null]));
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()
+            ->assertSee('Nominal UJ Ditahan Ban belum diatur')
+            ->assertViewHas('paymentPreview', fn (array $preview): bool => $preview['gross'] === null);
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    public function test_driver_and_bank_data_are_not_read_from_a_vehicle_moved_to_another_vendor(): void
+    {
+        $note = $this->draft();
+        DB::table('drivers')->insert(['id' => 1, 'nama' => 'FOREIGN PRIVATE DRIVER', 'no_rek' => 'PRIVATE ACCOUNT']);
+        DB::table('vehicles')->where('id', $note->vehicle_id)->update(['vendor_id' => 2, 'driver_id' => 1, 'uj_ditahan' => true]);
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'admin', 'vendor_id' => null]));
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()
+            ->assertSee('Unit tidak ditemukan pada vendor nota')
+            ->assertDontSee('FOREIGN PRIVATE DRIVER')->assertDontSee('PRIVATE ACCOUNT');
     }
 
     public static function reviewerRoles(): array

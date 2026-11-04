@@ -10,6 +10,7 @@ use App\Models\Rute;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\LoadNoteDraftService;
+use App\Services\LoadNotePaymentPreview;
 use App\Services\LoadNoteReviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,9 +38,10 @@ class LoadNoteInboxController extends Controller
         ]);
     }
 
-    public function show(Request $request, LoadNoteDraft $note): View
+    public function show(Request $request, LoadNoteDraft $note, LoadNotePaymentPreview $payments): View
     {
         return view('billing.nota-muat.show', [
+            'paymentPreview' => $payments->forNote($note),
             'returnFilters' => $request->only(['search', 'vendor_id', 'page']),
             'note' => $note->load(['vendor:id,nama', 'creator:id,name', 'customer:id,nama', 'rute:id,nama', 'events.actor:id,name']),
             'vehicles' => Vehicle::where('vendor_id', $note->vendor_id)->select(['id', 'nomor_lambung'])->orderBy('nomor_lambung')->get(),

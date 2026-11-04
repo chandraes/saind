@@ -13,6 +13,7 @@
     @endif
     @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     @include('billing.nota-muat.review')
+    @include('billing.nota-muat.payment-preview', ['preview' => $paymentPreview])
     <div class="row g-4">
         <div class="col-lg-5">
             <div class="card shadow-sm h-100">
@@ -24,7 +25,7 @@
                         <dt class="col-sm-5">Rute</dt><dd class="col-sm-7 text-break">{{ $note->rute?->nama ?? 'Belum ditentukan' }}</dd>
                         <dt class="col-sm-5">Tambang</dt><dd class="col-sm-7 text-break">{{ $note->mine_name }}</dd>
                         <dt class="col-sm-5">Tanggal muat</dt><dd class="col-sm-7">{{ $note->loaded_on->format('d-m-Y') }}</dd>
-                        <dt class="col-sm-5">Pengemudi</dt><dd class="col-sm-7 text-break">{{ $note->driver_name ?: '-' }}</dd>
+                        <dt class="col-sm-5">Pengemudi pada nota</dt><dd class="col-sm-7 text-break">{{ $note->driver_name ?: '-' }}</dd>
                         <dt class="col-sm-5">Gross (ton)</dt><dd class="col-sm-7">{{ number_format($note->gross_kg / 1000, 3, ',', '.') }}</dd>
                         <dt class="col-sm-5">Tare (ton)</dt><dd class="col-sm-7">{{ number_format($note->tare_kg / 1000, 3, ',', '.') }}</dd>
                         <dt class="col-sm-5">Netto (ton)</dt><dd class="col-sm-7 fw-bold">{{ number_format($note->net_kg / 1000, 3, ',', '.') }}</dd>
