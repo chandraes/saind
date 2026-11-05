@@ -1,4 +1,4 @@
-@can('reviewAny', \App\Models\LoadNoteDraft::class)
+@can('inbox', \App\Models\LoadNoteDraft::class)
 <div class="col-md-2 text-center mt-5">
     <a href="{{ route('billing.nota-muat.index') }}" class="text-decoration-none">
         <span class="position-relative d-inline-block align-middle">

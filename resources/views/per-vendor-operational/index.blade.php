@@ -15,6 +15,7 @@
         </div>
     </div> --}}
     <div class="row justify-content-left mt-3">
+        @include('billing.nota-muat.menu')
         {{-- <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
                 <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="70">

@@ -78,7 +78,7 @@ class LoadNoteInboxTest extends MobileApiTestCase
         $this->get('/billing/nota-muat/'.$note->id)->assertOk()
             ->assertSee('Rencana uang jalan')->assertSee('Driver terdaftar')->assertSee('Nama pada nota')
             ->assertSee('Rp 300.000')->assertSee('Rp '.number_format($gross, 0, ',', '.'))
-            ->assertSee($held ? 'REKENING DRIVER' : 'REKENING UNIT')
+            ->assertSee('REKENING DRIVER')->assertDontSee('REKENING UNIT')
             ->assertViewHas('paymentPreview', fn (array $preview): bool => $preview['transfer'] === 300000 && $preview['gross'] === $gross && $preview['sparepart'] === $sparepart && $preview['ban'] === $ban);
         $this->assertDatabaseCount('transaksis', 0);
         $this->assertSame('draft', $note->fresh()->status);
@@ -171,7 +171,7 @@ class LoadNoteInboxTest extends MobileApiTestCase
 
     public static function otherRoles(): array
     {
-        return [['vendor-operational'], ['vendor'], ['operasional'], ['asisten-user'], ['investor']];
+        return [['vendor'], ['operasional'], ['asisten-user'], ['investor']];
     }
 
     private function draft(int $vendor = 1, array $attributes = []): LoadNoteDraft
@@ -216,6 +216,94 @@ class LoadNoteInboxTest extends MobileApiTestCase
             $this->get('/billing/nota-muat'.$path)->assertForbidden();
         }
         $this->view('billing.nota-muat.menu')->assertDontSee('Nota Muat Masuk');
+    }
+
+    public function test_vendor_operational_reads_colleague_notes_but_cannot_read_foreign_vendor_or_mutate(): void
+    {
+        Storage::fake('local');
+        $own = $this->draft(1, ['ticket_number' => 'OWN-COLLEAGUE-NOTE']);
+        $foreign = $this->draft(2, ['ticket_number' => 'FOREIGN-NOTE']);
+        Storage::disk('local')->put($own->photo_path, 'own-private-photo');
+        $viewer = User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 1]);
+        $this->actingAs($viewer);
+        config(['mobile.load_note_roles' => []]);
+        $this->assertFalse(Gate::allows('reviewAny', LoadNoteDraft::class));
+        $this->get('/billing/nota-muat')->assertOk()->assertSee('OWN-COLLEAGUE-NOTE')->assertDontSee('FOREIGN-NOTE')->assertDontSee('Seluruh vendor')->assertViewHas('vendors', fn ($vendors): bool => $vendors->isEmpty());
+        $this->getJson('/billing/nota-muat')->assertOk()->assertJsonPath('next', null)->assertSee('OWN-COLLEAGUE-NOTE')->assertDontSee('FOREIGN-NOTE');
+        $this->get('/billing/nota-muat/'.$own->id)->assertOk()->assertSee('OWN-COLLEAGUE-NOTE')->assertSee('Riwayat pemeriksaan')->assertDontSee('data-note-review', false)
+            ->assertViewHas('vehicles', fn ($items): bool => $items->isEmpty())->assertViewHas('customers', fn ($items): bool => $items->isEmpty())->assertViewHas('rutes', fn ($items): bool => $items->isEmpty());
+        $this->get('/billing/nota-muat/'.$own->id.'/foto')->assertOk()->assertStreamedContent('own-private-photo');
+        $this->get('/billing/nota-muat?vendor_id=2')->assertNotFound();
+        $this->getJson('/billing/nota-muat?vendor_id=999')->assertNotFound();
+        foreach (['', '/foto'] as $suffix) {
+            $this->get('/billing/nota-muat/'.$foreign->id.$suffix)->assertNotFound();
+        }
+        foreach ([$own, $foreign] as $note) {
+            $this->patchJson('/billing/nota-muat/'.$note->id, [])->assertForbidden();
+            $this->patchJson('/billing/nota-muat/'.$note->id.'/payment', [])->assertForbidden();
+            $this->postJson('/billing/nota-muat/'.$note->id.'/process', [])->assertForbidden();
+            $this->postJson('/billing/nota-muat/'.$note->id.'/decision', [])->assertForbidden();
+        }
+        $this->get('/billing')->assertForbidden();
+        $this->view('billing.nota-muat.menu')->assertSee('Nota Muat Masuk');
+        $this->assertSame('draft', $own->fresh()->status);
+        $this->assertSame(0, $own->fresh()->revision);
+        $this->assertDatabaseCount('transaksis', 0);
+    }
+
+    public function test_processed_note_shows_recorded_payment_and_account_without_current_settings(): void
+    {
+        Schema::table('transaksis', function (Blueprint $table): void {
+            $table->unsignedBigInteger('kas_uang_jalan_id');
+        });
+        Schema::create('kas_uang_jalans', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vendor_id');
+            $table->unsignedBigInteger('nominal_transaksi');
+            foreach (['transfer_ke', 'bank', 'no_rekening'] as $field) {
+                $table->string($field)->nullable();
+            }
+        });
+        foreach (['uj_ditahan_details', 'uj_ditahan_ban_details'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('transaksi_id');
+                $table->string('jenis');
+                $table->unsignedBigInteger('nominal');
+            });
+        }
+        DB::table('kas_uang_jalans')->insert(['id' => 1, 'vendor_id' => 1, 'nominal_transaksi' => 370000, 'transfer_ke' => 'RECORDED RECIPIENT', 'bank' => 'RECORDED BANK', 'no_rekening' => 'RECORDED-123']);
+        DB::table('transaksis')->insert(['id' => 1, 'kas_uang_jalan_id' => 1]);
+        $note = $this->draft(1, ['status' => 'processed', 'transaksi_id' => 1]);
+        DB::table('uj_ditahan_details')->insert(['transaksi_id' => 1, 'jenis' => 'masuk', 'nominal' => 50000]);
+        DB::table('uj_ditahan_ban_details')->insert(['transaksi_id' => 1, 'jenis' => 'masuk', 'nominal' => 20000]);
+        DB::table('vehicles')->where('id', $note->vehicle_id)->update(['transfer_ke' => 'CURRENT ACCOUNT', 'no_rekening' => 'CURRENT-999']);
+        $this->actingAs($note->creator);
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()->assertSee('Uang jalan tercatat')->assertSee('Rp 370.000')->assertSee('Rp 300.000')
+            ->assertSee('RECORDED RECIPIENT')->assertSee('RECORDED-123')->assertSee('Rekening pada transaksi')->assertDontSee('CURRENT ACCOUNT')->assertDontSee('CURRENT-999')
+            ->assertDontSee('Pilih rute pada nota terlebih dahulu')->assertDontSee('data-note-review', false);
+        DB::table('kas_uang_jalans')->where('id', 1)->update(['vendor_id' => 2]);
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()->assertSee('Rincian uang jalan transaksi belum tersedia')->assertDontSee('RECORDED RECIPIENT')->assertDontSee('RECORDED-123');
+    }
+
+    public function test_vendor_operational_without_a_valid_vendor_cannot_read_inbox(): void
+    {
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 999]));
+        $this->get('/billing/nota-muat')->assertForbidden();
+        $this->view('billing.nota-muat.menu')->assertDontSee('Nota Muat Masuk');
+    }
+
+    public function test_incremental_list_is_bounded_and_keeps_filters(): void
+    {
+        $note = $this->draft(1, ['ticket_number' => 'MATCH']);
+        LoadNoteDraft::factory()->count(30)->create(['vendor_id' => 1, 'vehicle_id' => $note->vehicle_id, 'created_by' => $note->created_by, 'ticket_number' => 'MATCH']);
+        $this->draft(2, ['ticket_number' => 'FOREIGN-MATCH']);
+        $this->actingAs($note->creator);
+        $first = $this->getJson('/billing/nota-muat?search=MATCH')->assertOk()->assertDontSee('FOREIGN-MATCH');
+        $this->assertSame(25, substr_count($first->json('rows'), 'aria-label="Lihat detail nota'));
+        $this->assertStringContainsString('search=MATCH', $first->json('next'));
+        $second = $this->getJson($first->json('next'))->assertOk()->assertJsonPath('next', null);
+        $this->assertSame(6, substr_count($second->json('rows'), 'aria-label="Lihat detail nota'));
     }
 
     public function test_guests_must_log_in_before_reading_the_inbox_or_a_photo(): void

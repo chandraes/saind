@@ -6,30 +6,49 @@ use App\Models\LoadNoteDraft;
 use App\Models\Transaksi;
 use App\Models\UjDitahanBanDetail;
 use App\Models\UjDitahanDetail;
+use Illuminate\Database\Eloquent\Builder;
 
 class MobileNotePayment
 {
-    public function __construct(private LoadNotePaymentPreview $preview) {}
+    public function __construct(private LoadNotePaymentPreview $preview, private TransferDestination $destinations) {}
 
     /** @return array{kind: string, currency: string, gross_amount: int, sparepart_withheld: int, tyre_withheld: int, net_amount: int}|null */
     public function estimate(LoadNoteDraft $note): ?array
     {
+        return $this->estimateDetail($note)['payment'];
+    }
+
+    /** @return array{payment: ?array, transfer_destination: array} */
+    public function estimateDetail(LoadNoteDraft $note): array
+    {
         if ($note->status === 'processed') {
-            return null;
+            $transaction = $note->transaksi_id ? Transaksi::whereKey($note->transaksi_id)
+                ->whereHas('kas_uang_jalan', fn (Builder $query): Builder => $query->where('vendor_id', $note->vendor_id))->first() : null;
+
+            return ['payment' => null, 'transfer_destination' => $this->destinations->forJourney($transaction?->kas_uang_jalan)];
         }
         $preview = $this->preview->forNote($note);
 
-        return $this->breakdown('estimate', $preview['gross'], $preview['sparepart'], $preview['ban']);
+        return ['payment' => $this->breakdown('estimate', $preview['gross'], $preview['sparepart'], $preview['ban']),
+            'transfer_destination' => $preview['transfer_destination']];
     }
 
     /** @return array{kind: string, currency: string, gross_amount: int, sparepart_withheld: int, tyre_withheld: int, net_amount: int}|null */
     public function final(Transaksi $transaction): ?array
     {
-        $gross = $transaction->kas_uang_jalan()->value('nominal_transaksi');
+        return $this->finalDetail($transaction)['payment'];
+    }
+
+    /** @return array{payment: ?array, transfer_destination: array} */
+    public function finalDetail(Transaksi $transaction): array
+    {
+        $journey = $transaction->kas_uang_jalan()->first();
+        $gross = $journey?->nominal_transaksi;
         $sparepart = UjDitahanDetail::where('transaksi_id', $transaction->id)->where('jenis', 'masuk')->sum('nominal');
         $tyre = UjDitahanBanDetail::where('transaksi_id', $transaction->id)->where('jenis', 'masuk')->sum('nominal');
 
-        return $this->breakdown('final', $gross === null ? null : (int) $gross, (int) $sparepart, (int) $tyre);
+        return ['payment' => $this->breakdown('final', $gross === null ? null : (int) $gross, (int) $sparepart, (int) $tyre),
+            'transfer_destination' => $this->destinations->forJourney($journey)];
     }
 
     /** @return array{kind: string, currency: string, gross_amount: int, sparepart_withheld: int, tyre_withheld: int, net_amount: int}|null */

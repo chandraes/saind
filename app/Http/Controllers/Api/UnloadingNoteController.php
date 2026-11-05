@@ -35,7 +35,9 @@ class UnloadingNoteController extends Controller
         $this->authorize('viewAny', LoadNoteDraft::class);
 
         $journey = $this->journeys($request)->findOrFail($transaction);
-        $journey->setAttribute('mobile_payment', $payments->final($journey));
+        $detail = $payments->finalDetail($journey);
+        $journey->setAttribute('mobile_payment', $detail['payment']);
+        $journey->setAttribute('mobile_transfer_destination', $detail['transfer_destination']);
 
         return new MobileUnloadingNoteResource($journey);
     }

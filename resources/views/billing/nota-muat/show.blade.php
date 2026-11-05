@@ -15,7 +15,9 @@
     <div class="alert alert-info">Nota ini belum mengeluarkan uang jalan. Setiap koreksi dan keputusan dicatat pada riwayat.</div>
     @endif
     @if ($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
+    @can('reviewAny', \App\Models\LoadNoteDraft::class)
     @include('billing.nota-muat.review')
+    @endcan
     @include('billing.nota-muat.payment-preview', ['preview' => $paymentPreview])
     <div class="row g-4">
         <div class="col-lg-5">

@@ -25,6 +25,7 @@ use App\Services\FilterOliRitaseService;
 use App\Services\LoadNoteDateRule;
 use App\Services\LoadNotePaymentPreview;
 use App\Services\LoadNoteReviewService;
+use App\Services\TransferDestination;
 use App\Services\UjDitahanBanService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -176,13 +177,13 @@ class FormKasUangJalanController extends Controller
     {
         $vehicle = Vehicle::join('vendors', 'vendors.id', 'vehicles.vendor_id')
             ->select('vehicles.*', 'vendors.nama as nama_vendor', 'vendors.id as id_vendor', 'vendors.limit_tonase as limit_tonase')
-            ->find($request->id);
+            ->findOrFail($request->id);
 
-        if ($vehicle->uj_ditahan == 1 && $vehicle->driver) {
-            $vehicle->transfer_ke = $vehicle->driver->nama_rek; // Sesuaikan nama kolom di tabel driver Anda
-            $vehicle->bank = $vehicle->driver->bank;               // Sesuaikan nama kolom
-            $vehicle->no_rekening = $vehicle->driver->no_rek; // Sesuaikan nama kolom
-        }
+        $destination = app(TransferDestination::class)->forVehicle($vehicle);
+        $vehicle->transfer_ke = $destination['recipient_name'];
+        $vehicle->bank = $destination['bank'];
+        $vehicle->no_rekening = $destination['account_number'];
+        $vehicle->transfer_destination = $destination;
 
         $data = $vehicle;
 
@@ -302,6 +303,19 @@ class FormKasUangJalanController extends Controller
             $request->merge($notes->formData($loadNote));
         }
 
+        $request->validate(['vehicle_id' => 'required|integer|exists:vehicles,id']);
+        $kendaraan = Vehicle::with('driver')->findOrFail($request->vehicle_id);
+        $destination = app(TransferDestination::class)->forVehicle($kendaraan);
+        if (! $destination['complete']) {
+            throw ValidationException::withMessages(['no_rekening' => 'Rekening tujuan transfer belum lengkap. Hubungi admin untuk melengkapi data '.($destination['source'] === 'driver' ? 'driver' : 'kendaraan').'.']);
+        }
+        foreach (['recipient_name' => 'transfer_ke', 'bank' => 'bank', 'account_number' => 'no_rekening'] as $key => $field) {
+            if ((string) $request->input($field) !== $destination[$key]) {
+                throw ValidationException::withMessages([$field => 'Rekening tujuan transfer telah berubah atau tidak sesuai data '.($destination['source'] === 'driver' ? 'driver' : 'kendaraan').'. Muat ulang dan periksa kembali.']);
+            }
+            $request->merge([$field => $destination[$key]]);
+        }
+
         $data = $request->validate([
             'customer_id' => 'required',
             'vehicle_id' => 'required|integer|exists:vehicles,id',
@@ -309,8 +323,8 @@ class FormKasUangJalanController extends Controller
             'p_vendor' => 'required',
             'nominal_transaksi' => 'required',
             'transfer_ke' => 'required',
-            'bank' => 'required',
-            'no_rekening' => 'required',
+            'bank' => 'required|string|max:10',
+            'no_rekening' => 'required|string|max:255',
 
             'nota_muat' => 'required',
             'tonase' => 'required|numeric',
@@ -319,7 +333,6 @@ class FormKasUangJalanController extends Controller
             'tarra_muat' => 'nullable|numeric',
         ]);
 
-        $kendaraan = Vehicle::findOrFail($data['vehicle_id']);
         try {
             $filterOliRitase->assertWithinLimits($kendaraan, $request->user());
         } catch (ValidationException $exception) {
@@ -497,6 +510,16 @@ class FormKasUangJalanController extends Controller
             }
             $lockedNote = $loadNote ? $notes->lockForProcessing($request->user(), $loadNote, (int) $noteInput['load_note_revision']) : null;
             $kendaraan = Vehicle::whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
+            if ($kendaraan->driver_id !== null) {
+                $kendaraan->setRelation('driver', $kendaraan->driver()->lockForUpdate()->first());
+            }
+            $lockedDestination = app(TransferDestination::class)->forVehicle($kendaraan);
+            foreach (['recipient_name' => 'transfer_ke', 'bank' => 'bank', 'account_number' => 'no_rekening'] as $key => $field) {
+                $expected = $field === 'transfer_ke' ? substr((string) $lockedDestination[$key], 0, 15) : $lockedDestination[$key];
+                if (! $lockedDestination['complete'] || $data[$field] !== $expected) {
+                    throw ValidationException::withMessages([$field => 'Rekening tujuan transfer telah berubah. Muat ulang dan periksa kembali sebelum memproses uang jalan.']);
+                }
+            }
             $filterOliRitase->assertWithinLimits($kendaraan, $request->user());
             if ($direct) {
                 $payments = app(LoadNotePaymentPreview::class);

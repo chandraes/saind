@@ -8,6 +8,8 @@ use App\Models\VendorUangJalan;
 
 class LoadNotePaymentPreview
 {
+    public function __construct(private TransferDestination $destinations) {}
+
     public function confirmationHash(LoadNoteDraft $note, array $preview): string
     {
         $details = array_intersect_key($preview, array_flip(['held', 'transfer', 'sparepart', 'ban', 'gross', 'recipient', 'bank', 'account']));
@@ -25,13 +27,16 @@ class LoadNotePaymentPreview
         $vehicle = Vehicle::with('driver')->whereKey($note->vehicle_id)->where('vendor_id', $note->vendor_id)->first();
         $held = (int) $vehicle?->uj_ditahan === 1;
         $driver = $vehicle?->driver;
-        $useDriverAccount = $held && $driver !== null;
+        $destination = $this->destinations->forVehicle($vehicle);
         $preview = ['is_custom' => $note->transfer_override !== null, 'system_transfer' => null, 'held' => $held, 'transfer' => null, 'sparepart' => $held ? null : 0, 'ban' => $held ? null : 0,
             'gross' => null, 'driver' => $driver?->nama, 'driver_phone' => $driver?->no_hp,
-            'account_source' => $useDriverAccount ? 'driver' : 'vehicle',
-            'recipient' => $useDriverAccount ? $driver->nama_rek : $vehicle?->transfer_ke,
-            'bank' => $useDriverAccount ? $driver->bank : $vehicle?->bank,
-            'account' => $useDriverAccount ? $driver->no_rek : $vehicle?->no_rekening, 'warnings' => []];
+            'account_source' => $destination['source'],
+            'recipient' => $destination['recipient_name'],
+            'bank' => $destination['bank'],
+            'account' => $destination['account_number'], 'transfer_destination' => $destination, 'warnings' => []];
+        if (! $destination['complete']) {
+            $preview['warnings'][] = 'Rekening tujuan transfer belum lengkap. Hubungi admin untuk melengkapi data '.($destination['source'] === 'driver' ? 'driver' : 'kendaraan').'.';
+        }
         if (! $vehicle) {
             $preview['warnings'][] = 'Unit tidak ditemukan pada vendor nota. Periksa kembali data kendaraan.';
 

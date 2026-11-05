@@ -77,7 +77,9 @@ class LoadNoteDraftController extends Controller
     public function show(Request $request, int $note, MobileNotePayment $payments): MobileLoadNoteDraftResource
     {
         $draft = $this->draft($request, $note);
-        $draft->setAttribute('mobile_payment', $payments->estimate($draft));
+        $detail = $payments->estimateDetail($draft);
+        $draft->setAttribute('mobile_payment', $detail['payment']);
+        $draft->setAttribute('mobile_transfer_destination', $detail['transfer_destination']);
 
         return new MobileLoadNoteDraftResource($draft);
     }

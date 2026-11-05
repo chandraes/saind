@@ -7,6 +7,16 @@ use App\Models\User;
 
 class LoadNoteDraftPolicy
 {
+    public function inbox(User $user): bool
+    {
+        return $this->reviewAny($user) || ($user->role === 'vendor-operational' && $user->vendor_id !== null && $user->vendor()->exists());
+    }
+
+    public function readInbox(User $user, LoadNoteDraft $note): bool
+    {
+        return $this->reviewAny($user) || ($this->inbox($user) && (int) $user->vendor_id === $note->vendor_id);
+    }
+
     public function reviewAny(User $user): bool
     {
         return in_array($user->role, ['admin', 'su', 'user'], true);

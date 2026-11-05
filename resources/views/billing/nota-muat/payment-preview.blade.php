@@ -1,20 +1,23 @@
+@php($isFinal = $preview['is_final'] ?? false)
 <section class="card mb-4" aria-labelledby="note-payment-title">
     <div class="note-payment-header">
-        <h2 class="h6 fw-bold mb-0" id="note-payment-title"><i class="fa fa-truck me-2" aria-hidden="true"></i>Rencana uang jalan</h2>
-        <span class="badge {{ $preview['held'] ? 'bg-success' : 'bg-secondary' }}">UJ ditahan {{ $preview['held'] ? 'aktif' : 'nonaktif' }}</span>
+        <h2 class="h6 fw-bold mb-0" id="note-payment-title"><i class="fa fa-truck me-2" aria-hidden="true"></i>{{ $isFinal ? 'Uang jalan tercatat' : 'Rencana uang jalan' }}</h2>
+        <span class="badge {{ $preview['held'] ? 'bg-success' : 'bg-secondary' }}">{{ $isFinal ? 'Data transaksi' : 'UJ ditahan '.($preview['held'] ? 'aktif' : 'nonaktif') }}</span>
     </div>
     <div class="card-body">
         <div class="note-money-summary">
             <div>
                 <p class="note-caption mb-1">{{ $preview['held'] ? 'Sisa transfer (netto)' : 'Uang jalan ditransfer' }}</p>
                 <div class="note-transfer-value">{{ $preview['transfer'] === null ? 'Belum tersedia' : 'Rp '.number_format($preview['transfer'], 0, ',', '.') }}</div>
-                <span class="note-source-pill mt-2">{{ $preview['is_custom'] ? 'Nominal khusus nota ini' : 'Kesepakatan vendor–rute' }}</span>
+                <span class="note-source-pill mt-2">{{ $isFinal ? 'Pencatatan transaksi #'.$note->transaksi_id : ($preview['is_custom'] ? 'Nominal khusus nota ini' : 'Kesepakatan vendor–rute') }}</span>
             </div>
             @if ($note->status === 'draft')
                 @can('adjustPayment', $note)
                     <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#note-payment-modal"><i class="fa fa-pencil" aria-hidden="true"></i>Atur nominal</button>
                 @else
+                    @can('reviewAny', \App\Models\LoadNoteDraft::class)
                     <p class="note-action-note mb-0">Perubahan nominal hanya oleh admin atau su.</p>
+                    @endcan
                 @endcan
             @endif
         </div>
@@ -30,7 +33,7 @@
                         <tbody>
                             @foreach (['gross' => 'Total uang jalan (kotor)', 'sparepart' => 'UJ Ditahan Sparepart', 'ban' => 'UJ Ditahan Ban', 'transfer' => 'Sisa transfer (netto)'] as $key => $label)
                             <tr>
-                                <th scope="row" class="fw-normal">{{ $label }}@if (in_array($key, ['sparepart', 'ban']) && ! $preview['held'])<span class="d-block small text-muted">Tidak diaktifkan pada kendaraan</span>@endif</th>
+                                <th scope="row" class="fw-normal">{{ $label }}@if (in_array($key, ['sparepart', 'ban']) && ! $preview['held'] && ! $isFinal)<span class="d-block small text-muted">Tidak diaktifkan pada kendaraan</span>@endif</th>
                                 <td class="text-end text-nowrap {{ $key === 'transfer' ? 'fw-bold text-success' : '' }}">{{ $preview[$key] === null ? 'Belum tersedia' : 'Rp '.number_format($preview[$key], 0, ',', '.') }}</td>
                             </tr>
                             @endforeach
@@ -45,16 +48,16 @@
                 <div class="note-driver-panel">
                     <h3 class="h6 fw-bold mb-3"><i class="fa fa-user me-2" aria-hidden="true"></i>Driver dan tujuan transfer</h3>
                     <dl class="row mb-0">
-                        <dt class="col-sm-5">Driver terdaftar</dt><dd class="col-sm-7">{{ $preview['driver'] ?: 'Belum diatur' }}</dd>
+                        <dt class="col-sm-5">{{ $isFinal ? 'Pengemudi pada nota' : 'Driver terdaftar' }}</dt><dd class="col-sm-7">{{ $preview['driver'] ?: 'Belum diatur' }}</dd>
                         <dt class="col-sm-5">Telepon</dt><dd class="col-sm-7">{{ $preview['driver_phone'] ?: 'Belum tersedia' }}</dd>
                         <dt class="col-sm-5">Nama rekening</dt><dd class="col-sm-7">{{ $preview['recipient'] ?: 'Belum tersedia' }}</dd>
                     </dl>
                     <div class="note-account"><span class="small text-muted">{{ $preview['bank'] ?: 'Bank belum tersedia' }}</span><strong>{{ $preview['account'] ?: 'Nomor rekening belum tersedia' }}</strong></div>
-                    <p class="note-caption mt-3 mb-0">{{ $preview['account_source'] === 'driver' ? 'Tujuan transfer dari rekening driver terhubung.' : 'Tujuan transfer dari database kendaraan.' }}</p>
+                    <p class="note-caption mt-3 mb-0">{{ match ($preview['account_source']) { 'transaction' => 'Rekening pada transaksi, sesuai pencatatan saat uang jalan diproses.', 'driver' => 'Tujuan transfer dari rekening driver terhubung.', default => 'Tujuan transfer dari database kendaraan.' } }}</p>
                 </div>
             </div>
         </div>
-        <p class="note-caption mt-3 mb-0"><i class="fa fa-info-circle me-1" aria-hidden="true"></i>Belum ada pencairan dari halaman ini. Tahanan mengikuti pengaturan aktif saat ini; kelayakan dan nominal akhir diperiksa kembali di form uang jalan keluar. Rencana ini bukan bukti nominal historis transaksi.</p>
+        <p class="note-caption mt-3 mb-0"><i class="fa fa-info-circle me-1" aria-hidden="true"></i>{{ $isFinal ? 'Nominal dan rekening diambil dari pencatatan transaksi, bukan pengaturan kendaraan atau kesepakatan saat ini.' : 'Belum ada pencairan dari halaman ini. Tahanan mengikuti pengaturan aktif saat ini; kelayakan dan nominal akhir diperiksa kembali di form uang jalan keluar. Rencana ini bukan bukti nominal historis transaksi.' }}</p>
     </div>
 </section>
 @if ($note->status === 'draft')

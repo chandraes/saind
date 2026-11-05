@@ -28,6 +28,9 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
                 $table->unsignedBigInteger($field);
             }
             $table->unsignedBigInteger('nominal_transaksi')->default(999999);
+            $table->string('transfer_ke')->nullable();
+            $table->string('bank')->nullable();
+            $table->string('no_rekening')->nullable();
         });
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
@@ -87,7 +90,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             'money_out_number' => 'UJ07', 'ticket_number' => 'TICKET-100', 'loaded_on' => '2026-11-03', 'unloaded_on' => null, 'unloading_ticket_number' => null,
             'gross_weight' => '45.540', 'tare_weight' => '15.320', 'net_weight' => '30.220', 'unloading_gross_weight' => null, 'unloading_tare_weight' => null, 'unloading_net_weight' => null];
         $this->assertSame($expected, $response->json('data.0'));
-        $this->getJson('/api/v1/unloading-notes/'.$id, $headers)->assertOk()->assertExactJson(['data' => $expected + ['payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]]]);
+        $this->getJson('/api/v1/unloading-notes/'.$id, $headers)->assertOk()->assertExactJson(['data' => $expected + ['transfer_destination' => ['source' => 'transaction', 'recipient_name' => null, 'bank' => null, 'account_number' => null, 'complete' => false], 'payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]]]);
         $this->assertEquals($before, DB::table('transaksis')->get()->toArray());
         $this->assertEquals($cashBefore, DB::table('kas_uang_jalans')->get()->toArray());
         $this->assertDatabaseHas('vehicles', ['id' => 1, 'do_count' => 0]);
@@ -129,7 +132,8 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             'kind' => 'estimate', 'currency' => 'IDR', 'gross_amount' => 1300000,
             'sparepart_withheld' => 100000, 'tyre_withheld' => 200000, 'net_amount' => 1000000,
         ]);
-        $this->assertStringNotContainsString('SECRET-', $response->getContent());
+        $response->assertJsonPath('data.transfer_destination.account_number', 'SECRET-ACCOUNT')->assertJsonPath('data.transfer_destination.source', 'vehicle');
+        $response->assertJsonMissingPath('data.driver_phone');
         foreach (['admin', 'su'] as $role) {
             $note = app(LoadNoteReviewService::class)->updatePayment($this->actor(1, $role), $note, [
                 'revision' => $note->revision, 'use_system_amount' => false, 'transfer_amount' => 900000, 'reason' => 'Approved correction',
@@ -141,14 +145,15 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             ->assertJsonPath('data.payment.sparepart_withheld', 0)->assertJsonPath('data.payment.tyre_withheld', 0);
         DB::table('vehicles')->where('id', 1)->update(['uj_ditahan' => 1]);
         DB::table('vendor_uang_jalans')->update(['uj_ditahan_ban' => null]);
-        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null)
+            ->assertJsonPath('data.transfer_destination.account_number', 'SECRET-ACCOUNT');
         DB::table('vendor_uang_jalans')->delete();
         $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
         $note->update(['rute_id' => null]);
         $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
         $note->update(['rute_id' => 1, 'status' => 'processed']);
         $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.payment', null);
-        $this->getJson('/api/v1/load-notes', $headers)->assertOk()->assertJsonMissingPath('data.0.payment');
+        $this->getJson('/api/v1/load-notes', $headers)->assertOk()->assertJsonMissingPath('data.0.payment')->assertJsonMissingPath('data.0.transfer_destination');
     }
 
     public function test_final_payment_uses_persisted_gross_and_transaction_withholdings_only(): void
@@ -159,7 +164,8 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         Schema::table('vehicles', function (Blueprint $table): void {
             $table->boolean('uj_ditahan')->default(false);
         });
-        DB::table('kas_uang_jalans')->where('vendor_id', 1)->update(['nominal_transaksi' => 1500000]);
+        DB::table('kas_uang_jalans')->where('vendor_id', 1)->update(['nominal_transaksi' => 1500000, 'transfer_ke' => 'Recorded driver', 'bank' => 'BCA', 'no_rekening' => '001234']);
+        DB::table('vehicles')->where('id', 1)->update(['no_rekening' => 'CHANGED-CURRENT']);
         DB::table('uj_ditahan_details')->insert([
             ['transaksi_id' => $id, 'jenis' => 'masuk', 'nominal' => 100000],
             ['transaksi_id' => $id, 'jenis' => 'keluar', 'nominal' => 50000],
@@ -171,8 +177,9 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $this->getJson('/api/v1/unloading-notes/'.$id, $headers)->assertOk()->assertJsonPath('data.payment', [
             'kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 1500000,
             'sparepart_withheld' => 100000, 'tyre_withheld' => 200000, 'net_amount' => 1200000,
-        ])->assertJsonMissingPath('data.bank')->assertJsonMissingPath('data.account');
-        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonMissingPath('data.0.payment');
+        ])->assertJsonPath('data.transfer_destination', ['source' => 'transaction', 'recipient_name' => 'Recorded driver', 'bank' => 'BCA', 'account_number' => '001234', 'complete' => true])
+            ->assertJsonMissingPath('data.bank')->assertJsonMissingPath('data.account');
+        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonMissingPath('data.0.payment')->assertJsonMissingPath('data.0.transfer_destination');
     }
 
     public function test_inconsistent_persisted_final_amounts_are_unavailable(): void
@@ -242,6 +249,12 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(1), $actor)->create(['status' => $status, 'transaksi_id' => $status === 'processed' ? $transaction : null]);
         }
         LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(2), $this->actor(2))->create();
+        DB::table('kas_uang_jalans')->where('vendor_id', 1)->update(['transfer_ke' => 'Recorded', 'bank' => 'BRI', 'no_rekening' => '0001']);
+        $processed = LoadNoteDraft::where('status', 'processed')->firstOrFail();
+        $this->getJson('/api/v1/load-notes/'.$processed->id, $this->headers($actor))->assertOk()
+            ->assertJsonPath('data.payment', null)->assertJsonPath('data.transfer_destination', [
+                'source' => 'transaction', 'recipient_name' => 'Recorded', 'bank' => 'BRI', 'account_number' => '0001', 'complete' => true,
+            ]);
         $headers = $this->headers($actor);
         $this->getJson('/api/v1/load-notes', $headers)->assertOk()->assertJsonCount(4, 'data');
         $this->getJson('/api/v1/load-notes?status=all', $headers)->assertOk()->assertJsonCount(4, 'data');

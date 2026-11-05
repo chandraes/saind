@@ -33,6 +33,12 @@ class LoadNoteRulesTest extends MobileApiTestCase
             $table->id();
             $table->string('nama');
         });
+        Schema::create('vendor_uang_jalans', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vendor_id');
+            $table->unsignedBigInteger('rute_id');
+            $table->integer('hk_uang_jalan')->nullable();
+        });
         Schema::create('customer_tagihans', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('customer_id');

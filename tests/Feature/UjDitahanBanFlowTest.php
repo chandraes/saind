@@ -157,6 +157,9 @@ class UjDitahanBanFlowTest extends TestCase
         });
         Schema::table('drivers', function (Blueprint $table): void {
             $table->string('no_hp')->nullable();
+            $table->string('nama_rek')->default('Driver');
+            $table->string('bank')->nullable()->default('BCA');
+            $table->string('no_rek')->default('123');
         });
         foreach (['konfigurasis', 'pengaturans'] as $name) {
             Schema::create($name, function (Blueprint $table): void {
@@ -329,6 +332,88 @@ class UjDitahanBanFlowTest extends TestCase
         $this->assertDatabaseHas('kas_uang_jalans', ['nomor_uang_jalan' => 13, 'nominal_transaksi' => $gross]);
         $this->assertSame('processed', $note->fresh()->status);
         $this->assertSame(350000, $note->fresh()->transfer_override);
+    }
+
+    #[TestWith([true])]
+    #[TestWith([false])]
+    public function test_exit_uses_driver_account_regardless_of_holding_and_preserves_leading_zeroes(bool $held): void
+    {
+        $data = $this->setupExit();
+        DB::table('vehicles')->where('id', 1)->update(['uj_ditahan' => $held]);
+        DB::table('drivers')->where('id', 2)->update(['no_rek' => '001234']);
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        $this->post(route('kas-uang-jalan.keluar.store'), [...$data, 'no_rekening' => '001234'])->assertSessionHas('success');
+        $this->assertDatabaseHas('kas_uang_jalans', ['nomor_uang_jalan' => 13, 'transfer_ke' => 'Driver', 'bank' => 'BCA', 'no_rekening' => '001234']);
+    }
+
+    #[TestWith(['transfer_ke'])]
+    #[TestWith(['bank'])]
+    #[TestWith(['no_rekening'])]
+    public function test_exit_rejects_tampered_or_stale_driver_recipient(string $field): void
+    {
+        $data = $this->setupExit();
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        $this->post(route('kas-uang-jalan.keluar.store'), [...$data, $field => 'TAMPERED'])->assertSessionHasErrors($field);
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+    }
+
+    #[TestWith(['bank', 'bank', 11])]
+    #[TestWith(['no_rek', 'no_rekening', 256])]
+    public function test_exit_rejects_recipient_fields_exceeding_existing_storage_capacity(string $column, string $field, int $length): void
+    {
+        $data = $this->setupExit();
+        $value = str_repeat('1', $length);
+        DB::table('drivers')->where('id', 2)->update([$column => $value]);
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        $this->post(route('kas-uang-jalan.keluar.store'), [...$data, $field => $value])->assertSessionHasErrors($field);
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+    }
+
+    public function test_exit_accepts_trimmed_canonical_driver_fields_without_losing_leading_zeroes(): void
+    {
+        $data = $this->setupExit();
+        DB::table('drivers')->where('id', 2)->update(['nama_rek' => ' Driver ', 'bank' => ' BCA ', 'no_rek' => ' 001234 ']);
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        $this->post(route('kas-uang-jalan.keluar.store'), [...$data, 'no_rekening' => '001234'])->assertSessionHas('success');
+        $this->assertDatabaseHas('kas_uang_jalans', ['nomor_uang_jalan' => 13, 'transfer_ke' => 'Driver', 'bank' => 'BCA', 'no_rekening' => '001234']);
+    }
+
+    #[TestWith(['bank', '-'])]
+    #[TestWith(['no_rek', '0'])]
+    public function test_placeholder_driver_account_never_falls_back_to_vehicle(string $column, string $value): void
+    {
+        [$note, $input] = $this->directNote();
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => 2, 'uj_ditahan' => false]);
+        DB::table('drivers')->where('id', 2)->update([$column => $value]);
+        $preview = app(LoadNotePaymentPreview::class)->forNote($note);
+        $this->assertSame('driver', $preview['account_source']);
+        $this->assertFalse($preview['transfer_destination']['complete']);
+        $this->assertNull($preview[$column === 'bank' ? 'bank' : 'account']);
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        $this->post(route('kas-uang-jalan.keluar.store'), ['vehicle_id' => 1])->assertSessionHasErrors('no_rekening');
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+    }
+
+    public function test_exit_rejects_tampered_vehicle_recipient_when_no_driver_exists(): void
+    {
+        [$note, $input] = $this->directNote();
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        $data = ['vehicle_id' => 1, 'transfer_ke' => 'Penerima unit', 'bank' => 'BCA', 'no_rekening' => 'WRONG'];
+        $this->post(route('kas-uang-jalan.keluar.store'), $data)->assertSessionHasErrors('no_rekening');
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
+    }
+
+    public function test_incomplete_driver_never_falls_back_to_complete_vehicle_account(): void
+    {
+        [$note, $input] = $this->directNote();
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => 2, 'uj_ditahan' => false]);
+        DB::table('drivers')->where('id', 2)->update(['bank' => null]);
+        $preview = app(LoadNotePaymentPreview::class)->forNote($note);
+        $this->assertSame('driver', $preview['account_source']);
+        $this->assertNull($preview['bank']);
+        $this->actingAs(User::factory()->make(['id' => 1, 'role' => 'admin', 'password' => 'password']));
+        $this->post(route('kas-uang-jalan.keluar.store'), ['vehicle_id' => 1])->assertSessionHasErrors('no_rekening');
+        $this->assertDatabaseCount('kas_uang_jalans', 1);
     }
 
     private function directNote(): array

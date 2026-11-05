@@ -297,13 +297,13 @@
                 }
                 // ------------------------------------------
 
-                if (data.transfer_ke == null || data.bank == null || data.no_rekening == null) {
+                if (!data.transfer_destination.complete) {
                     // Matikan sweet alert otomatis jika sedang load dari old() agar tidak spam
                     if(!callback) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Oops...',
-                            text: 'Rekening Uang Jalan Vehicle ini belum diisi, silahkan isi terlebih dahulu di Database Vehicle!!',
+                            text: 'Rekening tujuan transfer belum lengkap. Hubungi admin untuk melengkapi data ' + (data.transfer_destination.source === 'driver' ? 'driver.' : 'kendaraan.'),
                         });
                     }
                     $('#transfer_ke, #bank, #no_rekening').val('');
