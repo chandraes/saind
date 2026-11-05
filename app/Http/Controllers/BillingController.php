@@ -38,6 +38,7 @@ use App\Services\KasBesarService;
 use App\Services\KasVendorService;
 use App\Services\MaintenanceAuthorizationService;
 use App\Services\MaintenanceBanUjDitahanService;
+use App\Services\MaintenanceKasBesarWhatsAppService;
 use App\Services\MaintenanceUjDitahanService;
 use App\Services\PayrollService;
 use App\Services\UjDitahanWhatsAppService;
@@ -532,7 +533,7 @@ class BillingController extends Controller
                 }
             }
             if ($kb) {
-                $this->kirimWaNotifikasi($kb);
+                $this->kirimWaNotifikasi($kb, $invoice->vehicle?->vendor);
             }
 
             return redirect()->back()->with('success', 'Otorisasi berhasil. Log Ban diperbarui.');
@@ -573,60 +574,22 @@ class BillingController extends Controller
         return redirect()->back()->with('success', 'Detail ban baru berhasil diperbarui.');
     }
 
-    private function kirimWaNotifikasiAki($kb)
+    private function kirimWaNotifikasiAki($kb, ?Vendor $vendor = null)
     {
-        try {
-            $dbWa = new GroupWa;
-            $group = $dbWa->where('untuk', 'kas-besar')->first();
-
-            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                     "*FORM PENGGANTIAN AKI*\n".
-                     "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                     'Uraian :  '.$kb['uraian']."\n".
-                     'Nilai :  *Rp. '.number_format($kb['nominal_transaksi'], 0, ',', '.')."*\n\n".
-                     "Ditransfer ke rek:\n\n".
-                     'Bank     : '.$kb['bank']."\n".
-                     'Nama    : '.$kb['transfer_ke']."\n".
-                     'No. Rek : '.$kb['no_rekening']."\n\n".
-                     "==========================\n".
-                     "Sisa Saldo Kas Besar : \n".
-                     'Rp. '.number_format($kb->saldo, 0, ',', '.')."\n\n".
-                     "Total Modal Investor : \n".
-                     'Rp. '.number_format($kb->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                     "Terima kasih 🙏🙏🙏\n";
-
-            $dbWa->sendWa($group->nama_group, $pesan);
-        } catch (\Throwable $th) {
-            // Log error jika pengiriman WA bermasalah
-        }
+        $this->notifyMaintenanceCash($kb, 'AKI', $vendor);
     }
 
-    private function kirimWaNotifikasi($kb)
+    private function kirimWaNotifikasi($kb, ?Vendor $vendor = null)
+    {
+        $this->notifyMaintenanceCash($kb, 'BAN', $vendor);
+    }
+
+    private function notifyMaintenanceCash(KasBesar $cash, string $maintenance, ?Vendor $vendor = null): void
     {
         try {
-            $dbWa = new GroupWa;
-            $group = $dbWa->where('untuk', 'kas-besar')->first();
-
-            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                        "*FORM PENGGANTIAN BAN*\n".
-                        "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                        'Uraian :  '.$kb['uraian']."\n".
-                        'Nilai :  *Rp. '.number_format($kb['nominal_transaksi'], 0, ',', '.')."*\n\n".
-                        "Ditransfer ke rek:\n\n".
-                        'Bank     : '.$kb['bank']."\n".
-                        'Nama    : '.$kb['transfer_ke']."\n".
-                        'No. Rek : '.$kb['no_rekening']."\n\n".
-                        "==========================\n".
-                        "Sisa Saldo Kas Besar : \n".
-                        'Rp. '.number_format($kb->saldo, 0, ',', '.')."\n\n".
-                        "Total Modal Investor : \n".
-                        'Rp. '.number_format($kb->modal_investor_terakhir, 0, ',', '.')."\n\n".
-                        "Terima kasih 🙏🙏🙏\n";
-
-            $dbWa->sendWa($group->nama_group, $pesan);
-        } catch (\Throwable $th) {
-            // \Log::error('Gagal kirim WA Otorisasi Ban: ' . $th->getMessage());
-            // return; // Keluar dari method agar tidak fatal saat gagal kirim WA
+            app(MaintenanceKasBesarWhatsAppService::class)->notify($cash, $maintenance, $vendor);
+        } catch (\Throwable $exception) {
+            report($exception);
         }
     }
 
@@ -762,7 +725,7 @@ class BillingController extends Controller
             }
         }
         if ($kb) {
-            $this->kirimWaNotifikasiAki($kb);
+            $this->kirimWaNotifikasiAki($kb, $invoice->vehicle?->vendor);
         }
 
         return back()->with('success', 'Otorisasi berhasil. Histori aki dan pembayaran telah dicatat.');
