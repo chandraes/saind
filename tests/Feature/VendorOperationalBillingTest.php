@@ -21,6 +21,7 @@ class VendorOperationalBillingTest extends MobileApiTestCase
                 $table->id();
                 $table->string('nama');
                 $table->integer('jarak')->nullable();
+                $table->integer('tagihan_dari')->nullable();
             });
         }
         Schema::create('kas_uang_jalans', function (Blueprint $table): void {
@@ -340,6 +341,22 @@ class VendorOperationalBillingTest extends MobileApiTestCase
             }
             $this->getJson('/api/v1/payment-notes/'.$kind.'/'.($kind === 'utama' ? 2 : $id + 10), $headers)->assertNotFound();
         }
+    }
+
+    public function test_mobile_billing_weight_follows_customer_basis_without_guessing(): void
+    {
+        $headers = $this->mobileHeaders();
+        foreach ([1 => ['loaded', '30'], 2 => ['unloaded', '29'], 0 => [null, null]] as $basis => [$source, $weight]) {
+            DB::table('customers')->where('id', 1)->update(['tagihan_dari' => $basis]);
+            $this->getJson('/api/v1/payment-notes', $headers)->assertOk()
+                ->assertJsonPath('data.0.billing_weight_source', $source)
+                ->assertJsonPath('data.0.billing_weight', $weight);
+        }
+        DB::table('customers')->insert(['id' => 3, 'nama' => 'Customer Tambahan', 'tagihan_dari' => 2]);
+        DB::table('transaksi_additionals')->where('id', 10)->update(['customer_id' => 3]);
+        $this->getJson('/api/v1/payment-notes?kind=kompensasi_jr', $headers)->assertOk()
+            ->assertJsonPath('data.0.billing_weight_source', 'unloaded')
+            ->assertJsonPath('data.0.billing_weight', '29');
     }
 
     public function test_mobile_payment_notes_filter_paginate_and_exclude_unavailable_records_without_writes(): void
