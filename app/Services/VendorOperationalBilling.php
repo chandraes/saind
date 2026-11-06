@@ -2,10 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\InvoiceAddVendor;
+use App\Models\InvoiceBayar;
 use App\Models\KeranjangNotaBayar;
 use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Facades\DB;
 
 class VendorOperationalBilling
 {
@@ -35,6 +40,57 @@ class VendorOperationalBilling
         $query->where(fn (Builder $query): Builder => $query->where('nota_muat', 'like', $term)->orWhere('nota_bongkar', 'like', $term)
             ->orWhereHas('kas_uang_jalan.vehicle', fn (Builder $query): Builder => $query->where('nomor_lambung', 'like', $term)->orWhere('nopol', 'like', $term))
             ->orWhereHas('kas_uang_jalan.rute', fn (Builder $query): Builder => $query->where('nama', 'like', $term)));
+    }
+
+    public function invoiceQuery(int $vendorId, string $kind): Builder
+    {
+        return $kind === 'utama' ? InvoiceBayar::query()->with('vendor')->where('vendor_id', $vendorId)
+            : InvoiceAddVendor::query()->with('vendor')->where('vendor_id', $vendorId)->where('jenis', $kind);
+    }
+
+    public function invoices(int $vendorId, array $filters): QueryBuilder
+    {
+        $base = $this->invoiceQuery($vendorId, 'utama')->select('id', 'periode', 'tanggal', 'tempo', 'updated_at')
+            ->selectRaw("'utama' as kind, lunas as is_paid")->toBase();
+        $extra = InvoiceAddVendor::query()->where('vendor_id', $vendorId)->where('status', 1)
+            ->whereIn('jenis', array_keys(self::CATEGORIES))
+            ->select('id', 'periode', 'created_at as tanggal', 'tempo', 'updated_at', 'jenis as kind', 'is_finished as is_paid')->toBase();
+        $query = DB::query()->fromSub($base->unionAll($extra), 'vendor_invoices');
+        if (($filters['status'] ?? 'unpaid') !== 'all') {
+            $query->where('is_paid', ($filters['status'] ?? 'unpaid') === 'paid' ? 1 : 0);
+        }
+        if (trim($filters['search'] ?? '') !== '') {
+            $query->where('periode', 'like', '%'.trim($filters['search']).'%');
+        }
+        if (! empty($filters['start_date'])) {
+            $query->whereDate('tempo', '>=', $filters['start_date']);
+        }
+        if (! empty($filters['end_date'])) {
+            $query->whereDate('tempo', '<=', $filters['end_date']);
+        }
+
+        return $query->orderByDesc('tanggal')->orderByDesc('id')->orderBy('kind');
+    }
+
+    /** @return array<string, mixed> */
+    public function invoiceSummary(object $invoice, ?string $kind = null): array
+    {
+        $kind ??= $invoice->kind;
+        $paid = (int) ($invoice instanceof InvoiceBayar ? $invoice->lunas : ($invoice instanceof InvoiceAddVendor ? $invoice->is_finished : $invoice->is_paid)) === 1;
+        $date = $invoice instanceof InvoiceAddVendor ? $invoice->created_at : $invoice->tanggal;
+
+        return ['id' => (int) $invoice->id, 'kind' => $kind,
+            'invoice_number' => $kind === 'utama' ? $invoice->periode : (new InvoiceAddVendor)->forceFill(['jenis' => $kind, 'periode' => $invoice->periode])->periode_invoice,
+            'category_name' => self::CATEGORIES[$kind], 'issued_on' => $date === null ? null : substr((string) $date, 0, 10),
+            'due_on' => $invoice->tempo === null ? null : substr((string) $invoice->tempo, 0, 10),
+            'paid' => $paid, 'paid_on' => $paid && $invoice->updated_at ? Carbon::parse($invoice->updated_at)->format('Y-m-d') : null];
+    }
+
+    public function invoiceJourneys(int $vendorId, string $kind, InvoiceBayar|InvoiceAddVendor $invoice): Builder
+    {
+        return $kind === 'utama'
+            ? $this->journeys($vendorId)->whereIn('id', $invoice->invoice_bayar_details()->select('transaksi_id'))
+            : $this->additionals($vendorId, $kind)->whereIn('id', $invoice->details()->select('transaksi_additional_id'));
     }
 
     public function cartEntries(int $vendorId, int $userId): Builder

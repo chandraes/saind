@@ -396,4 +396,73 @@ class VendorOperationalBillingTest extends MobileApiTestCase
             $this->{$method.'Json'}('/api/v1/payment-notes/utama/1', [], $headers)->assertStatus(405);
         }
     }
+
+    public function test_mobile_invoice_status_dates_and_financial_allowlist_match_vendor_web(): void
+    {
+        DB::table('invoice_bayars')->where('id', 1)->update(['lunas' => 1, 'tanggal' => '2026-11-01', 'tempo' => '2026-11-15', 'updated_at' => '2026-11-06 10:00:00']);
+        $headers = $this->mobileHeaders();
+        $this->getJson('/api/v1/vendor-invoices', $headers)->assertOk()->assertJsonCount(3, 'data');
+        $paid = $this->getJson('/api/v1/vendor-invoices?status=paid', $headers)->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.kind', 'utama')->assertJsonPath('data.0.category_name', 'HPP')
+            ->assertJsonPath('data.0.paid_on', '2026-11-06')->assertJsonPath('data.0.paid', true);
+        $this->assertSame(['id', 'kind', 'invoice_number', 'category_name', 'issued_on', 'due_on', 'paid', 'paid_on'], array_keys($paid->json('data.0')));
+        $this->getJson('/api/v1/vendor-invoices?status=all', $headers)->assertOk()->assertJsonCount(4, 'data')->assertDontSee('987654321')->assertDontSee('FOREIGN');
+        $this->getJson('/api/v1/vendor-invoices?status=paid&start_date=2026-11-15&end_date=2026-11-15', $headers)->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/api/v1/vendor-invoices?status=paid&start_date=2026-11-16', $headers)->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/vendor-invoices?status=all&search=PERIODE%201&vendor_id=2', $headers)->assertOk()->assertJsonCount(1, 'data');
+        DB::table('invoice_bayars')->where('id', 1)->update(['updated_at' => null]);
+        $this->getJson('/api/v1/vendor-invoices?status=paid', $headers)->assertOk()->assertJsonPath('data.0.paid_on', null);
+    }
+
+    public function test_mobile_invoice_details_include_both_tickets_and_weights_without_restricted_nominal(): void
+    {
+        DB::table('transaksis')->where('id', 1)->update(['nota_bongkar' => 'UNLOAD-1']);
+        DB::table('invoice_bayar_details')->insert(['invoice_bayar_id' => 1, 'transaksi_id' => 2]);
+        $headers = $this->mobileHeaders();
+        foreach (['utama', 'kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $index => $kind) {
+            $id = $kind === 'utama' ? 1 : 9 + $index;
+            $result = $this->getJson('/api/v1/vendor-invoices/'.$kind.'/'.$id, $headers)->assertOk()
+                ->assertJsonCount(1, 'data')->assertJsonPath('invoice.id', $id)->assertJsonPath('invoice.kind', $kind)
+                ->assertJsonPath('data.0.ticket_number', 'TICKET 1')->assertJsonPath('data.0.unloading_ticket_number', 'UNLOAD-1')
+                ->assertJsonPath('data.0.net_weight', '30')->assertJsonPath('data.0.unloading_net_weight', '29')
+                ->assertJsonPath('meta.per_page', 20)->assertDontSee('987654321')->assertDontSee('FOREIGN');
+            $this->assertSame($kind === 'utama' ? 123456 : null, $result->json('data.0.money_out_amount'));
+            $this->getJson('/api/v1/vendor-invoices/'.$kind.'/'.($kind === 'utama' ? 2 : $id + 10), $headers)->assertNotFound();
+        }
+        DB::table('invoice_add_vendors')->where('id', 10)->update(['status' => 0]);
+        $this->getJson('/api/v1/vendor-invoices/kompensasi_jr/10', $headers)->assertNotFound();
+    }
+
+    public function test_mobile_invoice_lists_and_detail_rows_are_paginated_without_business_mutation(): void
+    {
+        foreach (range(3, 26) as $id) {
+            DB::table('invoice_bayars')->insert(['id' => $id, 'vendor_id' => 1, 'periode' => 'INV-'.$id]);
+            DB::table('transaksis')->insert(['id' => $id, 'kas_uang_jalan_id' => 1, 'nota_muat' => 'ROW-'.$id]);
+            DB::table('invoice_bayar_details')->insert(['invoice_bayar_id' => 1, 'transaksi_id' => $id]);
+        }
+        $before = DB::table('transaksis')->get()->toArray();
+        $headers = $this->mobileHeaders();
+        $first = $this->getJson('/api/v1/vendor-invoices', $headers)->assertOk()->assertJsonCount(20, 'data');
+        $last = $this->getJson('/api/v1/vendor-invoices?page=2', $headers)->assertOk()->assertJsonCount(8, 'data');
+        $keys = array_map(fn (array $row): string => $row['kind'].':'.$row['id'], array_merge($first->json('data'), $last->json('data')));
+        $this->assertCount(28, array_unique($keys));
+        $this->getJson('/api/v1/vendor-invoices/utama/1', $headers)->assertOk()->assertJsonCount(20, 'data');
+        $this->getJson('/api/v1/vendor-invoices/utama/1?page=2', $headers)->assertOk()->assertJsonCount(5, 'data');
+        $this->assertEquals($before, DB::table('transaksis')->get()->toArray());
+    }
+
+    public function test_mobile_invoice_api_validates_filters_and_remains_vendor_only_readonly(): void
+    {
+        $headers = $this->mobileHeaders();
+        foreach (['status=invalid', 'page=0', 'start_date=invalid', 'start_date=2026-11-15&end_date=2026-11-01'] as $filter) {
+            $this->getJson('/api/v1/vendor-invoices?'.$filter, $headers)->assertUnprocessable();
+        }
+        $this->getJson('/api/v1/vendor-invoices/invalid/1', $headers)->assertNotFound();
+        foreach (['post', 'patch', 'delete'] as $method) {
+            $this->{$method.'Json'}('/api/v1/vendor-invoices/utama/1', [], $headers)->assertStatus(405);
+        }
+        $this->getJson('/api/v1/vendor-invoices', array_replace($headers, ['X-Vendor-ID' => '2']))->assertStatus(409);
+        $admin = User::factory()->create(['username' => 'invoice-mobile-admin', 'password' => 'secret-pass', 'role' => 'admin', 'vendor_id' => 1]);
+        $this->getJson('/api/v1/vendor-invoices', $this->mobileHeaders($admin))->assertForbidden();
+    }
 }

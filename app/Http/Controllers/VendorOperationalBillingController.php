@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\VendorInvoiceIndexRequest;
 use App\Models\InvoiceAddVendor;
 use App\Models\InvoiceBayar;
 use App\Models\Vendor;
@@ -11,7 +12,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class VendorOperationalBillingController extends Controller
@@ -71,45 +71,21 @@ class VendorOperationalBillingController extends Controller
             'fields' => $this->billing->journey($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama' ? null : $item)]);
     }
 
-    public function invoices(Request $request): View|JsonResponse
+    public function invoices(VendorInvoiceIndexRequest $request): View|JsonResponse
     {
         $vendor = $this->vendor($request);
-        $rules = ['status' => ['sometimes', Rule::in(['unpaid', 'paid', 'all'])], 'search' => ['nullable', 'string', 'max:100'], 'start_date' => ['nullable', 'date_format:Y-m-d'], 'end_date' => ['nullable', 'date_format:Y-m-d'], 'page' => ['sometimes', 'integer', 'min:1']];
-        if ($request->filled('start_date')) {
-            $rules['end_date'][] = 'after_or_equal:start_date';
-        }
-        $filters = $request->validate($rules);
+        $filters = $request->validated();
         $filters['status'] ??= 'unpaid';
-        $base = $this->invoiceQuery($vendor, 'utama')
-            ->select('id', 'periode', 'tanggal', 'tempo', 'updated_at')->selectRaw("'utama' as kind, lunas as is_paid")->toBase();
-        $extra = InvoiceAddVendor::query()->where('vendor_id', $vendor)->where('status', 1)
-            ->whereIn('jenis', array_keys(VendorOperationalBilling::CATEGORIES))
-            ->select('id', 'periode', 'created_at as tanggal', 'tempo', 'updated_at', 'jenis as kind', 'is_finished as is_paid')->toBase();
-        $query = DB::query()->fromSub($base->unionAll($extra), 'vendor_invoices');
-        if ($filters['status'] !== 'all') {
-            $query->where('is_paid', $filters['status'] === 'paid' ? 1 : 0);
-        }
-        if ($request->filled('search')) {
-            $query->where('periode', 'like', '%'.$filters['search'].'%');
-        }
-        if ($request->filled('start_date')) {
-            $query->whereDate('tempo', '>=', $filters['start_date']);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('tempo', '<=', $filters['end_date']);
-        }
-        $items = $query->orderByDesc('tanggal')->orderByDesc('id')->orderBy('kind')->simplePaginate(20)->withQueryString();
+        $items = $this->billing->invoices($vendor, $filters)->simplePaginate(20)->withQueryString();
         $vendorName = Vendor::whereKey($vendor)->value('nama');
-        $rows = $items->getCollection()->map(fn ($invoice): array => [
-            'tanggal' => $invoice->tanggal === null ? null : substr($invoice->tanggal, 0, 10),
-            'vendor' => $vendorName,
-            'invoice' => $invoice->kind === 'utama' ? $invoice->periode
-                : (new InvoiceAddVendor)->forceFill(['jenis' => $invoice->kind, 'periode' => $invoice->periode])->periode_invoice,
-            'tempo' => $invoice->tempo,
-            'paid' => (int) $invoice->is_paid === 1,
-            'paid_on' => (int) $invoice->is_paid === 1 && $invoice->updated_at ? Carbon::parse($invoice->updated_at)->format('d-m-Y') : null,
-            'url' => route('vendor-operational.invoice.show', ['kind' => $invoice->kind, 'record' => $invoice->id]),
-        ])->all();
+        $rows = $items->getCollection()->map(function ($invoice) use ($vendorName): array {
+            $summary = $this->billing->invoiceSummary($invoice);
+
+            return ['tanggal' => $summary['issued_on'], 'vendor' => $vendorName, 'invoice' => $summary['invoice_number'],
+                'tempo' => $summary['due_on'], 'paid' => $summary['paid'],
+                'paid_on' => $summary['paid_on'] ? Carbon::parse($summary['paid_on'])->format('d-m-Y') : null,
+                'url' => route('vendor-operational.invoice.show', ['kind' => $summary['kind'], 'record' => $summary['id']])];
+        })->all();
         $data = ['title' => 'Invoice Vendor', 'vendorName' => $vendorName, 'filters' => $filters, 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
         if ($request->expectsJson()) {
             return response()->json(['rows' => view('billing.vendor-readonly.invoice-rows', $data)->render(), 'next' => $data['next']]);
@@ -123,12 +99,8 @@ class VendorOperationalBillingController extends Controller
         $vendor = $this->vendor($request);
         $this->validKind($kind);
         $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
-        $invoice = $this->invoiceQuery($vendor, $kind)->findOrFail($record);
-        if ($kind === 'utama') {
-            $query = $this->billing->journeys($vendor)->whereIn('id', $invoice->invoice_bayar_details()->select('transaksi_id'));
-        } else {
-            $query = $this->billing->additionals($vendor, $kind)->whereIn('id', $invoice->details()->select('transaksi_additional_id'));
-        }
+        $invoice = $this->billing->invoiceQuery($vendor, $kind)->findOrFail($record);
+        $query = $this->billing->invoiceJourneys($vendor, $kind, $invoice);
         $items = $query->orderByDesc('id')->simplePaginate(20)->withQueryString();
         $rows = $items->getCollection()->map(fn ($item): array => ['cells' => $this->billing->paymentCells($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama'), 'url' => null])->all();
         $data = ['title' => 'Invoice · '.($kind === 'utama' ? $invoice->periode : $invoice->periode_invoice), 'invoiceFields' => array_merge(...array_values($this->invoiceCells($invoice, $kind))), 'columns' => array_keys($this->billing->paymentColumns($kind === 'utama')), 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
@@ -137,12 +109,6 @@ class VendorOperationalBillingController extends Controller
         }
 
         return view('billing.vendor-readonly.invoice-detail', $data);
-    }
-
-    private function invoiceQuery(int $vendor, string $kind): Builder
-    {
-        return $kind === 'utama' ? InvoiceBayar::query()->with('vendor')->where('vendor_id', $vendor)
-            : InvoiceAddVendor::query()->with('vendor')->where('vendor_id', $vendor)->where('jenis', $kind);
     }
 
     private function invoiceCells(InvoiceBayar|InvoiceAddVendor $invoice, string $kind): array

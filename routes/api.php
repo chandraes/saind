@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\LoadNoteDraftController;
 use App\Http\Controllers\Api\PaymentNoteController;
 use App\Http\Controllers\Api\UnloadingNoteController;
 use App\Http\Controllers\Api\VehicleController;
+use App\Http\Controllers\Api\VendorInvoiceController;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Middleware\EnsureMobileToken;
 use App\Http\Middleware\EnsureMobileVendorContext;
@@ -20,6 +21,8 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::get('me', [AuthController::class, 'show'])->name('me');
             Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
             Route::middleware(EnsureMobileVendorContext::class.':billing')->group(function (): void {
+                Route::get('vendor-invoices', [VendorInvoiceController::class, 'index'])->name('vendor-invoices.index');
+                Route::get('vendor-invoices/{kind}/{record}', [VendorInvoiceController::class, 'show'])->whereNumber('record')->name('vendor-invoices.show');
                 Route::get('payment-notes', [PaymentNoteController::class, 'index'])->name('payment-notes.index');
                 Route::get('payment-notes/{kind}/{record}', [PaymentNoteController::class, 'show'])->whereNumber('record')->name('payment-notes.show');
             });
