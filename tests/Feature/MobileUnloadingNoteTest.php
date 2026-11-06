@@ -89,6 +89,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $expected = ['id' => $id, 'status' => 'waiting', 'vehicle_id' => 1, 'vehicle_number' => '288', 'route_name' => 'Mine - Port', 'mine_name' => 'Mine A',
             'money_out_number' => 'UJ07', 'ticket_number' => 'TICKET-100', 'loaded_on' => '2026-11-03', 'unloaded_on' => null, 'unloading_ticket_number' => null,
             'gross_weight' => '45.540', 'tare_weight' => '15.320', 'net_weight' => '30.220', 'unloading_gross_weight' => null, 'unloading_tare_weight' => null, 'unloading_net_weight' => null];
+        $expected = ['payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]] + $expected;
         $this->assertSame($expected, $response->json('data.0'));
         $this->getJson('/api/v1/unloading-notes/'.$id, $headers)->assertOk()->assertExactJson(['data' => $expected + ['transfer_destination' => ['source' => 'transaction', 'recipient_name' => null, 'bank' => null, 'account_number' => null, 'complete' => false], 'payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]]]);
         $this->assertEquals($before, DB::table('transaksis')->get()->toArray());
@@ -179,7 +180,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             'sparepart_withheld' => 100000, 'tyre_withheld' => 200000, 'net_amount' => 1200000,
         ])->assertJsonPath('data.transfer_destination', ['source' => 'transaction', 'recipient_name' => 'Recorded driver', 'bank' => 'BCA', 'account_number' => '001234', 'complete' => true])
             ->assertJsonMissingPath('data.bank')->assertJsonMissingPath('data.account');
-        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonMissingPath('data.0.payment')->assertJsonMissingPath('data.0.transfer_destination');
+        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonPath('data.0.payment.net_amount', 1200000)->assertJsonPath('data.0.payment.sparepart_withheld', 100000)->assertJsonPath('data.0.payment.tyre_withheld', 200000)->assertJsonMissingPath('data.0.transfer_destination');
     }
 
     public function test_inconsistent_persisted_final_amounts_are_unavailable(): void
@@ -221,7 +222,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $headers = $this->headers($this->actor());
         $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(20, 'data')->assertJsonPath('meta.last_page', 2);
         $this->getJson('/api/v1/unloading-notes?page=2', $headers)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('meta.current_page', 2);
-        foreach (['status=all', 'page=0', 'search[]=x'] as $query) {
+        foreach (['status=invalid', 'page=0', 'search[]=x'] as $query) {
             $this->getJson('/api/v1/unloading-notes?'.$query, $headers)->assertUnprocessable();
         }
     }
@@ -288,5 +289,24 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             $this->app['auth']->forgetGuards();
             $this->getJson($url, array_replace($headers, ['Authorization' => 'Bearer '.$wrongToken]))->assertUnauthorized();
         }
+    }
+
+    public function test_unloading_summary_is_bounded_and_does_not_query_each_transaction(): void
+    {
+        $this->journey();
+        $headers = $this->headers($this->actor());
+        DB::enableQueryLog();
+        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(1, 'data');
+        $small = count(DB::getQueryLog());
+        DB::disableQueryLog();
+        foreach (range(1, 23) as $unused) {
+            $this->journey();
+        }
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(20, 'data')->assertJsonPath('data.0.payment.net_amount', 999999);
+        $this->assertLessThanOrEqual($small, count(DB::getQueryLog()));
+        DB::disableQueryLog();
+        $this->getJson('/api/v1/unloading-notes?status=all', $headers)->assertOk()->assertJsonCount(20, 'data');
     }
 }

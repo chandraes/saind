@@ -52,7 +52,7 @@ class MobileNotePayment
     }
 
     /** @return array{kind: string, currency: string, gross_amount: int, sparepart_withheld: int, tyre_withheld: int, net_amount: int}|null */
-    private function breakdown(string $kind, ?int $gross, ?int $sparepart, ?int $tyre): ?array
+    public function breakdown(string $kind, ?int $gross, ?int $sparepart, ?int $tyre): ?array
     {
         if ($gross === null || $sparepart === null || $tyre === null || min($gross, $sparepart, $tyre) < 0 || $gross < $sparepart + $tyre) {
             return null;
