@@ -31,6 +31,28 @@ class VendorOperationalBilling
             : $this->additionals($vendorId, $kind)->where('status', 3);
     }
 
+    /** @return array{total_weight_kg: ?int, missing_weight_count: int} */
+    public function paymentWeightSummary(Builder $filtered, string $kind): array
+    {
+        $query = DB::query()->fromSub((clone $filtered)->toBase(), 'notes');
+        $journey = 'notes';
+        if ($kind !== 'utama') {
+            $query->leftJoin('transaksis as journey', 'journey.id', '=', 'notes.transaksi_id')
+                ->leftJoin('customers as override_customer', 'override_customer.id', '=', 'notes.customer_id');
+            $journey = 'journey';
+        }
+        $query->leftJoin('kas_uang_jalans as cash', 'cash.id', '=', $journey.'.kas_uang_jalan_id')
+            ->leftJoin('customers as customer', 'customer.id', '=', 'cash.customer_id');
+        $basis = $kind === 'utama' ? 'customer.tagihan_dari' : 'CASE WHEN override_customer.id IS NOT NULL THEN override_customer.tagihan_dari ELSE customer.tagihan_dari END';
+        $weight = "CASE ($basis) WHEN 1 THEN $journey.tonase WHEN 2 THEN $journey.timbangan_bongkar ELSE NULL END";
+        $summary = $query->selectRaw("SUM(CAST(REPLACE(($weight), ',', '.') AS DECIMAL(14,3))) as total_weight")
+            ->selectRaw("SUM(CASE WHEN ($weight) IS NULL OR TRIM(($weight)) = '' THEN 1 ELSE 0 END) as missing_weight_count")->first();
+        $missing = (int) $summary->missing_weight_count;
+
+        return ['total_weight_kg' => $missing > 0 ? null : (int) round((float) $summary->total_weight * 1000),
+            'missing_weight_count' => $missing];
+    }
+
     public function searchJourneys(Builder $query, string $search): void
     {
         if ($search === '') {

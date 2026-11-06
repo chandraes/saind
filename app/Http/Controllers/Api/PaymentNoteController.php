@@ -28,10 +28,11 @@ class PaymentNoteController extends Controller
         } elseif ($search !== '') {
             $query->whereHas('transaksi', fn (Builder $query) => $this->billing->searchJourneys($query, $search));
         }
+        $summary = $this->billing->paymentWeightSummary($query, $kind);
         $items = $query->orderByDesc('id')->paginate(20)->withQueryString();
         $items->getCollection()->each(fn (Transaksi|TransaksiAdditional $item) => $item->setAttribute('mobile_kind', $kind));
 
-        return MobilePaymentNoteResource::collection($items)->additional(['meta' => ['categories' => VendorOperationalBilling::CATEGORIES]]);
+        return MobilePaymentNoteResource::collection($items)->additional(['meta' => ['categories' => VendorOperationalBilling::CATEGORIES] + $summary]);
     }
 
     public function show(Request $request, string $kind, int $record): MobilePaymentNoteResource

@@ -343,6 +343,25 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         }
     }
 
+    public function test_mobile_payment_total_covers_filtered_pages_and_stays_vendor_scoped(): void
+    {
+        DB::table('customers')->where('id', 1)->update(['tagihan_dari' => 1]);
+        for ($id = 3; $id <= 23; $id++) {
+            DB::table('kas_uang_jalans')->insert(['id' => $id, 'vendor_id' => 1, 'vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 1, 'nomor_uang_jalan' => $id, 'tanggal' => '2026-11-01']);
+            DB::table('transaksis')->insert(['id' => $id, 'kas_uang_jalan_id' => $id, 'nota_muat' => 'EXTRA '.$id, 'tonase' => '1.111', 'timbangan_bongkar' => '1']);
+        }
+        $headers = $this->mobileHeaders();
+        $this->getJson('/api/v1/payment-notes', $headers)->assertOk()->assertJsonCount(20, 'data')->assertJsonPath('meta.total_weight_kg', 53331);
+        $this->getJson('/api/v1/payment-notes?page=2', $headers)->assertOk()->assertJsonPath('meta.total_weight_kg', 53331);
+        $this->getJson('/api/v1/payment-notes?search=EXTRA', $headers)->assertOk()->assertJsonPath('meta.total_weight_kg', 23331);
+        $this->getJson('/api/v1/payment-notes?search=NOTFOUND', $headers)->assertOk()->assertJsonPath('meta.total_weight_kg', 0);
+        DB::table('customers')->where('id', 1)->update(['tagihan_dari' => null]);
+        $this->getJson('/api/v1/payment-notes', $headers)->assertOk()->assertJsonPath('meta.total_weight_kg', null)->assertJsonPath('meta.missing_weight_count', 22);
+        DB::table('customers')->insert(['id' => 3, 'nama' => 'Customer Tambahan', 'tagihan_dari' => 2]);
+        DB::table('transaksi_additionals')->where('id', 10)->update(['customer_id' => 3]);
+        $this->getJson('/api/v1/payment-notes?kind=kompensasi_jr', $headers)->assertOk()->assertJsonPath('meta.total_weight_kg', 29000);
+    }
+
     public function test_mobile_billing_weight_follows_customer_basis_without_guessing(): void
     {
         $headers = $this->mobileHeaders();
