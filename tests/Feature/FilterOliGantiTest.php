@@ -6,6 +6,7 @@ use App\Models\FilterOliGantiCart;
 use App\Models\FilterOliGantiInvoice;
 use App\Models\FilterOliGantiInvoiceDetail;
 use App\Models\FilterOliLog;
+use App\Models\GroupWa;
 use App\Models\KategoriFilterOliMesin;
 use App\Models\Transaksi;
 use App\Models\User;
@@ -45,6 +46,9 @@ class FilterOliGantiTest extends TestCase
             $table->foreignId('vendor_id')->nullable();
             $table->string('nomor_lambung');
             $table->string('status')->default('aktif');
+            foreach (['transfer_ke', 'bank', 'no_rekening'] as $column) {
+                $table->string($column)->nullable();
+            }
         });
         (require database_path('migrations/2026_10_04_145713_add_pembatasan_filter_oli_to_vehicles_table.php'))->up();
         Schema::create('rutes', function (Blueprint $table): void {
@@ -602,7 +606,7 @@ class FilterOliGantiTest extends TestCase
     {
         $vendorId = DB::table('vendors')->insertGetId(['nama' => 'Vendor Uji']);
 
-        return DB::table('vehicles')->insertGetId(['vendor_id' => $vendorId, 'nomor_lambung' => '101', 'status' => 'aktif', 'pembatasan_filter_oli' => true]);
+        return DB::table('vehicles')->insertGetId(['vendor_id' => $vendorId, 'nomor_lambung' => '101', 'status' => 'aktif', 'pembatasan_filter_oli' => true, 'transfer_ke' => 'Penerima', 'bank' => 'BCA', 'no_rekening' => '123']);
     }
 
     private function cart(User $user, int $vehicleId): FilterOliGantiCart
@@ -854,6 +858,10 @@ class FilterOliGantiTest extends TestCase
 
     public function test_billing_modal_shows_pending_counts_for_each_maintenance_type(): void
     {
+        Schema::create('load_note_drafts', function (Blueprint $table): void {
+            $table->id();
+            $table->string('status')->default('draft');
+        });
         $user = $this->loginAs('admin');
         foreach (['rekap_gajis', 'customers', 'sponsors'] as $name) {
             Schema::create($name, function (Blueprint $table): void {
@@ -989,5 +997,65 @@ class FilterOliGantiTest extends TestCase
         $this->assertDatabaseHas('filter_oli_log_transaksis', ['filter_oli_log_id' => $older->id, 'transaksi_id' => $oldTrip->id]);
         $this->assertDatabaseMissing('filter_oli_log_transaksis', ['filter_oli_log_id' => $older->id, 'transaksi_id' => $newTrip->id]);
         $this->assertDatabaseHas('filter_oli_log_transaksis', ['filter_oli_log_id' => $newer->id, 'transaksi_id' => $newTrip->id]);
+    }
+
+    #[TestWith(['success'])]
+    #[TestWith(['false'])]
+    #[TestWith(['exception'])]
+    #[TestWith(['success', '+62 812-3456-7890'])]
+    public function test_cash_payment_whatsapp_is_sent_after_commit_and_failure_preserves_approval(string $result, ?string $phone = null): void
+    {
+        Schema::table('vendors', function (Blueprint $table): void {
+            $table->string('no_hp')->nullable();
+        });
+        (require database_path('migrations/2023_09_06_160726_create_group_was_table.php'))->up();
+        GroupWa::create(['untuk' => 'kas-besar', 'nama_group' => 'kas-besar-test']);
+        $messenger = new class extends GroupWa
+        {
+            public array $sent = [];
+
+            public string $result = 'success';
+
+            public function sendWa($to, $text)
+            {
+                $this->sent[] = ['to' => $to, 'text' => $text, 'transaction_level' => DB::transactionLevel()];
+                if ($this->result === 'exception') {
+                    throw new \RuntimeException('WA unavailable');
+                }
+
+                return $this->result !== 'false';
+            }
+        };
+        $messenger->result = $result;
+        $this->app->instance(GroupWa::class, $messenger);
+        $user = $this->loginAs('admin');
+        $cart = $this->cart($user, $this->vehicle());
+        DB::table('vendors')->update(['no_hp' => $phone]);
+        $data = array_replace($this->checkoutData($cart), ['pembayaran' => 'kas_besar', 'total_nominal' => 500000, 'nama_bank' => 'BCA', 'nomor_rekening' => '0123456', 'nama_rekening' => 'Vendor']);
+        DB::table('kas_besars')->insert(['saldo' => 1000000, 'modal_investor_terakhir' => 2500000]);
+        $this->post(route('billing.form-maintenance.filter-oli.checkout'), $data)->assertSessionHas('success');
+        $invoice = FilterOliGantiInvoice::firstOrFail();
+        $response = $this->post(route('billing.otorisasi-maintenance.filter-oli.approve', $invoice->id))->assertSessionHas('success');
+        if ($result === 'success') {
+            $response->assertSessionMissing('warning');
+        } else {
+            $response->assertSessionHas('warning');
+        }
+        $this->assertCount($phone ? 2 : 1, $messenger->sent);
+        $sent = $messenger->sent[0];
+        $this->assertSame('kas-besar-test', $sent['to']);
+        $this->assertSame(0, $sent['transaction_level']);
+        foreach (['FORM PENGGANTIAN FILTER & OLI MESIN', '🔴🔴🔴', 'Rp. 500.000', 'BCA', '0123456', 'Sisa Saldo Kas Besar', 'Total Modal Investor', 'Rp. 2.500.000'] as $part) {
+            $this->assertStringContainsString($part, $sent['text']);
+        }
+        if ($phone) {
+            $this->assertSame('6281234567890', $messenger->sent[1]['to']);
+            $this->assertStringNotContainsString('Sisa Saldo Kas Besar', $messenger->sent[1]['text']);
+            $this->assertStringNotContainsString('Total Modal Investor', $messenger->sent[1]['text']);
+        }
+        $this->assertSame('approved', $invoice->fresh()->status);
+        $this->post(route('billing.otorisasi-maintenance.filter-oli.approve', $invoice->id))->assertSessionHas('error');
+        $this->assertCount($phone ? 2 : 1, $messenger->sent);
+        $this->assertDatabaseCount('kas_besars', 2);
     }
 }

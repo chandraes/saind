@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const indicator = document.getElementById('note-inbox-loading');
     if (!table || !indicator) return;
     if (window.jQuery?.fn.select2) jQuery('#vendor_id').select2({width: '100%'});
-    const grid = table.tBodies[0].querySelector('[colspan]') ? null : jQuery(table).DataTable({paging: false, searching: false, ordering: false, info: false, autoWidth: false});
+    const view = createIncrementalDataTable(table);
+    const scrollBody = view.body;
     const stateUrl = new URL(window.location.href);
     stateUrl.searchParams.delete('page');
     for (const [key, value] of [...stateUrl.searchParams]) {
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let restoring = Boolean(saved && loadedPages === 1);
     table.addEventListener('click', event => {
         if (!event.target.closest('a')) return;
-        try { sessionStorage.setItem(stateKey, JSON.stringify({pages: loadedPages, scroll: window.scrollY})); } catch {}
+        try { sessionStorage.setItem(stateKey, JSON.stringify({pages: loadedPages, tableScroll: scrollBody.scrollTop, pageScroll: window.scrollY})); } catch {}
     });
     let next = indicator.dataset.next;
     let loading = false;
@@ -34,8 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const body = document.createElement('tbody');
             body.innerHTML = data.rows;
             const rows = Array.from(body.rows);
-            if (grid) grid.rows.add(rows).draw(false);
-            else rows.forEach(row => table.tBodies[0].append(row));
+            view.add(rows);
             next = data.next;
             loadedPages++;
             indicator.textContent = next ? 'Memuat nota berikutnya saat Anda menggulir…' : 'Seluruh nota telah ditampilkan.';
@@ -51,16 +51,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             loading = false;
             indicator.setAttribute('aria-busy', 'false');
-            if (!restoring && next && !failed && indicator.getBoundingClientRect().top < window.innerHeight + 250) load();
+            if (!restoring && next && !failed && view.nearEnd()) load();
         }
     }
     async function restore() {
         if (restoring) {
             while (next && !failed && loadedPages < saved.pages) await load();
-            window.scrollTo(0, saved.scroll);
+            scrollBody.scrollTop = saved.tableScroll || 0;
+            window.scrollTo(0, saved.pageScroll ?? saved.scroll ?? 0);
             restoring = false;
         }
-        new IntersectionObserver(entries => {if (entries.some(entry => entry.isIntersecting)) load();}, {rootMargin: '250px'}).observe(indicator);
+        view.watch(() => { if (view.nearEnd()) load(); });
+        if (view.nearEnd()) load();
     }
     restore();
 });

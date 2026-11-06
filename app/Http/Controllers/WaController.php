@@ -3,29 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\GroupWa;
-use Illuminate\Http\Request;
 use App\Services\WaStatus;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class WaController extends Controller
 {
     public function wa()
     {
         $data = GroupWa::all();
+
         return view('pengaturan.wa', [
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
-    public function edit($id)
+    public function edit(int $id, WaStatus $wa): View
     {
-        $data = GroupWa::find($id);
+        $data = GroupWa::findOrFail($id);
+        $result = $wa->getGroup();
 
-        $wa = new WaStatus();
-        $group = $wa->getGroup();
-        // dd($group['data']);
         return view('pengaturan.wa-edit', [
             'data' => $data,
-            'group' => $group['data']
+            'group' => $result === false ? [] : $result['data'],
+            'groupsUnavailable' => $result === false,
         ]);
     }
 
@@ -33,13 +34,12 @@ class WaController extends Controller
     {
         $data = $request->validate([
             'nama_group' => 'required',
-            'group_id' => 'required'
+            'group_id' => 'required',
         ]);
-
 
         $update = GroupWa::where('id', $id)->update([
             'nama_group' => $data['nama_group'],
-            'group_id' => $data['group_id']
+            'group_id' => $data['group_id'],
         ]);
 
         if ($update) {
@@ -48,5 +48,4 @@ class WaController extends Controller
             return redirect()->route('pengaturan.wa')->with('error', 'Gagal mengubah data');
         }
     }
-
 }

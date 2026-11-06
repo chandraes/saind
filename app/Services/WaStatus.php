@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+
 class WaStatus
 {
     private $apikey;
@@ -74,36 +77,33 @@ class WaStatus
 
     }
 
-    public function getGroup()
+    /** @return array{success: true, data: list<array{id: string, name: string}>}|false */
+    public function getGroup(): array|false
     {
-        $apikey = $this->apikey;
-
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => 'https://starsender.online/api/device/group',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_HTTPHEADER => [
-                'apikey: '.$apikey,
-            ],
-        ]);
-
-        $response = curl_exec($curl);
-
-        curl_close($curl);
-
-        $result = json_decode($response, true);
-        // dd($result);
-        if ($result['success'] == true) {
-            return $result;
-        } else {
+        if (! is_string($this->apikey) || trim($this->apikey) === '') {
             return false;
         }
+        try {
+            $response = Http::acceptJson()->connectTimeout(3)->timeout(10)->withoutRedirecting()
+                ->withHeaders(['Authorization' => $this->apikey])
+                ->get('https://api.starsender.online/api/whatsapp/groups');
+        } catch (ConnectionException) {
+            return false;
+        }
+        $result = $response->json();
+        if (! $response->successful() || ! is_array($result) || ($result['success'] ?? false) !== true
+            || ! is_array($result['data']['groups'] ?? null)) {
+            return false;
+        }
+        $groups = [];
+        foreach ($result['data']['groups'] as $group) {
+            if (! is_array($group) || ! is_string($group['id'] ?? null) || trim($group['id']) === ''
+                || ! is_string($group['name'] ?? null) || trim($group['name']) === '') {
+                continue;
+            }
+            $groups[] = ['id' => $group['id'], 'name' => $group['name']];
+        }
+
+        return ['success' => true, 'data' => $groups];
     }
 }

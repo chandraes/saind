@@ -1,0 +1,399 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
+
+class VendorOperationalBillingTest extends MobileApiTestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+        View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
+        Schema::table('vehicles', fn (Blueprint $table) => $table->unsignedBigInteger('driver_id')->nullable());
+        foreach (['customers', 'drivers', 'rutes'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->string('nama');
+                $table->integer('jarak')->nullable();
+            });
+        }
+        Schema::create('kas_uang_jalans', function (Blueprint $table): void {
+            $table->id();
+            foreach (['vendor_id', 'vehicle_id', 'customer_id', 'rute_id', 'nomor_uang_jalan'] as $field) {
+                $table->integer($field);
+            }
+            $table->date('tanggal');
+            $table->bigInteger('nominal_transaksi')->default(123456);
+        });
+        Schema::create('transaksis', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('kas_uang_jalan_id');
+            $table->integer('status')->default(3);
+            $table->integer('void')->default(0);
+            $table->integer('bayar')->default(0);
+            $table->integer('keranjang')->default(0);
+            foreach (['tanggal_muat', 'tanggal_bongkar', 'nota_muat', 'nota_bongkar', 'tonase', 'timbangan_bongkar', 'gross_muat', 'tarra_muat', 'gross_bongkar', 'tarra_bongkar'] as $field) {
+                $table->string($field)->nullable();
+            }
+            $table->bigInteger('harga_vendor')->default(987654321);
+        });
+        Schema::create('keranjang_nota_bayars', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('vendor_id');
+            $table->integer('transaksi_id');
+            $table->integer('user_id')->nullable();
+        });
+        Schema::create('transaksi_additionals', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('transaksi_id');
+            $table->integer('vendor_id');
+            $table->string('jenis');
+            $table->integer('status')->default(3);
+            $table->integer('customer_id')->nullable();
+            $table->integer('rute_id')->nullable();
+            $table->bigInteger('nominal')->default(987654321);
+        });
+        foreach (['invoice_bayars', 'invoice_add_vendors'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->integer('vendor_id');
+                $table->string('periode');
+                $table->date('tanggal')->nullable();
+                $table->date('tempo')->nullable();
+                $table->string('jenis')->nullable();
+                $table->integer('lunas')->default(0);
+                $table->integer('is_finished')->default(0);
+                $table->integer('status')->default(1);
+                $table->bigInteger('total')->default(987654321);
+                $table->timestamps();
+            });
+        }
+        foreach (['invoice_bayar_details', 'invoice_add_vendor_details'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->integer('invoice_bayar_id')->nullable();
+                $table->integer('invoice_add_vendor_id')->nullable();
+                $table->integer('transaksi_id')->nullable();
+                $table->integer('transaksi_additional_id')->nullable();
+            });
+        }
+        DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A'], ['id' => 2, 'nama' => 'FOREIGN VENDOR']]);
+        DB::table('vehicles')->insert([['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => 'UNIT A'], ['id' => 2, 'vendor_id' => 2, 'nomor_lambung' => 'FOREIGN UNIT']]);
+        DB::table('customers')->insert(['id' => 1, 'nama' => 'Tambang A']);
+        DB::table('rutes')->insert(['id' => 1, 'nama' => 'Rute A', 'jarak' => 50]);
+        foreach ([1, 2] as $vendor) {
+            DB::table('kas_uang_jalans')->insert(['id' => $vendor, 'vendor_id' => $vendor, 'vehicle_id' => $vendor, 'customer_id' => 1, 'rute_id' => 1, 'nomor_uang_jalan' => $vendor, 'tanggal' => '2026-11-01']);
+            DB::table('transaksis')->insert(['id' => $vendor, 'kas_uang_jalan_id' => $vendor, 'nota_muat' => 'TICKET '.$vendor, 'tonase' => '30', 'timbangan_bongkar' => '29']);
+            DB::table('invoice_bayars')->insert(['id' => $vendor, 'vendor_id' => $vendor, 'periode' => 'PERIODE '.$vendor]);
+            DB::table('invoice_bayar_details')->insert(['invoice_bayar_id' => $vendor, 'transaksi_id' => $vendor]);
+            foreach (['kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $index => $kind) {
+                $id = $vendor * 10 + $index;
+                DB::table('transaksi_additionals')->insert(['id' => $id, 'vendor_id' => $vendor, 'transaksi_id' => $vendor, 'jenis' => $kind]);
+                DB::table('invoice_add_vendors')->insert(['id' => $id, 'vendor_id' => $vendor, 'jenis' => $kind, 'periode' => '1', 'created_at' => '2026-11-01', 'updated_at' => '2026-11-01']);
+                DB::table('invoice_add_vendor_details')->insert(['invoice_add_vendor_id' => $id, 'transaksi_additional_id' => $id]);
+            }
+        }
+        $this->actingAs(User::factory()->create(['username' => 'billing-test', 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 1]));
+    }
+
+    public function test_lists_and_details_are_tenant_scoped_and_never_serialize_restricted_money(): void
+    {
+        foreach (['nota-bongkar', 'nota-bayar', 'invoice'] as $page) {
+            $this->get('/vendor-operational/'.$page)->assertOk()->assertDontSee('987654321')->assertDontSee('FOREIGN UNIT');
+            $this->getJson('/vendor-operational/'.$page)->assertOk()->assertDontSee('987654321')->assertDontSee('FOREIGN UNIT');
+        }
+        foreach (['utama', 'kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $index => $kind) {
+            $id = $kind === 'utama' ? 1 : 9 + $index;
+            foreach (['nota-bayar', 'invoice'] as $page) {
+                $this->getJson('/vendor-operational/'.$page.'?kind='.$kind)->assertOk()->assertDontSee('987654321');
+                $this->get('/vendor-operational/'.$page.'/'.$kind.'/'.$id)->assertOk()->assertSee('UNIT A')->assertDontSee('987654321')->assertDontSee('987.654.321');
+                $foreign = $kind === 'utama' ? 2 : $id + 10;
+                $this->get('/vendor-operational/'.$page.'/'.$kind.'/'.$foreign)->assertNotFound();
+            }
+        }
+        $this->get('/vendor-operational/nota-bongkar/2')->assertNotFound();
+    }
+
+    public function test_incremental_rows_are_bounded_and_can_be_retrieved_without_mutation(): void
+    {
+        foreach (range(3, 24) as $id) {
+            DB::table('transaksis')->insert(['id' => $id, 'kas_uang_jalan_id' => 1, 'nota_muat' => 'PAGE-'.$id]);
+        }
+        $before = DB::table('transaksis')->get()->toArray();
+        $response = $this->getJson('/vendor-operational/nota-bayar')->assertOk();
+        $this->assertNotNull($response->json('next'));
+        $this->assertSame(20, substr_count($response->json('rows'), '<tr>'));
+        $this->getJson($response->json('next'))->assertOk()->assertJsonPath('next', null);
+        $this->assertEquals($before, DB::table('transaksis')->get()->toArray());
+        $this->get('/vendor-operational/nota-bayar?kind=invalid')->assertSessionHasErrors('kind');
+    }
+
+    public function test_filters_search_each_category_and_do_not_accept_another_vendor_context(): void
+    {
+        foreach (['utama', 'kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $kind) {
+            $this->getJson('/vendor-operational/nota-bayar?kind='.$kind.'&search=TICKET%201&vendor_id=2')->assertOk()->assertSee('UNIT A')->assertDontSee('FOREIGN UNIT');
+            $this->getJson('/vendor-operational/nota-bayar?kind='.$kind.'&search=NOT-A-TICKET')->assertOk()->assertJsonPath('rows', '');
+        }
+        DB::table('transaksis')->where('id', 1)->update(['status' => 2]);
+        $this->getJson('/vendor-operational/nota-bongkar?status=waiting')->assertOk()->assertSee('UNIT A');
+        $this->getJson('/vendor-operational/nota-bongkar?status=completed')->assertUnprocessable();
+    }
+
+    public function test_invoice_details_filter_cross_vendor_links_and_escape_text(): void
+    {
+        DB::table('invoice_bayar_details')->insert(['invoice_bayar_id' => 1, 'transaksi_id' => 2]);
+        DB::table('invoice_add_vendor_details')->insert(['invoice_add_vendor_id' => 10, 'transaksi_additional_id' => 20]);
+        DB::table('transaksis')->where('id', 1)->update(['nota_muat' => '<script>alert(1)</script>']);
+        foreach (['utama/1', 'kompensasi_jr/10'] as $path) {
+            $response = $this->get('/vendor-operational/invoice/'.$path)->assertOk()->assertDontSee('FOREIGN UNIT');
+            $response->assertSee('&lt;script&gt;', false)->assertDontSee('<script>alert(1)</script>', false);
+            $this->getJson('/vendor-operational/invoice/'.$path)->assertOk()->assertDontSee('FOREIGN UNIT')->assertDontSee('987654321');
+        }
+        $this->get('/vendor-operational/nota-bayar/invalid/1')->assertNotFound();
+        $this->get('/vendor-operational/invoice/invalid/1')->assertNotFound();
+        $this->post('/vendor-operational/nota-bayar')->assertStatus(405);
+        $this->patch('/vendor-operational/nota-bongkar/1')->assertStatus(405);
+    }
+
+    public function test_accounts_without_vendor_and_other_roles_cannot_read_billing(): void
+    {
+        $this->actingAs(User::factory()->create(['username' => 'wrong-role', 'password' => 'secret-pass', 'role' => 'vendor', 'vendor_id' => 1]));
+        foreach (['nota-bongkar', 'nota-bayar', 'invoice'] as $path) {
+            $this->get('/vendor-operational/'.$path)->assertForbidden();
+        }
+        $this->actingAs(User::factory()->create(['username' => 'no-vendor', 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => null]));
+        foreach (['nota-bongkar', 'nota-bayar', 'invoice'] as $path) {
+            $this->get('/vendor-operational/'.$path)->assertForbidden();
+        }
+    }
+
+    public function test_payment_notes_only_show_the_same_eligible_records_and_columns_as_source(): void
+    {
+        $menu = $this->get('/vendor-operational/nota-bayar')->assertOk()->assertSee('HPP')->assertSee('KOMPENSASI JALAN RUSAK')->assertSee('PENYESUAIAN BBM')->assertSee('ACHIEVEMENT');
+        $menu->assertDontSee('FOREIGN VENDOR');
+        $response = $this->get('/vendor-operational/nota-bayar?kind=utama')->assertOk()->assertSee('123.456');
+        $html = new \DOMDocument;
+        @$html->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($html);
+        $headers = array_map(fn ($node): string => trim($node->textContent), iterator_to_array($xpath->query('//table[@id="note-inbox-table"]/thead/tr/th')));
+        $expected = ['No', 'Tanggal UJ', 'Kode', 'Nomor Lambung', 'Vendor', 'Rute', 'Jarak', 'Tanggal Muat', 'Nota Muat', 'Tonase Muat', 'Tanggal Bongkar', 'Nota Bongkar', 'Tonase Bongkar', 'Selisih (Ton)', 'Selisih (%)', 'Uang Jalan'];
+        $this->assertSame($expected, $headers);
+        $this->assertSame(0, $xpath->query('//select[@name="status"]')->length);
+        $this->assertSame(0, $xpath->query('//table[@id="note-inbox-table"]//input')->length);
+        $this->assertSame(0, $xpath->query('//table[@id="note-inbox-table"]//a')->length);
+        foreach (['kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $kind) {
+            $response = $this->get('/vendor-operational/nota-bayar?kind='.$kind)->assertOk()->assertDontSee('Harga');
+            @$html->loadHTML($response->getContent());
+            $xpath = new \DOMXPath($html);
+            $headers = array_map(fn ($node): string => trim($node->textContent), iterator_to_array($xpath->query('//table[@id="note-inbox-table"]/thead/tr/th')));
+            $this->assertSame(array_slice($expected, 0, -1), $headers);
+        }
+        DB::table('keranjang_nota_bayars')->insert(['vendor_id' => 1, 'transaksi_id' => 1, 'user_id' => auth()->id()]);
+        $this->getJson('/vendor-operational/nota-bayar?kind=utama')->assertOk()->assertJsonPath('rows', '');
+        $this->get('/vendor-operational/nota-bayar/utama/1')->assertNotFound();
+        DB::table('keranjang_nota_bayars')->delete();
+        DB::table('keranjang_nota_bayars')->insert(['vendor_id' => 1, 'transaksi_id' => 1, 'user_id' => auth()->id() + 1]);
+        DB::table('transaksis')->where('id', 1)->update(['keranjang' => 1]);
+        $this->getJson('/vendor-operational/nota-bayar?kind=utama')->assertOk()->assertSee('UNIT A');
+        foreach (['bayar'] as $field) {
+            DB::table('transaksis')->where('id', 1)->update([$field => 1]);
+            $this->getJson('/vendor-operational/nota-bayar?kind=utama')->assertOk()->assertJsonPath('rows', '');
+            DB::table('transaksis')->where('id', 1)->update([$field => 0]);
+        }
+        DB::table('transaksi_additionals')->where('vendor_id', 1)->update(['status' => 4]);
+        foreach (['kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $kind) {
+            $this->getJson('/vendor-operational/nota-bayar?kind='.$kind)->assertOk()->assertJsonPath('rows', '');
+        }
+    }
+
+    public function test_unloading_matches_the_original_flat_table_and_defaults_to_waiting(): void
+    {
+        DB::table('transaksis')->where('id', 1)->update(['status' => 2]);
+        DB::table('transaksis')->insert(['id' => 3, 'kas_uang_jalan_id' => 1, 'status' => 3, 'nota_muat' => 'COMPLETED-TICKET']);
+        $response = $this->get('/vendor-operational/nota-bongkar')->assertOk()->assertSee('TICKET 1')->assertDontSee('COMPLETED-TICKET')
+            ->assertSee('<h1><u>Nota Bongkar</u></h1>', false)->assertDontSee('Selisih / uang jalan')->assertDontSee('Uang jalan / unit');
+        $html = new \DOMDocument;
+        @$html->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($html);
+        $headers = array_map(fn ($node): string => trim($node->textContent), iterator_to_array($xpath->query('//table[@id="note-inbox-table"]/thead/tr/th')));
+        $this->assertSame(['No', 'Tanggal', 'Kode', 'Nomor Lambung', 'Vendor', 'Tambang', 'Rute', 'Tanggal Muat', 'Nota Muat', 'Timbangan Muat'], $headers);
+        $this->assertSame(1, $xpath->query('//table[@id="note-inbox-table"]//a[contains(@class,"js-readonly-detail")]')->length);
+        $this->assertSame(0, $xpath->query('//table[@id="note-inbox-table"]//form')->length);
+        $this->getJson('/vendor-operational/nota-bongkar?status=all')->assertUnprocessable();
+        $this->getJson('/vendor-operational/nota-bongkar?status=completed')->assertUnprocessable();
+        $this->get('/vendor-operational/nota-bongkar/3')->assertNotFound();
+        $this->assertSame(0, $xpath->query('//select[@name="status"]')->length);
+        $this->get('/vendor-operational/nota-bongkar/1')->assertOk()->assertSee('UNIT A')->assertDontSee('987654321');
+        foreach (range(4, 24) as $id) {
+            DB::table('transaksis')->insert(['id' => $id, 'kas_uang_jalan_id' => 1, 'status' => 2, 'nota_muat' => 'WAITING-'.$id]);
+        }
+        $rows = $this->getJson('/vendor-operational/nota-bongkar')->assertOk()->assertDontSee('FOREIGN UNIT')->assertDontSee('987654321');
+        $this->assertSame(20, substr_count($rows->json('rows'), '<tr>'));
+        $this->assertNotNull($rows->json('next'));
+        $this->getJson($rows->json('next'))->assertOk()->assertJsonPath('next', null);
+    }
+
+    public function test_invoice_list_follows_source_columns_and_only_active_unpaid_invoices(): void
+    {
+        DB::table('invoice_bayars')->insert(['id' => 30, 'vendor_id' => 1, 'periode' => 'PAID-BASE', 'lunas' => 1]);
+        DB::table('invoice_add_vendors')->insert([
+            ['id' => 30, 'vendor_id' => 1, 'jenis' => 'achievement', 'periode' => 'PAID-EXTRA', 'status' => 1, 'is_finished' => 1],
+            ['id' => 31, 'vendor_id' => 1, 'jenis' => 'achievement', 'periode' => 'DRAFT-EXTRA', 'status' => 0, 'is_finished' => 0],
+        ]);
+        $response = $this->get('/vendor-operational/invoice')->assertOk()
+            ->assertSee('Tempo Dari')->assertSee('Tempo Sampai')
+            ->assertDontSee('PAID-BASE')->assertDontSee('PAID-EXTRA')->assertDontSee('DRAFT-EXTRA')
+            ->assertDontSee('987654321')->assertDontSee('987.654.321')->assertDontSee('Total Bayar');
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($dom);
+        $headers = array_map(fn ($node) => trim($node->textContent), iterator_to_array($xpath->query('//*[@id="note-inbox-table"]/thead/tr/th')));
+        $this->assertSame(['No', 'Tanggal', 'Vendor', 'Invoice', 'Jatuh Tempo', 'Status'], $headers);
+        $this->assertSame(4, $xpath->query('//*[@id="note-inbox-table"]/tbody/tr')->length);
+        $this->assertSame(0, $xpath->query('//form[translate(@method,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz")="post" and not(contains(@action,"/logout"))]')->length);
+        DB::table('invoice_bayars')->where('id', 1)->update(['tempo' => '2026-11-10']);
+        DB::table('invoice_add_vendors')->where('vendor_id', 1)->update(['tempo' => '2026-11-20']);
+        $filtered = $this->getJson('/vendor-operational/invoice?start_date=2026-11-09&end_date=2026-11-11')->assertOk();
+        $this->assertSame(1, substr_count($filtered->json('rows'), '<tr>'));
+        $this->getJson('/vendor-operational/invoice?start_date=2026-11-20&end_date=2026-11-01')->assertUnprocessable();
+    }
+
+    public function test_invoice_combined_types_scroll_without_duplicates_and_hide_money(): void
+    {
+        foreach (range(30, 53) as $id) {
+            DB::table('invoice_bayars')->insert(['id' => $id, 'vendor_id' => 1, 'periode' => 'PAGE-'.$id, 'tanggal' => '2026-11-01']);
+        }
+        $first = $this->getJson('/vendor-operational/invoice')->assertOk()->assertDontSee('987654321');
+        $second = $this->getJson($first->json('next'))->assertOk()->assertDontSee('987654321')->assertJsonPath('next', null);
+        $this->assertSame(20, substr_count($first->json('rows'), '<tr>'));
+        $this->assertSame(8, substr_count($second->json('rows'), '<tr>'));
+        preg_match_all('/href="([^"]+)"/', $first->json('rows').$second->json('rows'), $links);
+        $this->assertCount(28, array_unique($links[1]));
+    }
+
+    public function test_invoice_payment_status_filters_preserve_vendor_scope_and_show_update_date(): void
+    {
+        DB::table('invoice_bayars')->insert([
+            ['id' => 30, 'vendor_id' => 1, 'periode' => 'LUNAS-UTAMA', 'lunas' => 1, 'updated_at' => '2026-11-04 15:30:00'],
+            ['id' => 31, 'vendor_id' => 2, 'periode' => 'LUNAS-VENDOR-LAIN', 'lunas' => 1, 'updated_at' => '2026-11-04 15:30:00'],
+        ]);
+        DB::table('invoice_add_vendors')->insert([
+            ['id' => 30, 'vendor_id' => 1, 'jenis' => 'achievement', 'periode' => 'LUNAS-TAMBAHAN', 'status' => 1, 'is_finished' => 1, 'updated_at' => '2026-11-05 11:00:00'],
+            ['id' => 31, 'vendor_id' => 2, 'jenis' => 'achievement', 'periode' => 'LUNAS-TAMBAHAN-LAIN', 'status' => 1, 'is_finished' => 1, 'updated_at' => '2026-11-05 11:00:00'],
+        ]);
+        $this->get('/vendor-operational/invoice')->assertOk()->assertDontSee('LUNAS-UTAMA')->assertDontSee('LUNAS-TAMBAHAN')
+            ->assertViewHas('filters', fn (array $filters): bool => $filters['status'] === 'unpaid');
+        $paid = $this->getJson('/vendor-operational/invoice?status=paid&vendor_id=2')->assertOk()
+            ->assertSee('LUNAS-UTAMA')->assertSee('LUNAS-TAMBAHAN')->assertSee('04-11-2026')->assertSee('05-11-2026')
+            ->assertDontSee('LUNAS-VENDOR-LAIN')->assertDontSee('LUNAS-TAMBAHAN-LAIN')->assertDontSee('987654321')->assertDontSee('987.654.321');
+        $this->assertSame(2, substr_count($paid->json('rows'), '<tr>'));
+        $all = $this->getJson('/vendor-operational/invoice?status=all')->assertOk()->assertSee('Belum lunas')->assertSee('Lunas');
+        $this->assertSame(6, substr_count($all->json('rows'), '<tr>'));
+        $this->getJson('/vendor-operational/invoice?status=unknown')->assertUnprocessable();
+        DB::table('invoice_bayars')->where('id', 30)->update(['updated_at' => null]);
+        $this->getJson('/vendor-operational/invoice?status=paid')->assertOk()->assertSee('Tanggal belum tercatat');
+    }
+
+    public function test_paid_invoice_scroll_retains_status_filter_and_does_not_repeat_rows(): void
+    {
+        foreach (range(30, 54) as $id) {
+            DB::table('invoice_bayars')->insert(['id' => $id, 'vendor_id' => 1, 'periode' => 'LUNAS-PAGE-'.$id, 'lunas' => 1, 'updated_at' => '2026-11-05 12:00:00']);
+        }
+        $first = $this->getJson('/vendor-operational/invoice?status=paid')->assertOk();
+        $this->assertStringContainsString('status=paid', $first->json('next'));
+        $this->assertSame(20, substr_count($first->json('rows'), '<tr>'));
+        $second = $this->getJson($first->json('next'))->assertOk()->assertJsonPath('next', null);
+        $this->assertSame(5, substr_count($second->json('rows'), '<tr>'));
+        $this->assertStringNotContainsString('Belum lunas', $first->json('rows').$second->json('rows'));
+    }
+
+    private function mobileHeaders(?User $user = null): array
+    {
+        $user ??= auth()->user();
+        $this->app['auth']->forgetGuards();
+
+        return ['X-Workspace-ID' => self::WORKSPACE, 'X-Vendor-ID' => (string) $user->vendor_id,
+            'Authorization' => 'Bearer '.$user->createToken('billing-test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+    }
+
+    public function test_mobile_payment_notes_reuse_web_eligibility_and_never_expose_other_vendor_or_prices(): void
+    {
+        $headers = $this->mobileHeaders();
+        foreach (['utama', 'kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $index => $kind) {
+            $id = $kind === 'utama' ? 1 : 9 + $index;
+            $response = $this->getJson('/api/v1/payment-notes?kind='.$kind.'&vendor_id=2', $headers)
+                ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $id)
+                ->assertJsonPath('data.0.kind', $kind)->assertJsonPath('data.0.vehicle_number', 'UNIT A')
+                ->assertJsonPath('meta.per_page', 20)->assertJsonPath('meta.categories.utama', 'HPP');
+            $this->assertSame($kind === 'utama' ? 123456 : null, $response->json('data.0.money_out_amount'));
+            $detail = $this->getJson('/api/v1/payment-notes/'.$kind.'/'.$id, $headers)->assertOk()
+                ->assertJsonPath('data.fields.Nomor Lambung', 'UNIT A')
+                ->assertJsonPath('data.fields.Uang Jalan (Rp)', '123.456');
+            foreach ([$response, $detail] as $result) {
+                $result->assertDontSee('987654321')->assertDontSee('987.654.321')->assertDontSee('FOREIGN');
+            }
+            $this->getJson('/api/v1/payment-notes/'.$kind.'/'.($kind === 'utama' ? 2 : $id + 10), $headers)->assertNotFound();
+        }
+    }
+
+    public function test_mobile_payment_notes_filter_paginate_and_exclude_unavailable_records_without_writes(): void
+    {
+        $actor = auth()->user();
+        $headers = $this->mobileHeaders($actor);
+        foreach (range(3, 26) as $id) {
+            DB::table('transaksis')->insert(['id' => $id, 'kas_uang_jalan_id' => 1, 'nota_muat' => 'PAGE-'.$id]);
+        }
+        DB::table('transaksis')->where('id', 3)->update(['void' => 1]);
+        DB::table('transaksis')->where('id', 4)->update(['bayar' => 1]);
+        DB::table('transaksis')->where('id', 5)->update(['status' => 2]);
+        DB::table('keranjang_nota_bayars')->insert(['vendor_id' => 1, 'user_id' => $actor->id, 'transaksi_id' => 6]);
+        $before = DB::table('transaksis')->get()->toArray();
+        $first = $this->getJson('/api/v1/payment-notes', $headers)->assertOk()->assertJsonCount(20, 'data');
+        $second = $this->getJson('/api/v1/payment-notes?page=2', $headers)->assertOk()->assertJsonCount(1, 'data');
+        $ids = array_merge(array_column($first->json('data'), 'id'), array_column($second->json('data'), 'id'));
+        $this->assertCount(21, array_unique($ids));
+        foreach ([2, 3, 4, 5, 6] as $missing) {
+            $this->assertNotContains($missing, $ids);
+        }
+        $this->getJson('/api/v1/payment-notes?search=PAGE-26', $headers)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 26);
+        $this->getJson('/api/v1/payment-notes?search=NO-MATCH', $headers)->assertOk()->assertJsonCount(0, 'data');
+        DB::table('transaksi_additionals')->where('id', 10)->update(['status' => 4]);
+        $this->getJson('/api/v1/payment-notes?kind=kompensasi_jr', $headers)->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/payment-notes/kompensasi_jr/10', $headers)->assertNotFound();
+        $this->assertEquals($before, DB::table('transaksis')->get()->toArray());
+    }
+
+    public function test_mobile_payment_notes_require_token_role_workspace_and_current_vendor_context(): void
+    {
+        $actor = auth()->user();
+        $headers = $this->mobileHeaders($actor);
+        $this->getJson('/api/v1/payment-notes', array_diff_key($headers, ['Authorization' => true]))->assertUnauthorized();
+        $this->getJson('/api/v1/payment-notes', array_replace($headers, ['X-Vendor-ID' => '2']))->assertStatus(409);
+        $this->getJson('/api/v1/payment-notes', array_replace($headers, ['X-Workspace-ID' => '413236a8-76eb-483e-bbf4-df091aa8b67e']))->assertStatus(409);
+        $wrong = User::factory()->create(['username' => 'mobile-admin', 'password' => 'secret-pass', 'role' => 'admin', 'vendor_id' => 1]);
+        $this->getJson('/api/v1/payment-notes', $this->mobileHeaders($wrong))->assertForbidden();
+        config(['mobile.load_note_roles' => []]);
+        $this->getJson('/api/v1/payment-notes', $this->mobileHeaders($actor))->assertOk();
+        $actor->update(['vendor_id' => null]);
+        $this->app['auth']->forgetGuards();
+        $this->getJson('/api/v1/payment-notes', $headers)->assertForbidden();
+    }
+
+    public function test_mobile_payment_notes_validate_filters_and_have_no_mutation_routes(): void
+    {
+        $headers = $this->mobileHeaders();
+        foreach (['kind=invalid', 'page=0', 'search='.str_repeat('x', 101)] as $filter) {
+            $this->getJson('/api/v1/payment-notes?'.$filter, $headers)->assertUnprocessable();
+        }
+        $this->getJson('/api/v1/payment-notes/invalid/1', $headers)->assertNotFound();
+        foreach (['post', 'patch', 'delete'] as $method) {
+            $this->{$method.'Json'}('/api/v1/payment-notes/utama/1', [], $headers)->assertStatus(405);
+        }
+    }
+}

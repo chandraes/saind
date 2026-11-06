@@ -58,7 +58,10 @@
 @push('js')
 <script src="{{ asset('assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script>
-<script src="{{ asset('assets/js/load-note-inbox.js') }}"></script>
+@once('incremental-data-table')
+<script src="{{ asset('assets/js/incremental-data-table.js') }}?v={{ filemtime(public_path('assets/js/incremental-data-table.js')) }}"></script>
+@endonce
+<script src="{{ asset('assets/js/load-note-inbox.js') }}?v={{ filemtime(public_path('assets/js/load-note-inbox.js')) }}"></script>
 @endpush
 @push('css')
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}">

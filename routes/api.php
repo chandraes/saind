@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
+use App\Http\Controllers\Api\PaymentNoteController;
 use App\Http\Controllers\Api\UnloadingNoteController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WorkspaceController;
@@ -18,6 +19,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::middleware(['auth:sanctum', EnsureMobileToken::class])->group(function (): void {
             Route::get('me', [AuthController::class, 'show'])->name('me');
             Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
+            Route::middleware(EnsureMobileVendorContext::class.':billing')->group(function (): void {
+                Route::get('payment-notes', [PaymentNoteController::class, 'index'])->name('payment-notes.index');
+                Route::get('payment-notes/{kind}/{record}', [PaymentNoteController::class, 'show'])->whereNumber('record')->name('payment-notes.show');
+            });
             Route::middleware(EnsureMobileVendorContext::class)->group(function (): void {
                 Route::post('load-notes/scanned', [LoadNoteDraftController::class, 'storeScanned'])->middleware('throttle:30,1')->name('load-notes.scanned');
                 Route::post('load-notes/inspect', [LoadNoteDraftController::class, 'inspect'])->middleware('throttle:30,1')->name('load-notes.inspect');

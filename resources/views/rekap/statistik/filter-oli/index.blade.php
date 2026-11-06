@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('content')
+@if (auth()->user()->role === 'vendor-operational')
+<div class="container-fluid px-4 pt-4"><a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'filter-oli']) }}" class="btn btn-outline-primary"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a></div>
+@endif
 <div class="container-fluid px-4 py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><h1 class="h3 fw-bold mb-1">Statistik Filter & Oli Mesin</h1><p class="text-muted mb-0">Pantau kondisi dan ritase penggantian terakhir pada setiap kategori.</p></div>@if (auth()->user()->role === 'operasional')<a class="btn btn-outline-secondary" href="{{ route('home') }}"><i class="fa fa-arrow-left me-2"></i>Dashboard</a>@endif @if (in_array(auth()->user()->role, ['admin', 'su', 'user']))<a class="btn btn-outline-secondary" href="{{ route('statisik.index') }}"><i class="fa fa-arrow-left me-2"></i>Statistik</a>@endif</div>
     @include('billing.form-maintenance.filter-oli.feedback')

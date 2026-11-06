@@ -12,7 +12,7 @@
             <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/dashboard.svg') }}" width="18" alt="Dashboard"> Dashboard
             </a>
-            @if (!in_array(auth()->user()->role, ['asisten-user', 'operasional', 'vendor']) )
+            @if (!in_array(auth()->user()->role, ['asisten-user', 'operasional', 'vendor', 'vendor-operational']) )
             <a href="{{ route('rekap.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/rekap.svg') }}" width="18" alt="Rekap"> Rekap
             </a>
@@ -23,6 +23,9 @@
         </div>
     </div>
 
+    @if (auth()->user()->role === 'vendor-operational')
+    <a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'ban-luar']) }}" class="btn btn-outline-primary mb-3"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a>
+    @endif
     @include('swal')
     {{-- @include('rekap.statistik.ban-luar.tambah') --}}
 
@@ -62,7 +65,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="rekapTable">
+                <table class="table table-bordered table-hover align-middle mb-0" id="rekapTable">
                     <thead class="table-success">
                         <tr>
                             <th class="text-center" style="width: 50px;">NO</th>
@@ -139,8 +142,8 @@
                 </div>
                 <div class="modal-body p-0">
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table table-hover table-striped mb-0 text-center">
-                            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                        <table class="table table-bordered table-hover table-striped mb-0 text-center">
+                            <thead class="table-success" style="position: sticky; top: 0; z-index: 1;">
                                 <tr>
                                     <th>TANGGAL</th>
                                     <th>NO. UJ</th>
@@ -169,17 +172,29 @@
 
 @push('js')
 <script src="{{ asset('assets/js/dt5.min.js') }}"></script>
+@once('incremental-data-table')
+<script src="{{ asset('assets/js/incremental-data-table.js') }}?v={{ filemtime(public_path('assets/js/incremental-data-table.js')) }}"></script>
+@endonce
+<script src="{{ asset('assets/js/vendor-statistics-table.js') }}?v={{ filemtime(public_path('assets/js/vendor-statistics-table.js')) }}"></script>
 <script>
+    @if (in_array(auth()->user()->role, ['admin', 'su']))
     function tambah(data) {
         document.getElementById('posisi_ban_id').value = data.id;
         document.getElementById('tambahTitle').innerHTML = "Ganti Ban - " + data.nama;
     }
 
+    @endif
     $(document).ready(function(){
 
         $(document).on('click', '.show-transaksi', function() {
             var banLogId = $(this).data('id');
             var tbody = $('#tbodyDetailRitase');
+            @if (auth()->user()->role === 'vendor-operational')
+            vendorStatisticsAudit($('#modalDetailRitase .modal-body'), @json(route('statistik.ban-luar.transaksi-ritase', ['banLogId' => 'LOGID'])).replace('LOGID', banLogId), false);
+            $('#modalDetailRitase').modal('show');
+            return;
+            @endif
+
 
             tbody.html('<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><br>Mengambil data...</td></tr>');
             $('#modalDetailRitase').modal('show');
@@ -226,6 +241,7 @@
             "scrollY": "550px",
         });
 
+        @if (in_array(auth()->user()->role, ['admin', 'su']))
         $('#createForm').submit(function(e){
             e.preventDefault();
             Swal.fire({
@@ -244,6 +260,7 @@
                 }
             });
         });
+        @endif
     });
 </script>
 @endpush

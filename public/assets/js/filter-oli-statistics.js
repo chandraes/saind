@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const content = modal.querySelector('[data-ritase-content]');
     let controller;
     modal.addEventListener('show.bs.modal', async (event) => {
+        if (modal.dataset.vendorReadonly === 'true') {
+            vendorStatisticsAudit(content, event.relatedTarget.dataset.ritaseUrl, true);
+            return;
+        }
         controller?.abort();
         const request = new AbortController();
         controller = request;

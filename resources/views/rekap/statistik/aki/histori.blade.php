@@ -21,6 +21,7 @@
     @include('swal')
 
     <!-- Modal Delete / Password -->
+    @if (in_array(auth()->user()->role, ['admin', 'su']))
     <div class="modal fade" id="passwordModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow">
@@ -76,13 +77,15 @@
 
     <div class="alert alert-light border shadow-sm mb-4"><i class="fa fa-info-circle text-primary me-2"></i>Umur aki dihitung dari tanggal pemasangan sampai penggantian berikutnya. Untuk aki yang masih digunakan, umur dihitung sampai hari ini.</div>
     <!-- Tabel Histori Data -->
+    @endif
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white p-3"><h5 class="fw-bold mb-1">Riwayat penggantian</h5><p class="text-muted small mb-0">Urutan terbaru ditampilkan terlebih dahulu.</p></div>
         <div class="card-body p-3">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
+                <table class="table table-bordered table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
                     <thead class="table-success">
                         <tr>
+                            @if (auth()->user()->role === 'vendor-operational')<th>No</th>@endif
                             <th class="text-center">MEREK</th>
                             <th class="text-center">KONDISI AKI</th>
                             <th class="text-center">TANGGAL GANTI</th>
@@ -110,8 +113,13 @@
 <script src="{{ asset('assets/js/dt5.min.js') }}"></script>
 <script src="{{ asset('assets/js/moment.min.js') }}"></script>
 <script src="{{ asset('assets/js/flatpickr/flatpickr.js') }}"></script>
+@once('incremental-data-table')
+<script src="{{ asset('assets/js/incremental-data-table.js') }}?v={{ filemtime(public_path('assets/js/incremental-data-table.js')) }}"></script>
+@endonce
+<script src="{{ asset('assets/js/vendor-statistics-table.js') }}?v={{ filemtime(public_path('assets/js/vendor-statistics-table.js')) }}"></script>
 <script>
     $(document).ready(function(){
+        @if (in_array(auth()->user()->role, ['admin', 'su']))
         $(document).on('click', '.delete-btn', function() {
             var id = $(this).data('id');
             $('#itemId').val(id);
@@ -130,6 +138,7 @@
             });
         });
 
+        @endif
         var userRole = "{{ auth()->user()->role }}";
 
         var columns = [
@@ -160,6 +169,7 @@
                 } }
         ];
 
+        @if (in_array(auth()->user()->role, ['admin', 'su']))
         if (userRole === 'admin' || userRole === 'su') {
             columns.push({
                 data: null,
@@ -176,6 +186,14 @@
             });
         }
 
+        @endif
+        @if (auth()->user()->role === 'vendor-operational')
+        columns.unshift({data: null, render: (data, type, row, meta) => meta.row + 1});
+        vendorStatisticsTable('#rekapTable', {columns: columns,
+            url: @json(route('statistik.aki.histori-data')),
+            data: {vehicle: @json($vehicle->id), posisi: @json($posisi->id)}
+        });
+        @else
         $('#rekapTable').DataTable({
             'processing': true,
             'serverSide': true,
@@ -193,6 +211,7 @@
             'language': { search: 'Cari merek:', lengthMenu: 'Tampilkan _MENU_ data', info: '_START_–_END_ dari _TOTAL_ riwayat', infoEmpty: 'Belum ada riwayat', infoFiltered: '(dari _MAX_ riwayat)', zeroRecords: 'Riwayat tidak ditemukan', emptyTable: 'Belum ada riwayat penggantian aki', processing: 'Memuat riwayat...', paginate: { next: 'Berikutnya', previous: 'Sebelumnya' } },
             'columns': columns
         });
+        @endif
     });
 </script>
 @endpush

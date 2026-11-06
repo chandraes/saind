@@ -8,6 +8,7 @@ use App\Models\FilterOliLog;
 use App\Models\KategoriFilterOliMesin;
 use App\Models\Vehicle;
 use App\Services\FilterOliRitaseService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -55,15 +56,23 @@ class FilterOliReportController extends Controller
         return $controller->show($id)->with('backUrl', route('rekap.maintenance.filter-oli'));
     }
 
-    public function statistics(Request $request): View
+    public function statistics(Request $request): View|RedirectResponse
     {
+        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+            return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'filter-oli']);
+        }
         $filters = $request->validate(['vehicle_id' => ['nullable', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true))]]);
-        $vehicles = Vehicle::where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true)->orderBy('nomor_lambung')->get();
+        $vehicles = Vehicle::where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true)
+            ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('vendor_id', $request->user()->vendor_id)->whereKey($request->input('vehicle_id')))
+            ->orderBy('nomor_lambung')->get();
         $vehicle = isset($filters['vehicle_id']) ? $vehicles->firstWhere('id', $filters['vehicle_id']) : null;
         $categories = KategoriFilterOliMesin::orderBy('id')->get();
         $logs = collect();
         if ($vehicle) {
             $logs = FilterOliLog::with('kategori')->where('vehicle_id', $vehicle->id)
+                ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('id', function ($latest) {
+                    $latest->from('filter_oli_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'filter_oli_logs.vehicle_id')->whereColumn('latest.kategori_filter_oli_mesin_id', 'filter_oli_logs.kategori_filter_oli_mesin_id')->where('latest.created_at', '<=', now())->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
+                }))
                 ->where('created_at', '<=', now())->latest()->orderByDesc('id')->get()
                 ->unique('kategori_filter_oli_mesin_id')->keyBy('kategori_filter_oli_mesin_id');
         }
@@ -72,17 +81,28 @@ class FilterOliReportController extends Controller
         return view('rekap.statistik.filter-oli.index', compact('vehicles', 'vehicle', 'categories', 'logs', 'dueCount'));
     }
 
-    public function history(int $vehicle, int $category): View
+    public function history(Request $request, int $vehicle, int $category): View|JsonResponse
     {
         $vehicle = Vehicle::findOrFail($vehicle);
         $category = KategoriFilterOliMesin::findOrFail($category);
+        if ($request->user()->role === 'vendor-operational' && ! $request->ajax()) {
+            return view('rekap.statistik.filter-oli.vendor-history', compact('vehicle', 'category'));
+        }
         $logs = FilterOliLog::where('vehicle_id', $vehicle->id)->where('kategori_filter_oli_mesin_id', $category->id)
-            ->latest()->orderByDesc('id')->paginate(25)->withQueryString();
+            ->latest()->orderByDesc('id');
+
+        if ($request->user()->role === 'vendor-operational') {
+            $total = (clone $logs)->count();
+            $logs = $logs->offset(max(0, $request->integer('start')))->limit(25)->get();
+
+            return response()->json(['data' => $logs->map(fn ($log) => ['id' => $log->id, 'tanggal' => $log->created_at->format('d-m-Y'), 'merk' => $log->merk, 'kondisi' => $log->kondisi, 'ritase' => $log->ritase]), 'recordsFiltered' => $total]);
+        }
+        $logs = $logs->paginate(25)->withQueryString();
 
         return view('rekap.statistik.filter-oli.history', compact('vehicle', 'category', 'logs'));
     }
 
-    public function transactions(int $log): View
+    public function transactions(Request $request, int $log): View|JsonResponse
     {
         $log = FilterOliLog::with('kategori')->findOrFail($log);
         $transactions = DB::table('filter_oli_log_transaksis as audit')
@@ -91,7 +111,14 @@ class FilterOliReportController extends Controller
             ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
             ->where('audit.filter_oli_log_id', $log->id)
             ->select('transaksis.id', 'transaksis.created_at', 'kas_uang_jalans.nomor_uang_jalan', 'rutes.nama as rute', 'rutes.jarak', 'audit.nilai_ritase')
-            ->orderBy('transaksis.created_at')->orderBy('transaksis.id')->get();
+            ->orderBy('transaksis.created_at')->orderBy('transaksis.id');
+        if ($request->user()->role === 'vendor-operational') {
+            $transactions->where('kas_uang_jalans.vendor_id', $request->user()->vendor_id)->where('kas_uang_jalans.vehicle_id', $log->vehicle_id);
+            $total = (clone $transactions)->count();
+
+            return response()->json(['data' => $transactions->offset(max(0, $request->integer('start')))->limit(25)->get(), 'recordsFiltered' => $total]);
+        }
+        $transactions = $transactions->get();
 
         return view('rekap.statistik.filter-oli.transactions', compact('log', 'transactions'));
     }

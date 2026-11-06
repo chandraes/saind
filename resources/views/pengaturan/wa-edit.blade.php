@@ -14,7 +14,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Oops...',
-                text: '{{ session('error') }}',
+                text: @json(session('error')),
             });
         });
     </script>
@@ -27,6 +27,12 @@
                     <h5 class="card-title mb-0"><i class="fa fa-pencil me-2"></i> Form Ubah Data Grup</h5>
                 </div>
                 <div class="card-body p-4">
+                    @if ($groupsUnavailable)
+                        <div class="alert alert-warning" role="alert">Daftar grup WhatsApp belum dapat dimuat dari StarSender. Coba muat ulang halaman atau periksa koneksi perangkat dan konfigurasi API.</div>
+                    @elseif ($group === [])
+                        <div class="alert alert-warning" role="alert">Belum ada grup WhatsApp yang tersedia pada perangkat ini.</div>
+                    @endif
+                    <p class="small text-muted">Grup saat ini: <strong>{{ $data->group_id ?: $data->nama_group ?: 'Belum diatur' }}</strong>. Data lama tetap tersimpan sampai perubahan berhasil disimpan.</p>
                     <form action="{{ route('pengaturan.wa.update', $data->id) }}" method="post" id="masukForm">
                         @csrf
                         @method('PATCH')
@@ -45,10 +51,10 @@
 
                             <div class="col-md-6">
                                 <label for="nama_group" class="form-label fw-bold">Pilih Grup WA <span class="text-danger">*</span></label>
-                                <select class="form-select" name="nama_group" id="nama_group" required>
-                                    <option value="" disabled>-- Pilih Grup --</option>
+                                <select class="form-select" name="nama_group" id="nama_group" required @disabled($group === [])>
+                                    <option value="" disabled @selected(! collect($group)->contains('id', $data->nama_group))>-- Pilih Grup --</option>
                                     @foreach ($group as $g)
-                                        <option value="{{ $g['id'] }}" {{ $data->nama_group == $g['id'] ? 'selected' : '' }}>
+                                        <option value="{{ $g['id'] }}" @selected($data->nama_group === $g['id'])>
                                             {{ $g['name'] }}
                                         </option>
                                     @endforeach
@@ -60,7 +66,7 @@
                             <a class="btn btn-outline-secondary" href="{{ url()->previous() }}">
                                 <i class="fa fa-arrow-left me-1"></i> Kembali
                             </a>
-                            <button class="btn btn-success px-4" type="submit">
+                            <button class="btn btn-success px-4" type="submit" id="save-wa-group" @disabled($group === [])>
                                 <i class="fa fa-save me-1"></i> Simpan
                             </button>
                         </div>

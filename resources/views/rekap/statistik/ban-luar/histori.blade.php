@@ -21,6 +21,7 @@
     @include('swal')
 
     <!-- Modal Delete / Password -->
+    @if (in_array(auth()->user()->role, ['admin', 'su']))
     <div class="modal fade" id="passwordModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow">
@@ -75,12 +76,14 @@
     </div>
 
     <!-- Tabel Histori Data -->
+    @endif
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
+                <table class="table table-bordered table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
                     <thead class="table-dark">
                         <tr>
+                            @if (auth()->user()->role === 'vendor-operational')<th>No</th>@endif
                             <th class="text-center">MEREK</th>
                             <th class="text-center">NO. SERI BAN</th>
                             <th class="text-center">KONDISI BAN</th>
@@ -107,8 +110,8 @@
                 </div>
                 <div class="modal-body p-0">
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                        <table class="table table-hover table-striped mb-0 text-center">
-                            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                        <table class="table table-bordered table-hover table-striped mb-0 text-center">
+                            <thead class="table-success" style="position: sticky; top: 0; z-index: 1;">
                                 <tr>
                                     <th>TANGGAL</th>
                                     <th>NO. UJ</th>
@@ -140,11 +143,21 @@
 <script src="{{ asset('assets/js/dt5.min.js') }}"></script>
 <script src="{{ asset('assets/js/moment.min.js') }}"></script>
 <script src="{{ asset('assets/js/flatpickr/flatpickr.js') }}"></script>
+@once('incremental-data-table')
+<script src="{{ asset('assets/js/incremental-data-table.js') }}?v={{ filemtime(public_path('assets/js/incremental-data-table.js')) }}"></script>
+@endonce
+<script src="{{ asset('assets/js/vendor-statistics-table.js') }}?v={{ filemtime(public_path('assets/js/vendor-statistics-table.js')) }}"></script>
 <script>
     $(document).ready(function(){
           $(document).on('click', '.show-transaksi', function() {
             var banLogId = $(this).data('id');
             var tbody = $('#tbodyDetailRitase');
+            @if (auth()->user()->role === 'vendor-operational')
+            vendorStatisticsAudit($('#modalDetailRitase .modal-body'), @json(route('statistik.ban-luar.transaksi-ritase', ['banLogId' => 'LOGID'])).replace('LOGID', banLogId), false);
+            $('#modalDetailRitase').modal('show');
+            return;
+            @endif
+
 
             tbody.html('<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><br>Mengambil data...</td></tr>');
             $('#modalDetailRitase').modal('show');
@@ -181,6 +194,7 @@
         });
 
 
+        @if (in_array(auth()->user()->role, ['admin', 'su']))
         $(document).on('click', '.delete-btn', function() {
             var id = $(this).data('id');
             $('#itemId').val(id);
@@ -199,6 +213,7 @@
             });
         });
 
+        @endif
         var userRole = "{{ auth()->user()->role }}";
 
         var columns = [
@@ -234,6 +249,7 @@
             }
         ];
 
+        @if (in_array(auth()->user()->role, ['admin', 'su']))
         if (userRole === 'admin' || userRole === 'su') {
             columns.push({
                 data: null,
@@ -248,6 +264,14 @@
             });
         }
 
+        @endif
+        @if (auth()->user()->role === 'vendor-operational')
+        columns.unshift({data: null, render: (data, type, row, meta) => meta.row + 1});
+        vendorStatisticsTable('#rekapTable', {columns: columns,
+            url: @json(route('statistik.ban-luar.histori-data')),
+            data: {vehicle: @json($vehicle->id), posisi: @json($posisi->id)}
+        });
+        @else
         $('#rekapTable').DataTable({
             'processing': true,
             'serverSide': true,
@@ -263,6 +287,7 @@
             },
             'columns': columns
         });
+        @endif
     });
 </script>
 @endpush

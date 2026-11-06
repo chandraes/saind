@@ -147,7 +147,7 @@ class TransaksiVoidTest extends TestCase
         $this->assertTrue(session()->has('success'), (string) session('error'));
         $this->assertDatabaseHas('transaksis', ['id' => $transaction->id, 'void' => 1, 'nota_muat' => null, 'nota_bongkar' => null]);
         $this->assertDatabaseHas('kas_uang_jalans', ['kode_void' => 'UJ12', 'nominal_transaksi' => 500000, 'saldo' => 1500000]);
-        $this->assertDatabaseHas('uj_ditahan_details', ['uj_ditahan_id' => $master, 'transaksi_id' => $transaction->id, 'jenis' => 'keluar', 'nominal' => 100000, 'driver_id' => 1, 'bank' => 'BRI', 'no_rekening' => '456']);
+        $this->assertDatabaseHas('uj_ditahan_details', ['uj_ditahan_id' => $master, 'transaksi_id' => $transaction->id, 'jenis' => 'keluar', 'nominal' => 100000, 'driver_id' => 1, 'bank' => 'BCA', 'no_rekening' => '123', 'nama_rekening' => 'Kas']);
         $this->assertDatabaseHas('uj_ditahans', ['id' => $master, 'saldo' => 0, 'total_keluar' => 100000]);
         $this->assertDatabaseHas('vehicles', ['id' => 1, 'do_count' => 1, 'status' => 'aktif']);
         $this->assertDatabaseHas('ban_logs', ['id' => 1, 'ritase' => 4.5]);

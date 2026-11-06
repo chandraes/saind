@@ -81,21 +81,7 @@ $roleAllowed = ['admin', 'su'];
     <div class="card shadow-sm border-0">
         <div class="card-body p-0 table-responsive">
             <table class="table align-middle table-hover mb-0" id="data-table" style="font-size: 0.9rem;">
-                <thead class="table-success border-bottom">
-                    <tr>
-                        <th class="text-center" style="width: 110px;">Tanggal</th>
-                        <th class="text-center" style="width: 180px;">Vendor</th>
-                        <th class="text-center" style="width: 160px;">Invoice</th>
-                        <th class="text-center" style="width: 130px;">Jatuh Tempo</th>
-                        <th class="text-end" style="width: 180px;">Total Bayar</th>
-                        @if (Auth::user()->role !== 'vendor')
-                        <th class="text-center" style="width: 120px;">Pembayaran</th>
-                        @endif
-                        @if (Auth::user()->role == 'su' || Auth::user()->role == 'admin')
-                        <th class="text-center" style="width: 100px;">Aksi</th>
-                        @endif
-                    </tr>
-                </thead>
+                @include('billing.transaksi.invoice.vendor-list-head')
                 <tbody>
                     @php $today = date('Y-m-d'); @endphp
                     @foreach ($data as $d)

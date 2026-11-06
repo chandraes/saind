@@ -12,7 +12,7 @@
             <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/dashboard.svg') }}" width="18" alt="Dashboard"> Dashboard
             </a>
-            @if (!in_array(auth()->user()->role, ['asisten-user', 'operasional', 'vendor']))
+            @if (!in_array(auth()->user()->role, ['asisten-user', 'operasional', 'vendor', 'vendor-operational']))
             <a href="{{ route('rekap.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/rekap.svg') }}" width="18" alt="Rekap"> Rekap
             </a>
@@ -23,6 +23,9 @@
         </div>
     </div>
 
+    @if (auth()->user()->role === 'vendor-operational')
+    <a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'aki']) }}" class="btn btn-outline-primary mb-3"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a>
+    @endif
     @include('swal')
 
     @if ($errors->any())
@@ -67,7 +70,7 @@
         <div class="card-header bg-white p-3"><h5 class="fw-bold mb-1">Aki saat ini</h5><p class="text-muted small mb-0">Umur dihitung dari tanggal ganti sampai hari ini. Data tanpa riwayat ditampilkan sebagai tanda pisah.</p></div>
         <div class="card-body p-3">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="rekapTable">
+                <table class="table table-bordered table-hover align-middle mb-0" id="rekapTable">
                     <thead class="table-success">
                         <tr>
                             <th class="text-center" style="width: 50px;">NO</th>
@@ -84,7 +87,7 @@
                         <tr>
                             <td class="text-center fw-bold">{{ $loop->iteration }}</td>
                             <td class="fw-semibold">
-                                <i class="fa fa-car-battery me-1 text-primary"></i>{{ $d->nama }}
+                                <i class="fa fa-battery-full me-1 text-primary"></i>{{ $d->nama }}
                             </td>
                             <td class="text-center text-uppercase">{{ $d->akiLog['merk'] ?? '-' }}</td>
                             <td class="text-center">

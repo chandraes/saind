@@ -63,6 +63,7 @@ use App\Http\Controllers\UjDitahanPayoutCancellationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\VendorOperationalBillingController;
 use App\Http\Controllers\WaController;
 use App\Http\Middleware\EnsureVendorOperationalVehicle;
 use App\Models\LoadNoteDraft;
@@ -335,7 +336,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::prefix('pengaturan')->group(function () {
             Route::get('/wa', [WaController::class, 'wa'])->name('pengaturan.wa');
-            Route::get('/wa/edit/{id}', [WaController::class, 'edit'])->name('pengaturan.wa.edit');
+            Route::get('/wa/edit/{id}', [WaController::class, 'edit'])->whereNumber('id')->name('pengaturan.wa.edit');
             Route::patch('/wa/update/{id}', [WaController::class, 'update'])->name('pengaturan.wa.update');
             Route::get('/nota-transaksi', [KonfigurasiController::class, 'index'])->name('pengaturan.nota-transaksi');
             Route::patch('/nota-transaksi/update/{konfigurasi}', [KonfigurasiController::class, 'update'])->name('pengaturan.konfigurasi-transaksi.update');
@@ -553,32 +554,35 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational'], function () {
-        Route::prefix('statistik/perform-unit')->group(function () {
-            Route::get('/', [StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
-            Route::get('/print', [StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
-        });
+        Route::middleware(EnsureVendorOperationalVehicle::class.':statistics')->group(function (): void {
+            Route::get('/statistik/upah-gendong', [StatistikController::class, 'upah_gendong'])->middleware('role:admin,user,su,vendor-operational')->name('statistik.upah-gendong');
+            Route::prefix('statistik/perform-unit')->group(function () {
+                Route::get('/', [StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
+                Route::get('/print', [StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
+            });
 
-        Route::prefix('statistik/ban-luar')->group(function () {
-            Route::get('/', [BanController::class, 'index'])->name('statistik.ban-luar');
-            Route::get('/transaksi-ritase/{banLogId}', [BanController::class, 'get_transaksi_ritase'])->name('statistik.ban-luar.transaksi-ritase');
-            Route::get('/{vehicle}/{posisi}/histori', [BanController::class, 'histori'])->name('statistik.ban-luar.histori');
-            Route::get('/histori-data', [BanController::class, 'histori_data'])->name('statistik.ban-luar.histori-data');
-            Route::post('/histori-destroy/{histori}', [BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
-            Route::patch('/histori-update/{histori}', [BanController::class, 'histori_update'])->name('statistik.ban-luar.histori-update');
-        });
+            Route::prefix('statistik/ban-luar')->group(function () {
+                Route::get('/', [BanController::class, 'index'])->name('statistik.ban-luar');
+                Route::get('/transaksi-ritase/{banLogId}', [BanController::class, 'get_transaksi_ritase'])->name('statistik.ban-luar.transaksi-ritase');
+                Route::get('/{vehicle}/{posisi}/histori', [BanController::class, 'histori'])->name('statistik.ban-luar.histori');
+                Route::get('/histori-data', [BanController::class, 'histori_data'])->name('statistik.ban-luar.histori-data');
+                Route::post('/histori-destroy/{histori}', [BanController::class, 'histori_delete'])->name('statistik.ban-luar.histori-destroy');
+                Route::patch('/histori-update/{histori}', [BanController::class, 'histori_update'])->name('statistik.ban-luar.histori-update');
+            });
 
-        Route::get('statistik/filter-oli/transaksi-ritase/{log}', [FilterOliReportController::class, 'transactions'])->name('statistik.filter-oli.transaksi-ritase');
-        Route::patch('statistik/filter-oli/histori/{log}', [FilterOliReportController::class, 'updateHistory'])->middleware('role:su,admin')->name('statistik.filter-oli.histori.update');
-        Route::delete('statistik/filter-oli/histori/{log}', [FilterOliReportController::class, 'deleteHistory'])->middleware('role:su,admin')->name('statistik.filter-oli.histori.destroy');
-        Route::get('statistik/filter-oli', [FilterOliReportController::class, 'statistics'])->name('statistik.filter-oli');
-        Route::get('statistik/filter-oli/{vehicle}/{category}/histori', [FilterOliReportController::class, 'history'])->name('statistik.filter-oli.histori');
+            Route::get('statistik/filter-oli/transaksi-ritase/{log}', [FilterOliReportController::class, 'transactions'])->name('statistik.filter-oli.transaksi-ritase');
+            Route::patch('statistik/filter-oli/histori/{log}', [FilterOliReportController::class, 'updateHistory'])->middleware('role:su,admin')->name('statistik.filter-oli.histori.update');
+            Route::delete('statistik/filter-oli/histori/{log}', [FilterOliReportController::class, 'deleteHistory'])->middleware('role:su,admin')->name('statistik.filter-oli.histori.destroy');
+            Route::get('statistik/filter-oli', [FilterOliReportController::class, 'statistics'])->name('statistik.filter-oli');
+            Route::get('statistik/filter-oli/{vehicle}/{category}/histori', [FilterOliReportController::class, 'history'])->name('statistik.filter-oli.histori');
 
-        Route::prefix('statistik/aki')->group(function () {
-            Route::get('/', [StatistikController::class, 'aki_log'])->name('statistik.aki');
-            Route::get('/histori-data', [StatistikController::class, 'aki_histori_data'])->name('statistik.aki.histori-data');
-            Route::get('/{vehicle}/{posisi}/histori', [StatistikController::class, 'aki_histori'])->name('statistik.aki.histori');
-            Route::post('/histori-destroy/{histori}', [StatistikController::class, 'aki_histori_delete'])->name('statistik.aki.histori-destroy');
-            Route::patch('/histori-update/{histori}', [StatistikController::class, 'aki_histori_update'])->name('statistik.aki.histori-update');
+            Route::prefix('statistik/aki')->group(function () {
+                Route::get('/', [StatistikController::class, 'aki_log'])->name('statistik.aki');
+                Route::get('/histori-data', [StatistikController::class, 'aki_histori_data'])->name('statistik.aki.histori-data');
+                Route::get('/{vehicle}/{posisi}/histori', [StatistikController::class, 'aki_histori'])->name('statistik.aki.histori');
+                Route::post('/histori-destroy/{histori}', [StatistikController::class, 'aki_histori_delete'])->name('statistik.aki.histori-destroy');
+                Route::patch('/histori-update/{histori}', [StatistikController::class, 'aki_histori_update'])->name('statistik.aki.histori-update');
+            });
         });
     });
 
@@ -983,8 +987,6 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/perform-vendor', [StatistikController::class, 'perform_vendor'])->name('statistik.perform-vendor');
             Route::get('/vendor', [StatistikController::class, 'statistik_vendor'])->name('statistik.vendor');
 
-            Route::get('/upah-gendong', [StatistikController::class, 'upah_gendong'])->name('statistik.upah-gendong');
-
         });
 
         // Route::get('dokumen/template-new', [App\Http\Controllers\DokumenNewController::class, 'index'])->name('template-new');
@@ -1037,6 +1039,16 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => ['role:vendor-operational', EnsureVendorOperationalVehicle::class]], function () {
         Route::prefix('vendor-operational')->group(function () {
+            Route::name('vendor-operational.')->group(function (): void {
+                Route::get('/nota-bongkar', [VendorOperationalBillingController::class, 'unloading'])->name('nota-bongkar');
+                Route::get('/nota-bongkar/{transaction}', [VendorOperationalBillingController::class, 'unloadingShow'])->whereNumber('transaction')->name('nota-bongkar.show');
+                Route::get('/nota-bayar', [VendorOperationalBillingController::class, 'notes'])->name('nota-bayar');
+                Route::get('/nota-bayar/{kind}/{record}', [VendorOperationalBillingController::class, 'noteShow'])->whereNumber('record')->name('nota-bayar.show');
+                Route::get('/invoice', [VendorOperationalBillingController::class, 'invoices'])->name('invoice');
+                Route::get('/invoice/{kind}/{record}', [VendorOperationalBillingController::class, 'invoiceShow'])->whereNumber('record')->name('invoice.show');
+                Route::get('/statistics/vehicles', [StatistikController::class, 'vendorStatisticsVehicles'])->middleware(EnsureVendorOperationalVehicle::class.':statistics')->name('statistics.vehicles');
+            });
+
             // Route::get('kas-per-vendor/{vendor}', [App\Http\Controllers\RekapController::class, 'kas_per_vendor'])->name('vendor-operational.kas-per-vendor.index');
             // Route::get('kas-per-vendor/{invoiceBayar}/detail', [App\Http\Controllers\RekapController::class, 'kas_per_vendor_detail'])->name('vendor-operational.kas-per-vendor.detail');
             // Route::get('pritn-kas-per-vendor/{vendor}/{bulan}/{tahun}', [App\Http\Controllers\RekapController::class, 'print_kas_per_vendor'])->name('vendor-operational.print-kas-per-vendor.index');

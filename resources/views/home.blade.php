@@ -7,7 +7,7 @@
             <h1><u>DASHBOARD</u></h1>
         </div>
     </div>
-    <div class="row justify-content-left mt-5">
+    <div class="row justify-content-left {{ auth()->user()->role === 'vendor-operational' ? 'd-none' : 'mt-5' }}">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database')}}" class="text-decoration-none">

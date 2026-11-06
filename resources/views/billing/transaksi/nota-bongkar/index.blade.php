@@ -35,17 +35,7 @@
     <table class="table table-bordered table-hover" id="data-table">
         <thead class="table-success">
             <tr>
-                <th class="text-center align-middle">No</th>
-                <th class="text-center align-middle">Tanggal</th>
-                <th class="text-center align-middle">Kode</th>
-                <th class="text-center align-middle">Nomor Lambung</th>
-                <th class="text-center align-middle">Vendor</th>
-                <th class="text-center align-middle">Tambang</th>
-                <th class="text-center align-middle">Rute</th>
-                <th class="text-center align-middle">Tanggal Muat</th>
-                <th class="text-center align-middle">Nota Muat</th>
-                <th class="text-center align-middle">Timbangan Muat</th>
-                <th class="text-center align-middle">Action</th>
+                @include('billing.transaksi.nota-bongkar.table-head')
             </tr>
         </thead>
         <tbody>

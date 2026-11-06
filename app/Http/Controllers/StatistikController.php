@@ -21,9 +21,11 @@ use App\Models\Vehicle;
 use App\Models\Vendor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class StatistikController extends Controller
 {
@@ -40,8 +42,28 @@ class StatistikController extends Controller
         ]);
     }
 
+    public function vendorStatisticsVehicles(Request $request): View|JsonResponse
+    {
+        $report = $request->validate(['report' => 'required|in:upah-gendong,aki,ban-luar,filter-oli', 'q' => 'nullable|string|max:100', 'page' => 'nullable|integer|min:1'])['report'];
+        if ($request->ajax()) {
+            $query = Vehicle::where('vendor_id', $request->user()->vendor_id)->where('status', '!=', 'nonaktif');
+            if ($report === 'filter-oli') {
+                $query->where('pembatasan_filter_oli', true);
+            }
+            $vehicles = $query->where('nomor_lambung', 'like', '%'.$request->input('q', '').'%')->orderBy('nomor_lambung')->orderBy('id')->simplePaginate(25);
+
+            return response()->json(['results' => $vehicles->map(fn ($vehicle) => ['id' => $vehicle->id, 'text' => $vehicle->nomor_lambung]), 'pagination' => ['more' => $vehicles->hasMorePages()]]);
+        }
+
+        return view('rekap.statistik.vendor-selection', compact('report'));
+    }
+
     public function upah_gendong(Request $request)
     {
+        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+            return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'upah-gendong']);
+        }
+
         $vehicle = $request->vehicle_id;
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
@@ -55,7 +77,26 @@ class StatistikController extends Controller
 
         $db = new Transaksi;
 
-        $all = $db->upahGendong($vehicle, $bulan, $tahun, $tanggal_filter);
+        $isVendorOperational = $request->user()->role === 'vendor-operational';
+        if ($isVendorOperational) {
+            $request->validate(['bulan' => 'nullable|integer|between:1,12', 'tahun' => 'nullable|integer|between:2000,2100', 'tanggal_filter' => ['nullable', 'regex:/^\d{2}-\d{2}-\d{4}( to \d{2}-\d{2}-\d{4})?$/'], 'start' => 'nullable|integer|min:0']);
+        }
+        $all = $db->upahGendong($vehicle, $bulan, $tahun, $tanggal_filter, $isVendorOperational, max(0, $request->integer('start')));
+        if ($isVendorOperational) {
+            if ($request->ajax()) {
+                $ug = $all['ug'];
+                $rows = $all['data']->map(function ($transaction) use ($ug): array {
+                    $route = $transaction->kas_uang_jalan->rute;
+                    $excess = $route->jarak > 50 ? max(0, $transaction->timbangan_bongkar - $ug->tonase_min) : 0;
+
+                    return ['hari' => $transaction->kas_uang_jalan->hari, 'id_tanggal' => $transaction->kas_uang_jalan->id_tanggal, 'rute' => $route->nama, 'jarak' => $route->jarak, 'under_50' => $route->jarak < 50 ? $transaction->timbangan_bongkar : 0, 'over_50' => $route->jarak > 50 ? $transaction->timbangan_bongkar : 0, 'kelebihan' => $excess, 'nominal' => $excess * $ug->nominal];
+                });
+
+                return response()->json(['data' => $rows, 'recordsFiltered' => $all['recordsTotal']]);
+            }
+
+            return view('rekap.statistik.upah-gendong.vendor-index', $all);
+        }
 
         return view('rekap.statistik.upah-gendong.index', $all);
 
@@ -1463,7 +1504,7 @@ class StatistikController extends Controller
 
         $transaksiModel = new Transaksi;
 
-        if (Auth::user()->role === 'vendor') {
+        if (in_array(Auth::user()->role, ['vendor', 'vendor-operational'])) {
             $filters['vendor'] = Auth::user()->vendor_id;
         }
 
@@ -1484,7 +1525,7 @@ class StatistikController extends Controller
             'offset' => $request->input('offset', 0),
         ];
 
-        if (Auth::user()->role === 'vendor') {
+        if (in_array(Auth::user()->role, ['vendor', 'vendor-operational'])) {
             $filters['vendor'] = Auth::user()->vendor_id;
         }
 
@@ -1501,6 +1542,10 @@ class StatistikController extends Controller
 
     public function aki_log(Request $request)
     {
+        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+            return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'aki']);
+        }
+
         $validate = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
         ]);
@@ -1509,6 +1554,9 @@ class StatistikController extends Controller
         $vehicle = Vehicle::findOrFail($vehicleId);
 
         $latestLogs = AkiLog::where('vehicle_id', $vehicleId)
+            ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('id', function ($latest) {
+                $latest->from('aki_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'aki_logs.vehicle_id')->whereColumn('latest.posisi_aki_id', 'aki_logs.posisi_aki_id')->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
+            }))
             ->orderByDesc('created_at')->orderByDesc('id')->get()
             ->unique('posisi_aki_id')->keyBy('posisi_aki_id');
         $today = today();

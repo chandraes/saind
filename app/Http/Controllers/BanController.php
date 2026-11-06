@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\BanLog;
 use App\Models\PasswordKonfirmasi;
 use App\Models\PosisiBan;
-use App\Models\UpahGendong;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,45 +15,53 @@ class BanController extends Controller
 {
     public function index(Request $request)
     {
+        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+            return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'ban-luar']);
+        }
+
         $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
         ]);
 
-        if(Auth::user()->role === 'vendor') {
+        if (Auth::user()->role === 'vendor') {
             $vehicle = Vehicle::where('id', $request->vehicle_id)
-                        ->where('vendor_id', Auth::user()->vendor_id)
-                        ->first();
+                ->where('vendor_id', Auth::user()->vendor_id)
+                ->first();
 
-            if (!$vehicle) {
+            if (! $vehicle) {
                 return redirect()->back()->with('error', 'Kendaraan tidak ditemukan atau tidak sesuai dengan vendor Anda.');
             }
 
         }
 
         $vehicle = Vehicle::leftJoin('upah_gendongs as ug', 'vehicles.id', 'ug.vehicle_id')
-                        ->where('vehicles.id', $request->vehicle_id)
-                        ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus')
-                        ->first();
+            ->where('vehicles.id', $request->vehicle_id)
+            ->select('vehicles.*', 'ug.nama_driver as nama_driver', 'ug.nama_pengurus as pengurus')
+            ->first();
 
         // UPDATE: Tambahkan 'id' di dalam select
         $banLogs = BanLog::where('vehicle_id', $request->vehicle_id)
-                        ->select('id', 'posisi_ban_id', 'merk', 'no_seri', 'kondisi', 'ritase', 'created_at')
-                        ->orderBy('created_at', 'desc')
-                        ->get()
-                        ->unique('posisi_ban_id')
-                        ->mapWithKeys(function ($banLog) {
-                            return [$banLog->posisi_ban_id => [
-                                'id' => $banLog->id, // UPDATE: Masukkan id ke dalam array mapping
-                                'merk' => $banLog->merk,
-                                'no_seri' => $banLog->no_seri,
-                                'kondisi' => $banLog->kondisi,
-                                'ritase' => $banLog->ritase,
-                                'tanggal_ganti' => \Carbon\Carbon::parse($banLog->created_at)->format('d-m-Y'),
-                            ]];
-                        });
+            ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('id', function ($latest) {
+                $latest->from('ban_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'ban_logs.vehicle_id')->whereColumn('latest.posisi_ban_id', 'ban_logs.posisi_ban_id')->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
+            }))
+            ->select('id', 'posisi_ban_id', 'merk', 'no_seri', 'kondisi', 'ritase', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->unique('posisi_ban_id')
+            ->mapWithKeys(function ($banLog) {
+                return [$banLog->posisi_ban_id => [
+                    'id' => $banLog->id, // UPDATE: Masukkan id ke dalam array mapping
+                    'merk' => $banLog->merk,
+                    'no_seri' => $banLog->no_seri,
+                    'kondisi' => $banLog->kondisi,
+                    'ritase' => $banLog->ritase,
+                    'tanggal_ganti' => Carbon::parse($banLog->created_at)->format('d-m-Y'),
+                ]];
+            });
 
         $ban = PosisiBan::all()->map(function ($ban) use ($banLogs) {
             $ban->banLog = $banLogs[$ban->id] ?? null;
+
             return $ban;
         });
 
@@ -63,7 +71,7 @@ class BanController extends Controller
         ]);
     }
 
-    public function get_transaksi_ritase($banLogId)
+    public function get_transaksi_ritase(Request $request, $banLogId)
     {
         // Query ini akan mengambil riwayat transaksi dari pivot dan menggabungkannya
         // dengan data KasUangJalan dan Rute agar informatif.
@@ -80,8 +88,14 @@ class BanController extends Controller
                 'ban_log_transaksis.nilai_ritase',
                 'ban_log_transaksis.created_at'
             )
-            ->orderBy('kas_uang_jalans.tanggal', 'desc')
-            ->get();
+            ->orderBy('kas_uang_jalans.tanggal', 'desc')->orderByDesc('transaksis.id');
+        if ($request->user()->role === 'vendor-operational') {
+            $transaksis->where('kas_uang_jalans.vendor_id', $request->user()->vendor_id)->where('kas_uang_jalans.vehicle_id', BanLog::findOrFail($banLogId)->vehicle_id);
+            $total = (clone $transaksis)->count();
+
+            return response()->json(['data' => $transaksis->offset(max(0, $request->integer('start')))->limit(25)->get(), 'recordsFiltered' => $total]);
+        }
+        $transaksis = $transaksis->get();
 
         return response()->json($transaksis);
     }
@@ -113,37 +127,31 @@ class BanController extends Controller
     }
 
     public function histori_data(Request $request)
-
     {
-        if ($request->ajax()) {
-            $length = $request->get('length');
-
-            // Tambahkan ritase ke daftar kolom yang dapat di-sort
-            $columns = ['merk', 'no_seri', 'kondisi', 'ritase', 'created_at'];
-
-            $query = BanLog::where('vehicle_id', $request->vehicle)
-                        ->where('posisi_ban_id', $request->posisi)
-                        ->orderBy('created_at', 'desc');
-
-            if ($request->has('order')) {
-                $columnIndex = $request->get('order')[0]['column'];
-                $sortDirection = $request->get('order')[0]['dir'];
-                $column = $columns[$columnIndex] ?? 'created_at';
-
-                $query->orderBy($column, $sortDirection);
-            }
-
-            $data = $query->paginate($length);
-
-            return response()->json([
-                'draw' => intval($request->draw),
-                'recordsTotal' => $data->total(),
-                'recordsFiltered' => $data->total(),
-                'data' => $data->items(),
-            ]);
+        abort_unless($request->ajax(), 404);
+        $validated = $request->validate([
+            'vehicle' => 'required|integer|exists:vehicles,id',
+            'posisi' => 'required|integer',
+            'start' => 'nullable|integer|min:0',
+            'length' => 'nullable|integer|min:1|max:100',
+            'search.value' => 'nullable|string|max:100',
+            'order.0.column' => 'nullable|integer|min:0',
+            'order.0.dir' => 'nullable|in:asc,desc',
+        ]);
+        $query = BanLog::where('vehicle_id', $validated['vehicle'])->where('posisi_ban_id', $validated['posisi']);
+        $total = (clone $query)->count();
+        if ($search = $request->input('search.value')) {
+            $query->where(function ($query) use ($search): void {
+                $query->where('merk', 'like', '%'.$search.'%')->orWhere('no_seri', 'like', '%'.$search.'%');
+            });
         }
+        $filtered = (clone $query)->count();
+        $columns = ['merk', 'no_seri', 'kondisi', 'ritase', 'created_at'];
+        $column = $columns[$request->input('order.0.column', 4)] ?? 'created_at';
+        $data = $query->orderBy($column, $request->input('order.0.dir', 'desc'))->orderByDesc('id')
+            ->offset($request->integer('start'))->limit($request->integer('length', 25))->get();
 
-        return abort(404);
+        return response()->json(['draw' => $request->integer('draw'), 'recordsTotal' => $total, 'recordsFiltered' => $filtered, 'data' => $data]);
     }
 
     public function histori_delete($histori, Request $request)

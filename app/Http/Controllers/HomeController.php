@@ -11,7 +11,7 @@ use App\Models\Transaksi;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
 use App\Models\Vendor;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
@@ -29,7 +29,7 @@ class HomeController extends Controller
     /**
      * Show the application dashboard.
      *
-     * @return \Illuminate\Contracts\Support\Renderable
+     * @return Renderable
      */
     public function index()
     {
@@ -37,39 +37,41 @@ class HomeController extends Controller
 
         if ($user->role == 'asisten-user') {
 
-             $data = UpahGendong::with(['vehicle'])->get();
+            $data = UpahGendong::with(['vehicle'])->get();
             $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
             $customer = Customer::all();
-            $vendor = Vendor::select('id','nama')->where('status', 'aktif')->get();
+            $vendor = Vendor::select('id', 'nama')->where('status', 'aktif')->get();
+
             return view('home', [
                 'data' => $data,
                 'vehicle' => $vehicle,
                 'customer' => $customer,
-                'vendor' => $vendor
+                'vendor' => $vendor,
             ]);
         }
 
         if ($user->role == 'customer') {
 
-            $db = new Transaksi();
+            $db = new Transaksi;
             $tagihan = $db->countNotaTagihan(Auth::user()->customer_id);
             $invoice = InvoiceTagihan::where('customer_id', Auth::user()->customer_id)->where('lunas', 0)->count();
+
             return view('home', [
                 'tagihan' => $tagihan,
-                'invoice' => $invoice
+                'invoice' => $invoice,
             ]);
 
         }
 
         if ($user->role == 'customer-admin') {
 
-            $db = new Transaksi();
+            $db = new Transaksi;
             $tagihan = $db->countNotaTagihan(Auth::user()->customer_id);
             $invoice = InvoiceTagihan::where('customer_id', Auth::user()->customer_id)->where('lunas', 0)->count();
 
             return view('home', [
                 'tagihan' => $tagihan,
-                'invoice' => $invoice
+                'invoice' => $invoice,
             ]);
 
         }
@@ -78,10 +80,11 @@ class HomeController extends Controller
             $db = Vendor::all();
             $ug = UpahGendong::all();
             $maintenance = AktivasiMaintenance::with(['vehicle'])
-            ->get();
+                ->get();
             $customer = Customer::where('status', 1)->get();
             $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
-            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance, 'customer' => $customer, 'vehicle' =>$vehicle]);
+
+            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance, 'customer' => $customer, 'vehicle' => $vehicle]);
         }
 
         if ($user->role == 'vendor') {
@@ -97,20 +100,10 @@ class HomeController extends Controller
             ]);
         }
 
-        if ($user->role == 'vendor-operational') {
-            $v = Vehicle::where('vendor_id', Auth::user()->vendor_id)->pluck('id');
-            $vehicle = Vehicle::where('vendor_id', Auth::user()->vendor_id)->whereNot('status', 'nonaktif')->get();
-            $ug = UpahGendong::whereIn('vehicle_id', $v)->get();
-            $maintenance = AktivasiMaintenance::with(['vehicle'])
-                        ->whereHas('vehicle', function ($query) {
-                            $query->where('vendor_id', Auth::user()->vendor_id);
-                        })
-                        ->get();
-            return view('home', [
-                'ug' => $ug,
-                'vehicle' => $vehicle,
-                'maintenance' => $maintenance
-            ]);
+        if ($user->role === 'vendor-operational') {
+            abort_unless($user->vendor_id && $user->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');
+
+            return view('home');
         }
 
         return view('home');

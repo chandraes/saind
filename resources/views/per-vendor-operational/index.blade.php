@@ -1,186 +1,43 @@
+@php
+    $documentMenus = [
+        ['title' => 'Nota Muat Masuk', 'description' => 'Pantau pengajuan dan hasil pemeriksaan nota.', 'route' => 'billing.nota-muat.index', 'icon' => 'nota-muat-masuk.svg'],
+        ['title' => 'Nota Bongkar', 'description' => 'Lihat perjalanan dan progres pembongkaran.', 'route' => 'vendor-operational.nota-bongkar', 'icon' => 'bongkar.svg'],
+        ['title' => 'Nota Bayar Vendor', 'description' => 'Periksa nota dan rincian perjalanan vendor.', 'route' => 'vendor-operational.nota-bayar', 'icon' => 'bayar.svg'],
+        ['title' => 'Invoice Vendor', 'description' => 'Telusuri invoice dan nota yang tercantum.', 'route' => 'vendor-operational.invoice', 'icon' => 'invoice-bayar.svg'],
+    ];
+    $statisticMenus = [
+        ['title' => 'Perform Unit', 'description' => 'Performa dan aktivitas kendaraan.', 'route' => 'statistik.perform-unit', 'icon' => 'perform-unit.svg'],
+        ['title' => 'Statistik Upah Gendong', 'description' => 'Riwayat upah gendong per unit.', 'route' => 'statistik.upah-gendong', 'icon' => 'statistik-ug.svg'],
+        ['title' => 'Statistik Filter & Oli Mesin', 'description' => 'Pemakaian dan histori penggantian.', 'route' => 'statistik.filter-oli', 'icon' => 'filter-oli-mesin.svg'],
+        ['title' => 'Statistik Aki', 'description' => 'Kondisi dan histori aki kendaraan.', 'route' => 'statistik.aki', 'icon' => 'aki.svg'],
+        ['title' => 'Statistik Ban Luar', 'description' => 'Pemakaian dan histori ban per posisi.', 'route' => 'statistik.ban-luar', 'icon' => 'db-ban.svg'],
+    ];
+@endphp
 
-    {{-- <div class="row justify-content-left mt-5">
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('vendor-operational.kas-per-vendor.index', auth()->user()->vendor_id)}}" class="text-decoration-none">
-                <img src="{{asset('images/kas-vendor.svg')}}" alt="" width="70">
-                <h4 class="mt-3">Kas Vendor</h4>
-            </a>
+<div class="vendor-dashboard" data-vendor-dashboard>
+    <div class="vendor-dashboard-intro">
+        <div>
+            <span class="vendor-dashboard-eyebrow">OPERASIONAL VENDOR</span>
+            <p class="mb-0 text-muted">Pantau dokumen perjalanan dan statistik armada vendor Anda.</p>
         </div>
-
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('statistik-pervendor.index')}}" class="text-decoration-none">
-                <img src="{{asset('images/statistik-vendor.svg')}}" alt="" width="70">
-                <h4 class="mt-3">Statistik Vendor</h4>
-            </a>
-        </div>
-    </div> --}}
-    <div class="row justify-content-left mt-3">
-        @include('billing.nota-muat.menu')
-        {{-- <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
-                <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">DATABASE<br>UPAH GENDONG</h4>
-            </a>
-        </div> --}}
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('statistik.perform-unit')}}" class="text-decoration-none">
-                <img src="{{asset('images/perform-unit.svg')}}" alt="" width="70">
-                <h4 class="mt-3">PERFORM UNIT</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
-                <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="70">
-                <h4 class="mt-3">STATISTIK<br>UPAH GENDONG</h4>
-            </a>
-            <div class="modal fade" id="upahGendongId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="ugTitleId" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="ugTitleId">
-                                Pilih NOLAM
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form action="{{route('vendor-operational.per-vendor.upah-gendong')}}" method="get">
-                            <div class="modal-body">
-                                <div class="col-md-12 mb-3">
-                                    <select class="form-select" name="vehicle_id" id="vehicle_id">
-                                        @foreach ($ug as $d)
-                                        <option value="{{$d->vehicle_id}}">{{$d->vehicle->nomor_lambung}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Tutup
-                                </button>
-                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#maintenaceModal">
-                <img src="{{asset('images/rekap-maintenance.svg')}}" alt="" width="70">
-                <h4 class="mt-3">MAINTENANCE VEHICLE</h4>
-            </a>
-
-            <div class="modal fade" id="maintenaceModal" tabindex="-1" data-bs-backdrop="static"
-                data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalTitleId">
-                                Pilih Vehicle
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form action="{{route('vendor-operational.per-vendor.maintenance-vehicle')}}" method="get">
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <select class="form-select" name="vehicle_id" id="vehicle_id">
-                                        @foreach ($maintenance as $m)
-                                        <option value="{{$m->vehicle_id}}">{{$m->vehicle->nomor_lambung}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Tutup
-                                </button>
-                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#ban_luar">
-                <img src="{{asset('images/db-ban.svg')}}" alt="" width="70">
-                <h4 class="mt-3">BAN LUAR</h4>
-            </a>
-            <div class="modal fade" id="ban_luar" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="ban-luarTitle" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="ban-luarTitle">
-                                Pilih NOLAM
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form action="{{route('vendor-operational.per-vendor.ban-luar')}}" method="get">
-                            <div class="modal-body">
-                                <div class="col-md-12 mb-3">
-                                    <select class="form-select" name="vehicle_id" id="vehicle_ban">
-                                        @foreach ($vehicle as $d)
-                                        <option value="{{$d->id}}">{{$d->nomor_lambung}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Tutup
-                                </button>
-                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <span class="vendor-dashboard-access"><span aria-hidden="true"></span>Akses baca saja</span>
     </div>
-    {{-- <div class="row justify-content-left mt-5">
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="{{route('database.upah-gendong')}}" class="text-decoration-none">
-                <img src="{{asset('images/upah-gendong.svg')}}" alt="" width="70">
-                <h4 class="mt-3">DATABASE<br>BAN LUAR</h4>
-            </a>
-        </div>
-        <div class="col-md-3 text-center mb-5 mt-3">
-            <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#upahGendongId">
-                <img src="{{asset('images/statistik-ug.svg')}}" alt="" width="70">
-                <h4 class="mt-3">STATISTIK<br>BAN LUAR</h4>
-            </a>
-            <div class="modal fade" id="upahGendongId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false"
-                role="dialog" aria-labelledby="ugTitleId" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="ugTitleId">
-                                Pilih NOLAM
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form action="{{route('per-vendor.upah-gendong')}}" method="get">
-                            <div class="modal-body">
-                                <div class="col-md-12 mb-3">
-                                    <select class="form-select" name="vehicle_id" id="vehicle_id">
-                                        @foreach ($ug as $d)
-                                        <option value="{{$d->vehicle_id}}">{{$d->vehicle->nomor_lambung}}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Tutup
-                                </button>
-                                <button type="submit" class="btn btn-primary">Lanjutkan</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+    @foreach ([['key' => 'documents', 'title' => 'Nota & perjalanan', 'menus' => $documentMenus], ['key' => 'statistics', 'title' => 'Statistik operasional', 'menus' => $statisticMenus]] as $section)
+        <section class="vendor-dashboard-section" aria-labelledby="vendor-section-{{ $section['key'] }}">
+            <h2 id="vendor-section-{{ $section['key'] }}">{{ $section['title'] }}</h2>
+            <div class="vendor-dashboard-grid vendor-dashboard-grid-{{ $section['key'] }}" data-vendor-menu-row="{{ $section['key'] }}">
+                @foreach ($section['menus'] as $menu)
+                    <a class="vendor-menu-card" href="{{ route($menu['route']) }}">
+                        <span class="vendor-menu-icon"><img src="{{ asset('images/'.$menu['icon']) }}" alt="" width="48" height="48"></span>
+                        <h3>{{ $menu['title'] }}</h3>
+                        <p>{{ $menu['description'] }}</p>
+                        <span class="vendor-menu-link">Lihat data <span aria-hidden="true">→</span></span>
+                    </a>
+                @endforeach
             </div>
-        </div>
-    </div> --}}
-
+        </section>
+    @endforeach
+</div>
+@push('css')
+<link rel="stylesheet" href="{{ asset('assets/css/vendor-operational-dashboard.css') }}">
+@endpush
