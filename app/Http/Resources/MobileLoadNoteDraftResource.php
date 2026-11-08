@@ -13,6 +13,7 @@ class MobileLoadNoteDraftResource extends JsonResource
         return ['transfer_destination' => $this->whenHas('mobile_transfer_destination', fn () => $this->mobile_transfer_destination), 'payment' => $this->whenHas('mobile_payment', fn () => $this->mobile_payment), 'id' => $this->id, 'transaction_id' => $this->transaksi_id, 'customer_id' => $this->customer_id, 'rute_id' => $this->rute_id,
             'header_name' => $this->header_name, 'unit_code' => $this->unit_code, 'route_reference' => $this->route_reference, 'date_source' => $this->date_source, 'ticket_number' => $this->ticket_number, 'mine_name' => $this->mine_name,
             'vehicle_driver_name' => $this->whenLoaded('vehicle', fn () => $this->vehicle?->driver?->nama),
+            'tagihan_dari' => $this->whenLoaded('customer', fn () => $this->customer?->tagihan_dari),
             'vehicle_id' => $this->vehicle_id, 'vehicle_number' => $this->vehicle_number,
             'loaded_on' => $this->loaded_on->format('Y-m-d'), 'driver_name' => $this->driver_name,
             'gross_weight' => number_format($this->gross_kg / 1000, 3, '.', ''),

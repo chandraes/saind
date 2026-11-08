@@ -49,10 +49,11 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
                 $table->bigInteger('nominal');
             });
         }
+        Schema::table('customers', fn (Blueprint $table) => $table->unsignedTinyInteger('tagihan_dari')->nullable());
         Schema::table('vehicles', fn (Blueprint $table) => $table->unsignedBigInteger('driver_id')->nullable());
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A'], ['id' => 2, 'nama' => 'Vendor B']]);
         DB::table('vehicles')->insert([['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '288'], ['id' => 2, 'vendor_id' => 2, 'nomor_lambung' => '289']]);
-        DB::table('customers')->insert(['id' => 1, 'nama' => 'Mine A']);
+        DB::table('customers')->insert(['id' => 1, 'nama' => 'Mine A', 'tagihan_dari' => 2]);
         DB::table('rutes')->insert(['id' => 1, 'nama' => 'Mine - Port']);
     }
 
@@ -89,7 +90,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $cashBefore = DB::table('kas_uang_jalans')->get()->toArray();
         $response = $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.status', 'waiting')->assertJsonPath('meta.per_page', 20);
-        $expected = ['id' => $id, 'status' => 'waiting', 'vehicle_id' => 1, 'vehicle_number' => '288', 'vehicle_driver_name' => 'Driver A', 'route_name' => 'Mine - Port', 'mine_name' => 'Mine A',
+        $expected = ['id' => $id, 'status' => 'waiting', 'tagihan_dari' => 2, 'vehicle_id' => 1, 'vehicle_number' => '288', 'vehicle_driver_name' => 'Driver A', 'route_name' => 'Mine - Port', 'mine_name' => 'Mine A',
             'money_out_number' => 'UJ07', 'ticket_number' => 'TICKET-100', 'loaded_on' => '2026-11-03', 'unloaded_on' => null, 'unloading_ticket_number' => null,
             'gross_weight' => '45.540', 'tare_weight' => '15.320', 'net_weight' => '30.220', 'unloading_gross_weight' => null, 'unloading_tare_weight' => null, 'unloading_net_weight' => null];
         $expected = ['payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]] + $expected;
