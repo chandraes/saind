@@ -16,7 +16,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        foreach (['customers', 'rutes'] as $name) {
+        foreach (['customers', 'rutes', 'drivers'] as $name) {
             Schema::create($name, function (Blueprint $table): void {
                 $table->id();
                 $table->string('nama');
@@ -49,6 +49,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
                 $table->bigInteger('nominal');
             });
         }
+        Schema::table('vehicles', fn (Blueprint $table) => $table->unsignedBigInteger('driver_id')->nullable());
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A'], ['id' => 2, 'nama' => 'Vendor B']]);
         DB::table('vehicles')->insert([['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '288'], ['id' => 2, 'vendor_id' => 2, 'nomor_lambung' => '289']]);
         DB::table('customers')->insert(['id' => 1, 'nama' => 'Mine A']);
@@ -78,6 +79,8 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
 
     public function test_waiting_list_and_detail_expose_only_the_read_contract_without_writing_business_data(): void
     {
+        DB::table('drivers')->insert(['id' => 1, 'nama' => 'Driver A']);
+        DB::table('vehicles')->where('id', 1)->update(['driver_id' => 1]);
         $id = $this->journey(1, ['nota_bongkar' => 'STALE', 'tanggal_bongkar' => '2026-11-04', 'gross_bongkar' => '44', 'tarra_bongkar' => '15', 'timbangan_bongkar' => '29']);
         $this->journey(1, ['status' => 3]);
         $this->journey(1, ['void' => 1]);
@@ -86,7 +89,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $cashBefore = DB::table('kas_uang_jalans')->get()->toArray();
         $response = $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.status', 'waiting')->assertJsonPath('meta.per_page', 20);
-        $expected = ['id' => $id, 'status' => 'waiting', 'vehicle_id' => 1, 'vehicle_number' => '288', 'route_name' => 'Mine - Port', 'mine_name' => 'Mine A',
+        $expected = ['id' => $id, 'status' => 'waiting', 'vehicle_id' => 1, 'vehicle_number' => '288', 'vehicle_driver_name' => 'Driver A', 'route_name' => 'Mine - Port', 'mine_name' => 'Mine A',
             'money_out_number' => 'UJ07', 'ticket_number' => 'TICKET-100', 'loaded_on' => '2026-11-03', 'unloaded_on' => null, 'unloading_ticket_number' => null,
             'gross_weight' => '45.540', 'tare_weight' => '15.320', 'net_weight' => '30.220', 'unloading_gross_weight' => null, 'unloading_tare_weight' => null, 'unloading_net_weight' => null];
         $expected = ['payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]] + $expected;

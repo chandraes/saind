@@ -62,6 +62,6 @@ class UnloadingNoteController extends Controller
         return Transaksi::query()->where('void', 0)->whereIn('status', [2, 3])
             ->whereHas('kas_uang_jalan', fn (Builder $query): Builder => $query->where('vendor_id', $request->user()->vendor_id))
             ->with(['kas_uang_jalan:id,vendor_id,vehicle_id,customer_id,rute_id,nomor_uang_jalan,nominal_transaksi',
-                'kas_uang_jalan.vehicle:id,nomor_lambung', 'kas_uang_jalan.rute:id,nama', 'kas_uang_jalan.customer:id,nama']);
+                'kas_uang_jalan.vehicle:id,nomor_lambung,driver_id,vendor_id', 'kas_uang_jalan.vehicle.driver:id,nama', 'kas_uang_jalan.rute:id,nama', 'kas_uang_jalan.customer:id,nama']);
     }
 }

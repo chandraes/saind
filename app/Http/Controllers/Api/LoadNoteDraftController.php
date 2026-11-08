@@ -24,7 +24,8 @@ class LoadNoteDraftController extends Controller
     {
         $this->authorize('viewAny', LoadNoteDraft::class);
         $filters = $request->validate(['status' => ['sometimes', 'string', 'in:all,unprocessed,draft,rejected,cancelled,processed'], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
-        $query = LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with('creator:id,name');
+        $query = LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with(['creator:id,name', 'vehicle' => fn ($query) => $query
+            ->where('vendor_id', $request->user()->vendor_id)->select('id', 'driver_id')->with('driver:id,nama')]);
         $query->search($filters['search'] ?? '');
         if (($filters['status'] ?? 'all') === 'unprocessed') {
             $query->whereIn('status', ['draft', 'rejected', 'cancelled']);
