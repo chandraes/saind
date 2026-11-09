@@ -19,6 +19,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
         Route::post('login', [AuthController::class, 'store'])->middleware('throttle:mobile-login')->name('login');
         Route::middleware(['auth:sanctum', EnsureMobileToken::class])->group(function (): void {
             Route::get('me', [AuthController::class, 'show'])->name('me');
+            Route::patch('me', [AuthController::class, 'update'])->middleware('throttle:6,1')->name('me.update');
             Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
             Route::middleware(EnsureMobileVendorContext::class.':billing')->group(function (): void {
                 Route::get('vendor-invoices', [VendorInvoiceController::class, 'index'])->name('vendor-invoices.index');

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
@@ -131,6 +132,30 @@ class MobileApiFoundationTest extends MobileApiTestCase
         $this->assertNotNull(PersonalAccessToken::findToken($second));
         $this->app['auth']->forgetGuards();
         $this->getJson('/api/v1/me')->assertUnauthorized();
+    }
+
+    public function test_account_update_requires_current_password_and_revokes_other_mobile_sessions(): void
+    {
+        $user = $this->user();
+        User::factory()->create(['username' => 'occupied', 'password' => 'another-secret', 'role' => 'user']);
+        $first = $this->login();
+        $second = $this->login();
+        $headers = ['Authorization' => 'Bearer '.$first, 'X-Workspace-ID' => self::WORKSPACE];
+        $this->patchJson('/api/v1/me', ['username' => 'budi-baru', 'current_password' => 'wrong'], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('current_password');
+        $this->patchJson('/api/v1/me', ['username' => 'occupied', 'current_password' => 'secret-pass'], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('username');
+        $this->assertSame('budi', $user->fresh()->username);
+        $this->patchJson('/api/v1/me', ['username' => 'budi-baru', 'current_password' => 'secret-pass'], $headers)
+            ->assertOk()->assertJsonPath('data.username', 'budi-baru');
+        $this->assertNotNull(PersonalAccessToken::findToken($second));
+        $this->patchJson('/api/v1/me', [
+            'username' => 'budi-baru', 'current_password' => 'secret-pass', 'password' => 'new-secret-pass',
+            'password_confirmation' => 'new-secret-pass', 'role' => 'superadmin',
+        ], $headers)->assertOk()->assertJsonPath('data.role', 'vendor-operational')->assertJsonMissingPath('data.password');
+        $this->assertNull(PersonalAccessToken::findToken($second));
+        $this->assertNotNull(PersonalAccessToken::findToken($first));
+        $this->assertTrue(Hash::check('new-secret-pass', $user->fresh()->password));
     }
 
     public function test_vendor_without_assignment_cannot_login(): void
