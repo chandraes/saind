@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\LoadNoteRuleException;
 use App\Models\LoadNoteDraft;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -24,6 +25,10 @@ class LoadNoteRulesTest extends MobileApiTestCase
         config(['mobile.load_note_rules.enforce_mobile_backdate' => true]);
         $this->travelTo(now()->setDate(2026, 11, 3)->setTime(10, 0));
         (require database_path('migrations/2026_11_03_104025_create_load_note_drafts_table.php'))->up();
+        Schema::create('transaksis', function (Blueprint $table): void {
+            $table->id();
+            $table->string('nota_muat')->nullable()->unique();
+        });
         Schema::create('customers', function (Blueprint $table): void {
             $table->id();
             $table->string('nama');
@@ -325,5 +330,58 @@ class LoadNoteRulesTest extends MobileApiTestCase
         $this->postJson('/api/v1/load-notes/scanned', $payload, $headers)->assertConflict();
         $this->assertDatabaseCount('load_note_drafts', 1);
         $this->assertCount(1, Storage::disk('local')->allFiles());
+    }
+
+    private function ticketDecision(string $ticket, int $vendorId = 1, ?int $exceptNote = null): ?array
+    {
+        try {
+            app(LoadNoteRules::class)->assertTicket($vendorId, $ticket, $exceptNote);
+        } catch (LoadNoteRuleException $exception) {
+            return [$exception->reasonCode, $exception->nextAction, $exception->validator->errors()->first('ticket_number')];
+        }
+
+        return null;
+    }
+
+    public function test_duplicate_ticket_from_same_vendor_ignores_case_and_spaces(): void
+    {
+        $draft = LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(1), $this->actor())->create(['ticket_number' => 'SJB-001']);
+
+        foreach (['SJB-001', ' sjb-001 ', 'SJB - 001', "sjb\t-001"] as $ticket) {
+            $this->assertSame(['duplicate_note', 'view_notes', 'Nomor nota sudah pernah dikirim. Periksa daftar nota.'], $this->ticketDecision($ticket), $ticket);
+        }
+        $this->assertNull($this->ticketDecision('SJB-0011'));
+        $this->assertNull($this->ticketDecision('SJB-001', exceptNote: $draft->id));
+
+        foreach (['rejected', 'cancelled'] as $status) {
+            $draft->update(['status' => $status]);
+            $this->assertNull($this->ticketDecision('sjb-001'), $status);
+        }
+    }
+
+    public function test_ticket_used_by_another_vendor_or_web_transaction_is_rejected_without_revealing_owner(): void
+    {
+        DB::table('vendors')->insert(['id' => 2, 'nama' => 'Vendor B']);
+        DB::table('vehicles')->insert(['id' => 2, 'vendor_id' => 2, 'nomor_lambung' => '999']);
+        LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(2), $this->actor())->create(['ticket_number' => 'B-777']);
+        DB::table('transaksis')->insert(['nota_muat' => 'WEB 555']);
+
+        $expected = ['duplicate_note', 'contact_admin', 'Nomor nota muat sudah terdaftar di sistem. Periksa kembali nomor nota atau hubungi admin.'];
+        $this->assertSame($expected, $this->ticketDecision('b-777'));
+        $this->assertSame($expected, $this->ticketDecision('web555'));
+        $this->assertNull($this->ticketDecision('WEB-555'));
+    }
+
+    public function test_inspection_rejects_ticket_already_entered_on_the_web(): void
+    {
+        $this->alias();
+        DB::table('transaksis')->insert(['nota_muat' => 'sjb-001']);
+
+        $this->postJson('/api/v1/load-notes/inspect', $this->scan(), $this->headersFor($this->actor()))
+            ->assertUnprocessable()
+            ->assertJsonPath('decision.code', 'duplicate_note')
+            ->assertJsonPath('decision.action', 'contact_admin')
+            ->assertJsonMissing(['Vendor A']);
+        $this->assertDatabaseCount('load_note_drafts', 0);
     }
 }

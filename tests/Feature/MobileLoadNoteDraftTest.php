@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\LoadNoteDraft;
 use App\Models\User;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -16,6 +18,10 @@ class MobileLoadNoteDraftTest extends MobileApiTestCase
         parent::setUp();
         Storage::fake('local');
         (require database_path('migrations/2026_11_03_104025_create_load_note_drafts_table.php'))->up();
+        Schema::create('transaksis', function (Blueprint $table): void {
+            $table->id();
+            $table->string('nota_muat')->nullable()->unique();
+        });
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A'], ['id' => 2, 'nama' => 'Vendor B']]);
         DB::table('vehicles')->insert([
             ['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '169'],

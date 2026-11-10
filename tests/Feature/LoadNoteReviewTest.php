@@ -12,6 +12,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class LoadNoteReviewTest extends MobileApiTestCase
@@ -42,6 +43,7 @@ class LoadNoteReviewTest extends MobileApiTestCase
         });
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
+            $table->string('nota_muat')->nullable()->unique();
         });
         foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php', '2026_11_04_092518_add_transfer_override_to_load_note_drafts_table.php'] as $file) {
             (require database_path('migrations/'.$file))->up();
@@ -214,5 +216,20 @@ class LoadNoteReviewTest extends MobileApiTestCase
         $this->assertNotNull($note->fresh()->transaksi_id);
         $this->assertDatabaseCount('load_note_events', 1);
         $this->actingAs($user)->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 1, 'action' => 'cancel', 'reason' => 'Tidak boleh'])->assertUnprocessable();
+    }
+
+    public function test_processing_is_blocked_when_ticket_was_entered_on_the_web_meanwhile(): void
+    {
+        $note = $this->note();
+        DB::table('transaksis')->insert(['nota_muat' => strtolower(' '.$note->ticket_number.' ')]);
+
+        try {
+            DB::transaction(fn () => app(LoadNoteReviewService::class)->lockForProcessing($this->actor(), $note, 0));
+            $this->fail('Nota dengan nomor yang sudah dipakai transaksi web tidak boleh diteruskan.');
+        } catch (ValidationException $exception) {
+            $this->assertSame('Nomor nota muat sudah terdaftar di sistem. Periksa kembali nomor nota atau hubungi admin.', $exception->validator->errors()->first('ticket_number'));
+        }
+        $this->assertSame('draft', $note->fresh()->status);
+        $this->assertDatabaseCount('transaksis', 1);
     }
 }

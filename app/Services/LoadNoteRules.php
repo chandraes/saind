@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\LoadNoteRuleException;
 use App\Models\LoadNoteDraft;
 use App\Models\Vehicle;
+use Illuminate\Support\Facades\DB;
 
 class LoadNoteRules
 {
@@ -24,12 +25,50 @@ class LoadNoteRules
         }
     }
 
+    /**
+     * Nomor nota muat harus unik di seluruh sistem, sejalan dengan indeks UNIQUE
+     * `transaksis.nota_muat`. Pembandingan mengabaikan huruf besar/kecil dan spasi
+     * agar hasil OCR seperti "sjb 001" tetap dikenali sama dengan "SJB001".
+     */
     public function assertTicket(int $vendorId, string $ticket, ?int $exceptNote = null): void
     {
-        if (LoadNoteDraft::where('vendor_id', $vendorId)->where('ticket_number', trim($ticket))
+        $normalized = self::normalizeTicket($ticket);
+        if ($normalized === '') {
+            return;
+        }
+
+        $activeDrafts = fn () => LoadNoteDraft::query()
             ->whereNotIn('status', ['rejected', 'cancelled'])
-            ->when($exceptNote !== null, fn ($query) => $query->whereKeyNot($exceptNote))->exists()) {
+            ->whereRaw(self::normalizedSql('ticket_number').' = ?', [$normalized])
+            ->when($exceptNote !== null, fn ($query) => $query->whereKeyNot($exceptNote));
+
+        if ($activeDrafts()->where('vendor_id', $vendorId)->exists()) {
             throw new LoadNoteRuleException('ticket_number', 'Nomor nota sudah pernah dikirim. Periksa daftar nota.', 'duplicate_note', 'view_notes');
         }
+
+        // Nota yang diinput lewat web atau dipakai vendor lain: pesan sengaja
+        // tidak menyebut vendor/transaksi pemiliknya.
+        $usedByTransaction = DB::table('transaksis')
+            ->whereNotNull('nota_muat')
+            ->whereRaw(self::normalizedSql('nota_muat').' = ?', [$normalized])
+            ->exists();
+        if ($usedByTransaction || $activeDrafts()->exists()) {
+            throw new LoadNoteRuleException('ticket_number', 'Nomor nota muat sudah terdaftar di sistem. Periksa kembali nomor nota atau hubungi admin.', 'duplicate_note', 'contact_admin');
+        }
+    }
+
+    public static function normalizeTicket(string $ticket): string
+    {
+        return mb_strtoupper((string) preg_replace('/\s+/u', '', $ticket));
+    }
+
+    private static function normalizedSql(string $column): string
+    {
+        $stripped = $column;
+        foreach (["' '", 'CHAR(9)', 'CHAR(10)', 'CHAR(13)'] as $whitespace) {
+            $stripped = "REPLACE({$stripped}, {$whitespace}, '')";
+        }
+
+        return "UPPER({$stripped})";
     }
 }

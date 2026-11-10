@@ -28,6 +28,7 @@ use App\Services\LoadNoteReviewService;
 use App\Services\TransferDestination;
 use App\Services\UjDitahanBanService;
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -620,6 +621,14 @@ class FormKasUangJalanController extends Controller
             }
 
             return $this->exitFailure($direct, $exception->validator->errors()->first(), true, ['filter_oli_limit_issues' => $exception instanceof FilterOliLimitException ? $exception->issues : null]);
+        } catch (UniqueConstraintViolationException $exception) {
+            DB::rollBack();
+            if (! str_contains($exception->getMessage(), 'nota_muat')) {
+                throw $exception;
+            }
+
+            // Nomor nota muat dipakai transaksi lain (input web, vendor lain, atau proses bersamaan).
+            return $this->exitFailure($direct, 'Nomor nota muat '.$data['nota_muat'].' sudah terdaftar pada transaksi lain. Periksa kembali nomor nota; tolak nota ini bila memang duplikat.', true);
         } catch (\Throwable $th) {
             // throw $th;
 
