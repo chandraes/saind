@@ -20,8 +20,14 @@ class MobileTireMonitoringController extends Controller
             ->firstOrFail();
 
         $logs = BanLog::query()->where('vehicle_id', $record->id)
-            ->orderByDesc('created_at')->orderByDesc('id')->get()
-            ->unique('posisi_ban_id')->keyBy('posisi_ban_id');
+            ->where('id', function ($latest): void {
+                $latest->from('ban_logs as latest')->select('latest.id')
+                    ->whereColumn('latest.vehicle_id', 'ban_logs.vehicle_id')
+                    ->whereColumn('latest.posisi_ban_id', 'ban_logs.posisi_ban_id')
+                    ->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
+            })
+            ->select('id', 'posisi_ban_id', 'merk', 'no_seri', 'kondisi', 'ritase', 'created_at')
+            ->get()->keyBy('posisi_ban_id');
 
         $positions = PosisiBan::query()->orderBy('id')->get()->values()->map(function ($position, $index) use ($logs) {
             $log = $logs->get($position->id);
