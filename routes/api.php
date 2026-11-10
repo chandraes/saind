@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
+use App\Http\Controllers\Api\MobileTireMonitoringController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
 use App\Http\Controllers\Api\PaymentNoteController;
 use App\Http\Controllers\Api\UnloadingNoteController;
@@ -23,6 +24,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::patch('me', [AuthController::class, 'update'])->middleware('throttle:6,1')->name('me.update');
             Route::post('logout', [AuthController::class, 'destroy'])->name('logout');
             Route::middleware(EnsureMobileVendorContext::class.':billing')->group(function (): void {
+                Route::get('vehicles/{vehicle}/tire-monitoring', [MobileTireMonitoringController::class, 'show'])->whereNumber('vehicle')->name('tire-monitoring.show');
                 Route::get('unit-performance', [MobileUnitPerformanceController::class, 'index'])->name('unit-performance.index');
                 Route::get('vendor-invoices', [VendorInvoiceController::class, 'index'])->name('vendor-invoices.index');
                 Route::get('vendor-invoices/{kind}/{record}', [VendorInvoiceController::class, 'show'])->whereNumber('record')->name('vendor-invoices.show');
