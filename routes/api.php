@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
+use App\Http\Controllers\Api\MobileBatteryController;
+use App\Http\Controllers\Api\MobileFilterOilController;
 use App\Http\Controllers\Api\MobileTireHistoryController;
 use App\Http\Controllers\Api\MobileTireMonitoringController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
@@ -27,6 +29,12 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::middleware(EnsureMobileVendorContext::class.':billing')->group(function (): void {
                 Route::get('vehicles/{vehicle}/tire-positions/{position}/history', [MobileTireHistoryController::class, 'history'])->whereNumber(['vehicle', 'position'])->name('tire-history.index');
                 Route::get('vehicles/{vehicle}/tire-logs/{banLog}/trips', [MobileTireHistoryController::class, 'trips'])->whereNumber(['vehicle', 'banLog'])->name('tire-trips.index');
+                Route::get('vehicles/{vehicle}/battery-monitoring', [MobileBatteryController::class, 'show'])->whereNumber('vehicle')->name('battery-monitoring.show');
+                Route::get('vehicles/{vehicle}/battery-positions/{position}/history', [MobileBatteryController::class, 'history'])->whereNumber(['vehicle', 'position'])->name('battery-history.index');
+                Route::get('filter-oil/vehicles', [MobileFilterOilController::class, 'vehicles'])->name('filter-oil.vehicles');
+                Route::get('vehicles/{vehicle}/filter-oil-monitoring', [MobileFilterOilController::class, 'show'])->whereNumber('vehicle')->name('filter-oil-monitoring.show');
+                Route::get('vehicles/{vehicle}/filter-oil-categories/{category}/history', [MobileFilterOilController::class, 'history'])->whereNumber(['vehicle', 'category'])->name('filter-oil-history.index');
+                Route::get('vehicles/{vehicle}/filter-oil-logs/{log}/trips', [MobileFilterOilController::class, 'trips'])->whereNumber(['vehicle', 'log'])->name('filter-oil-trips.index');
                 Route::get('vehicles/{vehicle}/tire-monitoring', [MobileTireMonitoringController::class, 'show'])->whereNumber('vehicle')->name('tire-monitoring.show');
                 Route::get('unit-performance', [MobileUnitPerformanceController::class, 'index'])->name('unit-performance.index');
                 Route::get('vendor-invoices', [VendorInvoiceController::class, 'index'])->name('vendor-invoices.index');
