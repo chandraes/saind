@@ -1002,11 +1002,14 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/{invoice}/detail-jenis', [InvoiceController::class, 'invoice_bayar_detail_add'])->name('invoice.bayar.detail-jenis');
         });
 
+    });
+
+    // Vendor dan vendor-operational dikunci ke vehicle vendornya sendiri di StatistikController.
+    Route::group(['middleware' => 'role:admin,user,su,operasional,vendor,vendor-operational'], function () {
         Route::prefix('statistik/perform-unit')->group(function () {
             Route::get('/all-vendor', [StatistikController::class, 'perform_unit_all_vendor'])->name('statistik.perform-unit.all-vendor');
             Route::get('/all-vendor/pdf', [StatistikController::class, 'perform_unit_all_vendor_pdf'])->name('statistik.perform-unit.all-vendor.pdf');
         });
-
     });
 
     Route::group(['middleware' => 'role:vendor'], function () {

@@ -28,7 +28,7 @@ class VendorOperationalDashboardTest extends TestCase
     {
         $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'vendor-operational', 'vendor_id' => 1]));
         $response = $this->get('/home')->assertOk();
-        $response->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Perform Unit', 'Statistik Upah Gendong', 'Statistik Filter &amp; Oli Mesin', 'Statistik Aki', 'Statistik Ban Luar'], false)
+        $response->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Perform Unit', 'Perform Unit All', 'Statistik Upah Gendong', 'Statistik Filter &amp; Oli Mesin', 'Statistik Aki', 'Statistik Ban Luar'], false)
             ->assertSee('data-vendor-menu-row="documents"', false)
             ->assertSee('data-vendor-menu-row="statistics"', false)
             ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('maintenaceModal');
@@ -37,7 +37,8 @@ class VendorOperationalDashboardTest extends TestCase
         @$dom->loadHTML($html);
         $xpath = new \DOMXPath($dom);
         $this->assertSame(4, $xpath->query('//*[@data-vendor-menu-row="documents"]/a')->length);
-        $this->assertSame(5, $xpath->query('//*[@data-vendor-menu-row="statistics"]/a')->length);
+        $this->assertSame(6, $xpath->query('//*[@data-vendor-menu-row="statistics"]/a')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-vendor-menu-row="statistics"]/a[@href="'.route('statistik.perform-unit.all-vendor').'"]')->length);
         $this->assertSame(0, $xpath->query('//*[@data-vendor-dashboard]//form')->length);
     }
 

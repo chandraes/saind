@@ -1492,9 +1492,8 @@ class StatistikController extends Controller
 
     }
 
-    public function perform_unit_all_vendor(Request $request)
+    private function performUnitAllVendorFilters(Request $request): array
     {
-        // 1. Ambil filter dari Request, berikan default value (Bulan/Tahun sekarang)
         $filters = [
             'month' => $request->input('bulan', date('n')), // Format 1-12
             'year' => $request->input('tahun', date('Y')),
@@ -1502,11 +1501,22 @@ class StatistikController extends Controller
             'offset' => $request->input('offset', 0),
         ];
 
-        $transaksiModel = new Transaksi;
-
-        if (in_array(Auth::user()->role, ['vendor', 'vendor-operational'])) {
-            $filters['vendor'] = Auth::user()->vendor_id;
+        // Akun milik vendor hanya boleh melihat vehicle vendornya sendiri,
+        // apa pun parameter vendor yang dikirim lewat URL.
+        if (in_array(Auth::user()->role, ['vendor', 'vendor-operational'], true)) {
+            $vendorId = (int) Auth::user()->vendor_id;
+            abort_if($vendorId <= 0, 403);
+            $filters['vendor'] = $vendorId;
         }
+
+        return $filters;
+    }
+
+    public function perform_unit_all_vendor(Request $request)
+    {
+        $filters = $this->performUnitAllVendorFilters($request);
+
+        $transaksiModel = new Transaksi;
 
         // 2. Panggil function di Model yang akan mengembalikan array data lengkap
         $viewData = $transaksiModel->performUnitAllVendor($filters);
@@ -1518,16 +1528,7 @@ class StatistikController extends Controller
 
     public function perform_unit_all_vendor_pdf(Request $request)
     {
-        $filters = [
-            'month' => $request->input('bulan', date('n')), // Format 1-12
-            'year' => $request->input('tahun', date('Y')),
-            'vendor' => $request->input('vendor'),           // Bisa null
-            'offset' => $request->input('offset', 0),
-        ];
-
-        if (in_array(Auth::user()->role, ['vendor', 'vendor-operational'])) {
-            $filters['vendor'] = Auth::user()->vendor_id;
-        }
+        $filters = $this->performUnitAllVendorFilters($request);
 
         $transaksiModel = new Transaksi;
 

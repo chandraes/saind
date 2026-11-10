@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Transaksi;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,6 +77,59 @@ class MobileUnitPerformanceController extends Controller
                 'total' => $vehicles->total(),
                 'start_date' => $start->toDateString(),
                 'end_date' => $end->toDateString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Perform Unit All Vendor versi mobile: rekap ritase bulanan per unit,
+     * dihitung dengan query yang sama dengan halaman web admin,
+     * tetapi selalu dikunci ke vendor milik akun yang login.
+     */
+    public function allVendor(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+        ]);
+
+        $vendorId = (int) $request->user()->vendor_id;
+        abort_if($vendorId <= 0, 403);
+
+        $month = (int) ($filters['month'] ?? now()->month);
+        $year = (int) ($filters['year'] ?? now()->year);
+
+        $result = (new Transaksi)->performUnitAllVendor([
+            'month' => $month,
+            'year' => $year,
+            'vendor' => $vendorId,
+        ]);
+
+        $rows = $result['data']->map(fn ($row) => [
+            'vendor_name' => $row->vendor_name,
+            'vehicle_number' => $row->nomor_lambung,
+            'short_route_count' => (int) $row->total_rute_pendek,
+            'long_route_count' => (int) $row->total_rute_panjang,
+            'total_route_count' => (int) $row->total_rute_pendek + (int) $row->total_rute_panjang,
+        ])->values();
+
+        $years = $result['dataTahun']->pluck('tahun')->map(fn ($value) => (int) $value)
+            ->push($year)->unique()->sort()->values();
+
+        return response()->json([
+            'data' => $rows,
+            'meta' => [
+                'month' => $month,
+                'year' => $year,
+                'month_name' => $result['nama_bulan'],
+                'years' => $years,
+                'short_route_limit_km' => 50,
+                'totals' => [
+                    'vehicles' => $rows->count(),
+                    'short_route_count' => $rows->sum('short_route_count'),
+                    'long_route_count' => $rows->sum('long_route_count'),
+                    'total_route_count' => $rows->sum('total_route_count'),
+                ],
             ],
         ]);
     }

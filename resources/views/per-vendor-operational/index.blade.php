@@ -7,6 +7,7 @@
     ];
     $statisticMenus = [
         ['title' => 'Perform Unit', 'description' => 'Performa dan aktivitas kendaraan.', 'route' => 'statistik.perform-unit', 'icon' => 'perform-unit.svg'],
+        ['title' => 'Perform Unit All', 'description' => 'Rekap ritase bulanan seluruh unit vendor Anda.', 'route' => 'statistik.perform-unit.all-vendor', 'icon' => 'all-vendor.svg'],
         ['title' => 'Statistik Upah Gendong', 'description' => 'Riwayat upah gendong per unit.', 'route' => 'statistik.upah-gendong', 'icon' => 'statistik-ug.svg'],
         ['title' => 'Statistik Filter & Oli Mesin', 'description' => 'Pemakaian dan histori penggantian.', 'route' => 'statistik.filter-oli', 'icon' => 'filter-oli-mesin.svg'],
         ['title' => 'Statistik Aki', 'description' => 'Kondisi dan histori aki kendaraan.', 'route' => 'statistik.aki', 'icon' => 'aki.svg'],
