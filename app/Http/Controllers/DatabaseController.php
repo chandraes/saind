@@ -9,6 +9,7 @@ use App\Models\db\Kreditor;
 use App\Models\Driver;
 use App\Models\KategoriBarangMaintenance;
 use App\Models\UpahGendong;
+use App\Support\UpahGendongData;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -37,51 +38,16 @@ class DatabaseController extends Controller
 
     public function upah_gendong_store(Request $request)
     {
-        $data = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'nominal' => 'required',
-            'tonase_min' => 'required|integer', // Add this line
-            'nama_driver' => 'required',
-            'nama_pengurus' => 'required',
-            'no_rek' => 'required',
-            'bank' => 'required',
-            'nama_rek' => 'required',
-            'tanggal_masuk_driver' => 'required',
-            'tanggal_masuk_pengurus' => 'required',
-        ]);
-
-        $data['nominal'] = str_replace('.', '', $data['nominal']);
-        $data['tanggal_masuk_driver'] = date('Y-m-d', strtotime($data['tanggal_masuk_driver']));
-        $data['tanggal_masuk_pengurus'] = date('Y-m-d', strtotime($data['tanggal_masuk_pengurus']));
-
-        UpahGendong::create($data);
+        $data = $request->validate(UpahGendongData::rules(withVehicle: true), UpahGendongData::messages());
+        UpahGendong::create(UpahGendongData::normalize($data));
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil ditambahkan');
     }
 
     public function upah_gendong_update(UpahGendong $ug, Request $request)
     {
-
-        // dd($request->all());
-        $data = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'nominal' => 'required',
-            'tonase_min' => 'required', // Add this line
-            'nama_driver' => 'required',
-            'nama_pengurus' => 'required',
-            'no_rek' => 'required',
-            'bank' => 'required',
-            'nama_rek' => 'required',
-            'tanggal_masuk_driver' => 'required',
-            'tanggal_masuk_pengurus' => 'required',
-        ]);
-
-        $data['nominal'] = str_replace('.', '', $data['nominal']);
-
-        $data['tanggal_masuk_driver'] = date('Y-m-d', strtotime($data['tanggal_masuk_driver']));
-        $data['tanggal_masuk_pengurus'] = date('Y-m-d', strtotime($data['tanggal_masuk_pengurus']));
-
-        $ug->update($data);
+        $data = $request->validate(UpahGendongData::rules($ug, withVehicle: true), UpahGendongData::messages());
+        $ug->update(UpahGendongData::normalize($data));
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil diubah');
     }

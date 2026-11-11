@@ -73,6 +73,12 @@ class User extends Authenticatable
         return in_array($this->role, ['admin', 'su', 'vendor'], true);
     }
 
+    /** Mengatur Database Upah Gendong (vendor: hanya kendaraannya sendiri). */
+    public function canManageUpahGendong(): bool
+    {
+        return in_array($this->role, ['admin', 'su', 'vendor'], true);
+    }
+
     /** Vendor boleh melihat keuangannya sendiri; vendor operational hanya uang jalan. */
     public function canViewVendorFinance(): bool
     {

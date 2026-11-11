@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\MobileTireHistoryController;
 use App\Http\Controllers\Api\MobileTireMonitoringController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
 use App\Http\Controllers\Api\MobileUpahGendongController;
+use App\Http\Controllers\Api\MobileUpahGendongSettingController;
 use App\Http\Controllers\Api\MobileVendorCashController;
 use App\Http\Controllers\Api\PaymentNoteController;
 use App\Http\Controllers\Api\UnloadingNoteController;
@@ -43,6 +44,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::get('unit-performance/all-vendor', [MobileUnitPerformanceController::class, 'allVendor'])->name('unit-performance.all-vendor');
                 Route::get('vehicles/{vehicle}/upah-gendong', [MobileUpahGendongController::class, 'show'])->whereNumber('vehicle')->name('upah-gendong.show');
                 Route::get('vendor-cash', [MobileVendorCashController::class, 'index'])->name('vendor-cash.index');
+                Route::get('upah-gendong-settings', [MobileUpahGendongSettingController::class, 'index'])->name('upah-gendong-settings.index');
+                Route::post('vehicles/{vehicle}/upah-gendong-setting', [MobileUpahGendongSettingController::class, 'store'])->whereNumber('vehicle')->middleware('throttle:30,1')->name('upah-gendong-settings.store');
+                Route::patch('vehicles/{vehicle}/upah-gendong-setting', [MobileUpahGendongSettingController::class, 'update'])->whereNumber('vehicle')->middleware('throttle:30,1')->name('upah-gendong-settings.update');
+                Route::delete('vehicles/{vehicle}/upah-gendong-setting', [MobileUpahGendongSettingController::class, 'destroy'])->whereNumber('vehicle')->middleware('throttle:10,1')->name('upah-gendong-settings.destroy');
                 Route::middleware('throttle:10,1')->group(function (): void {
                     Route::patch('vehicles/{vehicle}/tire-logs/{banLog}', [MobileMaintenanceHistoryController::class, 'updateTire'])->whereNumber(['vehicle', 'banLog'])->name('tire-logs.update');
                     Route::delete('vehicles/{vehicle}/tire-logs/{banLog}', [MobileMaintenanceHistoryController::class, 'destroyTire'])->whereNumber(['vehicle', 'banLog'])->name('tire-logs.destroy');

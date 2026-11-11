@@ -19,6 +19,7 @@ class MobileUserResource extends JsonResource
                 // edit/hapus riwayat ban & aki hanya untuk akun vendor.
                 'vendor_billing' => $this->resource->isVendorAccount() && $this->vendor_id !== null,
                 'vendor_finance' => $this->resource->canViewVendorFinance(),
-                'maintenance_history' => $this->resource->isVendorAccount() && $this->resource->canManageMaintenanceHistory()]];
+                'maintenance_history' => $this->resource->isVendorAccount() && $this->resource->canManageMaintenanceHistory(),
+                'upah_gendong_settings' => $this->resource->isVendorAccount() && $this->resource->canManageUpahGendong()]];
     }
 }
