@@ -46,9 +46,11 @@ class StatistikController extends Controller
     {
         $report = $request->validate(['report' => 'required|in:upah-gendong,aki,ban-luar,filter-oli', 'q' => 'nullable|string|max:100', 'page' => 'nullable|integer|min:1'])['report'];
         if ($request->ajax()) {
-            $query = Vehicle::where('vendor_id', $request->user()->vendor_id)->where('status', '!=', 'nonaktif');
+            $query = Vehicle::where('vendor_id', $request->user()->vendor_id);
             if ($report === 'filter-oli') {
-                $query->where('pembatasan_filter_oli', true);
+                Vehicle::whereFilterOilEligible($query, $request->user());
+            } else {
+                $query->where('status', '!=', 'nonaktif');
             }
             $vehicles = $query->where('nomor_lambung', 'like', '%'.$request->input('q', '').'%')->orderBy('nomor_lambung')->orderBy('id')->simplePaginate(25);
 

@@ -36,6 +36,7 @@ use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\KasBesarService;
+use App\Services\MaintenanceLogWriter;
 use App\Services\KasVendorService;
 use App\Services\MaintenanceAuthorizationService;
 use App\Services\MaintenanceBanUjDitahanService;
@@ -402,97 +403,10 @@ class BillingController extends Controller
             $vehicleId = $invoice->vehicle_id;
             $vehicleInfo = $invoice->vehicle;
 
-            // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
-            // Eksekusi Update BanLog berdasarkan created_at milik Detail Item
+            // Histori ban dicatat lewat writer bersama (dipakai juga input langsung akun vendor).
             foreach ($invoice->details as $item) {
-                $tanggalGantiBan = $item->created_at;
-
-                if ($item->sumber_ban === 'serep') {
-                    $banSerep = BanLog::where('vehicle_id', $vehicleId)->where('posisi_ban_id', 11)->orderBy('id', 'desc')->first();
-                    $banLama = BanLog::where('vehicle_id', $vehicleId)->where('posisi_ban_id', $item->posisi_ban_id)->orderBy('id', 'desc')->first();
-
-                    $banLogTujuan = BanLog::create([
-                        'vehicle_id' => $vehicleId,
-                        'posisi_ban_id' => $item->posisi_ban_id,
-                        'merk' => $banSerep->merk ?? '-',
-                        'no_seri' => $banSerep->no_seri ?? '-',
-                        'kondisi' => $banSerep->kondisi ?? 100,
-                        'ritase' => $banSerep->ritase ?? 0,
-                        'created_at' => $tanggalGantiBan,
-                    ]);
-
-                    if ($banLama) {
-                        BanLog::create([
-                            'vehicle_id' => $vehicleId,
-                            'posisi_ban_id' => 11,
-                            'merk' => $banLama->merk,
-                            'no_seri' => $banLama->no_seri,
-                            'kondisi' => $banLama->kondisi,
-                            'ritase' => $banLama->ritase,
-                            'created_at' => $tanggalGantiBan,
-                        ]);
-                    }
-                } else {
-                    // 1. Tarik transaksi riil dari tanggal ganti hingga saat ini
-                    $transaksis = Transaksi::select('transaksis.id', 'rutes.jarak')
-                        ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
-                        ->join('rutes', 'kas_uang_jalans.rute_id', '=', 'rutes.id')
-                        ->where('kas_uang_jalans.vehicle_id', $invoice->vehicle_id)
-                        ->where('transaksis.void', 0)
-                        ->whereBetween('transaksis.created_at', [$tanggalGantiBan, now()])
-                        ->get();
-
-                    $totalRitaseHitung = 0;
-                    $trxList = [];
-                    $now = now();
-
-                    foreach ($transaksis as $trx) {
-                        $jarak = (float) $trx->jarak;
-                        $nilaiRitase = ($jarak > 50) ? 1.0 : 0.5;
-
-                        $totalRitaseHitung += $nilaiRitase;
-
-                        $trxList[] = [
-                            'transaksi_id' => $trx->id,
-                            'nilai_ritase' => $nilaiRitase,
-                        ];
-                    }
-
-                    // 2. Tentukan nilai ritase akhir (Mencegah Double Count)
-                    // Jika ada transaksi terhitung, gunakan $totalRitaseHitung.
-                    // Jika tidak ada transaksi (0), gunakan $item->ritase yang sudah tersimpan dari form/update tanggal.
-                    $ritaseFix = ($totalRitaseHitung > 0) ? $totalRitaseHitung : ($item->ritase ?? 0);
-
-                    // 3. Buat BanLog dengan ritase yang sudah akurat
-                    $banLogTujuan = BanLog::create([
-                        'vehicle_id' => $vehicleId,
-                        'posisi_ban_id' => $item->posisi_ban_id,
-                        'merk' => $item->merk,
-                        'no_seri' => $item->no_seri,
-                        'kondisi' => $item->kondisi,
-                        'ritase' => $ritaseFix,
-                        'created_at' => $tanggalGantiBan,
-                    ]);
-
-                    // 4. Masukkan riwayat transaksi ke tabel pivot ban_log_transaksis
-                    if (! empty($trxList)) {
-                        $pivotData = [];
-                        foreach ($trxList as $t) {
-                            $pivotData[] = [
-                                'ban_log_id' => $banLogTujuan->id,
-                                'transaksi_id' => $t['transaksi_id'],
-                                'nilai_ritase' => $t['nilai_ritase'],
-                                'created_at' => $now,
-                                'updated_at' => $now,
-                            ];
-                        }
-
-                        foreach (array_chunk($pivotData, 500) as $chunk) {
-                            DB::table('ban_log_transaksis')->insert($chunk);
-                        }
-                    }
-                }
-
+                $banLogTujuan = app(MaintenanceLogWriter::class)->tire($vehicleId, $item->posisi_ban_id, $item->sumber_ban,
+                    $item->merk, $item->no_seri, $item->kondisi, $item->created_at, (float) ($item->ritase ?? 0));
                 $item->update(['ban_log_id' => $banLogTujuan->id]);
             }
 
@@ -680,11 +594,8 @@ class BillingController extends Controller
                     app(MaintenanceUjDitahanService::class)->debit($invoice);
                 }
                 foreach ($invoice->details as $item) {
-                    $log = AkiLog::create([
-                        'vehicle_id' => $invoice->vehicle_id, 'posisi_aki_id' => $item->posisi_aki_id,
-                        'merk' => $item->merk, 'no_seri' => $item->no_seri, 'kondisi' => $item->kondisi,
-                        'created_at' => $item->created_at,
-                    ]);
+                    $log = app(MaintenanceLogWriter::class)->battery($invoice->vehicle_id, $item->posisi_aki_id,
+                        $item->merk, $item->no_seri, $item->kondisi, $item->created_at);
                     $item->update(['aki_log_id' => $log->id]);
                 }
                 $kb = null;

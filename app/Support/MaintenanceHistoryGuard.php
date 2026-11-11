@@ -4,18 +4,19 @@ namespace App\Support;
 
 use App\Models\AkiLog;
 use App\Models\BanLog;
+use App\Models\FilterOliLog;
 use App\Models\PasswordKonfirmasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * Satu pemeriksaan untuk edit/hapus riwayat ban dan aki: peran yang boleh,
+ * Satu pemeriksaan untuk edit/hapus riwayat ban, aki, dan filter & oli: peran yang boleh,
  * kepemilikan kendaraan untuk akun vendor, dan konfirmasi password.
  */
 class MaintenanceHistoryGuard
 {
     /** Hentikan request bila akun tidak boleh mengubah riwayat kendaraan ini. */
-    public static function authorize(Request $request, AkiLog|BanLog $log): void
+    public static function authorize(Request $request, AkiLog|BanLog|FilterOliLog $log): void
     {
         $user = $request->user();
         abort_unless($user->canManageMaintenanceHistory(), 403);

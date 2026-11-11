@@ -53,6 +53,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                     Route::delete('vehicles/{vehicle}/tire-logs/{banLog}', [MobileMaintenanceHistoryController::class, 'destroyTire'])->whereNumber(['vehicle', 'banLog'])->name('tire-logs.destroy');
                     Route::patch('vehicles/{vehicle}/battery-logs/{akiLog}', [MobileMaintenanceHistoryController::class, 'updateBattery'])->whereNumber(['vehicle', 'akiLog'])->name('battery-logs.update');
                     Route::delete('vehicles/{vehicle}/battery-logs/{akiLog}', [MobileMaintenanceHistoryController::class, 'destroyBattery'])->whereNumber(['vehicle', 'akiLog'])->name('battery-logs.destroy');
+                    Route::patch('vehicles/{vehicle}/filter-oil-logs/{log}', [MobileMaintenanceHistoryController::class, 'updateFilterOil'])->whereNumber(['vehicle', 'log'])->name('filter-oil-logs.update');
+                    Route::delete('vehicles/{vehicle}/filter-oil-logs/{log}', [MobileMaintenanceHistoryController::class, 'destroyFilterOil'])->whereNumber(['vehicle', 'log'])->name('filter-oil-logs.destroy');
+                });
+                Route::middleware('throttle:30,1')->group(function (): void {
+                    Route::post('vehicles/{vehicle}/tire-logs', [MobileMaintenanceHistoryController::class, 'storeTire'])->whereNumber('vehicle')->name('tire-logs.store');
+                    Route::post('vehicles/{vehicle}/battery-logs', [MobileMaintenanceHistoryController::class, 'storeBattery'])->whereNumber('vehicle')->name('battery-logs.store');
+                    Route::post('vehicles/{vehicle}/filter-oil-logs', [MobileMaintenanceHistoryController::class, 'storeFilterOil'])->whereNumber('vehicle')->name('filter-oil-logs.store');
                 });
                 Route::get('vendor-invoices', [VendorInvoiceController::class, 'index'])->name('vendor-invoices.index');
                 Route::get('vendor-invoices/{kind}/{record}', [VendorInvoiceController::class, 'show'])->whereNumber('record')->name('vendor-invoices.show');

@@ -19,6 +19,21 @@ class Vehicle extends Model
         return ['pembatasan_filter_oli' => 'boolean'];
     }
 
+    /**
+     * Kendaraan yang tampil di Filter & Oli Mesin untuk akun ini: selain
+     * nonaktif, dan (kecuali akun vendor) sudah diaktifkan admin.
+     *
+     * @template TQuery of \Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder
+     *
+     * @param  TQuery  $query
+     * @return TQuery
+     */
+    public static function whereFilterOilEligible($query, User $user, string $table = 'vehicles')
+    {
+        return $query->where($table.'.status', '!=', 'nonaktif')
+            ->when($user->requiresFilterOilActivation(), fn ($query) => $query->where($table.'.pembatasan_filter_oli', true));
+    }
+
     public function driver()
     {
         return $this->belongsTo(Driver::class);

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\FilterOliGantiInvoice;
-use App\Models\FilterOliGantiInvoiceDetail;
 use App\Models\FilterOliLog;
 use App\Models\KategoriFilterOliMesin;
 use App\Models\Vehicle;
-use App\Services\FilterOliRitaseService;
+use App\Services\MaintenanceLogWriter;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,8 +61,8 @@ class FilterOliReportController extends Controller
         if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'filter-oli']);
         }
-        $filters = $request->validate(['vehicle_id' => ['nullable', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true))]]);
-        $vehicles = Vehicle::where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true)
+        $filters = $request->validate(['vehicle_id' => ['nullable', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => Vehicle::whereFilterOilEligible($query, $request->user()))]]);
+        $vehicles = Vehicle::whereFilterOilEligible(Vehicle::query(), $request->user())
             ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('vendor_id', $request->user()->vendor_id)->whereKey($request->input('vehicle_id')))
             ->orderBy('nomor_lambung')->get();
         $vehicle = isset($filters['vehicle_id']) ? $vehicles->firstWhere('id', $filters['vehicle_id']) : null;
@@ -123,23 +123,17 @@ class FilterOliReportController extends Controller
         return view('rekap.statistik.filter-oli.transactions', compact('log', 'transactions'));
     }
 
-    public function updateHistory(Request $request, int $log, FilterOliRitaseService $ritase): RedirectResponse
+    public function updateHistory(Request $request, int $log, MaintenanceLogWriter $writer): RedirectResponse
     {
         $data = $request->validate(['tanggal_ganti' => ['required', 'date_format:Y-m-d', 'before_or_equal:today']], [
             'tanggal_ganti.required' => 'Tanggal ganti wajib diisi.',
             'tanggal_ganti.date_format' => 'Format tanggal ganti tidak valid.',
             'tanggal_ganti.before_or_equal' => 'Tanggal ganti tidak boleh setelah hari ini.',
         ]);
-        $record = FilterOliLog::findOrFail($log);
         try {
-            DB::transaction(function () use ($record, $data, $ritase): void {
-                Vehicle::whereKey($record->vehicle_id)->lockForUpdate()->firstOrFail();
-                $record = FilterOliLog::whereKey($record->id)->lockForUpdate()->firstOrFail();
-                $date = Carbon::parse($data['tanggal_ganti'])->startOfDay();
-                $record->update(['created_at' => $date]);
-                FilterOliGantiInvoiceDetail::where('filter_oli_log_id', $record->id)->update(['created_at' => $date]);
-                $ritase->refreshVehicle($record->vehicle_id);
-            }, 3);
+            $writer->rescheduleFilterOil(FilterOliLog::findOrFail($log), Carbon::parse($data['tanggal_ganti'])->startOfDay());
+        } catch (ModelNotFoundException $exception) {
+            throw $exception;
         } catch (Throwable $exception) {
             report($exception);
 
@@ -149,17 +143,12 @@ class FilterOliReportController extends Controller
         return back()->with('success', 'Tanggal ganti diperbarui. Ritase dan catatan transaksi seluruh periode penggantian telah dihitung ulang.');
     }
 
-    public function deleteHistory(int $log, FilterOliRitaseService $ritase): RedirectResponse
+    public function deleteHistory(int $log, MaintenanceLogWriter $writer): RedirectResponse
     {
-        $record = FilterOliLog::findOrFail($log);
         try {
-            DB::transaction(function () use ($record, $ritase): void {
-                Vehicle::whereKey($record->vehicle_id)->lockForUpdate()->firstOrFail();
-                $record = FilterOliLog::whereKey($record->id)->lockForUpdate()->firstOrFail();
-                FilterOliGantiInvoiceDetail::where('filter_oli_log_id', $record->id)->update(['filter_oli_log_id' => null]);
-                $record->delete();
-                $ritase->refreshVehicle($record->vehicle_id);
-            }, 3);
+            $writer->removeFilterOil(FilterOliLog::findOrFail($log));
+        } catch (ModelNotFoundException $exception) {
+            throw $exception;
         } catch (Throwable $exception) {
             report($exception);
 

@@ -80,6 +80,15 @@ class User extends Authenticatable
     }
 
     /** Vendor boleh melihat keuangannya sendiri; vendor operational hanya uang jalan. */
+    /**
+     * Filter & Oli Mesin hanya untuk kendaraan yang diaktifkan admin
+     * (pembatasan_filter_oli). Akun vendor mengelola sendiri tanpa pengaktifan.
+     */
+    public function requiresFilterOilActivation(): bool
+    {
+        return $this->role !== 'vendor';
+    }
+
     public function canViewVendorFinance(): bool
     {
         return $this->role === 'vendor';

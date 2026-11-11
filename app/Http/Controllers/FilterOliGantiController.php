@@ -17,6 +17,7 @@ use App\Services\KasBesarService;
 use App\Services\KasVendorService;
 use App\Services\MaintenanceAuthorizationService;
 use App\Services\MaintenanceKasBesarWhatsAppService;
+use App\Services\MaintenanceLogWriter;
 use App\Services\MaintenanceUjDitahanService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -229,15 +230,13 @@ class FilterOliGantiController extends Controller
                 if ($invoice->pembayaran === 'uj_ditahan') {
                     app(MaintenanceUjDitahanService::class)->debit($invoice);
                 }
+                $writer = app(MaintenanceLogWriter::class);
                 foreach ($invoice->details as $detail) {
-                    $log = FilterOliLog::create([
-                        'vehicle_id' => $invoice->vehicle_id, 'kategori_filter_oli_mesin_id' => $detail->kategori_filter_oli_mesin_id,
-                        'merk' => $detail->merk, 'kondisi' => $detail->kondisi, 'ritase' => $detail->ritase,
-                        'created_at' => $detail->created_at,
-                    ]);
+                    $log = $writer->filterOil($invoice->vehicle_id, $detail->kategori_filter_oli_mesin_id,
+                        $detail->merk, $detail->kondisi, $detail->created_at, (float) $detail->ritase);
                     $detail->update(['filter_oli_log_id' => $log->id]);
                 }
-                $this->ritase->refreshVehicle($invoice->vehicle_id);
+                $writer->refreshFilterOil($invoice->vehicle_id);
                 if ($invoice->pembayaran === 'kas_besar') {
                     $cash = $kasBesar->potongSaldo([
                         'nominal_transaksi' => (int) $invoice->total_nominal,

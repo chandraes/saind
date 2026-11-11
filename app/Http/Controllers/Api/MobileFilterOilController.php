@@ -14,11 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 class MobileFilterOilController extends Controller
 {
-    /** Same eligibility as the web statistics page: active (non-nonaktif) vehicles with the filter/oil restriction enabled. */
+    /** Same eligibility as the web statistics page (Vehicle::whereFilterOilEligible). */
     private function eligibleVehicles(Request $request): Builder
     {
-        return Vehicle::query()->where('vehicles.vendor_id', $request->user()->vendor_id)
-            ->where('vehicles.status', '!=', 'nonaktif')->where('vehicles.pembatasan_filter_oli', true);
+        return Vehicle::whereFilterOilEligible(Vehicle::query()->where('vehicles.vendor_id', $request->user()->vendor_id), $request->user());
     }
 
     private function meta(Paginator $page): array

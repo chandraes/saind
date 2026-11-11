@@ -91,9 +91,10 @@ class MobileFilterOilTest extends MobileApiTestCase
         ]);
     }
 
-    private function headers(): array
+    private function headers(string $role = 'vendor-operational'): array
     {
-        $user = User::factory()->create(['username' => 'filter-test', 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 1]);
+        $user = User::factory()->create(['username' => 'filter-'.$role, 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => 1]);
+        $this->app['auth']->forgetGuards();
 
         return ['X-Workspace-ID' => self::WORKSPACE, 'X-Vendor-ID' => '1',
             'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
@@ -105,6 +106,16 @@ class MobileFilterOilTest extends MobileApiTestCase
         $this->getJson('/api/v1/filter-oil/vehicles', $headers)->assertOk()
             ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 1)->assertJsonPath('meta.has_more', false);
         $this->getJson('/api/v1/filter-oil/vehicles?search=999', $headers)->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_vendor_sees_own_active_vehicles_without_admin_activation(): void
+    {
+        $headers = $this->headers('vendor');
+        $this->getJson('/api/v1/filter-oil/vehicles', $headers)->assertOk()
+            ->assertJsonCount(2, 'data')->assertJsonPath('data.0.id', 1)->assertJsonPath('data.1.id', 2);
+        $this->getJson('/api/v1/vehicles/2/filter-oil-monitoring', $headers)->assertOk()->assertJsonPath('data.vehicle.id', 2);
+        $this->getJson('/api/v1/vehicles/3/filter-oil-monitoring', $headers)->assertNotFound();
+        $this->getJson('/api/v1/vehicles/2/filter-oil-monitoring', $this->headers())->assertNotFound();
     }
 
     public function test_monitoring_returns_latest_log_per_category_and_limit_status(): void
