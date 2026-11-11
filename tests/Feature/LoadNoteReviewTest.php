@@ -43,8 +43,15 @@ class LoadNoteReviewTest extends MobileApiTestCase
         });
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
+            $table->unsignedBigInteger('kas_uang_jalan_id')->nullable();
             $table->string('nota_muat')->nullable()->unique();
         });
+        if (! Schema::hasTable('kas_uang_jalans')) {
+            Schema::create('kas_uang_jalans', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('vendor_id');
+            });
+        }
         foreach (['2026_11_03_104025_create_load_note_drafts_table.php', '2026_11_04_060303_add_matching_fields_to_load_note_drafts_table.php', '2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php', '2026_11_04_092518_add_transfer_override_to_load_note_drafts_table.php'] as $file) {
             (require database_path('migrations/'.$file))->up();
         }
@@ -150,22 +157,19 @@ class LoadNoteReviewTest extends MobileApiTestCase
         $note = $this->note();
         $this->actingAs($this->actor())->patchJson('/billing/nota-muat/'.$note->id, $this->correction())->assertOk();
         $this->patchJson('/billing/nota-muat/'.$note->id, $this->correction())->assertUnprocessable()->assertJsonValidationErrors('revision');
-        $this->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'action' => 'reject', 'reason' => 'Nota keliru'])->assertUnprocessable();
+        $this->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'reason' => 'Nota keliru'])->assertUnprocessable();
         $this->assertDatabaseCount('load_note_events', 1);
     }
 
-    public static function decisions(): array
-    {
-        return [['reject', 'rejected'], ['cancel', 'cancelled']];
-    }
-
-    #[DataProvider('decisions')]
-    public function test_decisions_keep_note_history_and_release_vehicle_pending_block(string $action, string $status): void
+    public function test_void_keeps_note_history_with_reason_and_releases_vehicle_pending_block(): void
     {
         $note = $this->note();
-        $this->actingAs($this->actor())->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'action' => $action, 'reason' => 'Nota tidak sesuai foto'])->assertOk();
-        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'status' => $status, 'revision' => 1]);
+        $this->actingAs($this->actor())->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'reason' => '  Nota tidak sesuai foto  '])
+            ->assertOk()->assertJsonPath('message', 'Nota berhasil di-void. Kendaraan dapat mengirim nota baru.');
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'status' => 'void', 'revision' => 1]);
+        $this->assertDatabaseHas('load_note_events', ['load_note_draft_id' => $note->id, 'action' => 'void', 'reason' => 'Nota tidak sesuai foto']);
         $this->assertDatabaseCount('load_note_events', 1);
+        $this->get('/billing/nota-muat/'.$note->id)->assertOk()->assertSee('Nota di-void')->assertSee('Void')->assertDontSee('data-bs-target="#note-decision-modal"', false);
         app(LoadNoteRules::class)->assertVehicle(Vehicle::findOrFail(1));
         $this->patchJson('/billing/nota-muat/'.$note->id, array_replace($this->correction(), ['revision' => 1]))->assertUnprocessable();
     }
@@ -174,7 +178,7 @@ class LoadNoteReviewTest extends MobileApiTestCase
     {
         $note = $this->note();
         $this->actingAs($this->actor());
-        $this->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'action' => 'cancel'])->assertUnprocessable()->assertJsonValidationErrors('reason');
+        $this->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'reason' => '   '])->assertUnprocessable()->assertJsonValidationErrors(['reason' => 'Alasan void wajib diisi.']);
         $this->patchJson('/billing/nota-muat/'.$note->id, array_replace($this->correction(), ['vehicle_id' => 2]))->assertUnprocessable()->assertJsonValidationErrors('vehicle_id');
         $this->assertDatabaseCount('load_note_events', 0);
     }
@@ -184,7 +188,7 @@ class LoadNoteReviewTest extends MobileApiTestCase
         $note = $this->note();
         $this->actingAs($this->actor('vendor-operational'));
         $this->patchJson('/billing/nota-muat/'.$note->id, $this->correction())->assertForbidden();
-        $this->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'action' => 'reject', 'reason' => 'Tidak sesuai'])->assertForbidden();
+        $this->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 0, 'reason' => 'Tidak sesuai'])->assertForbidden();
         $this->get('/kas-uang-jalan/keluar?load_note_id='.$note->id)->assertForbidden();
         $this->assertDatabaseCount('load_note_events', 0);
     }
@@ -215,7 +219,7 @@ class LoadNoteReviewTest extends MobileApiTestCase
         $this->assertSame('processed', $note->fresh()->status);
         $this->assertNotNull($note->fresh()->transaksi_id);
         $this->assertDatabaseCount('load_note_events', 1);
-        $this->actingAs($user)->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 1, 'action' => 'cancel', 'reason' => 'Tidak boleh'])->assertUnprocessable();
+        $this->actingAs($user)->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 1, 'reason' => 'Tidak boleh'])->assertUnprocessable();
     }
 
     public function test_processing_is_blocked_when_ticket_was_entered_on_the_web_meanwhile(): void

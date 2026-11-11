@@ -250,7 +250,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         }
         $actor = $this->actor();
         $transaction = $this->journey();
-        foreach (['draft', 'rejected', 'cancelled', 'processed'] as $status) {
+        foreach (['draft', 'void', 'void', 'processed'] as $status) {
             LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(1), $actor)->create(['status' => $status, 'transaksi_id' => $status === 'processed' ? $transaction : null]);
         }
         LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(2), $this->actor(2))->create();
@@ -264,8 +264,8 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $this->getJson('/api/v1/load-notes', $headers)->assertOk()->assertJsonCount(4, 'data');
         $this->getJson('/api/v1/load-notes?status=all', $headers)->assertOk()->assertJsonCount(4, 'data');
         $this->getJson('/api/v1/load-notes?status=unprocessed', $headers)->assertOk()->assertJsonCount(3, 'data');
-        foreach (['draft', 'rejected', 'cancelled', 'processed'] as $status) {
-            $this->getJson('/api/v1/load-notes?status='.$status, $headers)->assertOk()->assertJsonCount(1, 'data')
+        foreach (['draft' => 1, 'void' => 2, 'processed' => 1] as $status => $count) {
+            $this->getJson('/api/v1/load-notes?status='.$status, $headers)->assertOk()->assertJsonCount($count, 'data')
                 ->assertJsonPath('data.0.status', $status)->assertJsonPath('data.0.transaction_id', $status === 'processed' ? $transaction : null);
         }
         for ($index = 0; $index < 20; $index++) {

@@ -77,4 +77,22 @@ class MobileUnitPerformanceTest extends MobileApiTestCase
         $this->app['auth']->forgetGuards();
         $this->getJson($url, ['X-Workspace-ID' => self::WORKSPACE])->assertUnauthorized();
     }
+
+    public function test_performance_filters_by_month_and_year(): void
+    {
+        $this->travelTo('2026-12-05 09:00:00');
+        $user = User::factory()->create(['username' => 'perform-month', 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 1]);
+        $headers = $this->headersFor($user);
+
+        $this->getJson('/api/v1/unit-performance?month=11&year=2026', $headers)->assertOk()
+            ->assertJsonPath('data.0.long_route_count', 1)
+            ->assertJsonPath('meta.start_date', '2026-11-01')->assertJsonPath('meta.end_date', '2026-11-30')
+            ->assertJsonPath('meta.month', 11)->assertJsonPath('meta.year', 2026)->assertJsonPath('meta.years', [2026]);
+        $this->getJson('/api/v1/unit-performance?month=10&year=2026', $headers)->assertOk()->assertJsonPath('data.0.long_route_count', 0);
+        $this->getJson('/api/v1/unit-performance', $headers)->assertOk()
+            ->assertJsonPath('meta.start_date', '2026-12-01')->assertJsonPath('meta.end_date', '2026-12-05');
+        $this->getJson('/api/v1/unit-performance?month=13&year=2026', $headers)->assertUnprocessable()->assertJsonValidationErrors('month');
+        $this->getJson('/api/v1/unit-performance?month=11', $headers)->assertUnprocessable()->assertJsonValidationErrors('year');
+        $this->travelBack();
+    }
 }

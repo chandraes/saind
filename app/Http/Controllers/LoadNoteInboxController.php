@@ -106,9 +106,9 @@ class LoadNoteInboxController extends Controller
 
     public function decide(DecideLoadNoteRequest $request, LoadNoteDraft $note, LoadNoteReviewService $service): JsonResponse
     {
-        $updated = $service->decide($request->user(), $note, $request->validated());
+        $service->decide($request->user(), $note, $request->validated());
 
-        return response()->json(['message' => 'Nota berhasil '.($updated->status === 'rejected' ? 'ditolak.' : 'dibatalkan.')]);
+        return response()->json(['message' => 'Nota berhasil di-void. Kendaraan dapat mengirim nota baru.']);
     }
 
     public function photo(Request $request, LoadNoteDraft $note, LoadNoteDraftService $service): StreamedResponse

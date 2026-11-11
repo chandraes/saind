@@ -31,16 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePaymentTotal();
     }
     const decisionModal = document.getElementById('note-decision-modal');
-    decisionModal?.addEventListener('show.bs.modal', event => {
-        const action = event.relatedTarget?.dataset.noteDecision;
-        if (!['reject', 'cancel'].includes(action)) { event.preventDefault(); return; }
-        const form = decisionModal.querySelector('form');
-        form.querySelector('[name="action"]').value = action;
-        form.querySelector('[name="reason"]').value = '';
-        const label = action === 'reject' ? 'Tolak nota' : 'Batalkan nota';
-        document.getElementById('note-decision-title').textContent = label;
-        document.getElementById('note-decision-submit').textContent = label;
-        form.dataset.confirm = label + '?';
+    decisionModal?.addEventListener('show.bs.modal', () => {
+        decisionModal.querySelector('[name="reason"]').value = '';
     });
     document.querySelectorAll('#note-edit-modal, #note-decision-modal, #note-payment-modal').forEach(modal => {
         modal.addEventListener('hide.bs.modal', event => { if (saving) event.preventDefault(); });
@@ -51,18 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             if (saving) return;
             const target = form.closest('.modal') || document.body;
+            const reasonField = form.querySelector('textarea[name="reason"]');
+            if (reasonField) reasonField.value = reasonField.value.trim();
             if (!form.checkValidity()) {
                 await Swal.fire({icon: 'warning', title: 'Data belum lengkap', text: 'Lengkapi data wajib dan alasan sebelum melanjutkan.', target});
                 return;
             }
             saving = true;
-            const action = form.querySelector('[name="action"]')?.value;
+            const isDecision = form.hasAttribute('data-note-decision-form');
             const reason = form.querySelector('[name="reason"]')?.value || form.dataset.confirmDetails || '';
             let buttons = [];
             let navigating = false;
             try {
                 const confirmation = await Swal.fire({title: form.dataset.confirm, text: reason,
-                    icon: action ? 'warning' : 'question', showCancelButton: true, confirmButtonText: 'Ya, lanjutkan', cancelButtonText: 'Kembali', focusCancel: true, target});
+                    icon: isDecision ? 'warning' : 'question', showCancelButton: true, confirmButtonText: 'Ya, lanjutkan', cancelButtonText: 'Kembali', focusCancel: true, target});
                 if (!confirmation.isConfirmed) return;
                 const body = new FormData(form);
                 buttons = [...target.querySelectorAll('input, textarea, select, button')].map(element => ({element, disabled: element.disabled}));

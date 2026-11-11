@@ -15,20 +15,31 @@ class MobileUnitPerformanceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filters = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12', 'required_with:year'],
+            'year' => ['nullable', 'integer', 'between:2000,2100', 'required_with:month'],
+            // Rentang tanggal tetap diterima untuk aplikasi versi lama.
             'start_date' => ['nullable', 'date_format:Y-m-d'],
             'end_date' => ['nullable', 'date_format:Y-m-d'],
             'search' => ['nullable', 'string', 'max:100'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ]);
 
-        $start = CarbonImmutable::parse($filters['start_date'] ?? now()->startOfMonth()->toDateString());
-        $end = CarbonImmutable::parse($filters['end_date'] ?? now()->toDateString());
+        if (isset($filters['month']) || ! isset($filters['start_date'])) {
+            $start = CarbonImmutable::create((int) ($filters['year'] ?? now()->year), (int) ($filters['month'] ?? now()->month), 1);
+            $end = $start->isSameMonth(now()) ? CarbonImmutable::today() : $start->endOfMonth()->startOfDay();
+        } else {
+            $start = CarbonImmutable::parse($filters['start_date']);
+            $end = CarbonImmutable::parse($filters['end_date'] ?? now()->toDateString());
+        }
         if ($end->lessThan($start) || $start->diffInDays($end) > 31) {
             throw ValidationException::withMessages(['end_date' => 'Rentang tanggal harus berurutan dan maksimal 31 hari.']);
         }
 
         $vendorId = (int) $request->user()->vendor_id;
         abort_if($vendorId <= 0, 403);
+        $firstDate = DB::table('kas_uang_jalans as kuj')->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
+            ->where('v.vendor_id', $vendorId)->min('kuj.tanggal');
+        $firstYear = $firstDate ? min(CarbonImmutable::parse($firstDate)->year, $start->year) : $start->year;
         $search = trim($filters['search'] ?? '');
 
         $vehicles = DB::table('vehicles')
@@ -77,6 +88,9 @@ class MobileUnitPerformanceController extends Controller
                 'total' => $vehicles->total(),
                 'start_date' => $start->toDateString(),
                 'end_date' => $end->toDateString(),
+                'month' => $start->month,
+                'year' => $start->year,
+                'years' => range(max($start->year, (int) now()->year), $firstYear),
             ],
         ]);
     }

@@ -6,7 +6,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
         <div>
             <h1 class="h3 mb-1 text-gray-800 fw-bold">Statistik Perform Unit</h1>
-            <p class="text-muted mb-0">Periode: <span class="fw-semibold">{{
+            <p class="text-muted mb-0">Periode: @isset($daftar_bulan)<span class="fw-semibold">{{ $daftar_bulan[$bulan] }} {{ $tahun }}</span> · @endisset<span class="fw-semibold">{{
                     \Carbon\Carbon::parse($start_date)->translatedFormat('d M Y') }}</span> s/d <span
                     class="fw-semibold">{{ \Carbon\Carbon::parse($end_date)->translatedFormat('d M Y') }}</span></p>
         </div>
@@ -122,6 +122,24 @@
         <div class="card-body p-3">
             <form action="{{route('statistik.perform-unit')}}" method="get" id="filterForm">
                 <div class="row g-3 align-items-end">
+                    @isset($daftar_bulan)
+                    <div class="col-md-3">
+                        <label for="bulan" class="form-label fw-bold small text-muted">Bulan</label>
+                        <select class="form-select" name="bulan" id="bulan">
+                            @foreach ($daftar_bulan as $value => $label)
+                            <option value="{{ $value }}" @selected($value === $bulan)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tahun" class="form-label fw-bold small text-muted">Tahun</label>
+                        <select class="form-select" name="tahun" id="tahun">
+                            @foreach ($daftar_tahun as $value)
+                            <option value="{{ $value }}" @selected($value === $tahun)>{{ $value }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @else
                     <div class="col-md-3">
                         <label for="start_date" class="form-label fw-bold small text-muted">Tanggal Mulai</label>
                         <input type="date" class="form-control" name="start_date" id="start_date"
@@ -132,6 +150,7 @@
                                 class="text-danger small">(Max 1 Bulan)</span></label>
                         <input type="date" class="form-control" name="end_date" id="end_date" value="{{$end_date}}">
                     </div>
+                    @endisset
                     @if (!in_array(auth()->user()->role, ['vendor', 'vendor-operational']))
                     <div class="col-md-3">
                         <label for="vendor" class="form-label fw-bold small text-muted">Filter Vendor <span
@@ -324,6 +343,10 @@
             }
         }
 
+        $('#bulan, #tahun').on('change', function() {
+            $('#filterForm').trigger('submit');
+        });
+
         $('#start_date').on('change', function() {
             handleDateLimits();
             let startVal = $(this).val();
@@ -358,8 +381,10 @@
 
             // Jika lolos validasi, sinkronkan nilai form print dengan filter terbaru sebelum meluncur
             $('#printVendorId').val(currentVendor);
-            $(this).find('input[name="start_date"]').val(currentStartDate);
-            $(this).find('input[name="end_date"]').val(currentEndDate);
+            // Mode bulan/tahun (vendor operational) tidak punya input tanggal;
+            // tetap pakai periode yang sedang ditampilkan.
+            if (currentStartDate) $(this).find('input[name="start_date"]').val(currentStartDate);
+            if (currentEndDate) $(this).find('input[name="end_date"]').val(currentEndDate);
         });
     });
 </script>

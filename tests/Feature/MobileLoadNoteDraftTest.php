@@ -20,8 +20,16 @@ class MobileLoadNoteDraftTest extends MobileApiTestCase
         (require database_path('migrations/2026_11_03_104025_create_load_note_drafts_table.php'))->up();
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
+            $table->unsignedBigInteger('kas_uang_jalan_id')->nullable();
             $table->string('nota_muat')->nullable()->unique();
         });
+        if (! Schema::hasTable('kas_uang_jalans')) {
+            Schema::create('kas_uang_jalans', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('vendor_id');
+            });
+        }
+        (require database_path('migrations/2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'))->up();
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A'], ['id' => 2, 'nama' => 'Vendor B']]);
         DB::table('vehicles')->insert([
             ['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '169'],
@@ -95,6 +103,25 @@ class MobileLoadNoteDraftTest extends MobileApiTestCase
         $this->getJson('/api/v1/load-notes/'.$id, $other)->assertNotFound();
         $this->getJson('/api/v1/load-notes/'.$id.'/photo', $other)->assertNotFound();
         $this->getJson('/api/v1/load-notes/vehicles', $other)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 2);
+    }
+
+    public function test_list_filters_pending_and_void_notes_with_the_void_reason(): void
+    {
+        $creator = $this->actor();
+        $headers = $this->headers($creator);
+        $voided = $this->postJson('/api/v1/load-notes', $this->payload(), $headers)->assertCreated()->json('data.id');
+        DB::table('load_note_drafts')->where('id', $voided)->update(['status' => 'void']);
+        $pending = $this->postJson('/api/v1/load-notes', array_replace($this->payload(), ['ticket_number' => 'SJB-002']), $headers)->assertCreated()->json('data.id');
+        DB::table('load_note_events')->insert(['load_note_draft_id' => $voided, 'actor_id' => $creator->id, 'action' => 'void',
+            'reason' => 'Foto nota buram', 'before' => '{}', 'after' => '{}', 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->getJson('/api/v1/load-notes?status=draft', $headers)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $pending);
+        $this->getJson('/api/v1/load-notes?status=void', $headers)->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $voided)->assertJsonPath('data.0.void_reason', 'Foto nota buram');
+        // Aplikasi versi lama masih mengirim filter "rejected"/"cancelled".
+        $this->getJson('/api/v1/load-notes?status=rejected', $headers)->assertOk()->assertJsonPath('data.0.id', $voided);
+        $this->getJson('/api/v1/load-notes?status=unprocessed', $headers)->assertOk()->assertJsonCount(2, 'data');
+        $this->getJson('/api/v1/load-notes/'.$voided, $headers)->assertOk()->assertJsonPath('data.void_reason', 'Foto nota buram');
     }
 
     public function test_other_roles_and_unauthenticated_requests_are_refused(): void

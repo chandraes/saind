@@ -37,22 +37,27 @@ class LoadNoteRules
             return;
         }
 
-        $activeDrafts = fn () => LoadNoteDraft::query()
-            ->whereNotIn('status', ['rejected', 'cancelled'])
+        // Hanya nota yang masih menunggu pemeriksaan. Nota yang sudah diproses
+        // tercakup oleh transaksis.nota_muat, yang dikosongkan saat transaksi
+        // di-void sehingga nomor nota dapat dipakai ulang.
+        $pendingDrafts = fn () => LoadNoteDraft::query()
+            ->where('status', 'draft')
             ->whereRaw(self::normalizedSql('ticket_number').' = ?', [$normalized])
             ->when($exceptNote !== null, fn ($query) => $query->whereKeyNot($exceptNote));
+        $transactions = fn () => DB::table('transaksis')
+            ->whereNotNull('transaksis.nota_muat')
+            ->whereRaw(self::normalizedSql('transaksis.nota_muat').' = ?', [$normalized]);
 
-        if ($activeDrafts()->where('vendor_id', $vendorId)->exists()) {
+        $ownTransaction = fn () => $transactions()
+            ->join('kas_uang_jalans', 'transaksis.kas_uang_jalan_id', '=', 'kas_uang_jalans.id')
+            ->where('kas_uang_jalans.vendor_id', $vendorId)->exists();
+        if ($pendingDrafts()->where('vendor_id', $vendorId)->exists() || $ownTransaction()) {
             throw new LoadNoteRuleException('ticket_number', 'Nomor nota sudah pernah dikirim. Periksa daftar nota.', 'duplicate_note', 'view_notes');
         }
 
         // Nota yang diinput lewat web atau dipakai vendor lain: pesan sengaja
         // tidak menyebut vendor/transaksi pemiliknya.
-        $usedByTransaction = DB::table('transaksis')
-            ->whereNotNull('nota_muat')
-            ->whereRaw(self::normalizedSql('nota_muat').' = ?', [$normalized])
-            ->exists();
-        if ($usedByTransaction || $activeDrafts()->exists()) {
+        if ($transactions()->exists() || $pendingDrafts()->exists()) {
             throw new LoadNoteRuleException('ticket_number', 'Nomor nota muat sudah terdaftar di sistem. Periksa kembali nomor nota atau hubungi admin.', 'duplicate_note', 'contact_admin');
         }
     }

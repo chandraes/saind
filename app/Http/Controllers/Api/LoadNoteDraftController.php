@@ -23,14 +23,16 @@ class LoadNoteDraftController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->authorize('viewAny', LoadNoteDraft::class);
-        $filters = $request->validate(['status' => ['sometimes', 'string', 'in:all,unprocessed,draft,rejected,cancelled,processed'], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+        $filters = $request->validate(['status' => ['sometimes', 'string', 'in:all,unprocessed,draft,void,rejected,cancelled,processed'], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $query = LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with(['creator:id,name', 'customer:id,tagihan_dari', 'vehicle' => fn ($query) => $query
             ->where('vendor_id', $request->user()->vendor_id)->select('id', 'driver_id')->with('driver:id,nama')]);
-        $query->search($filters['search'] ?? '');
-        if (($filters['status'] ?? 'all') === 'unprocessed') {
-            $query->whereIn('status', ['draft', 'rejected', 'cancelled']);
-        } elseif (($filters['status'] ?? 'all') !== 'all') {
-            $query->where('status', $filters['status']);
+        $query->search($filters['search'] ?? '')->with('voidEvent');
+        // Aplikasi lama masih mengirim rejected/cancelled; keduanya kini menjadi void.
+        $status = in_array($filters['status'] ?? 'all', ['rejected', 'cancelled'], true) ? 'void' : ($filters['status'] ?? 'all');
+        if ($status === 'unprocessed') {
+            $query->whereIn('status', ['draft', 'void']);
+        } elseif ($status !== 'all') {
+            $query->where('status', $status);
         }
 
         return MobileLoadNoteDraftResource::collection($query->latest('id')->paginate(20));
@@ -77,7 +79,7 @@ class LoadNoteDraftController extends Controller
 
     public function show(Request $request, int $note, MobileNotePayment $payments): MobileLoadNoteDraftResource
     {
-        $draft = $this->draft($request, $note);
+        $draft = $this->draft($request, $note)->load('voidEvent');
         $detail = $payments->estimateDetail($draft);
         $draft->setAttribute('mobile_payment', $detail['payment']);
         $draft->setAttribute('mobile_transfer_destination', $detail['transfer_destination']);

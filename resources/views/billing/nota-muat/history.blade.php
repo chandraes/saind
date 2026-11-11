@@ -4,7 +4,7 @@
         @php($changeLabels = ['vehicle_number' => 'Nomor lambung', 'mine_name' => 'Customer / tambang', 'rute_name' => 'Rute', 'ticket_number' => 'Nomor nota', 'loaded_on' => 'Tanggal muat', 'gross_kg' => 'Gross (kg)', 'tare_kg' => 'Tare (kg)', 'net_kg' => 'Netto (kg)', 'notes' => 'Catatan', 'status' => 'Status', 'transfer_override' => 'Nominal transfer khusus (Rp)', 'transaksi_id' => 'Transaksi'])
         @forelse ($note->events as $event)
             <article class="border-start border-3 ps-3 py-2 mb-3">
-                <div class="d-flex flex-wrap justify-content-between gap-2"><strong>{{ match ($event->action) { 'payment_updated' => 'Perubahan nominal uang jalan', 'updated' => 'Koreksi nota', 'rejected' => 'Nota ditolak', 'cancelled' => 'Nota dibatalkan', 'processed' => 'Diteruskan ke uang jalan', default => $event->action } }}</strong><small class="text-muted">{{ $event->created_at->format('d-m-Y H:i:s') }}</small></div>
+                <div class="d-flex flex-wrap justify-content-between gap-2"><strong>{{ match ($event->action) { 'payment_updated' => 'Perubahan nominal uang jalan', 'updated' => 'Koreksi nota', 'void' => 'Nota di-void', 'rejected' => 'Nota ditolak', 'cancelled' => 'Nota dibatalkan', 'processed' => 'Diteruskan ke uang jalan', default => $event->action } }}</strong><small class="text-muted">{{ $event->created_at->format('d-m-Y H:i:s') }}</small></div>
                 <small class="text-muted">{{ $event->actor?->name ?? '-' }}</small><p class="text-break mt-2 mb-1">{{ $event->reason }}</p>
                 <details><summary class="small text-primary">Lihat perubahan</summary><dl class="row small mt-2 mb-0">
                     @foreach ($changeLabels as $field => $label)

@@ -27,8 +27,16 @@ class LoadNoteRulesTest extends MobileApiTestCase
         (require database_path('migrations/2026_11_03_104025_create_load_note_drafts_table.php'))->up();
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
+            $table->unsignedBigInteger('kas_uang_jalan_id')->nullable();
             $table->string('nota_muat')->nullable()->unique();
         });
+        if (! Schema::hasTable('kas_uang_jalans')) {
+            Schema::create('kas_uang_jalans', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('vendor_id');
+            });
+        }
+        (require database_path('migrations/2026_11_04_061342_add_review_lifecycle_to_load_note_drafts.php'))->up();
         Schema::create('customers', function (Blueprint $table): void {
             $table->id();
             $table->string('nama');
@@ -353,10 +361,24 @@ class LoadNoteRulesTest extends MobileApiTestCase
         $this->assertNull($this->ticketDecision('SJB-0011'));
         $this->assertNull($this->ticketDecision('SJB-001', exceptNote: $draft->id));
 
-        foreach (['rejected', 'cancelled'] as $status) {
+        foreach (['void', 'rejected', 'cancelled'] as $status) {
             $draft->update(['status' => $status]);
             $this->assertNull($this->ticketDecision('sjb-001'), $status);
         }
+    }
+
+    public function test_processed_ticket_is_blocked_until_its_transaction_is_voided(): void
+    {
+        $draft = LoadNoteDraft::factory()->forVehicle(Vehicle::findOrFail(1), $this->actor())->create(['ticket_number' => 'SJB-002']);
+        DB::table('kas_uang_jalans')->insert(['id' => 10, 'vendor_id' => 1]);
+        $transaction = DB::table('transaksis')->insertGetId(['kas_uang_jalan_id' => 10, 'nota_muat' => 'SJB-002']);
+        DB::table('load_note_drafts')->where('id', $draft->id)->update(['status' => 'processed', 'transaksi_id' => $transaction]);
+
+        $this->assertSame(['duplicate_note', 'view_notes', 'Nomor nota sudah pernah dikirim. Periksa daftar nota.'], $this->ticketDecision(' sjb-002 '));
+
+        // Void transaksi mengosongkan nota_muat; nota yang sama boleh dikirim ulang.
+        DB::table('transaksis')->where('id', $transaction)->update(['nota_muat' => null]);
+        $this->assertNull($this->ticketDecision('SJB-002'));
     }
 
     public function test_ticket_used_by_another_vendor_or_web_transaction_is_rejected_without_revealing_owner(): void

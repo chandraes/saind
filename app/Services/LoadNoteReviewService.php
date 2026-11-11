@@ -22,7 +22,7 @@ class LoadNoteReviewService
     private function assertDraft(LoadNoteDraft $note, ?int $revision = null): void
     {
         if ($note->status !== 'draft' || $note->transaksi_id !== null) {
-            throw ValidationException::withMessages(['note' => 'Nota sudah ditolak, dibatalkan, atau diproses. Muat ulang daftar nota.']);
+            throw ValidationException::withMessages(['note' => 'Nota sudah di-void atau diproses. Muat ulang daftar nota.']);
         }
         if ($revision !== null && $note->revision !== $revision) {
             throw ValidationException::withMessages(['revision' => 'Nota sudah diubah pengguna lain. Muat ulang dan periksa data terbaru.']);
@@ -125,11 +125,8 @@ class LoadNoteReviewService
             $locked = $this->lock($note);
             $this->assertDraft($locked, (int) $data['revision']);
             $before = $this->snapshot($locked);
-            $status = match ($data['action']) {
-                'reject' => 'rejected', 'cancel' => 'cancelled'
-            };
-            $locked->update(['status' => $status, 'revision' => $locked->revision + 1]);
-            $this->record($user, $locked, $status, trim($data['reason']), $before);
+            $locked->update(['status' => 'void', 'revision' => $locked->revision + 1]);
+            $this->record($user, $locked, 'void', trim($data['reason']), $before);
 
             return $locked;
         });

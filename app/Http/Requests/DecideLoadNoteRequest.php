@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class DecideLoadNoteRequest extends FormRequest
 {
@@ -12,9 +11,18 @@ class DecideLoadNoteRequest extends FormRequest
         return $this->user()?->can('review', $this->route('note')) ?? false;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge(['reason' => trim((string) $this->input('reason'))]);
+    }
+
+    public function messages(): array
+    {
+        return ['reason.required' => 'Alasan void wajib diisi.'];
+    }
+
     public function rules(): array
     {
-        return ['revision' => ['required', 'integer', 'min:0'], 'reason' => ['required', 'string', 'max:1000'],
-            'action' => ['required', Rule::in(['reject', 'cancel'])]];
+        return ['revision' => ['required', 'integer', 'min:0'], 'reason' => ['required', 'string', 'max:1000']];
     }
 }

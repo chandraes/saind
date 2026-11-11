@@ -20,6 +20,7 @@ class MobileLoadNoteDraftResource extends JsonResource
             'tare_weight' => number_format($this->tare_kg / 1000, 3, '.', ''),
             'net_weight' => number_format($this->net_kg / 1000, 3, '.', ''),
             'status' => $this->status, 'notes' => $this->notes, 'has_photo' => true,
+            'void_reason' => $this->whenLoaded('voidEvent', fn () => $this->voidEvent?->reason),
             'created_by' => $this->whenLoaded('creator', fn () => ['id' => $this->creator->id, 'name' => $this->creator->name]),
             'created_at' => $this->created_at->toIso8601String()];
     }

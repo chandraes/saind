@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Cache;
 
 class LoadNoteDraft extends Model
@@ -36,10 +37,16 @@ class LoadNoteDraft extends Model
         return $this->hasMany(LoadNoteEvent::class)->latest('id');
     }
 
+    /** Keputusan void terakhir beserta alasannya (termasuk tolak/batal lama). */
+    public function voidEvent(): HasOne
+    {
+        return $this->hasOne(LoadNoteEvent::class)->ofMany(['id' => 'max'], fn ($query) => $query->whereIn('action', ['void', 'rejected', 'cancelled']));
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {
-            'draft' => 'Menunggu pemeriksaan', 'rejected' => 'Ditolak', 'cancelled' => 'Dibatalkan', 'processed' => 'Sudah diproses', default => $this->status,
+            'draft' => 'Menunggu pemeriksaan', 'void', 'rejected', 'cancelled' => 'Void', 'processed' => 'Sudah diproses', default => $this->status,
         };
     }
 

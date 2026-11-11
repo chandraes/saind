@@ -145,7 +145,7 @@ class LoadNoteInboxTest extends MobileApiTestCase
         config(['cache.default' => 'array']);
         Cache::store('array')->flush();
         $this->draft();
-        $this->draft(2, ['status' => 'rejected']);
+        $this->draft(2, ['status' => 'void']);
         $this->draft(3, ['status' => 'cancelled']);
         $this->draft(4, ['status' => 'processed']);
         DB::enableQueryLog();

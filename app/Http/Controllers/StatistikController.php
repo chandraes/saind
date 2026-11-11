@@ -173,6 +173,10 @@ class StatistikController extends Controller
 
     public function perform_unit(Request $request)
     {
+        if (Auth::user()->role === 'vendor-operational') {
+            return $this->performUnitByMonth($request);
+        }
+
         // Default rentang tanggal berjalan (Awal bulan ini s/d hari ini)
         $start_date = $request->start_date ?? date('Y-m-01');
         $end_date = $request->end_date ?? date('Y-m-d');
@@ -201,6 +205,38 @@ class StatistikController extends Controller
         $all = $db->performUnitRange($start_date, $end_date, $vendor);
 
         return view('rekap.statistik.perform-unit', $all);
+    }
+
+    /**
+     * Vendor operational memilih bulan dan tahun (seperti Perform Unit All),
+     * bukan rentang tanggal. Data selalu dikunci ke vendor akun.
+     */
+    private function performUnitByMonth(Request $request)
+    {
+        $vendorId = (int) Auth::user()->vendor_id;
+        abort_if($vendorId <= 0, 403);
+        $filters = $request->validate([
+            'bulan' => ['nullable', 'integer', 'between:1,12'],
+            'tahun' => ['nullable', 'integer', 'between:2000,2100'],
+        ]);
+        $month = (int) ($filters['bulan'] ?? now()->month);
+        $year = (int) ($filters['tahun'] ?? now()->year);
+        $start = Carbon::create($year, $month, 1)->startOfDay();
+        $end = $start->copy()->endOfMonth()->startOfDay();
+        if ($start->isSameMonth(now())) {
+            $end = now()->startOfDay();
+        }
+
+        $all = (new Transaksi)->performUnitRange($start->toDateString(), $end->toDateString(), $vendorId);
+        $firstDate = DB::table('kas_uang_jalans')->where('vendor_id', $vendorId)->min('tanggal');
+        $firstYear = $firstDate ? min((int) Carbon::parse($firstDate)->year, $year) : $year;
+
+        return view('rekap.statistik.perform-unit', $all + [
+            'bulan' => $month,
+            'tahun' => $year,
+            'daftar_tahun' => range(max($year, (int) now()->year), $firstYear),
+            'daftar_bulan' => collect(range(1, 12))->mapWithKeys(fn (int $value) => [$value => Carbon::create(2000, $value, 1)->locale('id')->monthName])->all(),
+        ]);
     }
 
     public function perform_unit_print(Request $request)

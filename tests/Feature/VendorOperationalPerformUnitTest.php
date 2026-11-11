@@ -55,14 +55,15 @@ class VendorOperationalPerformUnitTest extends MobileApiTestCase
 
     public function test_web_and_print_force_own_vendor_and_keep_all_own_unit_columns(): void
     {
+        $this->travelTo('2026-12-05 09:00:00');
         $before = DB::table('transaksis')->get()->toArray();
-        foreach (['/statistik/perform-unit', '/statistik/perform-unit/print'] as $path) {
-            $response = $this->get($path.'?vendor=2&start_date=2026-11-01&end_date=2026-11-03')
+        foreach (['/statistik/perform-unit?bulan=11&tahun=2026', '/statistik/perform-unit/print?start_date=2026-11-01&end_date=2026-11-30'] as $path) {
+            $response = $this->get($path.'&vendor=2')
                 ->assertOk()->assertSee('OWN-UNIT')->assertSee('OWN-IDLE-UNIT')->assertSee('OWN ROUTE')
                 ->assertDontSee('FOREIGN-UNIT')->assertDontSee('FOREIGN VENDOR')->assertDontSee('FOREIGN ROUTE');
             $response->assertViewHas('vendor', 1)->assertViewHas('jumlah_vehicle', 2)->assertViewHas('grand_total_tonase', 30.125)
                 ->assertViewHas('vehicle', fn ($units): bool => $units->pluck('vendor_id')->unique()->all() === [1]);
-            $this->assertCount(3, $response->viewData('dates_array'));
+            $this->assertCount(30, $response->viewData('dates_array'));
             $this->assertEqualsCanonicalizing(['OWN-UNIT', 'OWN-IDLE-UNIT'], array_keys($response->viewData('statistics')));
             $html = new \DOMDocument;
             @$html->loadHTML($response->getContent());
@@ -72,11 +73,33 @@ class VendorOperationalPerformUnitTest extends MobileApiTestCase
             $this->assertSame(0, $xpath->query('//input[@name="_method"]')->length);
         }
         $this->assertEquals($before, DB::table('transaksis')->get()->toArray());
+        $this->travelBack();
     }
 
-    public function test_web_and_print_cap_the_date_matrix_at_32_days_and_normalize_reversed_ranges(): void
+    public function test_web_filters_by_month_and_year_instead_of_a_date_range(): void
     {
-        foreach (['/statistik/perform-unit', '/statistik/perform-unit/print'] as $path) {
+        $this->travelTo('2026-11-15 10:00:00');
+        $response = $this->get('/statistik/perform-unit?bulan=10&tahun=2026&start_date=2026-11-01&end_date=2026-11-03')->assertOk()
+            ->assertViewHas('start_date', '2026-10-01')->assertViewHas('end_date', '2026-10-31')->assertViewHas('total_days', 31)
+            ->assertViewHas('bulan', 10)->assertViewHas('tahun', 2026)->assertSee('Oktober 2026');
+        $html = new \DOMDocument;
+        @$html->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($html);
+        $this->assertSame(1, $xpath->query('//select[@name="bulan"]')->length);
+        $this->assertSame(1, $xpath->query('//select[@name="tahun"]')->length);
+        $this->assertSame(0, $xpath->query('//input[@name="start_date" and @type="date"]')->length);
+        $this->assertSame('10', $xpath->query('//select[@name="bulan"]/option[@selected]')->item(0)?->getAttribute('value'));
+
+        // Bulan berjalan berhenti di hari ini, seperti tampilan sebelumnya.
+        $this->get('/statistik/perform-unit')->assertOk()->assertViewHas('start_date', '2026-11-01')->assertViewHas('end_date', '2026-11-15')
+            ->assertViewHas('daftar_tahun', [2026]);
+        $this->get('/statistik/perform-unit?bulan=13&tahun=2026')->assertSessionHasErrors('bulan');
+        $this->travelBack();
+    }
+
+    public function test_print_caps_the_date_matrix_at_32_days_and_normalizes_reversed_ranges(): void
+    {
+        foreach (['/statistik/perform-unit/print'] as $path) {
             $response = $this->get($path.'?vendor=2&start_date=2026-11-01&end_date=2027-01-31')->assertOk()
                 ->assertViewHas('end_date', '2026-12-02')->assertViewHas('total_days', 32);
             $this->assertCount(32, $response->viewData('dates_array'));

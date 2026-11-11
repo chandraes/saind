@@ -7,8 +7,7 @@
     </form>
     <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#note-edit-modal"><i class="fa fa-pencil me-1" aria-hidden="true"></i> Edit nota</button>
     <div class="ms-sm-auto d-flex gap-2">
-        <button type="button" class="btn btn-outline-danger" data-note-decision="reject" data-bs-toggle="modal" data-bs-target="#note-decision-modal">Tolak</button>
-        <button type="button" class="btn btn-outline-secondary" data-note-decision="cancel" data-bs-toggle="modal" data-bs-target="#note-decision-modal">Batalkan</button>
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#note-decision-modal"><i class="fa fa-ban me-1" aria-hidden="true"></i>Void</button>
     </div>
 </div>
 @if (! $paymentReady)<p class="text-danger small mb-3">Lengkapi customer, rute, nominal dan rekening tujuan sebelum memproses uang jalan.</p>@endif
@@ -44,13 +43,14 @@
 </div>
 <div class="modal fade" id="note-decision-modal" tabindex="-1" aria-labelledby="note-decision-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
-        <div class="modal-header"><h2 class="modal-title fs-5" id="note-decision-title">Keputusan nota</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
-        <form method="POST" action="{{ route('billing.nota-muat.decide', $note) }}" data-note-review data-note-decision-form novalidate>
-            @csrf<input type="hidden" name="revision" value="{{ $note->revision }}"><input type="hidden" name="action">
-            <div class="modal-body"><p>Nota <strong>{{ $note->ticket_number }}</strong>. Tindakan ini mengakhiri pemeriksaan nota dan membuka blokir nota tertunda kendaraan. Aturan kendaraan lainnya tetap berlaku.</p>
-                <label for="note-decision-reason" class="form-label">Alasan <span class="text-danger">*</span></label><textarea id="note-decision-reason" name="reason" class="form-control" maxlength="1000" rows="3" required></textarea>
+        <div class="modal-header"><h2 class="modal-title fs-5" id="note-decision-title">Void nota</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+        <form method="POST" action="{{ route('billing.nota-muat.decide', $note) }}" data-note-review data-note-decision-form data-confirm="Void nota {{ $note->ticket_number }}?" novalidate>
+            @csrf<input type="hidden" name="revision" value="{{ $note->revision }}">
+            <div class="modal-body"><p>Nota <strong>{{ $note->ticket_number }}</strong> tidak akan diproses menjadi uang jalan. Tindakan ini membuka blokir nota tertunda kendaraan dan nomor nota dapat dikirim ulang. Aturan kendaraan lainnya tetap berlaku.</p>
+                <label for="note-decision-reason" class="form-label">Alasan void <span class="text-danger">*</span></label><textarea id="note-decision-reason" name="reason" class="form-control" maxlength="1000" rows="3" required placeholder="Contoh: foto nota buram, nomor nota tidak sesuai"></textarea>
+                <div class="form-text">Alasan ditampilkan kepada vendor pada aplikasi mobile.</div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Kembali</button><button type="submit" class="btn btn-danger" id="note-decision-submit">Simpan keputusan</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Kembali</button><button type="submit" class="btn btn-danger" id="note-decision-submit">Void nota</button></div>
         </form>
     </div></div>
 </div>
