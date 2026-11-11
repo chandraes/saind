@@ -13,7 +13,7 @@ class VehicleController extends BaseController
     private function vehicles(Request $request): Builder
     {
         $query = Vehicle::query()->select(['id', 'nomor_lambung', 'vendor_id', 'status']);
-        if ($request->user()->role === 'vendor-operational') {
+        if ($request->user()->isVendorAccount()) {
             $query->where('vendor_id', $request->user()->vendor_id);
         }
 

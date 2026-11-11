@@ -55,6 +55,31 @@ class VendorOperationalBilling
             'missing_weight_count' => $missing];
     }
 
+    /**
+     * Total bruto dan netto (bruto − uang jalan) atas seluruh nota HPP hasil
+     * filter, sebelum pagination. Hanya untuk akun yang boleh melihat keuangan.
+     *
+     * @return array{total_gross_amount: int, total_net_amount: int}
+     */
+    public function paymentFinanceSummary(Builder $filtered): array
+    {
+        $summary = DB::query()->fromSub((clone $filtered)->toBase(), 'notes')
+            ->leftJoin('kas_uang_jalans as cash', 'cash.id', '=', 'notes.kas_uang_jalan_id')
+            ->selectRaw('COALESCE(SUM(notes.nominal_bayar), 0) as gross, COALESCE(SUM(cash.nominal_transaksi), 0) as cash')->first();
+
+        return ['total_gross_amount' => (int) $summary->gross, 'total_net_amount' => (int) $summary->gross - (int) $summary->cash];
+    }
+
+    /** Harga, bruto dan netto satu perjalanan untuk akun yang boleh melihat keuangan. */
+    public function journeyFinance(Transaksi $journey): array
+    {
+        $gross = $journey->nominal_bayar === null ? null : (int) $journey->nominal_bayar;
+        $cash = $journey->kas_uang_jalan?->nominal_transaksi;
+
+        return ['price' => $journey->harga_vendor === null ? null : (float) $journey->harga_vendor, 'gross_amount' => $gross,
+            'net_amount' => $gross === null || $cash === null ? null : $gross - (int) $cash];
+    }
+
     public function searchJourneys(Builder $query, string $search): void
     {
         if ($search === '') {

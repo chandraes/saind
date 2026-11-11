@@ -7,6 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 
@@ -115,5 +116,38 @@ class VendorAccountAccessTest extends MobileApiTestCase
         $this->post('/statistik/'.$report.'/histori-destroy/2', ['password' => 'secret-pass'])->assertSessionHas('error', 'Password salah!!');
         $this->post('/statistik/'.$report.'/histori-destroy/2', ['password' => 'admin-confirm'])->assertSessionHas('success');
         $this->assertDatabaseMissing($table, ['id' => 2]);
+    }
+
+    public function test_vendor_kas_opening_balance_carries_over_empty_months_and_new_year(): void
+    {
+        View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
+        $this->withoutVite();
+        Schema::create('kas_vendors', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vendor_id');
+            $table->unsignedBigInteger('vehicle_id')->nullable();
+            $table->unsignedBigInteger('invoice_bayar_id')->nullable();
+            $table->unsignedBigInteger('invoice_add_vendor_id')->nullable();
+            $table->date('tanggal');
+            $table->string('uraian');
+            $table->bigInteger('pinjaman')->default(0);
+            $table->bigInteger('bayar')->default(0);
+            $table->bigInteger('sisa')->default(0);
+            $table->timestamps();
+        });
+        DB::table('kas_vendors')->insert([
+            ['vendor_id' => 1, 'tanggal' => '2026-10-05', 'uraian' => 'Awal', 'pinjaman' => 500000, 'sisa' => 500000],
+            ['vendor_id' => 1, 'tanggal' => '2026-10-20', 'uraian' => 'Akhir Oktober', 'pinjaman' => 250000, 'sisa' => 750000],
+            ['vendor_id' => 2, 'tanggal' => '2026-12-20', 'uraian' => 'Vendor lain', 'pinjaman' => 999999, 'sisa' => 999999],
+            ['vendor_id' => 1, 'tanggal' => '2027-01-03', 'uraian' => 'Januari', 'pinjaman' => 100000, 'sisa' => 850000],
+        ]);
+        $pdo = DB::connection()->getPdo();
+        $year = fn ($date) => $date === null ? null : (int) substr((string) $date, 0, 4);
+        method_exists($pdo, 'createFunction') ? $pdo->createFunction('YEAR', $year, 1) : $pdo->sqliteCreateFunction('YEAR', $year, 1);
+        // Januari 2027: November-Desember kosong dan ganti tahun, saldo awal tetap 750.000.
+        $this->get('/kas-per-vendor/1?bulan=1&tahun=2027')->assertOk()
+            ->assertViewHas('dataSebelumnya', fn ($row): bool => (int) $row->sisa === 750000)
+            ->assertSee('750.000');
+        $this->get('/kas-per-vendor/1?bulan=10&tahun=2026')->assertOk()->assertViewHas('dataSebelumnya', null);
     }
 }

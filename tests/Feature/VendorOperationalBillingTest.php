@@ -367,6 +367,50 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->get('/vendor-operational/invoice?status=all')->assertOk()->assertDontSee('Total Bayar')->assertDontSee('2.220.000')->assertDontSee('Grand Total');
     }
 
+    public function test_mobile_vendor_sees_own_finance_and_vendor_operational_does_not(): void
+    {
+        Schema::table('transaksis', fn (Blueprint $table) => $table->bigInteger('nominal_bayar')->nullable());
+        Schema::table('invoice_bayars', function (Blueprint $table): void {
+            foreach (['bayar', 'sisa_bayar'] as $column) {
+                $table->bigInteger($column)->default(0);
+            }
+        });
+        foreach (['ppn_masukans', 'pph_simpans'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->integer('invoice_bayar_id')->nullable();
+                $table->integer('invoice_add_vendor_id')->nullable();
+                $table->bigInteger('nominal');
+            });
+        }
+        DB::table('transaksis')->where('id', 1)->update(['harga_vendor' => 70000, 'nominal_bayar' => 2000000]);
+        DB::table('invoice_bayars')->where('id', 1)->update(['total_bayar' => 2220000, 'bayar' => 1000000, 'sisa_bayar' => 1220000]);
+        DB::table('invoice_add_vendors')->where('vendor_id', 1)->update(['total' => 100000]);
+
+        $headers = $this->mobileHeaders(User::factory()->create(['username' => 'vendor-mobile', 'password' => 'secret-pass', 'role' => 'vendor', 'vendor_id' => 1]));
+        $this->getJson('/api/v1/me', $headers)->assertOk()->assertJsonPath('data.permissions.vendor_billing', true)
+            ->assertJsonPath('data.permissions.vendor_finance', true)->assertJsonPath('data.permissions.maintenance_history', true)
+            ->assertJsonPath('data.permissions.load_notes', true);
+        $this->getJson('/api/v1/payment-notes?kind=utama', $headers)->assertOk()
+            ->assertJsonPath('data.0.finance', ['price' => 70000, 'gross_amount' => 2000000, 'net_amount' => 1876544])
+            ->assertJsonPath('meta.total_gross_amount', 2000000)->assertJsonPath('meta.total_net_amount', 1876544)->assertDontSee('FOREIGN');
+        $this->getJson('/api/v1/payment-notes/utama/1', $headers)->assertOk()->assertJsonPath('data.fields.Bruto (Rp)', '2.000.000');
+        $this->getJson('/api/v1/payment-notes?kind=achievement', $headers)->assertOk()->assertJsonMissingPath('data.0.finance');
+        $invoices = $this->getJson('/api/v1/vendor-invoices?status=all', $headers)->assertOk()->assertJsonPath('meta.grand_total_amount', 2520000);
+        $this->assertEqualsCanonicalizing([2220000, 100000, 100000, 100000], array_column($invoices->json('data'), 'total_amount'));
+        $this->getJson('/api/v1/vendor-invoices/utama/1', $headers)->assertOk()
+            ->assertJsonPath('invoice.finance.headline', ['Total Bayar', 'Rp2.220.000'])
+            ->assertJsonPath('invoice.finance.progress.percent', 45)->assertJsonPath('data.0.finance.gross_amount', 2000000);
+
+        $headers = $this->mobileHeaders(User::factory()->create(['username' => 'ops-mobile', 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 1]));
+        $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.vendor_finance', false)->assertJsonPath('data.permissions.maintenance_history', false);
+        $this->getJson('/api/v1/payment-notes?kind=utama', $headers)->assertOk()->assertJsonMissingPath('data.0.finance')
+            ->assertJsonMissingPath('meta.total_gross_amount')->assertDontSee('2000000');
+        $this->getJson('/api/v1/vendor-invoices?status=all', $headers)->assertOk()->assertJsonMissingPath('meta.grand_total_amount')
+            ->assertJsonMissingPath('data.0.total_amount');
+        $this->getJson('/api/v1/vendor-invoices/utama/1', $headers)->assertOk()->assertJsonMissingPath('invoice.finance');
+    }
+
     private function mobileHeaders(?User $user = null): array
     {
         $user ??= auth()->user();

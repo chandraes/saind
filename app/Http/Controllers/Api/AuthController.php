@@ -26,7 +26,7 @@ class AuthController extends BaseController
             return $this->sendError('Username atau password tidak sesuai.', [], 401);
         }
         abort_unless(in_array($user->role, config('mobile.roles'), true), 403, 'Akun tidak diizinkan menggunakan API mobile.');
-        if ($user->role === 'vendor-operational') {
+        if ($user->isVendorAccount()) {
             abort_unless($user->vendor_id && $user->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');
         }
         $identity = $workspace->identity();

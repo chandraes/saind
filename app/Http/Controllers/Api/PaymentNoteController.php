@@ -29,6 +29,9 @@ class PaymentNoteController extends Controller
             $query->whereHas('transaksi', fn (Builder $query) => $this->billing->searchJourneys($query, $search));
         }
         $summary = $this->billing->paymentWeightSummary($query, $kind);
+        if ($kind === 'utama' && $request->user()->canViewVendorFinance()) {
+            $summary += $this->billing->paymentFinanceSummary($query);
+        }
         $items = $query->orderByDesc('id')->paginate(20)->withQueryString();
         $items->getCollection()->each(fn (Transaksi|TransaksiAdditional $item) => $item->setAttribute('mobile_kind', $kind));
 
@@ -41,7 +44,7 @@ class PaymentNoteController extends Controller
         $item = $this->billing->payableNotes((int) $request->user()->vendor_id, $kind, (int) $request->user()->id)->findOrFail($record);
         $additional = $item instanceof TransaksiAdditional ? $item : null;
         $item->setAttribute('mobile_kind', $kind);
-        $item->setAttribute('mobile_fields', $this->billing->journey($additional ? $item->transaksi : $item, $additional));
+        $item->setAttribute('mobile_fields', $this->billing->journey($additional ? $item->transaksi : $item, $additional, $request->user()->canViewVendorFinance()));
 
         return new MobilePaymentNoteResource($item);
     }

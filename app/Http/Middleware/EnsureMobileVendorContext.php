@@ -12,7 +12,7 @@ class EnsureMobileVendorContext
     public function handle(Request $request, Closure $next, string $access = 'load-notes'): Response
     {
         if ($access === 'billing') {
-            abort_unless($request->user()?->role === 'vendor-operational', 403);
+            abort_unless((bool) $request->user()?->isVendorAccount(), 403);
         } else {
             abort_unless($request->user()?->can('viewAny', LoadNoteDraft::class), 403);
         }

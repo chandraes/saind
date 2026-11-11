@@ -18,10 +18,14 @@ class VendorInvoiceController extends Controller
 
     public function index(VendorInvoiceIndexRequest $request): AnonymousResourceCollection
     {
-        $items = $this->billing->invoices((int) $request->user()->vendor_id, $request->validated())->paginate(20)->withQueryString();
-        $items->through(fn (object $invoice): array => $this->billing->invoiceSummary($invoice));
+        $query = $this->billing->invoices((int) $request->user()->vendor_id, $request->validated());
+        $finance = $request->user()->canViewVendorFinance();
+        $items = (clone $query)->paginate(20)->withQueryString();
+        $items->through(fn (object $invoice): array => $this->billing->invoiceSummary($invoice) + ($finance ? ['total_amount' => (int) $invoice->total] : []));
+        $collection = MobileVendorInvoiceResource::collection($items);
 
-        return MobileVendorInvoiceResource::collection($items);
+        // Grand total seluruh invoice sesuai filter, bukan hanya halaman ini.
+        return $finance ? $collection->additional(['meta' => ['grand_total_amount' => (int) (clone $query)->reorder()->sum('total')]]) : $collection;
     }
 
     public function show(Request $request, string $kind, int $record): AnonymousResourceCollection
@@ -37,6 +41,11 @@ class VendorInvoiceController extends Controller
         $items = $this->billing->invoiceJourneys($vendor, $kind, $invoice)->orderByDesc('id')->paginate(20)->withQueryString();
         $items->getCollection()->each(fn (Transaksi|TransaksiAdditional $item) => $item->setAttribute('mobile_kind', $kind));
 
-        return MobilePaymentNoteResource::collection($items)->additional(['invoice' => (new MobileVendorInvoiceResource($this->billing->invoiceSummary($invoice, $kind)))->resolve($request)]);
+        $summary = (new MobileVendorInvoiceResource($this->billing->invoiceSummary($invoice, $kind)))->resolve($request);
+        if ($request->user()->canViewVendorFinance()) {
+            $summary['finance'] = $this->billing->invoiceFinance($invoice);
+        }
+
+        return MobilePaymentNoteResource::collection($items)->additional(['invoice' => $summary]);
     }
 }

@@ -39,6 +39,8 @@ class MobilePaymentNoteResource extends JsonResource
             },
             'money_out_number' => $cash ? 'UJ'.sprintf('%02d', $cash->nomor_uang_jalan) : null,
             'money_out_amount' => $kind === 'utama' && $cash?->nominal_transaksi !== null ? (int) $cash->nominal_transaksi : null,
+            'finance' => $this->when($kind === 'utama' && (bool) $request->user()?->canViewVendorFinance(),
+                fn () => app(VendorOperationalBilling::class)->journeyFinance($journey)),
             'fields' => $this->whenHas('mobile_fields', fn () => $this->mobile_fields)];
     }
 }

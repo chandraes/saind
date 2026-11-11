@@ -950,7 +950,7 @@ class RekapController extends Controller
         $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasVendor::where('vendor_id', $vendor->id)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = KasVendor::lastBefore($vendor->id, (int) $tahun, (int) $bulan);
 
         // $data = $vendor->kas_vendor()->get();
         $sisaTerakhir = $data->last()->sisa ?? 0;
@@ -1008,7 +1008,7 @@ class RekapController extends Controller
         $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasVendor::where('vendor_id', $vendor->id)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = KasVendor::lastBefore($vendor->id, (int) $tahun, (int) $bulan);
 
         $sisaTerakhir = $data->last()->sisa ?? 0;
 
