@@ -27,7 +27,7 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    @if(Auth::user()->role != 'vendor')
+                    @if(! auth()->user()->isVendorOwner())
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
                                 alt="dokumen" width="30"> Billing</a></td>
                     @endif

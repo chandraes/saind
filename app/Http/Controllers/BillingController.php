@@ -1388,7 +1388,7 @@ class BillingController extends Controller
     public function nota_bayar(Vendor $vendor)
     {
 
-        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+        if (Auth::user()->isVendorOwner() && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
         }
 
@@ -1408,7 +1408,7 @@ class BillingController extends Controller
 
     public function nota_bayar_detail_jenis(Request $request, Vendor $vendor, string $jenis)
     {
-        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+        if (Auth::user()->isVendorOwner() && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
         }
 
@@ -1447,7 +1447,7 @@ class BillingController extends Controller
     public function nota_bayar_detail_by_jenis_keranjang(Vendor $vendor, $jenis)
     {
 
-        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+        if (Auth::user()->isVendorOwner() && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
         }
 

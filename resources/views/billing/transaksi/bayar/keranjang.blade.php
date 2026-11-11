@@ -26,7 +26,7 @@
             <table class="table">
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard" width="30"> Dashboard</a></td>
-                    @if (auth()->user()->role != 'asisten-user' && auth()->user()->role != 'vendor')
+                    @if (auth()->user()->role != 'asisten-user' && ! auth()->user()->isVendorOwner())
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen" width="30"> Billing</a></td>
                     @endif
                     <td><a href="{{route('transaksi.nota-bayar', ['vendor' => $vendor->id])}}"><img src="{{asset('images/back.svg')}}" alt="dokumen" width="30"> Tambah Transaksi</a></td>
@@ -40,7 +40,7 @@
     <div class="card border-primary mb-4">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="fa fa-shopping-cart me-2"></i> Daftar Keranjang ({{ $data->count() }} Terpilih)</h5>
-            @if(auth()->user()->role !== 'vendor' && $data->count() > 0)
+            @if(! auth()->user()->isVendorOwner() && $data->count() > 0)
             <form action="{{ route('transaksi.nota-bayar.kosongkan-keranjang', $vendor) }}" method="POST" id="kosongkanForm">
                 @csrf
                 <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash me-1"></i> Kosongkan Keranjang</button>
@@ -51,7 +51,7 @@
             <table class="table table-bordered table-hover" id="keranjangTable">
                 <thead class="table-success">
                     <tr>
-                        @if(auth()->user()->role !== 'vendor')
+                        @if(! auth()->user()->isVendorOwner())
                         <th class="text-center align-middle">Aksi</th>
                         @endif
                         <th class="text-center align-middle">No</th>
@@ -78,7 +78,7 @@
                 <tbody>
                     @forelse ($data as $d)
                     <tr>
-                        @if(auth()->user()->role !== 'vendor')
+                        @if(! auth()->user()->isVendorOwner())
                         <td class="text-center align-middle">
                             <form action="{{ route('transaksi.nota-bayar.keluar-keranjang', $vendor) }}" method="POST" class="form-keluar-item">
                                 @csrf
@@ -113,7 +113,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="{{ auth()->user()->role !== 'vendor' ? 20 : 19 }}" class="text-center text-muted py-4">
+                        <td colspan="{{ ! auth()->user()->isVendorOwner() ? 20 : 19 }}" class="text-center text-muted py-4">
                             Keranjang masih kosong. <a href="{{ route('transaksi.nota-bayar', $vendor) }}">Klik di sini</a> untuk memilih transaksi.
                         </td>
                     </tr>
@@ -122,28 +122,28 @@
                 @if($data->count() > 0)
                 <tfoot>
                     <tr>
-                        <td class="text-center align-middle" colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                        <td class="text-center align-middle" colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                         <td class="text-center align-middle"><strong>Total</strong></td>
                         <td class="align-middle text-center">{{number_format($total_tagihan, 0, ',', '.')}}</td>
                         <td class="align-middle text-center">{{number_format($total_uang_jalan, 0, ',', '.')}}</td>
                         <td class="align-middle text-end">{{number_format($total_netto, 0, ',', '.')}}</td>
                     </tr>
                     <tr>
-                        <td class="text-center align-middle" colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                        <td class="text-center align-middle" colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                         <td class="text-center align-middle"><strong>PPN</strong></td>
                         <td class="align-middle"></td>
                         <td></td>
                         <td class="text-end align-middle">{{number_format($ppn, 0, ',', '.')}}</td>
                     </tr>
                     <tr>
-                        <td class="align-middle" colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                        <td class="align-middle" colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                         <td class="text-center align-middle"><strong>PPh</strong></td>
                         <td class="align-middle"></td>
                         <td></td>
                         <td class="align-middle text-end">{{number_format($pph, 0, ',', '.')}}</td>
                     </tr>
                     <tr>
-                        <td class="align-middle" colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                        <td class="align-middle" colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                         <td class="text-center align-middle"><strong>Tagihan</strong></td>
                         <td class="align-middle"></td>
                         <td></td>
@@ -156,7 +156,7 @@
     </div>
 </div>
 
-@if (auth()->user()->role !== 'vendor' && $data->count() > 0)
+@if (! auth()->user()->isVendorOwner() && $data->count() > 0)
 <div class="container-fluid mb-5">
     <div class="card border-info">
         <div class="card-header bg-info text-white">

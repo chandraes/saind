@@ -1204,7 +1204,7 @@ class TransaksiController extends Controller
 
     public function nota_bayar(Vendor $vendor)
     {
-        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+        if (Auth::user()->isVendorOwner() && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
         }
 
@@ -1236,7 +1236,7 @@ class TransaksiController extends Controller
     // Halaman Khusus Keranjang Nota Bayar
     public function nota_bayar_keranjang(Vendor $vendor)
     {
-        if (Auth::user()->role === 'vendor' && ($vendor->id !== Auth::user()->vendor_id)) {
+        if (Auth::user()->isVendorOwner() && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
         }
 

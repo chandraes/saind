@@ -77,6 +77,20 @@ class MobileVendorAccountTest extends MobileApiTestCase
             ->assertForbidden();
     }
 
+    public function test_vendor_induk_has_vendor_access_but_read_only_maintenance(): void
+    {
+        User::factory()->create(['username' => 'vendor-induk-login', 'password' => 'secret-pass', 'role' => 'vendor-induk', 'vendor_id' => 1]);
+        $this->postJson('/api/v1/login', ['username' => 'vendor-induk-login', 'password' => 'secret-pass', 'device_name' => 'Android'], ['X-Workspace-ID' => self::WORKSPACE])
+            ->assertOk()->assertJsonPath('data.user.role', 'vendor-induk')
+            ->assertJsonPath('data.user.permissions.vendor_finance', true)
+            ->assertJsonPath('data.user.permissions.upah_gendong_settings', true)
+            ->assertJsonPath('data.user.permissions.maintenance_history', false);
+        $headers = $this->headers('vendor-induk');
+        $this->getJson('/api/v1/vendor-cash?month=11&year=2026', $headers)->assertOk()->assertJsonCount(2, 'data');
+        $this->deleteJson('/api/v1/vehicles/1/tire-logs/1', ['password' => 'secret-pass'], $headers)->assertForbidden();
+        $this->assertDatabaseHas('ban_logs', ['id' => 1]);
+    }
+
     public function test_vendor_cash_lists_own_month_with_opening_and_closing_balance(): void
     {
         $this->getJson('/api/v1/vendor-cash?month=11&year=2026', $this->headers())->assertOk()

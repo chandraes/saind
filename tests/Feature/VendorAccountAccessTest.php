@@ -75,6 +75,20 @@ class VendorAccountAccessTest extends MobileApiTestCase
         $this->assertDatabaseMissing('ban_logs', ['id' => 1]);
     }
 
+    #[DataProvider('maintenanceHistories')]
+    public function test_vendor_induk_uses_vendor_pages_but_cannot_change_maintenance(string $report, string $table): void
+    {
+        $this->actingAs(User::factory()->create(['username' => 'vendor-induk', 'password' => 'secret-pass', 'role' => 'vendor-induk', 'vendor_id' => 1]));
+        // Rute khusus role:vendor juga terbuka untuk vendor-induk.
+        $this->get('/kas-per-vendor/2')->assertRedirect();
+        $this->post('/transaksi/nota-bayar/1/lanjut', ['transaksi_ids' => [1]])->assertForbidden();
+        // Maintenance hanya lihat: perubahan lewat Form Maintenance admin.
+        $this->post('/statistik/'.$report.'/histori-destroy/1', ['password' => 'secret-pass'])->assertForbidden();
+        $this->post('/per-vendor/ban-luar/histori-destroy/1', ['password' => 'secret-pass'])->assertForbidden();
+        $this->assertDatabaseHas($table, ['id' => 1]);
+        $this->assertDatabaseHas('ban_logs', ['id' => 1]);
+    }
+
     public function test_vendor_cannot_open_or_print_other_vendor_kas(): void
     {
         $this->get('/kas-per-vendor/2')->assertRedirect();

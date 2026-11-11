@@ -17,7 +17,7 @@ return [
         'customer_min_margin' => (float) env('MOBILE_NOTE_CUSTOMER_MIN_MARGIN', 0.1),
         'unit_pattern' => '/^(?:SAI[ -]*)?([0-9]{1,10})$/i',
     ],
-    'load_note_roles' => ['vendor', 'vendor-operational'],
+    'load_note_roles' => ['vendor', 'vendor-induk', 'vendor-operational'],
     'database_roles' => ['admin', 'su'],
-    'roles' => ['admin', 'su', 'user', 'asisten-user', 'vendor', 'vendor-operational'],
+    'roles' => ['admin', 'su', 'user', 'asisten-user', 'vendor', 'vendor-induk', 'vendor-operational'],
 ];

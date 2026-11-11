@@ -184,7 +184,7 @@ class StatistikController extends Controller
         $end_date = $request->end_date ?? date('Y-m-d');
         $vendor = $request->vendor ?? null;
 
-        if (Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
+        if (Auth::user()->isVendorAccount()) {
             $vendor = Auth::user()->vendor_id;
         }
 
@@ -243,7 +243,7 @@ class StatistikController extends Controller
 
     public function perform_unit_print(Request $request)
     {
-        if (Auth::user()->role == 'vendor' || Auth::user()->role == 'vendor-operational') {
+        if (Auth::user()->isVendorAccount()) {
             $request->vendor = Auth::user()->vendor_id;
         }
 
@@ -1541,7 +1541,7 @@ class StatistikController extends Controller
 
         // Akun milik vendor hanya boleh melihat vehicle vendornya sendiri,
         // apa pun parameter vendor yang dikirim lewat URL.
-        if (in_array(Auth::user()->role, ['vendor', 'vendor-operational'], true)) {
+        if (Auth::user()->isVendorAccount()) {
             $vendorId = (int) Auth::user()->vendor_id;
             abort_if($vendorId <= 0, 403);
             $filters['vendor'] = $vendorId;

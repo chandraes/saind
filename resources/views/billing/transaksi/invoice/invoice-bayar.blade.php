@@ -13,7 +13,7 @@ $roleAllowed = ['admin', 'su'];
             <a href="{{route('home')}}" class="text-secondary text-decoration-none fw-medium">
                 <i class="fa fa-tachometer me-1"></i> Dashboard
             </a>
-            @if (auth()->user()->role != 'vendor')
+            @if (! auth()->user()->isVendorOwner())
             <a href="{{route('billing.index')}}" class="text-secondary text-decoration-none fw-medium">
                 <i class="fa fa-folder-open me-1"></i> Billing
             </a>
@@ -104,7 +104,7 @@ $roleAllowed = ['admin', 'su'];
                             @endif
                         </td>
                         <td class="text-end fw-semibold">Rp {{ number_format($d->total_bayar, 0, ',', '.') }}</td>
-                        @if (Auth::user()->role !== 'vendor')
+                        @if (! auth()->user()->isVendorOwner())
                         <td class="text-center">
                             <form action="{{route('invoice.bayar.lunas', $d)}}" method="post"
                                 class="d-inline form-bayar"
@@ -150,7 +150,7 @@ $roleAllowed = ['admin', 'su'];
                                 @endif
                             </td>
                             <td class="text-end fw-semibold">Rp {{ $item->nf_total }}</td>
-                            @if (Auth::user()->role !== 'vendor')
+                            @if (! auth()->user()->isVendorOwner())
                             <td class="text-center">
                                 <form action="{{route('invoice.bayar.jenis-lunas', $item->id)}}" method="post"
                                     class="d-inline form-bayar" data-nominal="{{ $item->nf_total }}">
@@ -175,7 +175,7 @@ $roleAllowed = ['admin', 'su'];
                     <tr>
                         <td colspan="4" class="text-end fw-bold align-middle">Grand Total:</td>
                         <td class="text-end fw-bold text-success fs-6 align-middle" id="tableGrandTotal">Rp 0</td>
-                        @if (Auth::user()->role != 'vendor')
+                        @if (! auth()->user()->isVendorOwner())
                         <td colspan="{{ Auth::user()->role == 'su' || Auth::user()->role == 'admin' ? 2 : 1 }}"></td>
                         @endif
                     </tr>

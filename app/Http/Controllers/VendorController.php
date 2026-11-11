@@ -25,7 +25,7 @@ class VendorController extends Controller
         if ($request->ajax()) {
             $query = Vendor::with(['sponsor', 'vendor_uang_jalan.rute']);
 
-            if (Auth::user()->role == 'vendor') {
+            if (Auth::user()->isVendorOwner()) {
                 $query->where('vendor_id', Auth::user()->vendor_id);
             }
 
@@ -125,7 +125,7 @@ class VendorController extends Controller
     //         $vendors = Vendor::with(['sponsor', 'vendor_uang_jalan', 'vendor_uang_jalan.rute'])->get();
     //     }
 
-    //     if(Auth::user()->role == 'vendor') {
+    //     if(Auth::user()->isVendorOwner()) {
     //         $vendors = Vendor::where('vendor_id', Auth::user()->vendor_id)->get();
     //     }
 

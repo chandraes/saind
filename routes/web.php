@@ -1016,7 +1016,7 @@ Route::group(['middleware' => ['auth']], function () {
         });
     });
 
-    Route::group(['middleware' => ['role:vendor', EnsureVendorOperationalVehicle::class]], function () {
+    Route::group(['middleware' => ['role:vendor', EnsureVendorOperationalVehicle::class.':maintenance']], function () {
         Route::get('kas-per-vendor/{vendor}', [RekapController::class, 'kas_per_vendor'])->name('kas-per-vendor.index');
         Route::get('kas-per-vendor/{invoiceBayar}/detail', [RekapController::class, 'kas_per_vendor_detail'])->name('kas-per-vendor.detail');
         Route::get('pritn-kas-per-vendor/{vendor}/{bulan}/{tahun}', [RekapController::class, 'print_kas_per_vendor'])->name('print-kas-per-vendor.index');

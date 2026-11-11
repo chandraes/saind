@@ -11,11 +11,15 @@ class RoleChecker
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!in_array($request->user()->role, $roles)) {
+        // Vendor-induk memakai seluruh rute vendor; pembedaan maintenance ada di User.
+        if (in_array('vendor', $roles, true)) {
+            $roles[] = 'vendor-induk';
+        }
+        if (! in_array($request->user()->role, $roles)) {
             abort(403);
         }
 

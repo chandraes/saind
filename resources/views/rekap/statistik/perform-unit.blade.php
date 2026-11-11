@@ -15,7 +15,7 @@
             <a href="{{route('home')}}" class="btn btn-outline-secondary">
                 <i class="fa fa-tachometer-alt me-1"></i> Dashboard
             </a>
-            @if (!in_array(auth()->user()->role, ['vendor', 'operasional', 'asisten-user', 'vendor-operational']))
+            @if (!in_array(auth()->user()->role, ['vendor', 'vendor-induk', 'operasional', 'asisten-user', 'vendor-operational']))
             <a href="{{route('statisik.index')}}" class="btn btn-outline-secondary">
                 <i class="fa fa-chart-bar me-1"></i> STATISTIK
             </a>
@@ -151,7 +151,7 @@
                         <input type="date" class="form-control" name="end_date" id="end_date" value="{{$end_date}}">
                     </div>
                     @endisset
-                    @if (!in_array(auth()->user()->role, ['vendor', 'vendor-operational']))
+                    @if (!auth()->user()->isVendorAccount())
                     <div class="col-md-3">
                         <label for="vendor" class="form-label fw-bold small text-muted">Filter Vendor <span
                                 class="text-danger small">*Wajib untuk Print</span></label>
@@ -367,7 +367,7 @@
 
             //if user is not vendor or vendor-operational, then vendor filter must be filled before print
 
-            if (userRole !== 'vendor' && userRole !== 'vendor-operational' && !currentVendor) {
+            if (!['vendor', 'vendor-induk', 'vendor-operational'].includes(userRole) && !currentVendor) {
 
                 e.preventDefault(); // Batalkan submit form
                 Swal.fire({

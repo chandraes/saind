@@ -105,7 +105,7 @@ $(function () {
     function toggleRelations() {
         const role = $('#user-role').val();
         ['vendor', 'customer'].forEach(type => {
-            const active = type === 'vendor' ? ['vendor', 'vendor-operational'].includes(role) : ['customer', 'customer-admin'].includes(role);
+            const active = type === 'vendor' ? ['vendor', 'vendor-induk', 'vendor-operational'].includes(role) : ['customer', 'customer-admin'].includes(role);
             $('#user-' + type + '-group').prop('hidden', !active);
             $('#user-' + type).prop('disabled', !active).prop('required', active);
             if (!active) $('#user-' + type).val(null).trigger('change');

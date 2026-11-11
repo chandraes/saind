@@ -301,7 +301,7 @@ class InvoiceController extends Controller
 
         $user = Auth::user();
 
-        if ($user->role == 'vendor') {
+        if ($user->isVendorOwner()) {
             $vendorId = $user->vendor_id;
         }
 
@@ -372,7 +372,7 @@ class InvoiceController extends Controller
 
     public function invoice_bayar_detail_add(InvoiceAddVendor $invoice)
     {
-        if (Auth::user()->role == 'vendor' && $invoice->vendor_id != Auth::user()->vendor_id) {
+        if (Auth::user()->isVendorOwner() && $invoice->vendor_id != Auth::user()->vendor_id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melihat invoice ini');
         }
 

@@ -8,7 +8,7 @@
                         @if($vendorReadonly ?? false)<th class="text-center" style="width: 170px;">Status</th>@endif
                         @if(($vendorReadonly ?? false) && ($showTotal ?? false))<th class="text-end" style="width: 180px;">Total Bayar</th>@endif
                         @unless($vendorReadonly ?? false)<th class="text-end" style="width: 180px;">Total Bayar</th>@endunless
-                        @if (!($vendorReadonly ?? false) && Auth::user()->role !== 'vendor')
+                        @if (!($vendorReadonly ?? false) && ! auth()->user()->isVendorOwner())
                         <th class="text-center" style="width: 120px;">Pembayaran</th>
                         @endif
                         @if (!($vendorReadonly ?? false) && (Auth::user()->role == 'su' || Auth::user()->role == 'admin'))

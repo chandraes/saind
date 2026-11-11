@@ -165,6 +165,8 @@ class MobileMaintenanceInputTest extends MobileApiTestCase
         $this->postJson('/api/v1/vehicles/2/battery-logs', $body, $this->headers())->assertNotFound();
         $this->postJson('/api/v1/vehicles/3/battery-logs', $body, $this->headers())->assertNotFound();
         $this->postJson('/api/v1/vehicles/1/battery-logs', $body, $this->headers('vendor-operational'))->assertForbidden();
+        // Vendor-induk mengganti maintenance lewat Form Maintenance admin, bukan input langsung.
+        $this->postJson('/api/v1/vehicles/1/battery-logs', $body, $this->headers('vendor-induk'))->assertForbidden();
         $this->assertDatabaseCount('aki_logs', 0);
     }
 }

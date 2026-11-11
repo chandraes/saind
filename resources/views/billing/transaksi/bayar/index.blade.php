@@ -25,7 +25,7 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
-                    @if (auth()->user()->role != 'asisten-user' && auth()->user()->role != 'vendor')
+                    @if (auth()->user()->role != 'asisten-user' && ! auth()->user()->isVendorOwner())
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}" alt="dokumen"
                                 width="30"> Billing</a></td>
                     @endif
@@ -60,7 +60,7 @@
         <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
             {{-- <h5 class="mb-0"><i class="fa fa-list me-2"></i> Transaksi Belum Dipilih ({{ $dataTersedia->count() }})</h5>
 
-            @if(auth()->user()->role !== 'vendor' && $dataTersedia->count() > 0)
+            @if(! auth()->user()->isVendorOwner() && $dataTersedia->count() > 0)
             <form action="{{ route('transaksi.nota-bayar.keranjang-semua', $vendor) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn btn-success btn-sm">
@@ -75,7 +75,7 @@
                 id="formMasukKeranjang" autocomplete="off">
                 @csrf
 
-                @if(auth()->user()->role !== 'vendor' && $dataTersedia->count() > 0)
+                @if(! auth()->user()->isVendorOwner() && $dataTersedia->count() > 0)
                 <!-- Summary Card Item Terpilih -->
                 <div class="card border-primary shadow-sm mb-4">
                     <div class="card-body bg-light p-3">
@@ -157,7 +157,7 @@
                 <table class="table table-bordered table-hover" id="tersediaTable">
                     <thead class="table-light">
                         <tr>
-                            @if(auth()->user()->role !== 'vendor')
+                            @if(! auth()->user()->isVendorOwner())
                             <th class="text-center align-middle" style="width: 40px;">
                                 <input type="checkbox" class="form-check-input" id="checkAll">
                             </th>
@@ -191,7 +191,7 @@
                         $netto = $bruto - $uj;
                         @endphp
                         <tr>
-                            @if(auth()->user()->role !== 'vendor')
+                            @if(! auth()->user()->isVendorOwner())
                             <td class="text-center align-middle">
                                 <input type="checkbox" name="transaksi_ids[]" value="{{ $t->id }}"
                                     data-bruto="{{ $bruto }}" data-uj="{{ $uj }}" class="form-check-input check-item">
@@ -226,7 +226,7 @@
                     <tfoot>
                         <tr>
                             <td class="text-center align-middle"
-                                colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                                colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                             <td class="text-center align-middle"><strong>Total</strong></td>
                             <td class="align-middle text-center">{{number_format($total_tagihan, 0, ',', '.')}}</td>
                             <td class="align-middle text-center">{{number_format($total_uang_jalan, 0, ',', '.')}}</td>
@@ -234,21 +234,21 @@
                         </tr>
                         <tr>
                             <td class="text-center align-middle"
-                                colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                                colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                             <td class="text-center align-middle"><strong>PPN</strong></td>
                             <td class="align-middle"></td>
                             <td></td>
                             <td class="text-end align-middle">{{number_format($ppn, 0, ',', '.')}}</td>
                         </tr>
                         <tr>
-                            <td class="align-middle" colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                            <td class="align-middle" colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                             <td class="text-center align-middle"><strong>PPh</strong></td>
                             <td class="align-middle"></td>
                             <td></td>
                             <td class="align-middle text-end">{{number_format($pph, 0, ',', '.')}}</td>
                         </tr>
                         <tr>
-                            <td class="align-middle" colspan="{{ auth()->user()->role !== 'vendor' ? 16 : 15 }}"></td>
+                            <td class="align-middle" colspan="{{ ! auth()->user()->isVendorOwner() ? 16 : 15 }}"></td>
                             <td class="text-center align-middle"><strong>Grand Total</strong></td>
                             <td class="align-middle"></td>
                             <td></td>

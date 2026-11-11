@@ -116,6 +116,9 @@ class MobileFilterOilTest extends MobileApiTestCase
         $this->getJson('/api/v1/vehicles/2/filter-oil-monitoring', $headers)->assertOk()->assertJsonPath('data.vehicle.id', 2);
         $this->getJson('/api/v1/vehicles/3/filter-oil-monitoring', $headers)->assertNotFound();
         $this->getJson('/api/v1/vehicles/2/filter-oil-monitoring', $this->headers())->assertNotFound();
+        // Vendor-induk tetap butuh pengaktifan admin.
+        $this->getJson('/api/v1/filter-oil/vehicles', $this->headers('vendor-induk'))->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 1);
     }
 
     public function test_monitoring_returns_latest_log_per_category_and_limit_status(): void

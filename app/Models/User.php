@@ -47,12 +47,23 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    /** Akun milik vendor: hanya boleh melihat data vendornya sendiri, tanpa mengubah data. */
-    public const VENDOR_ACCOUNT_ROLES = ['vendor', 'vendor-operational'];
+    /** Akun milik vendor: hanya boleh menyentuh data vendornya sendiri. */
+    public const VENDOR_ACCOUNT_ROLES = ['vendor', 'vendor-induk', 'vendor-operational'];
+
+    /**
+     * Akun pemilik vendor (bukan vendor operational): menu & keuangan vendor sama.
+     * Bedanya, vendor-induk mengganti maintenance lewat Form Maintenance admin.
+     */
+    public const VENDOR_OWNER_ROLES = ['vendor', 'vendor-induk'];
 
     public function isVendorAccount(): bool
     {
         return in_array($this->role, self::VENDOR_ACCOUNT_ROLES, true);
+    }
+
+    public function isVendorOwner(): bool
+    {
+        return in_array($this->role, self::VENDOR_OWNER_ROLES, true);
     }
 
     /** Akun vendor hanya boleh menyentuh data milik vendornya sendiri. */
@@ -67,19 +78,21 @@ class User extends Authenticatable
         return $this->role === 'vendor-operational';
     }
 
-    /** Boleh mengedit/menghapus riwayat ban dan aki (vendor: kendaraannya sendiri). */
+    /**
+     * Boleh menambah/mengedit/menghapus riwayat ban, aki, filter & oli (vendor:
+     * kendaraannya sendiri). Vendor-induk hanya melihat; penggantian lewat Form Maintenance.
+     */
     public function canManageMaintenanceHistory(): bool
     {
         return in_array($this->role, ['admin', 'su', 'vendor'], true);
     }
 
-    /** Mengatur Database Upah Gendong (vendor: hanya kendaraannya sendiri). */
+    /** Mengatur Database Upah Gendong (vendor & vendor-induk: hanya kendaraannya sendiri). */
     public function canManageUpahGendong(): bool
     {
-        return in_array($this->role, ['admin', 'su', 'vendor'], true);
+        return in_array($this->role, ['admin', 'su', 'vendor', 'vendor-induk'], true);
     }
 
-    /** Vendor boleh melihat keuangannya sendiri; vendor operational hanya uang jalan. */
     /**
      * Filter & Oli Mesin hanya untuk kendaraan yang diaktifkan admin
      * (pembatasan_filter_oli). Akun vendor mengelola sendiri tanpa pengaktifan.
@@ -89,9 +102,10 @@ class User extends Authenticatable
         return $this->role !== 'vendor';
     }
 
+    /** Vendor & vendor-induk boleh melihat keuangannya sendiri; vendor operational hanya uang jalan. */
     public function canViewVendorFinance(): bool
     {
-        return $this->role === 'vendor';
+        return $this->isVendorOwner();
     }
 
     public function vendor()

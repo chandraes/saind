@@ -20,7 +20,7 @@ class UserController extends Controller
     public const ROLES = [
         'admin' => 'Admin', 'user' => 'User', 'asisten-user' => 'Asisten User',
         'operasional' => 'Operasional', 'investor' => 'Investor', 'vendor' => 'Vendor',
-        'vendor-operational' => 'Vendor Operational', 'customer' => 'Customer', 'customer-admin' => 'Customer Admin',
+        'vendor-induk' => 'Vendor Induk', 'vendor-operational' => 'Vendor Operational', 'customer' => 'Customer', 'customer-admin' => 'Customer Admin',
     ];
 
     public function index(Request $request): View|JsonResponse
@@ -142,7 +142,7 @@ class UserController extends Controller
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:6', 'max:255'],
             'role' => ['required', Rule::in(array_keys(self::ROLES))],
-            'vendor_id' => ['exclude_unless:role,vendor,vendor-operational', 'required', 'integer', 'exists:vendors,id'],
+            'vendor_id' => ['exclude_unless:role,vendor,vendor-induk,vendor-operational', 'required', 'integer', 'exists:vendors,id'],
             'customer_id' => ['exclude_unless:role,customer,customer-admin', 'required', 'integer', 'exists:customers,id'],
         ], [
             'username.unique' => 'Username sudah digunakan.', 'email.unique' => 'Email sudah digunakan.',

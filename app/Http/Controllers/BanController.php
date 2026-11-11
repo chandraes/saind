@@ -23,7 +23,7 @@ class BanController extends Controller
             'vehicle_id' => 'required|exists:vehicles,id',
         ]);
 
-        if (Auth::user()->role === 'vendor') {
+        if (Auth::user()->isVendorOwner()) {
             $vehicle = Vehicle::where('id', $request->vehicle_id)
                 ->where('vendor_id', Auth::user()->vendor_id)
                 ->first();

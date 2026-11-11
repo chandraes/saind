@@ -13,11 +13,13 @@ class EnsureVendorOperationalVehicle
 {
     public function handle(Request $request, Closure $next, string $context = 'vehicle'): Response
     {
-        if ($context === 'statistics') {
-            if (! $request->user()->isVendorAccount()) {
-                return $next($request);
-            }
-            abort_if($request->user()->isReadOnlyVendorAccount() && ! $request->isMethod('GET') && ! $request->isMethod('HEAD'), 403);
+        if ($context === 'statistics' && ! $request->user()->isVendorAccount()) {
+            return $next($request);
+        }
+        // Statistik & maintenance: hanya akun yang boleh mengelola histori (vendor) yang bisa mengubah;
+        // vendor-operational dan vendor-induk hanya melihat.
+        if (in_array($context, ['statistics', 'maintenance'], true)) {
+            abort_if(! $request->user()->canManageMaintenanceHistory() && ! $request->isMethod('GET') && ! $request->isMethod('HEAD'), 403);
         }
         $vendorId = $request->user()->vendor_id;
         abort_unless($vendorId && $request->user()->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');
