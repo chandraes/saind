@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\InvoiceAddVendor;
 use App\Models\KasVendor;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,9 @@ class MobileVendorCashController extends Controller
         $opening = (int) (KasVendor::lastBefore($vendorId, $start->year, $start->month)?->sisa ?? 0);
         $firstDate = KasVendor::query()->where('vendor_id', $vendorId)->min('tanggal');
         $firstYear = $firstDate ? min(CarbonImmutable::parse($firstDate)->year, $start->year) : $start->year;
+        // Baris pelunasan tertaut ke invoice, sama seperti tautan di halaman web.
+        $additionalKinds = InvoiceAddVendor::query()->where('vendor_id', $vendorId)
+            ->whereIn('id', $rows->pluck('invoice_add_vendor_id')->filter())->pluck('jenis', 'id');
         $loan = (int) $rows->sum('pinjaman');
         $payment = (int) $rows->sum('bayar');
 
@@ -35,6 +39,11 @@ class MobileVendorCashController extends Controller
                 'id' => $row->id, 'date' => CarbonImmutable::parse($row->tanggal)->toDateString(), 'description' => $row->uraian,
                 'vehicle_number' => $row->vehicle?->nomor_lambung, 'loan' => (int) $row->pinjaman, 'payment' => (int) $row->bayar,
                 'balance' => (int) $row->sisa,
+                'invoice' => match (true) {
+                    $row->invoice_bayar_id !== null => ['kind' => 'utama', 'id' => (int) $row->invoice_bayar_id],
+                    isset($additionalKinds[$row->invoice_add_vendor_id]) => ['kind' => $additionalKinds[$row->invoice_add_vendor_id], 'id' => (int) $row->invoice_add_vendor_id],
+                    default => null,
+                },
             ])->values(),
             'meta' => [
                 'month' => $start->month, 'year' => $start->year, 'years' => range(max($start->year, (int) now()->year), $firstYear),

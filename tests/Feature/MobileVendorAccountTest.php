@@ -20,11 +20,19 @@ class MobileVendorAccountTest extends MobileApiTestCase
             $table->unsignedBigInteger('vehicle_id')->nullable();
             $table->date('tanggal');
             $table->string('uraian');
+            $table->unsignedBigInteger('invoice_bayar_id')->nullable();
+            $table->unsignedBigInteger('invoice_add_vendor_id')->nullable();
             $table->bigInteger('pinjaman')->default(0);
             $table->bigInteger('bayar')->default(0);
             $table->bigInteger('sisa')->default(0);
             $table->timestamps();
         });
+        Schema::create('invoice_add_vendors', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vendor_id');
+            $table->string('jenis');
+        });
+        DB::table('invoice_add_vendors')->insert([['id' => 30, 'vendor_id' => 1, 'jenis' => 'achievement'], ['id' => 31, 'vendor_id' => 2, 'jenis' => 'achievement']]);
         foreach (['ban_logs', 'aki_logs'] as $name) {
             Schema::create($name, function (Blueprint $table): void {
                 $table->id();
@@ -43,10 +51,10 @@ class MobileVendorAccountTest extends MobileApiTestCase
             DB::table($name)->insert([['id' => 1, 'vehicle_id' => 1, 'created_at' => '2026-10-01'], ['id' => 2, 'vehicle_id' => 2, 'created_at' => '2026-10-01'], ['id' => 3, 'vehicle_id' => 1, 'created_at' => '2026-10-02']]);
         }
         DB::table('kas_vendors')->insert([
-            ['vendor_id' => 1, 'vehicle_id' => null, 'tanggal' => '2026-09-20', 'uraian' => 'Saldo lama', 'pinjaman' => 500000, 'bayar' => 0, 'sisa' => 500000],
-            ['vendor_id' => 1, 'vehicle_id' => 1, 'tanggal' => '2026-11-03', 'uraian' => 'Pinjaman ban', 'pinjaman' => 200000, 'bayar' => 0, 'sisa' => 700000],
-            ['vendor_id' => 1, 'vehicle_id' => null, 'tanggal' => '2026-11-10', 'uraian' => 'Potong invoice', 'pinjaman' => 0, 'bayar' => 300000, 'sisa' => 400000],
-            ['vendor_id' => 2, 'vehicle_id' => 2, 'tanggal' => '2026-11-05', 'uraian' => 'Vendor lain', 'pinjaman' => 999999, 'bayar' => 0, 'sisa' => 999999],
+            ['vendor_id' => 1, 'vehicle_id' => null, 'tanggal' => '2026-09-20', 'uraian' => 'Saldo lama', 'pinjaman' => 500000, 'bayar' => 0, 'sisa' => 500000, 'invoice_bayar_id' => null, 'invoice_add_vendor_id' => null],
+            ['vendor_id' => 1, 'vehicle_id' => 1, 'tanggal' => '2026-11-03', 'uraian' => 'Pinjaman ban', 'pinjaman' => 200000, 'bayar' => 0, 'sisa' => 700000, 'invoice_bayar_id' => null, 'invoice_add_vendor_id' => 30],
+            ['vendor_id' => 1, 'vehicle_id' => null, 'tanggal' => '2026-11-10', 'uraian' => 'Potong invoice', 'pinjaman' => 0, 'bayar' => 300000, 'sisa' => 400000, 'invoice_bayar_id' => 975, 'invoice_add_vendor_id' => null],
+            ['vendor_id' => 2, 'vehicle_id' => 2, 'tanggal' => '2026-11-05', 'uraian' => 'Vendor lain', 'pinjaman' => 999999, 'bayar' => 0, 'sisa' => 999999, 'invoice_bayar_id' => null, 'invoice_add_vendor_id' => 31],
         ]);
     }
 
@@ -75,7 +83,9 @@ class MobileVendorAccountTest extends MobileApiTestCase
             ->assertJsonCount(2, 'data')->assertJsonPath('data.0.description', 'Pinjaman ban')->assertJsonPath('data.0.vehicle_number', '101')
             ->assertJsonPath('meta.opening_balance', 500000)->assertJsonPath('meta.total_loan', 200000)
             ->assertJsonPath('meta.total_payment', 300000)->assertJsonPath('meta.closing_balance', 400000)
-            ->assertJsonMissing(['description' => 'Vendor lain']);
+            ->assertJsonMissing(['description' => 'Vendor lain'])
+            ->assertJsonPath('data.0.invoice', ['kind' => 'achievement', 'id' => 30])
+            ->assertJsonPath('data.1.invoice', ['kind' => 'utama', 'id' => 975]);
         $this->getJson('/api/v1/vendor-cash?month=12&year=2026', $this->headers())->assertOk()->assertJsonCount(0, 'data')
             ->assertJsonPath('meta.opening_balance', 400000)->assertJsonPath('meta.closing_balance', 400000);
         $this->getJson('/api/v1/vendor-cash?month=13&year=2026', $this->headers())->assertUnprocessable();
