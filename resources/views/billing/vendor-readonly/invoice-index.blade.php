@@ -57,6 +57,11 @@
             <table class="table table-bordered align-middle table-hover mb-0 invoice-vendor-table" id="note-inbox-table">
                 @include('billing.transaksi.invoice.vendor-list-head', ['vendorReadonly' => true])
                 <tbody>@include('billing.vendor-readonly.invoice-rows')</tbody>
+                @if($showTotal ?? false)
+                <tfoot class="table-light">
+                    <tr><td colspan="6" class="text-end fw-bold">Grand Total</td><td class="text-end fw-bold text-success text-nowrap" id="invoice-grand-total">Rp {{ $grandTotal }}</td></tr>
+                </tfoot>
+                @endif
             </table>
         </div>
         <div id="note-inbox-loading" class="invoice-vendor-loading" role="status" data-next="{{ $next }}">{{ $next ? 'Memuat data berikutnya saat Anda menggulir…' : 'Seluruh data telah ditampilkan.' }}</div>

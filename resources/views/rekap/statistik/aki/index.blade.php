@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    @if (auth()->user()->role === 'vendor-operational')
+    @if (auth()->user()->isVendorAccount())
     <a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'aki']) }}" class="btn btn-outline-primary mb-3"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a>
     @endif
     @include('swal')

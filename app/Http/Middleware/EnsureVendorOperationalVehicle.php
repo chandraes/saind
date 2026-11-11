@@ -14,10 +14,10 @@ class EnsureVendorOperationalVehicle
     public function handle(Request $request, Closure $next, string $context = 'vehicle'): Response
     {
         if ($context === 'statistics') {
-            if ($request->user()->role !== 'vendor-operational') {
+            if (! $request->user()->isVendorAccount()) {
                 return $next($request);
             }
-            abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
+            abort_if($request->user()->isReadOnlyVendorAccount() && ! $request->isMethod('GET') && ! $request->isMethod('HEAD'), 403);
         }
         $vendorId = $request->user()->vendor_id;
         abort_unless($vendorId && $request->user()->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');

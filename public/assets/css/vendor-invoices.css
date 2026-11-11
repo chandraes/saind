@@ -6,3 +6,38 @@
 @media(max-width:1150px){.invoice-vendor-filter-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.invoice-filter-search{grid-column:span 2}.invoice-filter-status{grid-column:span 2}.invoice-vendor-filter-actions{grid-column:span 2;justify-content:flex-end}}
 @media(max-width:767.98px){.invoice-vendor-header{align-items:flex-start;padding:22px;flex-direction:column;gap:18px}.invoice-vendor-header-actions{width:100%;justify-content:space-between}.invoice-vendor-header h1{font-size:1.4rem}.invoice-vendor-mark{width:62px;height:62px}.invoice-vendor-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.invoice-vendor-filters{padding:18px}.invoice-vendor-filter-actions{justify-content:stretch}.invoice-vendor-filter-actions .btn{flex:1}.invoice-vendor-list-heading{padding:18px;align-items:flex-start}.invoice-vendor-list-heading p{max-width:200px}}
 @media(max-width:400px){.invoice-vendor-page{padding-inline:12px}.invoice-vendor-header{padding:18px}.invoice-vendor-identity{gap:12px}.invoice-vendor-list-heading{gap:10px}.invoice-vendor-active-filter{font-size:.75rem}}
+
+/* Invoice detail */
+.invoice-detail-page .invoice-vendor-table thead th{white-space:nowrap}
+.invoice-detail-status{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;font-size:.82rem;font-weight:650;white-space:nowrap}
+.invoice-detail-status-paid{background:#dff1e6;color:#1f5a3c}
+.invoice-detail-status-unpaid{background:#fff1d1;color:#7a5410}
+.invoice-detail-status-cart{background:#e6eef3;color:#2f4c5d}
+.invoice-detail-summary{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:22px}
+.invoice-detail-summary-finance{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:start}
+.invoice-detail-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.invoice-detail-summary-finance .invoice-detail-meta{grid-template-columns:1fr}
+.invoice-detail-tile{display:flex;align-items:center;gap:14px;padding:16px 18px;background:#fff;border:1px solid var(--iv-line);border-radius:10px;min-width:0}
+.invoice-detail-tile p{margin:0 0 3px;font-size:.78rem;color:var(--iv-muted)}
+.invoice-detail-tile strong{display:block;font-size:1rem;font-weight:650;color:var(--iv-ink);overflow-wrap:anywhere}
+.invoice-detail-tile small{display:inline-block;margin-top:4px;font-size:.75rem;font-weight:600;color:#4c6574}
+.invoice-detail-tile-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:42px;height:42px;border-radius:10px;background:#f3f6f8;color:#3d5868;font-size:1.05rem}
+.invoice-detail-tile-alert{border-color:#edc8c4;background:#fdf6f5}
+.invoice-detail-tile-alert .invoice-detail-tile-icon{background:#faeceb;color:#943b3b}
+.invoice-detail-tile-alert small{color:#943b3b}
+.invoice-detail-finance{padding:22px 24px;background:#fff;border:1px solid var(--iv-line);border-top:4px solid var(--iv-amber);border-radius:10px}
+.invoice-detail-headline p{margin:0 0 4px;font-size:.8rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--iv-muted)}
+.invoice-detail-headline strong{display:block;font-size:clamp(1.6rem,2.6vw,2.15rem);font-weight:700;line-height:1.15;color:#1f3340;font-variant-numeric:tabular-nums}
+.invoice-detail-amounts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:18px 0 0}
+.invoice-detail-amounts>div{padding:12px 14px;border-radius:8px;background:#f6f8f9}
+.invoice-detail-amounts dt{font-size:.75rem;font-weight:500;color:var(--iv-muted);margin-bottom:3px}
+.invoice-detail-amounts dd{margin:0;font-size:.95rem;font-weight:650;color:var(--iv-ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.invoice-detail-progress{margin-top:18px;padding-top:18px;border-top:1px dashed var(--iv-line)}
+.invoice-detail-progress-track{height:8px;border-radius:999px;background:#e8edf0;overflow:hidden}
+.invoice-detail-progress-track span{display:block;height:100%;border-radius:inherit;background:#3f8a63;transition:width .3s}
+.invoice-detail-amounts-split{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px}
+.invoice-detail-amounts .invoice-detail-paid{color:#286147}
+.invoice-detail-amounts .invoice-detail-remaining{color:#8a5a0f}
+@media(max-width:991.98px){.invoice-detail-summary-finance{grid-template-columns:1fr}.invoice-detail-summary-finance .invoice-detail-meta{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:767.98px){.invoice-detail-meta,.invoice-detail-summary-finance .invoice-detail-meta{grid-template-columns:1fr}.invoice-detail-finance{padding:18px}}
+@media(prefers-reduced-motion:reduce){.invoice-detail-progress-track span{transition:none}}

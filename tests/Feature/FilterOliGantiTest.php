@@ -158,8 +158,11 @@ class FilterOliGantiTest extends TestCase
         $this->get(route('statistik.filter-oli'))->assertRedirect(route('login'));
         $this->get(route('rekap.maintenance.filter-oli'))->assertRedirect(route('login'));
         $this->loginAs('vendor');
-        $this->get(route('statistik.filter-oli'))->assertOk();
+        // Akun vendor tanpa vendor terhubung ditolak; yang terhubung memilih kendaraan sendiri dulu.
+        $this->get(route('statistik.filter-oli'))->assertForbidden();
         $this->get(route('rekap.maintenance.filter-oli'))->assertForbidden();
+        $this->actingAs(User::factory()->make(['id' => 999, 'role' => 'vendor', 'password' => 'password', 'vendor_id' => DB::table('vendors')->insertGetId(['nama' => 'Vendor Akun'])]));
+        $this->get(route('statistik.filter-oli'))->assertRedirect(route('vendor-operational.statistics.vehicles', ['report' => 'filter-oli']));
     }
 
     public function test_statistics_only_lists_and_accepts_vehicles_that_are_not_inactive(): void

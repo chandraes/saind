@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\InvoiceAddVendor;
 use App\Models\InvoiceBayar;
 use App\Models\KeranjangNotaBayar;
+use App\Models\Pajak\PphSimpan;
+use App\Models\Pajak\PpnMasukan;
 use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use Carbon\Carbon;
@@ -73,10 +75,10 @@ class VendorOperationalBilling
     public function invoices(int $vendorId, array $filters): QueryBuilder
     {
         $base = $this->invoiceQuery($vendorId, 'utama')->select('id', 'periode', 'tanggal', 'tempo', 'updated_at')
-            ->selectRaw("'utama' as kind, lunas as is_paid")->toBase();
+            ->selectRaw("'utama' as kind, lunas as is_paid, total_bayar as total")->toBase();
         $extra = InvoiceAddVendor::query()->where('vendor_id', $vendorId)->where('status', 1)
             ->whereIn('jenis', array_keys(self::CATEGORIES))
-            ->select('id', 'periode', 'created_at as tanggal', 'tempo', 'updated_at', 'jenis as kind', 'is_finished as is_paid')->toBase();
+            ->select('id', 'periode', 'created_at as tanggal', 'tempo', 'updated_at', 'jenis as kind', 'is_finished as is_paid', 'total')->toBase();
         $query = DB::query()->fromSub($base->unionAll($extra), 'vendor_invoices');
         if (($filters['status'] ?? 'unpaid') !== 'all') {
             $query->where('is_paid', ($filters['status'] ?? 'unpaid') === 'paid' ? 1 : 0);
@@ -128,14 +130,26 @@ class VendorOperationalBilling
             ->with(['customer', 'rute', 'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute', 'transaksi.kas_uang_jalan.vehicle.driver']);
     }
 
-    /** Only this allowlist crosses the financial-data boundary into web views. */
-    public function journey(Transaksi $transaction, ?TransaksiAdditional $additional = null): array
+    /**
+     * Only this allowlist crosses the financial-data boundary into web views.
+     * Vendor nominals (harga, bruto, netto) are added only for accounts that
+     * may see their own finances ($finance), never for vendor operational.
+     */
+    public function journey(Transaksi $transaction, ?TransaksiAdditional $additional = null, bool $finance = false): array
     {
         $cash = $transaction->kas_uang_jalan;
         $vehicle = $cash?->vehicle;
         $loaded = $transaction->tonase;
         $unloaded = $transaction->timbangan_bongkar;
         $difference = is_numeric($loaded) && is_numeric($unloaded) ? (float) $loaded - (float) $unloaded : null;
+
+        $rupiah = fn ($value): ?string => $value === null ? null : number_format((float) $value, 0, ',', '.');
+        $money = $finance && $additional === null ? [
+            'Harga Vendor (Rp)' => $rupiah($transaction->harga_vendor),
+            'Bruto (Rp)' => $rupiah($transaction->nominal_bayar),
+            'Netto (Rp)' => $transaction->nominal_bayar === null || $cash?->nominal_transaksi === null ? null
+                : $rupiah((float) $transaction->nominal_bayar - (float) $cash->nominal_transaksi),
+        ] : [];
 
         return [
             'Tanggal UJ' => $cash?->tanggal,
@@ -160,6 +174,7 @@ class VendorOperationalBilling
             'Selisih (ton)' => $difference === null ? null : number_format($difference, 3, ',', '.'),
             'Selisih (%)' => $difference === null || (float) $loaded === 0.0 ? null : number_format($difference / (float) $loaded * 100, 2, ',', '.'),
             'Uang Jalan (Rp)' => $cash?->nominal_transaksi === null ? null : number_format($cash->nominal_transaksi, 0, ',', '.'),
+            ...$money,
             'Status Bongkar' => (int) $transaction->status === 2 ? 'Menunggu bongkar' : 'Selesai bongkar',
             'Status Nota Bayar' => $additional
                 ? match ((int) $additional->status) {
@@ -187,7 +202,7 @@ class VendorOperationalBilling
         ];
     }
 
-    public function paymentColumns(bool $includeMoneyOut = true): array
+    public function paymentColumns(bool $includeMoneyOut = true, bool $finance = false): array
     {
         $columns = ['Tanggal UJ' => 'Tanggal UJ', 'Kode' => 'Kode UJ', 'Nomor Lambung' => 'Nomor Lambung',
             'Vendor' => 'Vendor', 'Rute' => 'Rute', 'Jarak' => 'Jarak (km)', 'Tanggal Muat' => 'Tanggal Muat',
@@ -196,14 +211,17 @@ class VendorOperationalBilling
             'Selisih (Ton)' => 'Selisih (ton)', 'Selisih (%)' => 'Selisih (%)'];
         if ($includeMoneyOut) {
             $columns['Uang Jalan'] = 'Uang Jalan (Rp)';
+            if ($finance) {
+                $columns += ['Harga' => 'Harga Vendor (Rp)', 'Bruto' => 'Bruto (Rp)', 'Netto' => 'Netto (Rp)'];
+            }
         }
 
         return $columns;
     }
 
-    public function paymentCells(Transaksi $transaction, bool $includeMoneyOut = true): array
+    public function paymentCells(Transaksi $transaction, bool $includeMoneyOut = true, bool $finance = false): array
     {
-        $fields = $this->journey($transaction);
+        $fields = $this->journey($transaction, null, $finance);
         $fields['Tanggal Muat'] = $transaction->tanggal_muat ? $transaction->id_tanggal_muat : null;
         $fields['Tanggal Bongkar'] = $transaction->tanggal_bongkar ? $transaction->id_tanggal_bongkar : null;
         if (is_numeric($transaction->tonase) && is_numeric($transaction->timbangan_bongkar)) {
@@ -212,10 +230,37 @@ class VendorOperationalBilling
             $fields['Selisih (%)'] = number_format($difference * 0.1, 2, ',', '.');
         }
         $cells = [];
-        foreach ($this->paymentColumns($includeMoneyOut) as $label => $key) {
+        foreach ($this->paymentColumns($includeMoneyOut, $finance) as $label => $key) {
             $cells[$label] = $fields[$key];
         }
 
         return $cells;
+    }
+
+    /**
+     * Invoice totals shown only to accounts allowed to see vendor finances:
+     * a headline amount, supporting details and, for HPP invoices, payment progress.
+     *
+     * @return array{headline: array{0: string, 1: string}, details: array<string, string>, progress: ?array{paid: string, remaining: string, percent: int}}
+     */
+    public function invoiceFinance(InvoiceBayar|InvoiceAddVendor $invoice): array
+    {
+        $rupiah = fn ($value): string => 'Rp'.number_format((float) $value, 0, ',', '.');
+        if ($invoice instanceof InvoiceBayar) {
+            $total = (float) $invoice->total_bayar;
+
+            return ['headline' => ['Total Bayar', $rupiah($total)],
+                'details' => ['PPN' => $rupiah(PpnMasukan::where('invoice_bayar_id', $invoice->id)->sum('nominal')),
+                    'PPh' => $rupiah(PphSimpan::where('invoice_bayar_id', $invoice->id)->sum('nominal'))],
+                'progress' => ['paid' => $rupiah($invoice->bayar), 'remaining' => $rupiah($invoice->sisa_bayar),
+                    'percent' => $total > 0 ? (int) min(100, max(0, round((float) $invoice->bayar / $total * 100))) : 0]];
+        }
+
+        // dpp adalah tarif per ton per km, bukan nominal rupiah.
+        $rate = rtrim(rtrim(number_format((float) $invoice->dpp, 2, ',', '.'), '0'), ',');
+
+        return ['headline' => ['Total', $rupiah($invoice->total)],
+            'details' => ['Tarif DPP' => 'Rp'.$rate.' /ton/km', 'Nominal' => $rupiah($invoice->nominal), 'PPN' => $rupiah($invoice->ppn), 'PPh' => $rupiah($invoice->pph)],
+            'progress' => null];
     }
 }

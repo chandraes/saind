@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    @if (auth()->user()->role === 'vendor-operational')
+    @if (auth()->user()->isVendorAccount())
     <a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'ban-luar']) }}" class="btn btn-outline-primary mb-3"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a>
     @endif
     @include('swal')
@@ -189,7 +189,7 @@
         $(document).on('click', '.show-transaksi', function() {
             var banLogId = $(this).data('id');
             var tbody = $('#tbodyDetailRitase');
-            @if (auth()->user()->role === 'vendor-operational')
+            @if (auth()->user()->isVendorAccount())
             vendorStatisticsAudit($('#modalDetailRitase .modal-body'), @json(route('statistik.ban-luar.transaksi-ritase', ['banLogId' => 'LOGID'])).replace('LOGID', banLogId), false);
             $('#modalDetailRitase').modal('show');
             return;

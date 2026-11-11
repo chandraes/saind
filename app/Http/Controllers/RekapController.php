@@ -989,7 +989,8 @@ class RekapController extends Controller
 
     public function print_kas_per_vendor(Request $request)
     {
-        $vendor = Vendor::find($request->vendor);
+        // Pakai parameter route, bukan ?vendor= dari query yang bisa diganti pengguna.
+        $vendor = Vendor::findOrFail($request->route('vendor'));
 
         if ($vendor->id != Auth::user()->vendor_id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke halaman ini!!');
@@ -997,9 +998,9 @@ class RekapController extends Controller
 
         $bulan = $request->bulan ?? date('m');
         $tahun = $request->tahun ?? date('Y');
-        $dataTahun = KasVendor::where('vendor_id', $request->vendor)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
+        $dataTahun = KasVendor::where('vendor_id', $vendor->id)->selectRaw('YEAR(tanggal) tahun')->groupBy('tahun')->get();
 
-        $data = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
+        $data = KasVendor::where('vendor_id', $vendor->id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->get();
 
         $bulanSebelumnya = $bulan - 1;
         $bulanSebelumnya = $bulanSebelumnya == 0 ? 12 : $bulanSebelumnya;
@@ -1007,7 +1008,7 @@ class RekapController extends Controller
         $stringBulan = Carbon::createFromDate($tahun, $bulanSebelumnya)->locale('id')->monthName;
         $stringBulanNow = Carbon::createFromDate($tahun, $bulan)->locale('id')->monthName;
         // get latest data from month before current month
-        $dataSebelumnya = KasVendor::where('vendor_id', $request->vendor)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
+        $dataSebelumnya = KasVendor::where('vendor_id', $vendor->id)->whereMonth('tanggal', $bulanSebelumnya)->whereYear('tanggal', $tahun)->latest()->orderBy('id', 'desc')->first();
 
         $sisaTerakhir = $data->last()->sisa ?? 0;
 

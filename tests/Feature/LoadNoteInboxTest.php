@@ -171,7 +171,7 @@ class LoadNoteInboxTest extends MobileApiTestCase
 
     public static function otherRoles(): array
     {
-        return [['vendor'], ['operasional'], ['asisten-user'], ['investor']];
+        return [['operasional'], ['asisten-user'], ['investor']];
     }
 
     private function draft(int $vendor = 1, array $attributes = []): LoadNoteDraft

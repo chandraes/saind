@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\BanLog;
-use App\Models\PasswordKonfirmasi;
 use App\Models\PosisiBan;
 use App\Models\Vehicle;
+use App\Support\MaintenanceHistoryGuard;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +15,7 @@ class BanController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'ban-luar']);
         }
 
@@ -41,7 +41,7 @@ class BanController extends Controller
 
         // UPDATE: Tambahkan 'id' di dalam select
         $banLogs = BanLog::where('vehicle_id', $request->vehicle_id)
-            ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('id', function ($latest) {
+            ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('id', function ($latest) {
                 $latest->from('ban_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'ban_logs.vehicle_id')->whereColumn('latest.posisi_ban_id', 'ban_logs.posisi_ban_id')->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
             }))
             ->select('id', 'posisi_ban_id', 'merk', 'no_seri', 'kondisi', 'ritase', 'created_at')
@@ -89,7 +89,7 @@ class BanController extends Controller
                 'ban_log_transaksis.created_at'
             )
             ->orderBy('kas_uang_jalans.tanggal', 'desc')->orderByDesc('transaksis.id');
-        if ($request->user()->role === 'vendor-operational') {
+        if ($request->user()->isVendorAccount()) {
             $transaksis->where('kas_uang_jalans.vendor_id', $request->user()->vendor_id)->where('kas_uang_jalans.vehicle_id', BanLog::findOrFail($banLogId)->vehicle_id);
             $total = (clone $transaksis)->count();
 
@@ -156,13 +156,12 @@ class BanController extends Controller
 
     public function histori_delete($histori, Request $request)
     {
-        $dbP = PasswordKonfirmasi::first();
-
-        if ($request->password != $dbP->password) {
+        $banLog = BanLog::findOrFail($histori);
+        MaintenanceHistoryGuard::authorize($request, $banLog);
+        if (! MaintenanceHistoryGuard::passwordMatches($request)) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
 
-        $banLog = BanLog::findOrFail($histori);
         $banLog->delete();
 
         return redirect()->back()->with('success', 'Berhasil menghapus data!!');
@@ -175,15 +174,13 @@ class BanController extends Controller
             'password' => 'required',
         ]);
 
-        $dbP = PasswordKonfirmasi::first();
-
-        if ($data['password'] != $dbP->password) {
+        $banLog = BanLog::findOrFail($histori);
+        MaintenanceHistoryGuard::authorize($request, $banLog);
+        if (! MaintenanceHistoryGuard::passwordMatches($request)) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
 
         unset($data['password']);
-
-        $banLog = BanLog::findOrFail($histori);
 
         $banLog->update($data);
 

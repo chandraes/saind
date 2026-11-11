@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\MaintenanceHistoryGuard;
 use App\Models\AktivasiMaintenance;
 use App\Models\BanLog;
 use App\Models\KategoriBarangMaintenance;
@@ -485,11 +486,11 @@ class PerVendorController extends Controller
 
     public function ban_histori_delete($histori, Request $request)
     {
-        if (!Hash::check($request->password, auth()->user()->password)) {
+        $banLog = BanLog::findOrFail($histori);
+        MaintenanceHistoryGuard::authorize($request, $banLog);
+        if (! MaintenanceHistoryGuard::passwordMatches($request)) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
-
-        $banLog = BanLog::findOrFail($histori);
         $banLog->delete();
 
         return redirect()->back()->with('success', 'Berhasil menghapus data!!');

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-@if (auth()->user()->role === 'vendor-operational')
+@if (auth()->user()->isVendorAccount())
 <div class="container-fluid px-4 pt-4"><a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'filter-oli']) }}" class="btn btn-outline-primary"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a></div>
 @endif
 <div class="container-fluid px-4 py-4">

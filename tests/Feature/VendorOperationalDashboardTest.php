@@ -7,6 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class VendorOperationalDashboardTest extends TestCase
@@ -24,22 +25,37 @@ class VendorOperationalDashboardTest extends TestCase
         View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
     }
 
-    public function test_dashboard_shows_two_ordered_menu_rows_without_loading_vehicle_data(): void
+    /** @return array<string, array{string, list<string>}> */
+    public static function vendorAccounts(): array
     {
-        $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'vendor-operational', 'vendor_id' => 1]));
+        $documents = ['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor'];
+
+        return [
+            'vendor operational' => ['vendor-operational', $documents],
+            'vendor' => ['vendor', [...$documents, 'Kas Vendor']],
+        ];
+    }
+
+    #[DataProvider('vendorAccounts')]
+    public function test_dashboard_groups_the_same_menus_for_both_vendor_accounts(string $role, array $documents): void
+    {
+        $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => $role, 'vendor_id' => 1]));
         $response = $this->get('/home')->assertOk();
-        $response->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Perform Unit', 'Perform Unit All', 'Statistik Upah Gendong', 'Statistik Filter &amp; Oli Mesin', 'Statistik Aki', 'Statistik Ban Luar'], false)
-            ->assertSee('data-vendor-menu-row="documents"', false)
-            ->assertSee('data-vendor-menu-row="statistics"', false)
-            ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('maintenaceModal');
-        $html = $response->getContent();
+        $response->assertSeeInOrder(['Nota &amp; Invoice', ...$documents, 'Performa &amp; Statistik', 'Perform Unit', 'Perform Unit All', 'Upah Gendong',
+            'Maintenance &amp; Sparepart', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
+            ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('maintenaceModal')->assertDontSee('Statistik Vendor')
+            ->assertDontSee('INVOICE BAYAR VENDOR');
         $dom = new \DOMDocument;
-        @$dom->loadHTML($html);
+        @$dom->loadHTML($response->getContent());
         $xpath = new \DOMXPath($dom);
-        $this->assertSame(4, $xpath->query('//*[@data-vendor-menu-row="documents"]/a')->length);
-        $this->assertSame(6, $xpath->query('//*[@data-vendor-menu-row="statistics"]/a')->length);
+        $this->assertSame(count($documents), $xpath->query('//*[@data-vendor-menu-row="documents"]/a')->length);
+        $this->assertSame(3, $xpath->query('//*[@data-vendor-menu-row="statistics"]/a')->length);
+        $this->assertSame(3, $xpath->query('//*[@data-vendor-menu-row="maintenance"]/a')->length);
         $this->assertSame(1, $xpath->query('//*[@data-vendor-menu-row="statistics"]/a[@href="'.route('statistik.perform-unit.all-vendor').'"]')->length);
+        $this->assertSame($role === 'vendor' ? 1 : 0, $xpath->query('//a[@href="'.route('kas-per-vendor.index', 1).'"]')->length);
         $this->assertSame(0, $xpath->query('//*[@data-vendor-dashboard]//form')->length);
+        // Versioned so browsers drop a cached stylesheet when the grid changes.
+        $response->assertSee('vendor-operational-dashboard.css?v='.filemtime(public_path('assets/css/vendor-operational-dashboard.css')), false);
     }
 
     public function test_financial_pages_and_mutations_remain_inaccessible_via_legacy_routes(): void

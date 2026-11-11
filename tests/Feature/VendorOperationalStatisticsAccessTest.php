@@ -151,6 +151,27 @@ class VendorOperationalStatisticsAccessTest extends TestCase
         }
     }
 
+    public function test_vendor_history_has_edit_and_delete_with_matching_action_column(): void
+    {
+        foreach (['posisi_akis', 'posisi_bans'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->string('nama');
+            });
+            DB::table($name)->insert(['id' => 1, 'nama' => 'DEPAN']);
+        }
+        $this->actingAs(User::factory()->make(['password' => 'test-password', 'id' => 1, 'role' => 'vendor', 'vendor_id' => 1]));
+        foreach (['aki', 'ban-luar'] as $report) {
+            $response = $this->get('/statistik/'.$report.'/1/1/histori')->assertOk()
+                ->assertSee('passwordForm')->assertSee('updateForm')->assertSee('delete-btn')->assertSee('edit-btn')->assertSee('Password akun Anda');
+            // The header must declare the ACTION column the script adds, or DataTables breaks.
+            $dom = new \DOMDocument;
+            @$dom->loadHTML($response->getContent());
+            $this->assertSame(1, (new \DOMXPath($dom))->query('//table[@id="rekapTable"]/thead//th[normalize-space()="ACTION"]')->length, $report);
+            $this->get('/statistik/'.$report.'/2/1/histori')->assertNotFound();
+        }
+    }
+
     private function createTransactionFixtures(): void
     {
         Schema::create('customers', function (Blueprint $table): void {

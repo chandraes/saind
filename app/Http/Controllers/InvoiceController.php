@@ -356,6 +356,7 @@ class InvoiceController extends Controller
 
     public function invoice_bayar_detail(InvoiceBayar $invoiceBayar)
     {
+        abort_unless(auth()->user()->canAccessVendor($invoiceBayar->vendor_id), 404);
         $periode = $invoiceBayar->periode;
         $vendor = Vendor::find($invoiceBayar->vendor_id);
         // dd($invoiceBayar);

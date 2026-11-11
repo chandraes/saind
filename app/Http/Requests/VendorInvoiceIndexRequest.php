@@ -9,7 +9,7 @@ class VendorInvoiceIndexRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role === 'vendor-operational';
+        return (bool) $this->user()?->isVendorAccount();
     }
 
     public function rules(): array

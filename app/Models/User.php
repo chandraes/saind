@@ -47,6 +47,38 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    /** Akun milik vendor: hanya boleh melihat data vendornya sendiri, tanpa mengubah data. */
+    public const VENDOR_ACCOUNT_ROLES = ['vendor', 'vendor-operational'];
+
+    public function isVendorAccount(): bool
+    {
+        return in_array($this->role, self::VENDOR_ACCOUNT_ROLES, true);
+    }
+
+    /** Akun vendor hanya boleh menyentuh data milik vendornya sendiri. */
+    public function canAccessVendor(int|string|null $vendorId): bool
+    {
+        return ! $this->isVendorAccount() || ($this->vendor_id !== null && (int) $vendorId === (int) $this->vendor_id);
+    }
+
+    /** Vendor operational hanya boleh melihat, tanpa mengubah data apa pun. */
+    public function isReadOnlyVendorAccount(): bool
+    {
+        return $this->role === 'vendor-operational';
+    }
+
+    /** Boleh mengedit/menghapus riwayat ban dan aki (vendor: kendaraannya sendiri). */
+    public function canManageMaintenanceHistory(): bool
+    {
+        return in_array($this->role, ['admin', 'su', 'vendor'], true);
+    }
+
+    /** Vendor boleh melihat keuangannya sendiri; vendor operational hanya uang jalan. */
+    public function canViewVendorFinance(): bool
+    {
+        return $this->role === 'vendor';
+    }
+
     public function vendor()
     {
         return $this->belongsTo(Vendor::class);

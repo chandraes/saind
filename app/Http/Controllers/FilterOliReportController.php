@@ -58,19 +58,19 @@ class FilterOliReportController extends Controller
 
     public function statistics(Request $request): View|RedirectResponse
     {
-        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'filter-oli']);
         }
         $filters = $request->validate(['vehicle_id' => ['nullable', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => $query->where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true))]]);
         $vehicles = Vehicle::where('status', '!=', 'nonaktif')->where('pembatasan_filter_oli', true)
-            ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('vendor_id', $request->user()->vendor_id)->whereKey($request->input('vehicle_id')))
+            ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('vendor_id', $request->user()->vendor_id)->whereKey($request->input('vehicle_id')))
             ->orderBy('nomor_lambung')->get();
         $vehicle = isset($filters['vehicle_id']) ? $vehicles->firstWhere('id', $filters['vehicle_id']) : null;
         $categories = KategoriFilterOliMesin::orderBy('id')->get();
         $logs = collect();
         if ($vehicle) {
             $logs = FilterOliLog::with('kategori')->where('vehicle_id', $vehicle->id)
-                ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('id', function ($latest) {
+                ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('id', function ($latest) {
                     $latest->from('filter_oli_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'filter_oli_logs.vehicle_id')->whereColumn('latest.kategori_filter_oli_mesin_id', 'filter_oli_logs.kategori_filter_oli_mesin_id')->where('latest.created_at', '<=', now())->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
                 }))
                 ->where('created_at', '<=', now())->latest()->orderByDesc('id')->get()
@@ -85,13 +85,13 @@ class FilterOliReportController extends Controller
     {
         $vehicle = Vehicle::findOrFail($vehicle);
         $category = KategoriFilterOliMesin::findOrFail($category);
-        if ($request->user()->role === 'vendor-operational' && ! $request->ajax()) {
+        if ($request->user()->isVendorAccount() && ! $request->ajax()) {
             return view('rekap.statistik.filter-oli.vendor-history', compact('vehicle', 'category'));
         }
         $logs = FilterOliLog::where('vehicle_id', $vehicle->id)->where('kategori_filter_oli_mesin_id', $category->id)
             ->latest()->orderByDesc('id');
 
-        if ($request->user()->role === 'vendor-operational') {
+        if ($request->user()->isVendorAccount()) {
             $total = (clone $logs)->count();
             $logs = $logs->offset(max(0, $request->integer('start')))->limit(25)->get();
 
@@ -112,7 +112,7 @@ class FilterOliReportController extends Controller
             ->where('audit.filter_oli_log_id', $log->id)
             ->select('transaksis.id', 'transaksis.created_at', 'kas_uang_jalans.nomor_uang_jalan', 'rutes.nama as rute', 'rutes.jarak', 'audit.nilai_ritase')
             ->orderBy('transaksis.created_at')->orderBy('transaksis.id');
-        if ($request->user()->role === 'vendor-operational') {
+        if ($request->user()->isVendorAccount()) {
             $transactions->where('kas_uang_jalans.vendor_id', $request->user()->vendor_id)->where('kas_uang_jalans.vehicle_id', $log->vehicle_id);
             $total = (clone $transactions)->count();
 

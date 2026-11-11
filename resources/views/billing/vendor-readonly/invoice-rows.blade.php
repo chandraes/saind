@@ -9,5 +9,6 @@
         <span class="badge invoice-vendor-status {{ $row['paid'] ? 'invoice-vendor-status-paid' : 'invoice-vendor-status-unpaid' }}"><i class="fa {{ $row['paid'] ? 'fa-check-circle' : 'fa-clock-o' }}" aria-hidden="true"></i>{{ $row['paid'] ? 'Lunas' : 'Belum lunas' }}</span>
         @if($row['paid'])<small class="invoice-vendor-paid-date">{{ $row['paid_on'] ? 'Tanggal pelunasan: '.$row['paid_on'] : 'Tanggal belum tercatat' }}</small>@endif
     </td>
+    @if($showTotal ?? false)<td class="text-end fw-semibold text-nowrap">Rp {{ $row['total'] }}</td>@endif
 </tr>
 @endforeach

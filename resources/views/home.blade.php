@@ -7,7 +7,7 @@
             <h1><u>DASHBOARD</u></h1>
         </div>
     </div>
-    <div class="row justify-content-left {{ auth()->user()->role === 'vendor-operational' ? 'd-none' : 'mt-5' }}">
+    <div class="row justify-content-left {{ auth()->user()->isVendorAccount() ? 'd-none' : 'mt-5' }}">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database')}}" class="text-decoration-none">
@@ -103,10 +103,7 @@
         @endif
 
     </div>
-    @if (auth()->user()->role === 'vendor')
-    @include('per-vendor.dashboard')
-    @endif
-    @if (auth()->user()->role === 'vendor-operational')
+    @if (auth()->user()->isVendorAccount())
     @include('per-vendor-operational.index')
     @endif
     @if (auth()->user()->role === 'customer')

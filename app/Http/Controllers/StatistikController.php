@@ -10,7 +10,6 @@ use App\Models\InvoiceAddVendor;
 use App\Models\InvoiceTagihan;
 use App\Models\KasBesar;
 use App\Models\KasVendor;
-use App\Models\PasswordKonfirmasi;
 use App\Models\PosisiAki;
 use App\Models\RekapGaji;
 use App\Models\Rute;
@@ -19,6 +18,7 @@ use App\Models\TransaksiAdditional;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Support\MaintenanceHistoryGuard;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -60,7 +60,7 @@ class StatistikController extends Controller
 
     public function upah_gendong(Request $request)
     {
-        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'upah-gendong']);
         }
 
@@ -77,7 +77,7 @@ class StatistikController extends Controller
 
         $db = new Transaksi;
 
-        $isVendorOperational = $request->user()->role === 'vendor-operational';
+        $isVendorOperational = $request->user()->isVendorAccount();
         if ($isVendorOperational) {
             $request->validate(['bulan' => 'nullable|integer|between:1,12', 'tahun' => 'nullable|integer|between:2000,2100', 'tanggal_filter' => ['nullable', 'regex:/^\d{2}-\d{2}-\d{4}( to \d{2}-\d{2}-\d{4})?$/'], 'start' => 'nullable|integer|min:0']);
         }
@@ -173,7 +173,7 @@ class StatistikController extends Controller
 
     public function perform_unit(Request $request)
     {
-        if (Auth::user()->role === 'vendor-operational') {
+        if (Auth::user()->isVendorAccount()) {
             return $this->performUnitByMonth($request);
         }
 
@@ -1579,7 +1579,7 @@ class StatistikController extends Controller
 
     public function aki_log(Request $request)
     {
-        if ($request->user()->role === 'vendor-operational' && ! $request->filled('vehicle_id')) {
+        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'aki']);
         }
 
@@ -1591,7 +1591,7 @@ class StatistikController extends Controller
         $vehicle = Vehicle::findOrFail($vehicleId);
 
         $latestLogs = AkiLog::where('vehicle_id', $vehicleId)
-            ->when($request->user()->role === 'vendor-operational', fn ($query) => $query->where('id', function ($latest) {
+            ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('id', function ($latest) {
                 $latest->from('aki_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'aki_logs.vehicle_id')->whereColumn('latest.posisi_aki_id', 'aki_logs.posisi_aki_id')->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
             }))
             ->orderByDesc('created_at')->orderByDesc('id')->get()
@@ -1683,13 +1683,12 @@ class StatistikController extends Controller
 
     public function aki_histori_delete($histori, Request $request)
     {
-        $dbP = PasswordKonfirmasi::first();
-
-        if ($request->password != $dbP->password) {
+        $banLog = AkiLog::findOrFail($histori);
+        MaintenanceHistoryGuard::authorize($request, $banLog);
+        if (! MaintenanceHistoryGuard::passwordMatches($request)) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
 
-        $banLog = AkiLog::findOrFail($histori);
         $banLog->delete();
 
         return redirect()->back()->with('success', 'Berhasil menghapus data!!');
@@ -1702,15 +1701,13 @@ class StatistikController extends Controller
             'password' => 'required',
         ]);
 
-        $dbP = PasswordKonfirmasi::first();
-
-        if ($data['password'] != $dbP->password) {
+        $banLog = AkiLog::findOrFail($histori);
+        MaintenanceHistoryGuard::authorize($request, $banLog);
+        if (! MaintenanceHistoryGuard::passwordMatches($request)) {
             return redirect()->back()->with('error', 'Password salah!!');
         }
 
         unset($data['password']);
-
-        $banLog = AkiLog::findOrFail($histori);
 
         $data['created_at'] = Carbon::createFromFormat('d-m-Y', $data['created_at'])->startOfDay();
         $banLog->update($data);

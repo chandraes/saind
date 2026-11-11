@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\AktivasiMaintenance;
 use App\Models\Customer;
-use App\Models\InvoiceAddVendor;
-use App\Models\InvoiceBayar;
 use App\Models\InvoiceTagihan;
 use App\Models\Transaksi;
 use App\Models\UpahGendong;
@@ -87,20 +85,7 @@ class HomeController extends Controller
             return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance, 'customer' => $customer, 'vehicle' => $vehicle]);
         }
 
-        if ($user->role == 'vendor') {
-            $v = Vehicle::where('vendor_id', Auth::user()->vendor_id)->pluck('id');
-            $vehicle = Vehicle::where('vendor_id', Auth::user()->vendor_id)->whereNot('status', 'nonaktif')->get();
-            $invoiceAdd = InvoiceAddVendor::where('vendor_id', Auth::user()->vendor_id)->where('is_finished', 0)->count();
-            $bayar = InvoiceBayar::where('vendor_id', Auth::user()->vendor_id)->where('lunas', 0)->count() + $invoiceAdd;
-
-            return view('home', [
-                'bayar' => $bayar,
-                'vehicle' => $vehicle,
-
-            ]);
-        }
-
-        if ($user->role === 'vendor-operational') {
+        if ($user->isVendorAccount()) {
             abort_unless($user->vendor_id && $user->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');
 
             return view('home');

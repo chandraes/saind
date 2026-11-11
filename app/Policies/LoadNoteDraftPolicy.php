@@ -9,7 +9,7 @@ class LoadNoteDraftPolicy
 {
     public function inbox(User $user): bool
     {
-        return $this->reviewAny($user) || ($user->role === 'vendor-operational' && $user->vendor_id !== null && $user->vendor()->exists());
+        return $this->reviewAny($user) || ($user->isVendorAccount() && $user->vendor_id !== null && $user->vendor()->exists());
     }
 
     public function readInbox(User $user, LoadNoteDraft $note): bool

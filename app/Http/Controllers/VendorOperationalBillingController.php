@@ -57,7 +57,7 @@ class VendorOperationalBillingController extends Controller
         }
 
         return $this->listing($request, $query, $kind === 'utama' ? 'Nota Bayar' : VendorOperationalBilling::CATEGORIES[$kind], 'nota-bayar', $filters,
-            fn ($item): array => ['cells' => $this->billing->paymentCells($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama'),
+            fn ($item): array => ['cells' => $this->billing->paymentCells($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama', $this->finance($request)),
                 'url' => null]);
     }
 
@@ -68,7 +68,7 @@ class VendorOperationalBillingController extends Controller
         $item = $this->billing->payableNotes($vendor, $kind, (int) $request->user()->id)->findOrFail($record);
 
         return view('billing.vendor-readonly.detail', ['title' => 'Nota Bayar · '.VendorOperationalBilling::CATEGORIES[$kind],
-            'fields' => $this->billing->journey($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama' ? null : $item)]);
+            'fields' => $this->billing->journey($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama' ? null : $item, $this->finance($request))]);
     }
 
     public function invoices(VendorInvoiceIndexRequest $request): View|JsonResponse
@@ -76,20 +76,27 @@ class VendorOperationalBillingController extends Controller
         $vendor = $this->vendor($request);
         $filters = $request->validated();
         $filters['status'] ??= 'unpaid';
-        $items = $this->billing->invoices($vendor, $filters)->simplePaginate(20)->withQueryString();
+        $query = $this->billing->invoices($vendor, $filters);
+        $finance = $this->finance($request);
+        $items = (clone $query)->simplePaginate(20)->withQueryString();
         $vendorName = Vendor::whereKey($vendor)->value('nama');
-        $rows = $items->getCollection()->map(function ($invoice) use ($vendorName): array {
+        $rows = $items->getCollection()->map(function ($invoice) use ($vendorName, $finance): array {
             $summary = $this->billing->invoiceSummary($invoice);
 
             return ['tanggal' => $summary['issued_on'], 'vendor' => $vendorName, 'invoice' => $summary['invoice_number'],
                 'tempo' => $summary['due_on'], 'paid' => $summary['paid'],
+                'total' => $finance ? number_format((float) $invoice->total, 0, ',', '.') : null,
                 'paid_on' => $summary['paid_on'] ? Carbon::parse($summary['paid_on'])->format('d-m-Y') : null,
                 'url' => route('vendor-operational.invoice.show', ['kind' => $summary['kind'], 'record' => $summary['id']])];
         })->all();
-        $data = ['title' => 'Invoice Vendor', 'vendorName' => $vendorName, 'filters' => $filters, 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
+        $data = ['title' => 'Invoice Vendor', 'vendorName' => $vendorName, 'filters' => $filters, 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20,
+            'showTotal' => $finance];
         if ($request->expectsJson()) {
             return response()->json(['rows' => view('billing.vendor-readonly.invoice-rows', $data)->render(), 'next' => $data['next']]);
         }
+
+        // Total seluruh invoice yang sesuai filter, bukan hanya baris yang sudah dimuat.
+        $data['grandTotal'] = $finance ? number_format((float) (clone $query)->reorder()->sum('total'), 0, ',', '.') : null;
 
         return view('billing.vendor-readonly.invoice-index', $data);
     }
@@ -102,8 +109,10 @@ class VendorOperationalBillingController extends Controller
         $invoice = $this->billing->invoiceQuery($vendor, $kind)->findOrFail($record);
         $query = $this->billing->invoiceJourneys($vendor, $kind, $invoice);
         $items = $query->orderByDesc('id')->simplePaginate(20)->withQueryString();
-        $rows = $items->getCollection()->map(fn ($item): array => ['cells' => $this->billing->paymentCells($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama'), 'url' => null])->all();
-        $data = ['title' => 'Invoice · '.($kind === 'utama' ? $invoice->periode : $invoice->periode_invoice), 'invoiceFields' => array_merge(...array_values($this->invoiceCells($invoice, $kind))), 'columns' => array_keys($this->billing->paymentColumns($kind === 'utama')), 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
+        $finance = $this->finance($request);
+        $rows = $items->getCollection()->map(fn ($item): array => ['cells' => $this->billing->paymentCells($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama', $finance), 'url' => null])->all();
+        $data = ['title' => 'Invoice · '.($kind === 'utama' ? $invoice->periode : $invoice->periode_invoice), 'invoice' => $this->invoiceHeader($invoice, $kind),
+            'finance' => $finance ? $this->billing->invoiceFinance($invoice) : null, 'columns' => array_keys($this->billing->paymentColumns($kind === 'utama', $finance)), 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
         if ($request->expectsJson()) {
             return response()->json(['rows' => view('billing.vendor-readonly.rows', $data)->render(), 'next' => $data['next']]);
         }
@@ -111,22 +120,32 @@ class VendorOperationalBillingController extends Controller
         return view('billing.vendor-readonly.invoice-detail', $data);
     }
 
-    private function invoiceCells(InvoiceBayar|InvoiceAddVendor $invoice, string $kind): array
+    /** Identity, dates and payment status for the invoice detail header. */
+    private function invoiceHeader(InvoiceBayar|InvoiceAddVendor $invoice, string $kind): array
     {
         $paid = $kind === 'utama' ? (int) $invoice->lunas === 1 : (int) $invoice->is_finished === 1;
-        $status = $kind !== 'utama' && (int) $invoice->status === 0 ? 'Dalam keranjang' : ($paid ? 'Lunas' : 'Belum lunas');
+        $status = $kind !== 'utama' && (int) $invoice->status === 0 ? 'cart' : ($paid ? 'paid' : 'unpaid');
+        $issued = $kind === 'utama' ? $invoice->tanggal : $invoice->created_at;
+        $due = $invoice->tempo ? Carbon::parse($invoice->tempo)->startOfDay() : null;
+        $days = $due ? (int) today()->diffInDays($due, false) : null;
+        $dueNote = match (true) {
+            $due === null || $paid => null,
+            $days < 0 => 'Lewat '.abs($days).' hari',
+            $days === 0 => 'Jatuh tempo hari ini',
+            default => $days.' hari lagi',
+        };
 
-        return ['Invoice' => ['Vendor' => $invoice->vendor?->nama, 'Periode' => $kind === 'utama' ? $invoice->periode : $invoice->periode_invoice,
-            'Jenis' => VendorOperationalBilling::CATEGORIES[$kind]],
-            'Tanggal' => ['Tanggal' => $kind === 'utama' ? $invoice->tanggal : $invoice->created_at?->format('Y-m-d'), 'Jatuh Tempo' => $invoice->tempo],
-            'Status' => ['Pembayaran' => $status]];
+        return ['number' => $kind === 'utama' ? $invoice->periode : $invoice->periode_invoice, 'category' => VendorOperationalBilling::CATEGORIES[$kind],
+            'vendor' => $invoice->vendor?->nama, 'issued_on' => $issued ? Carbon::parse($issued)->locale('id')->translatedFormat('d F Y') : null,
+            'due_on' => $due?->locale('id')->translatedFormat('d F Y'), 'due_note' => $dueNote, 'overdue' => $days !== null && $days < 0 && ! $paid,
+            'status' => $status, 'status_label' => ['cart' => 'Dalam keranjang', 'paid' => 'Lunas', 'unpaid' => 'Belum lunas'][$status]];
     }
 
     private function listing(Request $request, Builder $query, string $title, string $page, array $filters, callable $project): View|JsonResponse
     {
         $items = $query->orderByDesc('id')->simplePaginate(20)->withQueryString();
         $data = ['title' => $title, 'page' => $page, 'filters' => $filters, 'categories' => VendorOperationalBilling::CATEGORIES,
-            'vendorName' => $request->user()->vendor->nama, 'columns' => $page === 'nota-bayar' ? array_keys($this->billing->paymentColumns($filters['kind'] === 'utama')) : [],
+            'vendorName' => $request->user()->vendor->nama, 'columns' => $page === 'nota-bayar' ? array_keys($this->billing->paymentColumns($filters['kind'] === 'utama', $this->finance($request))) : [],
             'rows' => $items->getCollection()->map($project)->all(), 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
         $rowsView = $page === 'nota-bongkar' ? 'billing.vendor-readonly.unloading-rows' : 'billing.vendor-readonly.rows';
         if ($request->expectsJson()) {
@@ -144,6 +163,11 @@ class VendorOperationalBillingController extends Controller
         return ['kind' => $filters['kind'] ?? 'utama', 'status' => $filters['status'] ?? $defaultStatus, 'search' => trim($filters['search'] ?? ''), 'statuses' => $statuses];
     }
 
+    private function finance(Request $request): bool
+    {
+        return $request->user()->canViewVendorFinance();
+    }
+
     private function validKind(string $kind): void
     {
         abort_unless(array_key_exists($kind, VendorOperationalBilling::CATEGORIES), 404);
@@ -151,7 +175,7 @@ class VendorOperationalBillingController extends Controller
 
     private function vendor(Request $request): int
     {
-        abort_unless($request->user()?->role === 'vendor-operational' && $request->user()->vendor_id && $request->user()->vendor()->exists(), 403);
+        abort_unless($request->user()?->isVendorAccount() && $request->user()->vendor_id && $request->user()->vendor()->exists(), 403);
         abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
 
         return (int) $request->user()->vendor_id;

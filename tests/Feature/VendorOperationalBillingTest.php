@@ -72,6 +72,7 @@ class VendorOperationalBillingTest extends MobileApiTestCase
                 $table->integer('is_finished')->default(0);
                 $table->integer('status')->default(1);
                 $table->bigInteger('total')->default(987654321);
+                $table->bigInteger('total_bayar')->default(987654321);
                 $table->timestamps();
             });
         }
@@ -164,7 +165,7 @@ class VendorOperationalBillingTest extends MobileApiTestCase
 
     public function test_accounts_without_vendor_and_other_roles_cannot_read_billing(): void
     {
-        $this->actingAs(User::factory()->create(['username' => 'wrong-role', 'password' => 'secret-pass', 'role' => 'vendor', 'vendor_id' => 1]));
+        $this->actingAs(User::factory()->create(['username' => 'wrong-role', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => 1]));
         foreach (['nota-bongkar', 'nota-bayar', 'invoice'] as $path) {
             $this->get('/vendor-operational/'.$path)->assertForbidden();
         }
@@ -312,6 +313,58 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $second = $this->getJson($first->json('next'))->assertOk()->assertJsonPath('next', null);
         $this->assertSame(5, substr_count($second->json('rows'), '<tr>'));
         $this->assertStringNotContainsString('Belum lunas', $first->json('rows').$second->json('rows'));
+    }
+
+    public function test_vendor_sees_own_finance_while_vendor_operational_only_sees_travel_cash(): void
+    {
+        Schema::table('transaksis', fn (Blueprint $table) => $table->bigInteger('nominal_bayar')->nullable());
+        Schema::table('invoice_bayars', function (Blueprint $table): void {
+            foreach (['bayar', 'sisa_bayar'] as $column) {
+                $table->bigInteger($column)->default(0);
+            }
+        });
+        foreach (['ppn_masukans', 'pph_simpans'] as $name) {
+            Schema::create($name, function (Blueprint $table): void {
+                $table->id();
+                $table->integer('invoice_bayar_id')->nullable();
+                $table->integer('invoice_add_vendor_id')->nullable();
+                $table->bigInteger('nominal');
+            });
+        }
+        DB::table('transaksis')->where('id', 1)->update(['harga_vendor' => 70000, 'nominal_bayar' => 2000000]);
+        DB::table('transaksis')->where('id', 2)->update(['harga_vendor' => 70000, 'nominal_bayar' => 5555555]);
+        DB::table('invoice_bayars')->where('id', 1)->update(['total_bayar' => 2220000, 'bayar' => 1000000, 'sisa_bayar' => 1220000]);
+        DB::table('ppn_masukans')->insert(['invoice_bayar_id' => 1, 'nominal' => 220000]);
+        DB::table('pph_simpans')->insert(['invoice_bayar_id' => 1, 'nominal' => 40000]);
+
+        $vendor = User::factory()->create(['username' => 'vendor-owner', 'password' => 'secret-pass', 'role' => 'vendor', 'vendor_id' => 1]);
+        $this->actingAs($vendor);
+        $response = $this->get('/vendor-operational/nota-bayar?kind=utama')->assertOk()
+            ->assertSee('70.000')->assertSee('2.000.000')->assertSee('1.876.544')->assertDontSee('5.555.555')->assertDontSee('FOREIGN UNIT');
+        $html = new \DOMDocument;
+        @$html->loadHTML($response->getContent());
+        $headers = array_map(fn ($node): string => trim($node->textContent), iterator_to_array((new \DOMXPath($html))->query('//table[@id="note-inbox-table"]/thead/tr/th')));
+        $this->assertSame(['Uang Jalan', 'Harga', 'Bruto', 'Netto'], array_slice($headers, -4));
+        $this->get('/vendor-operational/invoice/utama/1')->assertOk()
+            ->assertSeeInOrder(['Total Bayar', 'Rp2.220.000', 'PPN', 'Rp220.000', 'PPh', 'Rp40.000', 'Sudah Dibayar', 'Rp1.000.000', 'Sisa Bayar', 'Rp1.220.000']);
+        $this->get('/vendor-operational/invoice/utama/2')->assertNotFound();
+        // Daftar invoice: nominal per invoice dan grand total seluruh invoice yang sesuai filter, tanpa aksi.
+        DB::table('invoice_add_vendors')->where('vendor_id', 1)->update(['total' => 100000]);
+        $list = $this->get('/vendor-operational/invoice?status=all')->assertOk()
+            ->assertSee('Total Bayar')->assertSee('Rp 2.220.000')->assertSee('Rp 100.000')->assertDontSee('987.654.321')
+            ->assertDontSee('form-bayar')->assertDontSee('invoice.bayar.lunas');
+        $this->assertStringContainsString('Rp 2.520.000', $list->getContent());
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($list->getContent());
+        $this->assertSame('Rp 2.520.000', trim((new \DOMXPath($dom))->query('//*[@id="invoice-grand-total"]')->item(0)?->textContent ?? ''));
+        $this->assertSame(0, (new \DOMXPath($dom))->query('//table[@id="note-inbox-table"]//form|//table[@id="note-inbox-table"]//button')->length);
+        // Invoice tambahan memperlihatkan total invoice, bukan nominal per perjalanan.
+        $this->get('/vendor-operational/invoice/kompensasi_jr/10')->assertOk()->assertSee('Total')->assertSee('Rp100.000');
+
+        $this->actingAs(User::factory()->create(['username' => 'vendor-ops', 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 1]));
+        $this->get('/vendor-operational/nota-bayar?kind=utama')->assertOk()->assertSee('123.456')->assertDontSee('2.000.000')->assertDontSee('Bruto');
+        $this->get('/vendor-operational/invoice/utama/1')->assertOk()->assertDontSee('Total Bayar')->assertDontSee('2.220.000');
+        $this->get('/vendor-operational/invoice?status=all')->assertOk()->assertDontSee('Total Bayar')->assertDontSee('2.220.000')->assertDontSee('Grand Total');
     }
 
     private function mobileHeaders(?User $user = null): array

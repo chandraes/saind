@@ -21,7 +21,7 @@
     @include('swal')
 
     <!-- Modal Delete / Password -->
-    @if (in_array(auth()->user()->role, ['admin', 'su']))
+    @if (auth()->user()->canManageMaintenanceHistory())
     <div class="modal fade" id="passwordModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow">
@@ -33,7 +33,7 @@
                     @csrf
                     <div class="modal-body py-4">
                         <p class="text-muted mb-3">Masukkan password Anda untuk mengonfirmasi penghapusan data ini.</p>
-                        <input class="form-control" type="password" id="password" name="password" placeholder="Password Anda" required>
+                        <input class="form-control" type="password" id="password" name="password" placeholder="{{ auth()->user()->isVendorAccount() ? 'Password akun Anda' : 'Password konfirmasi' }}" required>
                         <input type="hidden" id="itemId" name="itemId">
                     </div>
                     <div class="modal-footer bg-light">
@@ -85,13 +85,13 @@
                 <table class="table table-bordered table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
                     <thead class="table-success">
                         <tr>
-                            @if (auth()->user()->role === 'vendor-operational')<th>No</th>@endif
+                            @if (auth()->user()->isVendorAccount())<th>No</th>@endif
                             <th class="text-center">MEREK</th>
                             <th class="text-center">KONDISI AKI</th>
                             <th class="text-center">TANGGAL GANTI</th>
                             <th class="text-center">UMUR AKI</th>
                             <th class="text-center">STATUS / AKHIR PEMAKAIAN</th>
-                            @if (auth()->user()->role == 'admin' || auth()->user()->role == 'su')
+                            @if (auth()->user()->canManageMaintenanceHistory())
                             <th class="text-center" style="width: 150px;">ACTION</th>
                             @endif
                         </tr>
@@ -119,7 +119,7 @@
 <script src="{{ asset('assets/js/vendor-statistics-table.js') }}?v={{ filemtime(public_path('assets/js/vendor-statistics-table.js')) }}"></script>
 <script>
     $(document).ready(function(){
-        @if (in_array(auth()->user()->role, ['admin', 'su']))
+        @if (auth()->user()->canManageMaintenanceHistory())
         $(document).on('click', '.delete-btn', function() {
             var id = $(this).data('id');
             $('#itemId').val(id);
@@ -169,8 +169,8 @@
                 } }
         ];
 
-        @if (in_array(auth()->user()->role, ['admin', 'su']))
-        if (userRole === 'admin' || userRole === 'su') {
+        @if (auth()->user()->canManageMaintenanceHistory())
+        {
             columns.push({
                 data: null,
                 name: 'ACT',
@@ -187,7 +187,7 @@
         }
 
         @endif
-        @if (auth()->user()->role === 'vendor-operational')
+        @if (auth()->user()->isVendorAccount())
         columns.unshift({data: null, render: (data, type, row, meta) => meta.row + 1});
         vendorStatisticsTable('#rekapTable', {columns: columns,
             url: @json(route('statistik.aki.histori-data')),

@@ -555,7 +555,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational'], function () {
         Route::middleware(EnsureVendorOperationalVehicle::class.':statistics')->group(function (): void {
-            Route::get('/statistik/upah-gendong', [StatistikController::class, 'upah_gendong'])->middleware('role:admin,user,su,vendor-operational')->name('statistik.upah-gendong');
+            Route::get('/statistik/upah-gendong', [StatistikController::class, 'upah_gendong'])->middleware('role:admin,user,su,vendor,vendor-operational')->name('statistik.upah-gendong');
             Route::prefix('statistik/perform-unit')->group(function () {
                 Route::get('/', [StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
                 Route::get('/print', [StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
@@ -586,10 +586,17 @@ Route::group(['middleware' => ['auth']], function () {
         });
     });
 
+    // Vendor hanya boleh melihat nota bayar dan keranjang; memasukkan ke keranjang,
+    // memproses invoice, dan menyelesaikan invoice tambahan khusus tim internal.
     Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor'], function () {
         Route::get('transaksi/nota-bayar/{vendor}', [TransaksiController::class, 'nota_bayar'])->name('transaksi.nota-bayar');
-
         Route::get('/transaksi/nota-bayar/{vendor}/keranjang', [TransaksiController::class, 'nota_bayar_keranjang'])->name('transaksi.nota-bayar.keranjang');
+        Route::get('billing/nota-bayar/{vendor}', [BillingController::class, 'nota_bayar'])->name('billing.nota-bayar');
+        Route::get('billing/nota-bayar/{vendor}/{jenis}', [BillingController::class, 'nota_bayar_detail_jenis'])->name('billing.nota-bayar.detail-jenis');
+        Route::get('billing/nota-bayar/{vendor}/{jenis}/keranjang', [BillingController::class, 'nota_bayar_detail_by_jenis_keranjang'])->name('billing.nota-bayar.detail-jenis.keranjang');
+    });
+
+    Route::group(['middleware' => 'role:admin,user,su,asisten-user'], function () {
         Route::post('/transaksi/nota-bayar/{vendor}/masuk-keranjang', [TransaksiController::class, 'nota_bayar_masuk_keranjang'])->name('transaksi.nota-bayar.masuk-keranjang');
         Route::post('/transaksi/nota-bayar/{vendor}/keluar-keranjang', [TransaksiController::class, 'nota_bayar_keluar_keranjang'])->name('transaksi.nota-bayar.keluar-keranjang');
         Route::post('/transaksi/nota-bayar/{vendor}/keranjang-semua', [TransaksiController::class, 'nota_bayar_keranjang_semua'])->name('transaksi.nota-bayar.keranjang-semua');
@@ -598,10 +605,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('transaksi/nota-bayar/{vendor}/lanjut', [TransaksiController::class, 'nota_bayar_lanjut'])->name('transaksi.nota-bayar.lanjut');
 
         Route::prefix('billing/nota-bayar')->group(function () {
-            Route::get('/{vendor}', [BillingController::class, 'nota_bayar'])->name('billing.nota-bayar');
-            Route::get('/{vendor}/{jenis}', [BillingController::class, 'nota_bayar_detail_jenis'])->name('billing.nota-bayar.detail-jenis');
             Route::post('{vendor}/{jenis}', [BillingController::class, 'nota_bayar_detail_by_jenis_lanjut'])->name('billing.nota-bayar.detail-jenis.lanjut');
-            Route::get('/{vendor}/{jenis}/keranjang', [BillingController::class, 'nota_bayar_detail_by_jenis_keranjang'])->name('billing.nota-bayar.detail-jenis.keranjang');
             Route::post('{vendor}/{jenis}/keranjang/{invoice}/lanjut', [BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-bayar.detail-jenis.keranjang.lanjut');
             Route::post('{vendor}/{jenis}/keranjang/{invoice}/back', [BillingController::class, 'nota_bayar_detail_by_jenis_keranjang_back'])->name('billing.nota-bayar.detail-jenis.keranjang.back');
         });
@@ -1012,7 +1016,7 @@ Route::group(['middleware' => ['auth']], function () {
         });
     });
 
-    Route::group(['middleware' => 'role:vendor'], function () {
+    Route::group(['middleware' => ['role:vendor', EnsureVendorOperationalVehicle::class]], function () {
         Route::get('kas-per-vendor/{vendor}', [RekapController::class, 'kas_per_vendor'])->name('kas-per-vendor.index');
         Route::get('kas-per-vendor/{invoiceBayar}/detail', [RekapController::class, 'kas_per_vendor_detail'])->name('kas-per-vendor.detail');
         Route::get('pritn-kas-per-vendor/{vendor}/{bulan}/{tahun}', [RekapController::class, 'print_kas_per_vendor'])->name('print-kas-per-vendor.index');
@@ -1040,7 +1044,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     });
 
-    Route::group(['middleware' => ['role:vendor-operational', EnsureVendorOperationalVehicle::class]], function () {
+    Route::group(['middleware' => ['role:vendor,vendor-operational', EnsureVendorOperationalVehicle::class]], function () {
         Route::prefix('vendor-operational')->group(function () {
             Route::name('vendor-operational.')->group(function (): void {
                 Route::get('/nota-bongkar', [VendorOperationalBillingController::class, 'unloading'])->name('nota-bongkar');
