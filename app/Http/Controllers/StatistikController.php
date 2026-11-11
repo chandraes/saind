@@ -87,9 +87,9 @@ class StatistikController extends Controller
                 $ug = $all['ug'];
                 $rows = $all['data']->map(function ($transaction) use ($ug): array {
                     $route = $transaction->kas_uang_jalan->rute;
-                    $excess = $route->jarak > 50 ? max(0, $transaction->timbangan_bongkar - $ug->tonase_min) : 0;
+                    $excess = $ug->excessTonnage((float) $route->jarak, (float) $transaction->timbangan_bongkar);
 
-                    return ['hari' => $transaction->kas_uang_jalan->hari, 'id_tanggal' => $transaction->kas_uang_jalan->id_tanggal, 'rute' => $route->nama, 'jarak' => $route->jarak, 'under_50' => $route->jarak < 50 ? $transaction->timbangan_bongkar : 0, 'over_50' => $route->jarak > 50 ? $transaction->timbangan_bongkar : 0, 'kelebihan' => $excess, 'nominal' => $excess * $ug->nominal];
+                    return ['hari' => $transaction->kas_uang_jalan->hari, 'id_tanggal' => $transaction->kas_uang_jalan->id_tanggal, 'rute' => $route->nama, 'jarak' => $route->jarak, 'under_50' => $route->jarak < 50 ? $transaction->timbangan_bongkar : 0, 'over_50' => UpahGendong::isLongRoute((float) $route->jarak) ? $transaction->timbangan_bongkar : 0, 'kelebihan' => $excess, 'nominal' => $excess * $ug->nominal];
                 });
 
                 return response()->json(['data' => $rows, 'recordsFiltered' => $all['recordsTotal']]);

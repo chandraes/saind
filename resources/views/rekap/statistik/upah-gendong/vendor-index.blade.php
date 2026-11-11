@@ -13,7 +13,7 @@
             <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Tampilkan</button></div>
         </form>
     </div></div>
-    <div class="table-responsive"><table id="vendorUpahTable" class="table table-bordered align-middle"><thead class="table-success"><tr><th>No</th><th>Hari</th><th>Tanggal</th><th>Rute</th><th>Jarak (km)</th><th>Tonase &lt;50 km</th><th>Tonase &gt;50 km</th><th>Kelebihan tonase</th><th>Upah gendong</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand Total</th><th>{{ number_format($summary->jarak, 1, ',', '.') }}</th><th>{{ number_format($summary->under_50, 2, ',', '.') }}</th><th>{{ number_format($summary->over_50, 2, ',', '.') }}</th><th>{{ number_format($summary->kelebihan, 2, ',', '.') }}</th><th>Rp{{ number_format($summary->nominal, 0, ',', '.') }}</th></tr></tfoot></table></div>
+    <div class="table-responsive"><table id="vendorUpahTable" class="table table-bordered align-middle"><thead class="table-success"><tr><th>No</th><th>Hari</th><th>Tanggal</th><th>Rute</th><th>Jarak (km)</th><th>Tonase &lt;50 km</th><th>Tonase ≥50 km</th><th>Kelebihan tonase</th><th>Upah gendong</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand Total</th><th>{{ number_format($summary->jarak, 1, ',', '.') }}</th><th>{{ number_format($summary->under_50, 2, ',', '.') }}</th><th>{{ number_format($summary->over_50, 2, ',', '.') }}</th><th>{{ number_format($summary->kelebihan, 2, ',', '.') }}</th><th>Rp{{ number_format($summary->nominal, 0, ',', '.') }}</th></tr></tfoot></table></div>
 </div>
 @endsection
 @push('css')

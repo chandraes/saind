@@ -157,7 +157,7 @@
                     <th class="text-center align-middle">Rute</th>
                     <th class="text-center align-middle">KM</th>
                     <th class="text-center align-middle">Tonase < 50 KM</th>
-                    <th class="text-center align-middle">Tonase > 50 KM</th>
+                    <th class="text-center align-middle">Tonase ≥ 50 KM</th>
                     <th class="text-center align-middle">Kelebihan Tonase</th>
                     <th class="text-center align-middle">Total Upah Gendong</th>
                 </tr>
@@ -189,7 +189,7 @@
                             @endif
                     </td>
                     <td class="text-center">
-                        @if ($d->kas_uang_jalan->rute->jarak > 50)
+                        @if ($d->kas_uang_jalan->rute->jarak >= 50)
                         {{$d->timbangan_bongkar}}
                         @php
                         $total_over_50 += $d->timbangan_bongkar;

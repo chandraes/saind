@@ -1034,7 +1034,7 @@ class Transaksi extends Model
         $recordsTotal = null;
         if ($paginate) {
             $recordsTotal = (clone $query)->count();
-            $summary = (clone $query)->selectRaw('COALESCE(SUM(r.jarak), 0) as jarak, COALESCE(SUM(CASE WHEN r.jarak < 50 THEN transaksis.timbangan_bongkar ELSE 0 END), 0) as under_50, COALESCE(SUM(CASE WHEN r.jarak > 50 THEN transaksis.timbangan_bongkar ELSE 0 END), 0) as over_50, COALESCE(SUM(CASE WHEN r.jarak > 50 AND transaksis.timbangan_bongkar > ? THEN transaksis.timbangan_bongkar - ? ELSE 0 END), 0) as kelebihan', [$ug->tonase_min, $ug->tonase_min])->first();
+            $summary = (clone $query)->selectRaw('COALESCE(SUM(r.jarak), 0) as jarak, COALESCE(SUM(CASE WHEN r.jarak < 50 THEN transaksis.timbangan_bongkar ELSE 0 END), 0) as under_50, COALESCE(SUM(CASE WHEN r.jarak >= 50 THEN transaksis.timbangan_bongkar ELSE 0 END), 0) as over_50, COALESCE(SUM(CASE WHEN r.jarak >= 50 AND transaksis.timbangan_bongkar > ? THEN transaksis.timbangan_bongkar - ? ELSE 0 END), 0) as kelebihan', [$ug->tonase_min, $ug->tonase_min])->first();
             $summary->nominal = $summary->kelebihan * $ug->nominal;
         }
         $query->select('transaksis.*', 'kuj.tanggal as tanggal', 'v.nomor_lambung as nomor_lambung', 'r.jarak as jarak')->orderBy('kuj.tanggal')->orderBy('transaksis.id');

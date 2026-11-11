@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\MobileFilterOilController;
 use App\Http\Controllers\Api\MobileTireHistoryController;
 use App\Http\Controllers\Api\MobileTireMonitoringController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
+use App\Http\Controllers\Api\MobileUpahGendongController;
 use App\Http\Controllers\Api\PaymentNoteController;
 use App\Http\Controllers\Api\UnloadingNoteController;
 use App\Http\Controllers\Api\VehicleController;
@@ -38,6 +39,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::get('vehicles/{vehicle}/tire-monitoring', [MobileTireMonitoringController::class, 'show'])->whereNumber('vehicle')->name('tire-monitoring.show');
                 Route::get('unit-performance', [MobileUnitPerformanceController::class, 'index'])->name('unit-performance.index');
                 Route::get('unit-performance/all-vendor', [MobileUnitPerformanceController::class, 'allVendor'])->name('unit-performance.all-vendor');
+                Route::get('vehicles/{vehicle}/upah-gendong', [MobileUpahGendongController::class, 'show'])->whereNumber('vehicle')->name('upah-gendong.show');
                 Route::get('vendor-invoices', [VendorInvoiceController::class, 'index'])->name('vendor-invoices.index');
                 Route::get('vendor-invoices/{kind}/{record}', [VendorInvoiceController::class, 'show'])->whereNumber('record')->name('vendor-invoices.show');
                 Route::get('payment-notes', [PaymentNoteController::class, 'index'])->name('payment-notes.index');

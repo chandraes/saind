@@ -200,6 +200,23 @@ class VendorOperationalStatisticsAccessTest extends TestCase
         $this->getJson($url.'&start=25', ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()->assertJsonCount(5, 'data');
     }
 
+    public function test_upah_web_counts_a_50_km_route_as_long_route(): void
+    {
+        $this->createTransactionFixtures();
+        Schema::create('upah_gendongs', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('vehicle_id');
+            $table->decimal('tonase_min');
+            $table->integer('nominal');
+        });
+        DB::table('upah_gendongs')->insert(['vehicle_id' => 1, 'tonase_min' => 30, 'nominal' => 1000]);
+        DB::table('rutes')->where('id', 1)->update(['jarak' => 50]);
+        $url = '/statistik/upah-gendong?vehicle_id=1&bulan=11&tahun=2026';
+        $this->getJson($url, ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()
+            ->assertJsonPath('data.0.over_50', 40)->assertJsonPath('data.0.under_50', 0)->assertJsonPath('data.0.kelebihan', 10)->assertJsonPath('data.0.nominal', 10000);
+        $this->get($url)->assertOk()->assertSee('300.000')->assertSee('Tonase ≥50 km');
+    }
+
     public function test_owned_transaction_audits_are_bounded_and_history_remains_read_only(): void
     {
         $this->createTransactionFixtures();
