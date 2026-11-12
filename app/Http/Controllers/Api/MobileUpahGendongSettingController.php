@@ -41,10 +41,10 @@ class MobileUpahGendongSettingController extends Controller
     {
         $unit = $this->vehicle($request, $vehicle);
         if (UpahGendong::query()->where('vehicle_id', $unit->id)->exists()) {
-            throw ValidationException::withMessages(['vehicle_id' => 'Nolam ini sudah memiliki data upah gendong.']);
+            throw ValidationException::withMessages(['vehicle_id' => UpahGendongData::messages()['vehicle_id.unique']]);
         }
         $data = UpahGendongData::normalize($request->validate(UpahGendongData::rules(), UpahGendongData::messages()));
-        $setting = UpahGendong::create($data + ['vehicle_id' => $unit->id]);
+        $setting = UpahGendongData::write(fn () => UpahGendong::create($data + ['vehicle_id' => $unit->id]));
 
         return response()->json(['message' => 'Upah gendong nolam '.$unit->nomor_lambung.' diaktifkan.', 'data' => $this->present($setting)], 201);
     }

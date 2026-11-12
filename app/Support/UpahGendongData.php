@@ -4,7 +4,10 @@ namespace App\Support;
 
 use App\Models\UpahGendong;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Satu aturan isi data Upah Gendong untuk menu Database admin (web) dan
@@ -63,5 +66,23 @@ class UpahGendongData
         }
 
         return $data;
+    }
+
+    /**
+     * Jalankan penulisan data; jika constraint unik vehicle_id menolak (request
+     * bersamaan lolos pengecekan awal), kembalikan sebagai error validasi.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $write
+     * @return T
+     */
+    public static function write(Closure $write): mixed
+    {
+        try {
+            return $write();
+        } catch (UniqueConstraintViolationException) {
+            throw ValidationException::withMessages(['vehicle_id' => self::messages()['vehicle_id.unique']]);
+        }
     }
 }

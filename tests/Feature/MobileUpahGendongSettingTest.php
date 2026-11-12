@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Models\UpahGendong;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 
 /** Database Upah Gendong: vendor (mobile) dan admin (web) memakai aturan yang sama. */
 class MobileUpahGendongSettingTest extends MobileApiTestCase
@@ -103,5 +105,54 @@ class MobileUpahGendongSettingTest extends MobileApiTestCase
         $this->post('/database/upah-gendong/store', $form)->assertRedirect(route('database.upah-gendong'));
         $this->assertDatabaseHas('upah_gendongs', ['vehicle_id' => 1, 'nominal' => 22500, 'tanggal_masuk_driver' => '2026-01-05']);
         $this->post('/database/upah-gendong/store', $form)->assertSessionHasErrors('vehicle_id');
+    }
+
+    private function uniqueMigration(): object
+    {
+        return require database_path('migrations/2026_11_12_130000_add_unique_vehicle_to_upah_gendongs.php');
+    }
+
+    public function test_concurrent_activation_is_rejected_without_changing_the_saved_record(): void
+    {
+        $this->uniqueMigration()->up();
+        $headers = $this->headers();
+        // Request lain menyimpan nolam yang sama setelah pengecekan exists() lolos.
+        UpahGendong::creating(function (): void {
+            DB::table('upah_gendongs')->insert(['vehicle_id' => 1, 'nominal' => 11000, 'tonase_min' => 1, 'nama_driver' => 'PERTAMA',
+                'nama_pengurus' => 'X', 'no_rek' => '1', 'bank' => 'BRI', 'nama_rek' => 'X']);
+        });
+
+        $this->postJson('/api/v1/vehicles/1/upah-gendong-setting', $this->payload(), $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors(['vehicle_id' => 'Nolam ini sudah memiliki data upah gendong.']);
+        $this->assertSame(['PERTAMA'], DB::table('upah_gendongs')->where('vehicle_id', 1)->pluck('nama_driver')->all());
+    }
+
+    public function test_web_admin_concurrent_store_is_rejected_by_the_constraint(): void
+    {
+        $this->uniqueMigration()->up();
+        $this->withoutMiddleware(VerifyCsrfToken::class);
+        UpahGendong::creating(function (): void {
+            DB::table('upah_gendongs')->insert(['vehicle_id' => 1, 'nominal' => 11000, 'tonase_min' => 1, 'nama_driver' => 'PERTAMA',
+                'nama_pengurus' => 'X', 'no_rek' => '1', 'bank' => 'BRI', 'nama_rek' => 'X']);
+        });
+
+        $this->actingAs(User::factory()->create(['username' => 'admin-ug', 'password' => 'secret-pass', 'role' => 'admin']))->from('/database/upah-gendong')
+            ->post(route('database.upah-gendong.store'), $this->payload(['vehicle_id' => 1]))
+            ->assertRedirect('/database/upah-gendong')->assertSessionHasErrors('vehicle_id');
+        $this->assertSame(['PERTAMA'], DB::table('upah_gendongs')->where('vehicle_id', 1)->pluck('nama_driver')->all());
+    }
+
+    public function test_unique_migration_stops_on_existing_duplicates_without_touching_them(): void
+    {
+        DB::table('upah_gendongs')->insert(['vehicle_id' => 2, 'nominal' => 1, 'tonase_min' => 1, 'nama_driver' => 'GANDA',
+            'nama_pengurus' => 'X', 'no_rek' => '1', 'bank' => 'BRI', 'nama_rek' => 'X']);
+
+        try {
+            $this->uniqueMigration()->up();
+            $this->fail('Migrasi seharusnya berhenti.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('vehicle_id: 2', $e->getMessage());
+        }
+        $this->assertSame(2, DB::table('upah_gendongs')->where('vehicle_id', 2)->count());
     }
 }

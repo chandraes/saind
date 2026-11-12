@@ -39,7 +39,7 @@ class DatabaseController extends Controller
     public function upah_gendong_store(Request $request)
     {
         $data = $request->validate(UpahGendongData::rules(withVehicle: true), UpahGendongData::messages());
-        UpahGendong::create(UpahGendongData::normalize($data));
+        UpahGendongData::write(fn () => UpahGendong::create(UpahGendongData::normalize($data)));
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil ditambahkan');
     }
@@ -47,7 +47,7 @@ class DatabaseController extends Controller
     public function upah_gendong_update(UpahGendong $ug, Request $request)
     {
         $data = $request->validate(UpahGendongData::rules($ug, withVehicle: true), UpahGendongData::messages());
-        $ug->update(UpahGendongData::normalize($data));
+        UpahGendongData::write(fn () => $ug->update(UpahGendongData::normalize($data)));
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil diubah');
     }
