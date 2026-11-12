@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\LoadNoteDraftController;
 use App\Http\Controllers\Api\MobileBatteryController;
 use App\Http\Controllers\Api\MobileFilterOilController;
 use App\Http\Controllers\Api\MobileMaintenanceHistoryController;
+use App\Http\Controllers\Api\MobileMaintenanceVehicleController;
 use App\Http\Controllers\Api\MobileTireHistoryController;
 use App\Http\Controllers\Api\MobileTireMonitoringController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
@@ -37,6 +38,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::get('vehicles/{vehicle}/tire-logs/{banLog}/trips', [MobileTireHistoryController::class, 'trips'])->whereNumber(['vehicle', 'banLog'])->name('tire-trips.index');
                 Route::get('vehicles/{vehicle}/battery-monitoring', [MobileBatteryController::class, 'show'])->whereNumber('vehicle')->name('battery-monitoring.show');
                 Route::get('vehicles/{vehicle}/battery-positions/{position}/history', [MobileBatteryController::class, 'history'])->whereNumber(['vehicle', 'position'])->name('battery-history.index');
+                Route::get('maintenance/vehicles', MobileMaintenanceVehicleController::class)->name('maintenance.vehicles');
                 Route::get('filter-oil/vehicles', [MobileFilterOilController::class, 'vehicles'])->name('filter-oil.vehicles');
                 Route::get('vehicles/{vehicle}/filter-oil-monitoring', [MobileFilterOilController::class, 'show'])->whereNumber('vehicle')->name('filter-oil-monitoring.show');
                 Route::get('vehicles/{vehicle}/filter-oil-categories/{category}/history', [MobileFilterOilController::class, 'history'])->whereNumber(['vehicle', 'category'])->name('filter-oil-history.index');
@@ -44,6 +46,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::get('vehicles/{vehicle}/tire-monitoring', [MobileTireMonitoringController::class, 'show'])->whereNumber('vehicle')->name('tire-monitoring.show');
                 Route::get('unit-performance', [MobileUnitPerformanceController::class, 'index'])->name('unit-performance.index');
                 Route::get('unit-performance/all-vendor', [MobileUnitPerformanceController::class, 'allVendor'])->name('unit-performance.all-vendor');
+                Route::get('upah-gendong/vehicles', [MobileUpahGendongController::class, 'vehicles'])->name('upah-gendong.vehicles');
                 Route::get('vehicles/{vehicle}/upah-gendong', [MobileUpahGendongController::class, 'show'])->whereNumber('vehicle')->name('upah-gendong.show');
                 Route::get('vendor-cash', [MobileVendorCashController::class, 'index'])->name('vendor-cash.index');
                 Route::get('upah-gendong-settings', [MobileUpahGendongSettingController::class, 'index'])->name('upah-gendong-settings.index');

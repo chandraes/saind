@@ -18,6 +18,26 @@ class MobileUpahGendongController extends Controller
 {
     private const PER_PAGE = 25;
 
+    /** Pilihan nolam tab Hasil: kendaraan aktif milik vendor yang upah gendongnya sudah diaktifkan. */
+    public function vehicles(Request $request): JsonResponse
+    {
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+        $vendorId = (int) $request->user()->vendor_id;
+        abort_if($vendorId <= 0, 403);
+        $search = trim($filters['search'] ?? '');
+        $page = Vehicle::query()->join('upah_gendongs as ug', 'ug.vehicle_id', '=', 'vehicles.id')
+            ->where('vehicles.vendor_id', $vendorId)->where('vehicles.status', '!=', 'nonaktif')
+            ->when($search !== '', fn ($query) => $query->where('vehicles.nomor_lambung', 'like', '%'.$search.'%'))
+            ->orderBy('vehicles.nomor_lambung')->orderBy('vehicles.id')
+            ->paginate(20, ['vehicles.id', 'vehicles.nomor_lambung', 'vehicles.nopol', 'vehicles.status', 'ug.nominal', 'ug.nama_driver']);
+
+        return response()->json([
+            'data' => $page->getCollection()->map(fn (Vehicle $vehicle): array => $vehicle->only(['id', 'nomor_lambung', 'nopol', 'status'])
+                + ['nominal' => (int) $vehicle->nominal, 'nama_driver' => $vehicle->nama_driver])->values(),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
+        ]);
+    }
+
     public function show(Request $request, int $vehicle): JsonResponse
     {
         $filters = $request->validate([

@@ -7,6 +7,7 @@ use App\Models\InvoiceAddVendor;
 use App\Models\InvoiceBayar;
 use App\Models\Vendor;
 use App\Services\VendorOperationalBilling;
+use App\Support\AdditionalInvoiceRecap;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -115,6 +116,13 @@ class VendorOperationalBillingController extends Controller
             'finance' => $finance ? $this->billing->invoiceFinance($invoice) : null, 'columns' => array_keys($this->billing->paymentColumns($kind === 'utama', $finance)), 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
         if ($request->expectsJson()) {
             return response()->json(['rows' => view('billing.vendor-readonly.rows', $data)->render(), 'next' => $data['next']]);
+        }
+        if ($finance) {
+            // Vendor dan vendor-induk melihat tabel yang sama dengan admin, tanpa aksi.
+            $data['adminTable'] = $kind === 'utama'
+                ? ['view' => 'billing.transaksi.invoice.bayar.table', 'data' => ['vendor' => $invoice->vendor, 'pph_simpan' => $invoice->pph_simpan?->nominal ?? 0,
+                    'data' => $invoice->transaksi->load(['kas_uang_jalan.vendor', 'kas_uang_jalan.vehicle', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute'])]]
+                : ['view' => 'billing.nota-bayar.table-keranjang', 'data' => AdditionalInvoiceRecap::data($invoice)];
         }
 
         return view('billing.vendor-readonly.invoice-detail', $data);

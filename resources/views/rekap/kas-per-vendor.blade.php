@@ -74,7 +74,7 @@
                     <th class="text-center align-middle">Nomor Lambung</th>
                     <th class="text-center align-middle">Pinjaman/Pelunasan</th>
                     <th class="text-center align-middle">Bayar</th>
-                    <th class="text-center align-middle">Sisa</th>
+                    <th class="text-center align-middle">Sisa Hutang</th>
                 </tr>
                 <tr class="table-warning">
 
@@ -92,7 +92,8 @@
                             number_format($sisaSebelumnya, 0,',','.') : ''}}
                         @endif
                     </td>
-                    <td class="text-center align-middle">
+                    {{-- Hutang vendor (sisa > 0) ditandai merah. --}}
+                    <td @class(['text-center align-middle', 'text-danger' => $sisaSebelumnya > 0])>
                         Rp. {{$dataSebelumnya ?
                             number_format($sisaSebelumnya, 0,',','.') : ''}}
                     </td>
@@ -116,7 +117,7 @@
                     <td class="text-center align-middle">{{$d->vehicle_id ? $d->vehicle->nomor_lambung : ''}}</td>
                     <td class="text-center align-middle">{{number_format($d->pinjaman, 0, ',', '.')}}</td>
                     <td class="text-center align-middle">{{number_format($d->bayar, 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($d->sisa, 0, ',','.')}}</td>
+                    <td @class(['text-center align-middle', 'text-danger' => $d->sisa > 0])>{{number_format($d->sisa, 0, ',','.')}}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -127,7 +128,8 @@
                     <td class="text-center align-middle"><strong>Grand Total</strong> </td>
                     <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$sisaSebelumnya, 0, ',','.')}}</td>
                     <td class="text-center align-middle">{{number_format($data->sum('bayar'), 0, ',','.')}}</td>
-                    <td class="text-center align-middle">{{number_format($data->sum('pinjaman')+$sisaSebelumnya-$data->sum('bayar'), 0, ',','.')}}</td>
+                    @php($sisaAkhir = $data->sum('pinjaman')+$sisaSebelumnya-$data->sum('bayar'))
+                    <td @class(['text-center align-middle', 'text-danger' => $sisaAkhir > 0])>{{number_format($sisaAkhir, 0, ',','.')}}</td>
                 </tr>
             </tfoot>
         </table>

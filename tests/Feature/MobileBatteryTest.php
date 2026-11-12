@@ -60,6 +60,18 @@ class MobileBatteryTest extends MobileApiTestCase
             'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
     }
 
+    public function test_maintenance_nolam_list_hides_nonaktif_and_other_vendors(): void
+    {
+        DB::table('vehicles')->insert([['id' => 3, 'vendor_id' => 1, 'nomor_lambung' => '150', 'status' => 'nonaktif'],
+            ['id' => 4, 'vendor_id' => 1, 'nomor_lambung' => '300', 'status' => 'aktif']]);
+
+        $headers = $this->headers();
+        $this->getJson('/api/v1/maintenance/vehicles', $headers)->assertOk()
+            ->assertJsonPath('data.*.nomor_lambung', ['288', '300'])->assertJsonPath('meta.total', 2);
+        $this->getJson('/api/v1/maintenance/vehicles?search=30', $headers)->assertOk()
+            ->assertJsonPath('data.*.id', [4]);
+    }
+
     public function test_monitoring_returns_latest_battery_per_position_with_age(): void
     {
         $headers = $this->headers();

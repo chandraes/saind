@@ -266,19 +266,26 @@ class VendorOperationalBilling
      * Invoice totals shown only to accounts allowed to see vendor finances:
      * a headline amount, supporting details and, for HPP invoices, payment progress.
      *
-     * @return array{headline: array{0: string, 1: string}, details: array<string, string>, progress: ?array{paid: string, remaining: string, percent: int}}
+     * @return array{headline: array{0: string, 1: string}, details: array<string, string>, progress: ?array{paid: string, remaining: string, percent: int}, breakdown: list<array{label: string, amount: int, op: ?string}>}
      */
     public function invoiceFinance(InvoiceBayar|InvoiceAddVendor $invoice): array
     {
         $rupiah = fn ($value): string => 'Rp'.number_format((float) $value, 0, ',', '.');
         if ($invoice instanceof InvoiceBayar) {
             $total = (float) $invoice->total_bayar;
+            $ppn = (float) PpnMasukan::where('invoice_bayar_id', $invoice->id)->sum('nominal');
+            $pph = (float) PphSimpan::where('invoice_bayar_id', $invoice->id)->sum('nominal');
+            $journeys = $invoice->transaksi()->join('kas_uang_jalans as kuj', 'kuj.id', '=', 'transaksis.kas_uang_jalan_id')
+                ->toBase()->selectRaw('COALESCE(SUM(transaksis.nominal_bayar), 0) as bruto, COALESCE(SUM(kuj.nominal_transaksi), 0) as uang_jalan')->first();
+            $bruto = (float) $journeys->bruto;
+            $netto = $bruto - (float) $journeys->uang_jalan;
 
             return ['headline' => ['Total Bayar', $rupiah($total)],
-                'details' => ['PPN' => $rupiah(PpnMasukan::where('invoice_bayar_id', $invoice->id)->sum('nominal')),
-                    'PPh' => $rupiah(PphSimpan::where('invoice_bayar_id', $invoice->id)->sum('nominal'))],
+                'details' => ['PPN' => $rupiah($ppn), 'PPh' => $rupiah($pph)],
                 'progress' => ['paid' => $rupiah($invoice->bayar), 'remaining' => $rupiah($invoice->sisa_bayar),
-                    'percent' => $total > 0 ? (int) min(100, max(0, round((float) $invoice->bayar / $total * 100))) : 0]];
+                    'percent' => $total > 0 ? (int) min(100, max(0, round((float) $invoice->bayar / $total * 100))) : 0],
+                'breakdown' => $this->breakdown([['Bruto', $bruto, null], ['Uang Jalan', (float) $journeys->uang_jalan, '-'],
+                    ['Netto', $netto, '='], ['PPN', $ppn, '+'], ['PPh', $pph, '-']], $netto + $ppn - $pph, 'Total Bayar', $total)];
         }
 
         // dpp adalah tarif per ton per km, bukan nominal rupiah.
@@ -286,6 +293,28 @@ class VendorOperationalBilling
 
         return ['headline' => ['Total', $rupiah($invoice->total)],
             'details' => ['Tarif DPP' => 'Rp'.$rate.' /ton/km', 'Nominal' => $rupiah($invoice->nominal), 'PPN' => $rupiah($invoice->ppn), 'PPh' => $rupiah($invoice->pph)],
-            'progress' => null];
+            'progress' => null,
+            'breakdown' => $this->breakdown([['Nominal', (float) $invoice->nominal, null], ['PPN', (float) $invoice->ppn, '+'], ['PPh', (float) $invoice->pph, '-']],
+                (float) $invoice->nominal + (float) $invoice->ppn - (float) $invoice->pph, 'Total', (float) $invoice->total)];
+    }
+
+    /**
+     * Langkah hitungan menuju total invoice untuk ditampilkan saat total diketuk.
+     * Bila total tersimpan berbeda dari hasil hitungan (data lama diubah setelah
+     * invoice dibuat), selisihnya ditampilkan sebagai "Penyesuaian" agar hitungan tetap utuh.
+     *
+     * @param  list<array{0: string, 1: float, 2: ?string}>  $steps  label, nominal, operator (null, '+', '-' atau '=' untuk subtotal)
+     * @return list<array{label: string, amount: int, op: ?string}>
+     */
+    private function breakdown(array $steps, float $computed, string $totalLabel, float $total): array
+    {
+        $rows = array_map(fn (array $step): array => ['label' => $step[0], 'amount' => (int) round($step[1]), 'op' => $step[2]], $steps);
+        $difference = (int) round($total - $computed);
+        if ($difference !== 0) {
+            $rows[] = ['label' => 'Penyesuaian', 'amount' => abs($difference), 'op' => $difference > 0 ? '+' : '-'];
+        }
+        $rows[] = ['label' => $totalLabel, 'amount' => (int) round($total), 'op' => '='];
+
+        return $rows;
     }
 }

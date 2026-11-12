@@ -163,5 +163,13 @@ class VendorAccountAccessTest extends MobileApiTestCase
             ->assertViewHas('dataSebelumnya', fn ($row): bool => (int) $row->sisa === 750000)
             ->assertSee('750.000');
         $this->get('/kas-per-vendor/1?bulan=10&tahun=2026')->assertOk()->assertViewHas('dataSebelumnya', null);
+
+        // Kolom "Sisa Hutang"; hutang (> 0) merah, lebih bayar (< 0) tetap hitam.
+        DB::table('kas_vendors')->insert(['vendor_id' => 1, 'tanggal' => '2027-01-09', 'uraian' => 'Lunas', 'bayar' => 900000, 'sisa' => -50000]);
+        $page = $this->get('/kas-per-vendor/1?bulan=1&tahun=2027')->assertOk()->assertSee('Sisa Hutang');
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($page->getContent());
+        $red = array_map(fn ($cell): string => trim($cell->textContent), iterator_to_array((new \DOMXPath($dom))->query('//table[@id="rekapTable"]//td[contains(@class, "text-danger")]')));
+        $this->assertSame(['Rp. 750.000', '850.000'], $red);
     }
 }

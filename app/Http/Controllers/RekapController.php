@@ -1023,6 +1023,7 @@ class RekapController extends Controller
             'bulan' => $bulan,
             'stringBulanNow' => $stringBulanNow,
             'sisaTerakhir' => $sisaTerakhir,
+            'hutang' => true,
         ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('Rekap Kas Vendor '.$vendor->nama.' '.$stringBulanNow.' '.$tahun.'.pdf');

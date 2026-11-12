@@ -347,6 +347,12 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->assertSame(['Uang Jalan', 'Harga', 'Bruto', 'Netto'], array_slice($headers, -4));
         $this->get('/vendor-operational/invoice/utama/1')->assertOk()
             ->assertSeeInOrder(['Total Bayar', 'Rp2.220.000', 'PPN', 'Rp220.000', 'PPh', 'Rp40.000', 'Sudah Dibayar', 'Rp1.000.000', 'Sisa Bayar', 'Rp1.220.000']);
+        // Di bawah ringkasan: tabel perjalanan format admin (Total/PPN/PPh/Tagihan) tanpa aksi.
+        $detail = $this->get('/vendor-operational/invoice/utama/1')->assertOk()->assertSee('id="notaTable"', false)
+            ->assertSeeInOrder(['Bruto', 'Uang Jalan', 'Netto', 'Total', 'PPN', 'PPh', 'Tagihan'])->assertDontSee('note-inbox-table');
+        $page = new \DOMDocument;
+        @$page->loadHTML($detail->getContent());
+        $this->assertSame(0, (new \DOMXPath($page))->query('//table[@id="notaTable"]//form|//table[@id="notaTable"]//button[not(@data-bs-dismiss)]')->length);
         $this->get('/vendor-operational/invoice/utama/2')->assertNotFound();
         // Daftar invoice: nominal per invoice dan grand total seluruh invoice yang sesuai filter, tanpa aksi.
         DB::table('invoice_add_vendors')->where('vendor_id', 1)->update(['total' => 100000]);
@@ -400,6 +406,10 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->assertEqualsCanonicalizing([2220000, 100000, 100000, 100000], array_column($invoices->json('data'), 'total_amount'));
         $this->getJson('/api/v1/vendor-invoices/utama/1', $headers)->assertOk()
             ->assertJsonPath('invoice.finance.headline', ['Total Bayar', 'Rp2.220.000'])
+            ->assertJsonPath('invoice.finance.breakdown.0', ['label' => 'Bruto', 'amount' => 2000000, 'op' => null])
+            ->assertJsonPath('invoice.finance.breakdown.2.label', 'Netto')
+            ->assertJsonPath('invoice.finance.breakdown.5.label', 'Penyesuaian')
+            ->assertJsonPath('invoice.finance.breakdown.6', ['label' => 'Total Bayar', 'amount' => 2220000, 'op' => '='])
             ->assertJsonPath('invoice.finance.progress.percent', 45)->assertJsonPath('data.0.finance.gross_amount', 2000000);
 
         $headers = $this->mobileHeaders(User::factory()->create(['username' => 'ops-mobile', 'password' => 'secret-pass', 'role' => 'vendor-operational', 'vendor_id' => 1]));

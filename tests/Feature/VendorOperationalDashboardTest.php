@@ -41,8 +41,8 @@ class VendorOperationalDashboardTest extends TestCase
     {
         $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => $role, 'vendor_id' => 1]));
         $response = $this->get('/home')->assertOk();
-        $response->assertSeeInOrder(['Nota &amp; Invoice', ...$documents, 'Performa &amp; Statistik', 'Perform Unit', 'Perform Unit All', 'Upah Gendong',
-            'Maintenance &amp; Sparepart', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
+        $response->assertSeeInOrder(['Nota &amp; Invoice', ...$documents, 'Performa &amp; Upah Gendong', 'Perform Unit', 'Perform Unit All', 'Upah Gendong',
+            'Maintenance', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
             ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('maintenaceModal')->assertDontSee('Statistik Vendor')
             ->assertDontSee('INVOICE BAYAR VENDOR');
         $dom = new \DOMDocument;

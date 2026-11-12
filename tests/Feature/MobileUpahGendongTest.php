@@ -105,6 +105,20 @@ class MobileUpahGendongTest extends MobileApiTestCase
             ->assertJsonCount(1, 'data')->assertJsonPath('meta.totals.amount', 300000);
     }
 
+    public function test_result_tab_lists_only_active_vehicles_with_upah_gendong(): void
+    {
+        DB::table('vehicles')->insert(['id' => 4, 'vendor_id' => 1, 'nomor_lambung' => '150', 'nopol' => 'BG 4', 'status' => 'nonaktif']);
+        DB::table('upah_gendongs')->insert(['vehicle_id' => 4, 'nominal' => 20000, 'tonase_min' => 30, 'nama_driver' => 'X',
+            'nama_pengurus' => 'Y', 'no_rek' => '1', 'bank' => 'BRI', 'nama_rek' => 'X']);
+
+        // 3 belum diaktifkan, 4 nonaktif, 2 milik vendor lain.
+        $this->getJson('/api/v1/upah-gendong/vehicles', $this->headers())->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 1)->assertJsonPath('data.0.nomor_lambung', '288')
+            ->assertJsonPath('data.0.nominal', 20000)->assertJsonPath('data.0.nama_driver', 'BUDI')
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('meta.last_page', 1);
+        $this->getJson('/api/v1/upah-gendong/vehicles?search=999', $this->headers(1, 'vendor'))->assertOk()->assertJsonCount(0, 'data');
+    }
+
     public function test_vehicle_without_rate_other_vendors_and_bad_filters(): void
     {
         $headers = $this->headers();

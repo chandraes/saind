@@ -27,12 +27,12 @@ class VendorDashboardMenu
 
         return [
             ['key' => 'documents', 'title' => 'Nota & Invoice', 'menus' => $documents],
-            ['key' => 'statistics', 'title' => 'Performa & Statistik', 'menus' => [
+            ['key' => 'statistics', 'title' => 'Performa & Upah Gendong', 'menus' => [
                 $menu('Perform Unit', 'Performa dan aktivitas kendaraan.', route('statistik.perform-unit'), 'perform-unit.svg'),
                 $menu('Perform Unit All', 'Rekap ritase bulanan seluruh unit vendor Anda.', route('statistik.perform-unit.all-vendor'), 'all-vendor.svg'),
                 $menu('Upah Gendong', 'Riwayat upah gendong per unit.', route('statistik.upah-gendong'), 'statistik-ug.svg'),
             ]],
-            ['key' => 'maintenance', 'title' => 'Maintenance & Sparepart', 'menus' => [
+            ['key' => 'maintenance', 'title' => 'Maintenance', 'menus' => [
                 $menu('Ban Luar', 'Pemakaian dan histori ban per posisi.', route('statistik.ban-luar'), 'db-ban.svg'),
                 $menu('Aki', 'Kondisi dan histori aki kendaraan.', route('statistik.aki'), 'aki.svg'),
                 $menu('Filter & Oli Mesin', 'Pemakaian dan histori penggantian.', route('statistik.filter-oli'), 'filter-oli-mesin.svg'),

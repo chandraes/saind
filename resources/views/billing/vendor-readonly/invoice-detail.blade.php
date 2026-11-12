@@ -62,6 +62,7 @@
         @endif
     </section>
 
+    @empty($adminTable)
     <section class="invoice-vendor-list" aria-labelledby="invoice-journeys-title">
         <div class="invoice-vendor-list-heading">
             <div><h2 id="invoice-journeys-title">Perjalanan dalam invoice</h2><p>Berat dalam ton. Data dimuat bertahap saat Anda menggulir.</p></div>
@@ -80,16 +81,36 @@
         @if (!$rows)<p class="text-center text-muted my-4">Belum ada perjalanan pada invoice ini.</p>@endif
         <div id="note-inbox-loading" class="invoice-vendor-loading" role="status" data-next="{{ $next }}">{{ $next ? 'Memuat data berikutnya saat Anda menggulir…' : 'Seluruh data telah ditampilkan.' }}</div>
     </section>
+    @endempty
 </div>
+@isset($adminTable)
+{{-- Di luar batas lebar halaman: tabel banyak kolom memakai container-fluid penuh seperti halaman admin. --}}
+<section class="invoice-detail-admin-table" aria-label="Perjalanan dalam invoice">
+    @include($adminTable['view'], $adminTable['data'])
+</section>
+@endisset
 @endsection
 @push('css')
 <link rel="stylesheet" href="{{ asset('assets/css/dt.min.css') }}">
 <link href="{{ asset('assets/css/vendor-invoices.css') }}?v={{ filemtime(public_path('assets/css/vendor-invoices.css')) }}" rel="stylesheet">
 @endpush
 @push('js')
+@isset($adminTable)
+<script src="{{ asset('assets/js/dt5.min.js') }}"></script>
+@if ($adminTable['view'] === 'billing.transaksi.invoice.bayar.table')
+<script>
+    // Sama seperti halaman admin Invoice Bayar.
+    $(function () {
+        $('#notaTable').DataTable({paging: false, ordering: false, searching: false, info: false, scrollCollapse: true, scrollX: true, scrollY: '550px',
+            fixedColumns: {leftColumns: 3, rightColumns: 1}});
+    });
+</script>
+@endif
+@else
 <script src="{{ asset('assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
 @once('incremental-data-table')
 <script src="{{ asset('assets/js/incremental-data-table.js') }}?v={{ filemtime(public_path('assets/js/incremental-data-table.js')) }}"></script>
 @endonce
 <script src="{{ asset('assets/js/load-note-inbox.js') }}?v={{ filemtime(public_path('assets/js/load-note-inbox.js')) }}"></script>
+@endisset
 @endpush
