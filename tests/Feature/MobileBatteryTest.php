@@ -72,6 +72,18 @@ class MobileBatteryTest extends MobileApiTestCase
             ->assertJsonPath('data.*.id', [4]);
     }
 
+    public function test_operasional_lists_every_vendor_nolam_and_opens_any_vehicle(): void
+    {
+        DB::table('vehicles')->insert(['id' => 3, 'vendor_id' => 2, 'nomor_lambung' => '150', 'status' => 'nonaktif']);
+        $user = User::factory()->create(['username' => 'aki-ops', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]);
+        $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+
+        $this->getJson('/api/v1/maintenance/vehicles', $headers)->assertOk()->assertJsonPath('data.*.nomor_lambung', ['288', '999']);
+        $this->getJson('/api/v1/maintenance/vehicles?vendor_id=2', $headers)->assertOk()->assertJsonPath('data.*.id', [2]);
+        $this->getJson('/api/v1/vehicles/2/battery-monitoring', $headers)->assertOk()->assertJsonPath('data.vehicle.id', 2);
+        $this->postJson('/api/v1/vehicles/2/battery-logs', [], $headers)->assertForbidden();
+    }
+
     public function test_monitoring_returns_latest_battery_per_position_with_age(): void
     {
         $headers = $this->headers();

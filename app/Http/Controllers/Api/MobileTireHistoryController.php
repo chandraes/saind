@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BanLog;
 use App\Models\PosisiBan;
 use App\Models\Vehicle;
+use App\Support\MobileVendorScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ class MobileTireHistoryController extends Controller
 {
     private function vehicle(Request $request, int $id): Vehicle
     {
-        return Vehicle::query()->where('vendor_id', $request->user()->vendor_id)->findOrFail($id);
+        return MobileVendorScope::apply(Vehicle::query(), $request)->findOrFail($id);
     }
 
     public function history(Request $request, int $vehicle, int $position): JsonResponse
@@ -49,7 +50,7 @@ class MobileTireHistoryController extends Controller
             ->join('kas_uang_jalans as kuj', 't.kas_uang_jalan_id', '=', 'kuj.id')
             ->join('rutes as r', 'kuj.rute_id', '=', 'r.id')
             ->where('pivot.ban_log_id', $log->id)
-            ->where('kuj.vendor_id', $request->user()->vendor_id)->where('kuj.vehicle_id', $record->id)
+            ->where('kuj.vendor_id', $record->vendor_id)->where('kuj.vehicle_id', $record->id)
             ->orderByDesc('kuj.tanggal')->orderByDesc('t.id')->orderByDesc('pivot.id')
             ->select('pivot.id', 't.id as transaksi_id', 'kuj.tanggal', 'kuj.nomor_uang_jalan', 'r.nama as rute', 'r.jarak', 'pivot.nilai_ritase')
             ->simplePaginate($filters['per_page'] ?? 20);

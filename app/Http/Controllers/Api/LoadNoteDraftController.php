@@ -13,6 +13,7 @@ use App\Models\Vehicle;
 use App\Services\LoadNoteDraftService;
 use App\Services\LoadNoteMatcher;
 use App\Services\MobileNotePayment;
+use App\Support\MobileVendorScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,10 +23,10 @@ class LoadNoteDraftController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $this->authorize('viewAny', LoadNoteDraft::class);
+        $this->authorize('readMobile', LoadNoteDraft::class);
         $filters = $request->validate(['status' => ['sometimes', 'string', 'in:all,unprocessed,draft,void,rejected,cancelled,processed'], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
-        $query = LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with(['creator:id,name', 'customer:id,tagihan_dari', 'vehicle' => fn ($query) => $query
-            ->where('vendor_id', $request->user()->vendor_id)->select('id', 'driver_id')->with('driver:id,nama')]);
+        $query = MobileVendorScope::apply(LoadNoteDraft::query(), $request)->with(['creator:id,name', 'customer:id,tagihan_dari', 'vendor:id,nama,nickname',
+            'vehicle' => fn ($query) => $query->select('id', 'driver_id', 'vendor_id')->with('driver:id,nama')]);
         $query->search($filters['search'] ?? '')->with('voidEvent');
         // Aplikasi lama masih mengirim rejected/cancelled; keduanya kini menjadi void.
         $status = in_array($filters['status'] ?? 'all', ['rejected', 'cancelled'], true) ? 'void' : ($filters['status'] ?? 'all');
@@ -72,9 +73,9 @@ class LoadNoteDraftController extends Controller
 
     private function draft(Request $request, int $note): LoadNoteDraft
     {
-        $this->authorize('viewAny', LoadNoteDraft::class);
+        $this->authorize('readMobile', LoadNoteDraft::class);
 
-        return LoadNoteDraft::where('vendor_id', $request->user()->vendor_id)->with('creator:id,name')->findOrFail($note);
+        return MobileVendorScope::apply(LoadNoteDraft::query(), $request)->with(['creator:id,name', 'vendor:id,nama,nickname'])->findOrFail($note);
     }
 
     public function show(Request $request, int $note, MobileNotePayment $payments): MobileLoadNoteDraftResource

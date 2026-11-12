@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
+use App\Support\MobileVendorScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,26 +36,27 @@ class MobileUnitPerformanceController extends Controller
             throw ValidationException::withMessages(['end_date' => 'Rentang tanggal harus berurutan dan maksimal 31 hari.']);
         }
 
-        $vendorId = (int) $request->user()->vendor_id;
-        abort_if($vendorId <= 0, 403);
+        // Akun vendor: vendornya sendiri; operasional: seluruh vendor atau filter vendor_id.
+        $vendorId = MobileVendorScope::id($request);
+        abort_if($vendorId !== null && $vendorId <= 0, 403);
         $firstDate = DB::table('kas_uang_jalans as kuj')->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
-            ->where('v.vendor_id', $vendorId)->min('kuj.tanggal');
+            ->when($vendorId !== null, fn ($query) => $query->where('v.vendor_id', $vendorId))->min('kuj.tanggal');
         $firstYear = $firstDate ? min(CarbonImmutable::parse($firstDate)->year, $start->year) : $start->year;
         $search = trim($filters['search'] ?? '');
 
-        $vehicles = DB::table('vehicles')
-            ->where('vendor_id', $vendorId)
-            ->where('status', '!=', 'nonaktif')
-            ->when($search !== '', fn ($query) => $query->where('nomor_lambung', 'like', '%'.$search.'%'))
-            ->orderBy('nomor_lambung')->orderBy('id')
-            ->select('id', 'nomor_lambung', 'nopol')
+        $vehicles = DB::table('vehicles')->leftJoin('vendors as vd', 'vd.id', '=', 'vehicles.vendor_id')
+            ->when($vendorId !== null, fn ($query) => $query->where('vehicles.vendor_id', $vendorId))
+            ->where('vehicles.status', '!=', 'nonaktif')
+            ->when($search !== '', fn ($query) => $query->where('vehicles.nomor_lambung', 'like', '%'.$search.'%'))
+            ->orderBy('vehicles.nomor_lambung')->orderBy('vehicles.id')
+            ->select('vehicles.id', 'vehicles.vendor_id', 'vehicles.nomor_lambung', 'vehicles.nopol', DB::raw('COALESCE(NULLIF(vd.nickname, \'\'), vd.nama) as vendor_name'))
             ->paginate(20)->withQueryString();
 
         $journeys = DB::table('transaksis as t')
             ->join('kas_uang_jalans as kuj', 'kuj.id', '=', 't.kas_uang_jalan_id')
             ->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
             ->join('rutes as r', 'r.id', '=', 'kuj.rute_id')
-            ->where('v.vendor_id', $vendorId)
+            // Kendaraan halaman ini sudah dibatasi cakupan vendornya.
             ->whereIn('v.id', $vehicles->pluck('id'))
             ->where('t.void', 0)
             ->whereBetween('kuj.tanggal', [$start->toDateString(), $end->toDateString()])
@@ -69,6 +71,7 @@ class MobileUnitPerformanceController extends Controller
                 'id' => $vehicle->id,
                 'vehicle_number' => $vehicle->nomor_lambung,
                 'plate_number' => $vehicle->nopol,
+                'vendor_name' => $vehicle->vendor_name,
                 'long_route_count' => $items->filter(fn ($item) => $item->jarak > 50)->count(),
                 'short_route_count' => $items->filter(fn ($item) => $item->jarak > 0 && $item->jarak <= 50)->count(),
                 'total_tonnage' => $items->sum(fn ($item) => (float) ($item->timbangan_bongkar ?? 0)),
@@ -107,8 +110,8 @@ class MobileUnitPerformanceController extends Controller
             'year' => ['nullable', 'integer', 'between:2000,2100'],
         ]);
 
-        $vendorId = (int) $request->user()->vendor_id;
-        abort_if($vendorId <= 0, 403);
+        $vendorId = MobileVendorScope::id($request);
+        abort_if($vendorId !== null && $vendorId <= 0, 403);
 
         $month = (int) ($filters['month'] ?? now()->month);
         $year = (int) ($filters['year'] ?? now()->year);

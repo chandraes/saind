@@ -11,6 +11,12 @@ class EnsureMobileVendorContext
 {
     public function handle(Request $request, Closure $next, string $access = 'load-notes'): Response
     {
+        if ($request->user()?->isOperasional()) {
+            // Operasional: seluruh vendor, hanya membaca (tanpa scan/kirim nota muat).
+            abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
+
+            return $next($request);
+        }
         if ($access === 'billing') {
             abort_unless((bool) $request->user()?->isVendorAccount(), 403);
         } else {

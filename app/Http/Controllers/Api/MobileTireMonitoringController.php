@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BanLog;
 use App\Models\PosisiBan;
 use App\Models\Vehicle;
+use App\Support\MobileVendorScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,7 @@ class MobileTireMonitoringController extends Controller
     public function show(Request $request, int $vehicle): JsonResponse
     {
         $record = Vehicle::query()->leftJoin('upah_gendongs as ug', 'vehicles.id', '=', 'ug.vehicle_id')
-            ->where('vehicles.vendor_id', $request->user()->vendor_id)
+            ->where(fn ($query) => MobileVendorScope::apply($query, $request, 'vehicles.vendor_id'))
             ->where('vehicles.id', $vehicle)
             ->select('vehicles.id', 'vehicles.nomor_lambung', 'ug.nama_driver', 'ug.nama_pengurus')
             ->firstOrFail();

@@ -9,6 +9,7 @@ use App\Models\Transaksi;
 use App\Models\UjDitahanBanDetail;
 use App\Models\UjDitahanDetail;
 use App\Services\MobileNotePayment;
+use App\Support\MobileVendorScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,7 +18,7 @@ class UnloadingNoteController extends Controller
 {
     public function index(Request $request, MobileNotePayment $payments): AnonymousResourceCollection
     {
-        $this->authorize('viewAny', LoadNoteDraft::class);
+        $this->authorize('readMobile', LoadNoteDraft::class);
         $filters = $request->validate(['status' => ['sometimes', 'string', 'in:waiting,completed,all'],
             'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $query = $this->journeys($request);
@@ -47,7 +48,7 @@ class UnloadingNoteController extends Controller
 
     public function show(Request $request, int $transaction, MobileNotePayment $payments): MobileUnloadingNoteResource
     {
-        $this->authorize('viewAny', LoadNoteDraft::class);
+        $this->authorize('readMobile', LoadNoteDraft::class);
 
         $journey = $this->journeys($request)->findOrFail($transaction);
         $detail = $payments->finalDetail($journey);
@@ -60,8 +61,8 @@ class UnloadingNoteController extends Controller
     private function journeys(Request $request): Builder
     {
         return Transaksi::query()->where('void', 0)->whereIn('status', [2, 3])
-            ->whereHas('kas_uang_jalan', fn (Builder $query): Builder => $query->where('vendor_id', $request->user()->vendor_id))
-            ->with(['kas_uang_jalan:id,vendor_id,vehicle_id,customer_id,rute_id,nomor_uang_jalan,nominal_transaksi',
+            ->whereHas('kas_uang_jalan', fn (Builder $query): Builder => MobileVendorScope::apply($query, $request))
+            ->with(['kas_uang_jalan:id,vendor_id,vehicle_id,customer_id,rute_id,nomor_uang_jalan,nominal_transaksi', 'kas_uang_jalan.vendor:id,nama,nickname',
                 'kas_uang_jalan.vehicle:id,nomor_lambung,driver_id,vendor_id', 'kas_uang_jalan.vehicle.driver:id,nama', 'kas_uang_jalan.rute:id,nama', 'kas_uang_jalan.customer:id,nama,tagihan_dari']);
     }
 }

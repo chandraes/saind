@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AkiLog;
 use App\Models\PosisiAki;
 use App\Models\Vehicle;
+use App\Support\MobileVendorScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -16,7 +17,7 @@ class MobileBatteryController extends Controller
     public function show(Request $request, int $vehicle): JsonResponse
     {
         $record = Vehicle::query()->leftJoin('upah_gendongs as ug', 'vehicles.id', '=', 'ug.vehicle_id')
-            ->where('vehicles.vendor_id', $request->user()->vendor_id)
+            ->where(fn ($query) => MobileVendorScope::apply($query, $request, 'vehicles.vendor_id'))
             ->where('vehicles.id', $vehicle)
             ->select('vehicles.id', 'vehicles.nomor_lambung', 'ug.nama_driver', 'ug.nama_pengurus')
             ->firstOrFail();
@@ -51,7 +52,7 @@ class MobileBatteryController extends Controller
     public function history(Request $request, int $vehicle, int $position): JsonResponse
     {
         $filters = $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'], 'search' => ['nullable', 'string', 'max:100']]);
-        $record = Vehicle::query()->where('vendor_id', $request->user()->vendor_id)->findOrFail($vehicle);
+        $record = MobileVendorScope::apply(Vehicle::query(), $request)->findOrFail($vehicle);
         $batteryPosition = PosisiAki::query()->findOrFail($position);
         $nextReplacement = DB::table('aki_logs as next_log')
             ->select('next_log.created_at')

@@ -198,6 +198,21 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->get('/vendor-operational/invoice/utama/2')->assertOk()->assertSee('PERIODE 2')->assertDontSee('Total Bayar')->assertDontSee('notaTable');
     }
 
+    public function test_mobile_operasional_picks_a_vendor_for_payment_notes_and_reads_every_invoice(): void
+    {
+        $ops = User::factory()->create(['username' => 'ops-mobile-all', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]);
+        $this->app['auth']->forgetGuards();
+        $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$ops->createToken('billing-test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+        $this->getJson('/api/v1/payment-notes?kind=utama', $headers)->assertUnprocessable()->assertJsonValidationErrors('vendor_id');
+        $this->getJson('/api/v1/payment-notes?kind=utama&vendor_id=2', $headers)->assertOk()->assertSee('FOREIGN UNIT')->assertDontSee('UNIT A')
+            ->assertJsonMissingPath('data.0.finance')->assertJsonMissingPath('meta.total_gross_amount');
+        $invoices = $this->getJson('/api/v1/vendor-invoices?status=all', $headers)->assertOk()->assertJsonMissingPath('meta.grand_total_amount');
+        $this->assertContains('FOREIGN VENDOR', array_column($invoices->json('data'), 'vendor_name'));
+        $this->assertContains('Vendor A', array_column($invoices->json('data'), 'vendor_name'));
+        $this->getJson('/api/v1/vendor-invoices?status=all&vendor_id=1', $headers)->assertOk()->assertDontSee('FOREIGN VENDOR');
+        $this->getJson('/api/v1/vendor-invoices/utama/2', $headers)->assertOk()->assertJsonPath('invoice.vendor_name', 'FOREIGN VENDOR')->assertJsonMissingPath('invoice.finance');
+    }
+
     public function test_payment_notes_only_show_the_same_eligible_records_and_columns_as_source(): void
     {
         $menu = $this->get('/vendor-operational/nota-bayar')->assertOk()->assertSee('HPP')->assertSee('KOMPENSASI JALAN RUSAK')->assertSee('PENYESUAIAN BBM')->assertSee('ACHIEVEMENT');

@@ -90,7 +90,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $cashBefore = DB::table('kas_uang_jalans')->get()->toArray();
         $response = $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $id)->assertJsonPath('data.0.status', 'waiting')->assertJsonPath('meta.per_page', 20);
-        $expected = ['id' => $id, 'status' => 'waiting', 'tagihan_dari' => 2, 'vehicle_id' => 1, 'vehicle_number' => '288', 'vehicle_driver_name' => 'Driver A', 'route_name' => 'Mine - Port', 'mine_name' => 'Mine A',
+        $expected = ['id' => $id, 'status' => 'waiting', 'tagihan_dari' => 2, 'vehicle_id' => 1, 'vehicle_number' => '288', 'vendor_name' => 'Vendor A', 'vehicle_driver_name' => 'Driver A', 'route_name' => 'Mine - Port', 'mine_name' => 'Mine A',
             'money_out_number' => 'UJ07', 'ticket_number' => 'TICKET-100', 'loaded_on' => '2026-11-03', 'unloaded_on' => null, 'unloading_ticket_number' => null,
             'gross_weight' => '45.540', 'tare_weight' => '15.320', 'net_weight' => '30.220', 'unloading_gross_weight' => null, 'unloading_tare_weight' => null, 'unloading_net_weight' => null];
         $expected = ['payment' => ['kind' => 'final', 'currency' => 'IDR', 'gross_amount' => 999999, 'sparepart_withheld' => 0, 'tyre_withheld' => 0, 'net_amount' => 999999]] + $expected;
@@ -216,6 +216,33 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             ->assertJsonPath('data.vehicle_number', null)->assertJsonPath('data.mine_name', null)->assertJsonPath('data.route_name', null)
             ->assertJsonPath('data.money_out_number', 'UJ123')->assertJsonPath('data.loaded_on', null)
             ->assertJsonPath('data.unloading_gross_weight', null)->assertJsonPath('data.unloading_tare_weight', null)->assertJsonPath('data.unloading_net_weight', null);
+    }
+
+    public function test_operasional_reads_every_vendor_with_a_vendor_filter_and_cannot_write(): void
+    {
+        $this->journey(1, ['nota_muat' => 'VENDOR-A-TICKET']);
+        $foreign = $this->journey(2, ['nota_muat' => 'VENDOR-B-TICKET']);
+        $user = User::factory()->create(['username' => Str::uuid()->toString(), 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]);
+        $this->app['auth']->forgetGuards();
+        $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+
+        $this->getJson('/api/v1/me', $headers)->assertOk()->assertJsonPath('data.permissions.all_vendors', true)
+            ->assertJsonPath('data.permissions.vendor_billing', true)->assertJsonPath('data.permissions.load_notes', false)
+            ->assertJsonPath('data.permissions.vendor_finance', false);
+        $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.vendor_name', 'Vendor B')->assertJsonPath('data.1.vendor_name', 'Vendor A');
+        $this->getJson('/api/v1/unloading-notes?vendor_id=1', $headers)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.ticket_number', 'VENDOR-A-TICKET');
+        $this->getJson('/api/v1/unloading-notes/'.$foreign, $headers)->assertOk()->assertJsonPath('data.ticket_number', 'VENDOR-B-TICKET');
+        $this->getJson('/api/v1/unloading-notes?vendor_id=999', $headers)->assertUnprocessable();
+        $this->getJson('/api/v1/vendor-options', $headers)->assertOk()->assertJsonPath('data.*.name', ['Vendor A', 'Vendor B']);
+        // Hanya membaca: tidak bisa scan atau mengirim nota muat.
+        $this->postJson('/api/v1/load-notes', [], $headers)->assertForbidden();
+        $this->postJson('/api/v1/load-notes/inspect', [], $headers)->assertForbidden();
+        $this->getJson('/api/v1/load-notes/vehicles', $headers)->assertForbidden();
+        // Vendor biasa tidak boleh memakai filter vendor operasional.
+        $vendor = $this->actor(1);
+        $this->getJson('/api/v1/unloading-notes?vendor_id=2', $this->headers($vendor))->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.ticket_number', 'VENDOR-A-TICKET');
+        $this->getJson('/api/v1/vendor-options', $this->headers($vendor))->assertForbidden();
     }
 
     public function test_list_is_paginated_and_validates_filters(): void

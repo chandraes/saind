@@ -16,6 +16,7 @@ class MobileUnloadingNoteResource extends JsonResource
         return ['transfer_destination' => $this->whenHas('mobile_transfer_destination', fn () => $this->mobile_transfer_destination), 'payment' => $this->whenHas('mobile_payment', fn () => $this->mobile_payment), 'id' => (int) $this->id, 'status' => $completed ? 'completed' : 'waiting',
             'tagihan_dari' => $journey->customer?->tagihan_dari,
             'vehicle_id' => (int) $journey->vehicle_id, 'vehicle_number' => $journey->vehicle?->nomor_lambung,
+            'vendor_name' => $journey->relationLoaded('vendor') ? ($journey->vendor?->nickname ?: $journey->vendor?->nama) : null,
             'vehicle_driver_name' => $journey->vehicle && (int) $journey->vehicle->vendor_id === (int) $journey->vendor_id ? $journey->vehicle->driver?->nama : null,
             'route_name' => $journey->rute?->nama, 'mine_name' => $journey->customer?->nama,
             'money_out_number' => 'UJ'.sprintf('%02d', $journey->nomor_uang_jalan), 'ticket_number' => (string) $this->nota_muat,

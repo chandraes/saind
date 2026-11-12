@@ -40,6 +40,12 @@ class LoadNoteDraftPolicy
             && $user->vendor_id !== null && $user->vendor()->exists();
     }
 
+    /** Membaca nota muat/bongkar di aplikasi: akun vendor, dan operasional untuk seluruh vendor. */
+    public function readMobile(User $user): bool
+    {
+        return $user->isOperasional() || $this->viewAny($user);
+    }
+
     public function create(User $user): bool
     {
         return $this->viewAny($user);

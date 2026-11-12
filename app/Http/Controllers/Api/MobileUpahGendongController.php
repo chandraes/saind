@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
+use App\Support\MobileVendorScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,18 +23,17 @@ class MobileUpahGendongController extends Controller
     public function vehicles(Request $request): JsonResponse
     {
         $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
-        $vendorId = (int) $request->user()->vendor_id;
-        abort_if($vendorId <= 0, 403);
         $search = trim($filters['search'] ?? '');
-        $page = Vehicle::query()->join('upah_gendongs as ug', 'ug.vehicle_id', '=', 'vehicles.id')
-            ->where('vehicles.vendor_id', $vendorId)->where('vehicles.status', '!=', 'nonaktif')
+        $page = MobileVendorScope::apply(Vehicle::query(), $request, 'vehicles.vendor_id')->join('upah_gendongs as ug', 'ug.vehicle_id', '=', 'vehicles.id')
+            ->with('vendor:id,nama,nickname')->where('vehicles.status', '!=', 'nonaktif')
             ->when($search !== '', fn ($query) => $query->where('vehicles.nomor_lambung', 'like', '%'.$search.'%'))
             ->orderBy('vehicles.nomor_lambung')->orderBy('vehicles.id')
-            ->paginate(20, ['vehicles.id', 'vehicles.nomor_lambung', 'vehicles.nopol', 'vehicles.status', 'ug.nominal', 'ug.nama_driver']);
+            ->paginate(20, ['vehicles.id', 'vehicles.vendor_id', 'vehicles.nomor_lambung', 'vehicles.nopol', 'vehicles.status', 'ug.nominal', 'ug.nama_driver']);
 
         return response()->json([
             'data' => $page->getCollection()->map(fn (Vehicle $vehicle): array => $vehicle->only(['id', 'nomor_lambung', 'nopol', 'status'])
-                + ['nominal' => (int) $vehicle->nominal, 'nama_driver' => $vehicle->nama_driver])->values(),
+                + ['nominal' => (int) $vehicle->nominal, 'nama_driver' => $vehicle->nama_driver,
+                    'vendor_name' => $vehicle->vendor?->nickname ?: $vehicle->vendor?->nama])->values(),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
         ]);
     }
@@ -45,9 +45,9 @@ class MobileUpahGendongController extends Controller
             'year' => ['nullable', 'integer', 'between:2000,2100', 'required_with:month'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ]);
-        $vendorId = (int) $request->user()->vendor_id;
-        abort_if($vendorId <= 0, 403);
-        $unit = Vehicle::whereKey($vehicle)->where('vendor_id', $vendorId)->firstOrFail(['id', 'nomor_lambung', 'nopol', 'vendor_id']);
+        $unit = MobileVendorScope::apply(Vehicle::whereKey($vehicle), $request)->firstOrFail(['id', 'nomor_lambung', 'nopol', 'vendor_id']);
+        // Rekap dihitung atas vendor pemilik kendaraan (operasional: vendor mana pun).
+        $vendorId = (int) $unit->vendor_id;
         $rate = UpahGendong::where('vehicle_id', $unit->id)->first();
         if (! $rate) {
             // Bukan error: kendaraan memang belum diberi tarif oleh admin.

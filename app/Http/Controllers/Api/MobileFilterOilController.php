@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FilterOliLog;
 use App\Models\KategoriFilterOliMesin;
 use App\Models\Vehicle;
+use App\Support\MobileVendorScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class MobileFilterOilController extends Controller
     /** Same eligibility as the web statistics page (Vehicle::whereFilterOilEligible). */
     private function eligibleVehicles(Request $request): Builder
     {
-        return Vehicle::whereFilterOilEligible(Vehicle::query()->where('vehicles.vendor_id', $request->user()->vendor_id), $request->user());
+        return Vehicle::whereFilterOilEligible(MobileVendorScope::apply(Vehicle::query(), $request, 'vehicles.vendor_id'), $request->user());
     }
 
     private function meta(Paginator $page): array
@@ -28,7 +29,7 @@ class MobileFilterOilController extends Controller
     public function vehicles(Request $request): JsonResponse
     {
         $filters = $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'search' => ['nullable', 'string', 'max:100']]);
-        $query = $this->eligibleVehicles($request)->select('id', 'nomor_lambung', 'status');
+        $query = $this->eligibleVehicles($request)->select('id', 'vendor_id', 'nomor_lambung', 'status')->with('vendor:id,nama,nickname');
         $search = trim($filters['search'] ?? '');
         if ($search !== '') {
             $query->where('nomor_lambung', 'like', '%'.$search.'%');
@@ -37,6 +38,7 @@ class MobileFilterOilController extends Controller
 
         return response()->json(['data' => $page->getCollection()->map(fn ($vehicle) => [
             'id' => $vehicle->id, 'nomor_lambung' => $vehicle->nomor_lambung, 'status' => $vehicle->status,
+            'vendor_name' => $vehicle->vendor?->nickname ?: $vehicle->vendor?->nama,
         ]), 'meta' => $this->meta($page)]);
     }
 
@@ -78,7 +80,7 @@ class MobileFilterOilController extends Controller
     public function history(Request $request, int $vehicle, int $category): JsonResponse
     {
         $filters = $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100']]);
-        $record = Vehicle::query()->where('vendor_id', $request->user()->vendor_id)->findOrFail($vehicle);
+        $record = MobileVendorScope::apply(Vehicle::query(), $request)->findOrFail($vehicle);
         $kategori = KategoriFilterOliMesin::query()->findOrFail($category);
         $page = FilterOliLog::query()->where('vehicle_id', $record->id)->where('kategori_filter_oli_mesin_id', $kategori->id)
             ->latest()->orderByDesc('id')->simplePaginate($filters['per_page'] ?? 20);
@@ -94,14 +96,14 @@ class MobileFilterOilController extends Controller
     public function trips(Request $request, int $vehicle, int $log): JsonResponse
     {
         $filters = $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100']]);
-        $record = Vehicle::query()->where('vendor_id', $request->user()->vendor_id)->findOrFail($vehicle);
+        $record = MobileVendorScope::apply(Vehicle::query(), $request)->findOrFail($vehicle);
         $filterLog = FilterOliLog::query()->with('kategori')->where('vehicle_id', $record->id)->findOrFail($log);
         $page = DB::table('filter_oli_log_transaksis as audit')
             ->join('transaksis as t', 'audit.transaksi_id', '=', 't.id')
             ->join('kas_uang_jalans as kuj', 't.kas_uang_jalan_id', '=', 'kuj.id')
             ->join('rutes as r', 'kuj.rute_id', '=', 'r.id')
             ->where('audit.filter_oli_log_id', $filterLog->id)
-            ->where('kuj.vendor_id', $request->user()->vendor_id)->where('kuj.vehicle_id', $record->id)
+            ->where('kuj.vendor_id', $record->vendor_id)->where('kuj.vehicle_id', $record->id)
             ->orderBy('t.created_at')->orderBy('t.id')
             ->select('audit.id', 't.id as transaksi_id', 't.created_at as tanggal', 'kuj.nomor_uang_jalan', 'r.nama as rute', 'r.jarak', 'audit.nilai_ritase')
             ->simplePaginate($filters['per_page'] ?? 20);

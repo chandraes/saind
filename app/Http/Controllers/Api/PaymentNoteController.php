@@ -7,6 +7,7 @@ use App\Http\Resources\MobilePaymentNoteResource;
 use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use App\Services\VendorOperationalBilling;
+use App\Support\MobileVendorScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -21,7 +22,8 @@ class PaymentNoteController extends Controller
         $filters = $request->validate(['kind' => ['sometimes', Rule::in(array_keys(VendorOperationalBilling::CATEGORIES))],
             'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $kind = $filters['kind'] ?? 'utama';
-        $query = $this->billing->payableNotes((int) $request->user()->vendor_id, $kind, (int) $request->user()->id);
+        // Operasional memilih vendor dulu (seperti admin); akun vendor selalu vendornya sendiri.
+        $query = $this->billing->payableNotes(MobileVendorScope::required($request), $kind, (int) $request->user()->id);
         $search = trim($filters['search'] ?? '');
         if ($kind === 'utama') {
             $this->billing->searchJourneys($query, $search);
@@ -41,7 +43,7 @@ class PaymentNoteController extends Controller
     public function show(Request $request, string $kind, int $record): MobilePaymentNoteResource
     {
         abort_unless(array_key_exists($kind, VendorOperationalBilling::CATEGORIES), 404);
-        $item = $this->billing->payableNotes((int) $request->user()->vendor_id, $kind, (int) $request->user()->id)->findOrFail($record);
+        $item = $this->billing->payableNotes(MobileVendorScope::id($request), $kind, (int) $request->user()->id)->findOrFail($record);
         $additional = $item instanceof TransaksiAdditional ? $item : null;
         $item->setAttribute('mobile_kind', $kind);
         $item->setAttribute('mobile_fields', $this->billing->journey($additional ? $item->transaksi : $item, $additional, $request->user()->canViewVendorFinance()));
