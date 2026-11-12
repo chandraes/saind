@@ -18,14 +18,15 @@ class VendorOperationalBilling
 {
     public const CATEGORIES = ['utama' => 'HPP'] + TransaksiAdditional::JENIS;
 
-    public function journeys(int $vendorId): Builder
+    /** Perjalanan aktif satu vendor, atau seluruh vendor bila $vendorId null (role operasional). */
+    public function journeys(?int $vendorId): Builder
     {
         return Transaksi::query()->where('void', 0)
-            ->whereHas('kas_uang_jalan', fn (Builder $query): Builder => $query->where('vendor_id', $vendorId))
+            ->whereHas('kas_uang_jalan', fn (Builder $query): Builder => $query->when($vendorId !== null, fn (Builder $query): Builder => $query->where('vendor_id', $vendorId)))
             ->with(['kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle.driver']);
     }
 
-    public function payableNotes(int $vendorId, string $kind, int $userId): Builder
+    public function payableNotes(?int $vendorId, string $kind, int $userId): Builder
     {
         return $kind === 'utama'
             ? $this->journeys($vendorId)->where('status', 3)->where('bayar', 0)
@@ -91,19 +92,19 @@ class VendorOperationalBilling
             ->orWhereHas('kas_uang_jalan.rute', fn (Builder $query): Builder => $query->where('nama', 'like', $term)));
     }
 
-    public function invoiceQuery(int $vendorId, string $kind): Builder
+    public function invoiceQuery(?int $vendorId, string $kind): Builder
     {
-        return $kind === 'utama' ? InvoiceBayar::query()->with('vendor')->where('vendor_id', $vendorId)
-            : InvoiceAddVendor::query()->with('vendor')->where('vendor_id', $vendorId)->where('jenis', $kind);
+        return ($kind === 'utama' ? InvoiceBayar::query() : InvoiceAddVendor::query()->where('jenis', $kind))
+            ->with('vendor')->when($vendorId !== null, fn (Builder $query): Builder => $query->where('vendor_id', $vendorId));
     }
 
-    public function invoices(int $vendorId, array $filters): QueryBuilder
+    public function invoices(?int $vendorId, array $filters): QueryBuilder
     {
-        $base = $this->invoiceQuery($vendorId, 'utama')->select('id', 'periode', 'tanggal', 'tempo', 'updated_at')
+        $base = $this->invoiceQuery($vendorId, 'utama')->select('id', 'vendor_id', 'periode', 'tanggal', 'tempo', 'updated_at')
             ->selectRaw("'utama' as kind, lunas as is_paid, total_bayar as total")->toBase();
-        $extra = InvoiceAddVendor::query()->where('vendor_id', $vendorId)->where('status', 1)
+        $extra = InvoiceAddVendor::query()->when($vendorId !== null, fn (Builder $query): Builder => $query->where('vendor_id', $vendorId))->where('status', 1)
             ->whereIn('jenis', array_keys(self::CATEGORIES))
-            ->select('id', 'periode', 'created_at as tanggal', 'tempo', 'updated_at', 'jenis as kind', 'is_finished as is_paid', 'total')->toBase();
+            ->select('id', 'vendor_id', 'periode', 'created_at as tanggal', 'tempo', 'updated_at', 'jenis as kind', 'is_finished as is_paid', 'total')->toBase();
         $query = DB::query()->fromSub($base->unionAll($extra), 'vendor_invoices');
         if (($filters['status'] ?? 'unpaid') !== 'all') {
             $query->where('is_paid', ($filters['status'] ?? 'unpaid') === 'paid' ? 1 : 0);
@@ -135,23 +136,24 @@ class VendorOperationalBilling
             'paid' => $paid, 'paid_on' => $paid && $invoice->updated_at ? Carbon::parse($invoice->updated_at)->format('Y-m-d') : null];
     }
 
-    public function invoiceJourneys(int $vendorId, string $kind, InvoiceBayar|InvoiceAddVendor $invoice): Builder
+    public function invoiceJourneys(?int $vendorId, string $kind, InvoiceBayar|InvoiceAddVendor $invoice): Builder
     {
         return $kind === 'utama'
             ? $this->journeys($vendorId)->whereIn('id', $invoice->invoice_bayar_details()->select('transaksi_id'))
             : $this->additionals($vendorId, $kind)->whereIn('id', $invoice->details()->select('transaksi_additional_id'));
     }
 
-    public function cartEntries(int $vendorId, int $userId): Builder
+    public function cartEntries(?int $vendorId, int $userId): Builder
     {
-        return KeranjangNotaBayar::query()->where('vendor_id', $vendorId)->where('user_id', $userId);
+        return KeranjangNotaBayar::query()->when($vendorId !== null, fn (Builder $query): Builder => $query->where('vendor_id', $vendorId))->where('user_id', $userId);
     }
 
-    public function additionals(int $vendorId, string $kind): Builder
+    public function additionals(?int $vendorId, string $kind): Builder
     {
-        return TransaksiAdditional::query()->where('vendor_id', $vendorId)->where('jenis', $kind)
-            ->whereHas('transaksi', fn (Builder $query): Builder => $query->where('void', 0)
-                ->whereHas('kas_uang_jalan', fn (Builder $query): Builder => $query->where('vendor_id', $vendorId)))
+        $own = fn (Builder $query): Builder => $query->when($vendorId !== null, fn (Builder $query): Builder => $query->where('vendor_id', $vendorId));
+
+        return $own(TransaksiAdditional::query())->where('jenis', $kind)
+            ->whereHas('transaksi', fn (Builder $query): Builder => $query->where('void', 0)->whereHas('kas_uang_jalan', $own))
             ->with(['customer', 'rute', 'transaksi.kas_uang_jalan.vendor', 'transaksi.kas_uang_jalan.customer', 'transaksi.kas_uang_jalan.rute', 'transaksi.kas_uang_jalan.vehicle.driver']);
     }
 

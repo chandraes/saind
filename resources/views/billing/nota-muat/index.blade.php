@@ -5,7 +5,7 @@
         <div>
             <a href="{{ $canReview ? route('billing.index') : route('home') }}" class="btn btn-outline-secondary btn-sm mb-3"><i class="fa fa-arrow-left me-1" aria-hidden="true"></i> Kembali</a>
             <h1 class="h3 fw-bold mb-2">Nota Muat Masuk</h1>
-            <p class="text-muted mb-0">{{ $canReview ? 'Kiriman vendor dari aplikasi mobile untuk seluruh vendor pada SAIND ini.' : 'Pantau kiriman dan progres nota vendor Anda. Halaman ini hanya untuk melihat.' }}</p>
+            <p class="text-muted mb-0">{{ $canReview ? 'Kiriman vendor dari aplikasi mobile untuk seluruh vendor pada SAIND ini.' : ($canFilterVendor ? 'Pantau kiriman dan progres nota seluruh vendor. Halaman ini hanya untuk melihat.' : 'Pantau kiriman dan progres nota vendor Anda. Halaman ini hanya untuk melihat.') }}</p>
         </div>
         <span class="badge bg-light text-dark border p-3">{{ number_format($notes->total(), 0, ',', '.') }} nota ditemukan</span>
     </div>
@@ -18,7 +18,7 @@
                     <input id="search" name="search" type="search" class="form-control @error('search') is-invalid @enderror" value="{{ old('search', $filters['search'] ?? '') }}" maxlength="100" placeholder="Nomor tiket, lambung, atau tambang">
                     @error('search')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
-                @if ($canReview)
+                @if ($canFilterVendor)
                 <div class="col-md-4">
                     <label for="vendor_id" class="form-label">Vendor</label>
                     <select id="vendor_id" name="vendor_id" class="form-select @error('vendor_id') is-invalid @enderror">

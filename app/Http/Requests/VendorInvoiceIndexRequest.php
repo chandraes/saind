@@ -9,7 +9,8 @@ class VendorInvoiceIndexRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return (bool) $this->user()?->isVendorAccount();
+        // Operasional membaca invoice seluruh vendor (disaring lewat vendor_id).
+        return (bool) $this->user()?->usesVendorMenus();
     }
 
     public function rules(): array

@@ -171,7 +171,7 @@ class LoadNoteInboxTest extends MobileApiTestCase
 
     public static function otherRoles(): array
     {
-        return [['operasional'], ['asisten-user'], ['investor']];
+        return [['asisten-user'], ['investor']];
     }
 
     private function draft(int $vendor = 1, array $attributes = []): LoadNoteDraft
@@ -216,6 +216,27 @@ class LoadNoteInboxTest extends MobileApiTestCase
             $this->get('/billing/nota-muat'.$path)->assertForbidden();
         }
         $this->view('billing.nota-muat.menu')->assertDontSee('Nota Muat Masuk');
+    }
+
+    public function test_operasional_reads_every_vendor_note_but_cannot_review(): void
+    {
+        Storage::fake('local');
+        $own = $this->draft(1, ['ticket_number' => 'VENDOR-ONE-NOTE']);
+        $foreign = $this->draft(2, ['ticket_number' => 'VENDOR-TWO-NOTE']);
+        Storage::disk('local')->put($foreign->photo_path, 'foreign-photo');
+        $this->actingAs(User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]));
+        $this->assertFalse(Gate::allows('reviewAny', LoadNoteDraft::class));
+        $this->assertFalse(Gate::allows('create', LoadNoteDraft::class));
+        $this->get('/billing/nota-muat')->assertOk()->assertSee('VENDOR-ONE-NOTE')->assertSee('VENDOR-TWO-NOTE')->assertSee('Seluruh vendor')->assertSee('seluruh vendor');
+        $this->getJson('/billing/nota-muat?vendor_id=2')->assertOk()->assertSee('VENDOR-TWO-NOTE')->assertDontSee('VENDOR-ONE-NOTE');
+        $this->get('/billing/nota-muat/'.$foreign->id)->assertOk()->assertSee('VENDOR-TWO-NOTE')->assertDontSee('data-note-review', false);
+        $this->get('/billing/nota-muat/'.$foreign->id.'/foto')->assertOk()->assertStreamedContent('foreign-photo');
+        foreach ([$own, $foreign] as $note) {
+            $this->patchJson('/billing/nota-muat/'.$note->id, [])->assertForbidden();
+            $this->postJson('/billing/nota-muat/'.$note->id.'/decision', [])->assertForbidden();
+            $this->postJson('/billing/nota-muat/'.$note->id.'/process', [])->assertForbidden();
+        }
+        $this->get('/billing')->assertForbidden();
     }
 
     public function test_vendor_operational_reads_colleague_notes_but_cannot_read_foreign_vendor_or_mutate(): void

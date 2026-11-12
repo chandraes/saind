@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AktivasiMaintenance;
 use App\Models\Customer;
 use App\Models\InvoiceTagihan;
 use App\Models\Transaksi;
@@ -74,15 +73,9 @@ class HomeController extends Controller
 
         }
 
-        if ($user->role == 'operasional') {
-            $db = Vendor::all();
-            $ug = UpahGendong::all();
-            $maintenance = AktivasiMaintenance::with(['vehicle'])
-                ->get();
-            $customer = Customer::where('status', 1)->get();
-            $vehicle = Vehicle::whereNot('status', 'nonaktif')->get();
-
-            return view('home', ['vendor' => $db, 'ug' => $ug, 'maintenance' => $maintenance, 'customer' => $customer, 'vehicle' => $vehicle]);
+        if ($user->isOperasional()) {
+            // Menu sama dengan vendor-operational (VendorDashboardMenu), untuk seluruh vendor.
+            return view('home');
         }
 
         if ($user->isVendorAccount()) {

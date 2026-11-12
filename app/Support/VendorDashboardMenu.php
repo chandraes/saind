@@ -5,20 +5,28 @@ namespace App\Support;
 use App\Models\User;
 
 /**
- * Menu dashboard untuk akun milik vendor (vendor dan vendor operational).
- * Satu sumber menu agar kedua role selalu seragam; hanya vendor yang
- * mendapat menu keuangan (Kas Vendor).
+ * Menu dashboard untuk akun milik vendor (vendor dan vendor operational) dan
+ * role operasional (seluruh vendor). Satu sumber menu agar semua role selalu
+ * seragam; hanya vendor yang mendapat menu keuangan (Kas Vendor). Operasional
+ * memilih vendor dulu (pop-up) sebelum membuka Nota Bayar.
  */
 class VendorDashboardMenu
 {
-    /** @return list<array{key: string, title: string, menus: list<array{title: string, description: string, url: string, icon: string}>}> */
+    /** Id pop-up "Pilih Vendor" untuk Nota Bayar role operasional. */
+    public const VENDOR_PICKER = 'operasional-nota-bayar-vendor';
+
+    /** @return list<array{key: string, title: string, menus: list<array{title: string, description: string, url: string, icon: string, modal?: string}>}> */
     public static function sections(User $user): array
     {
         $menu = fn (string $title, string $description, string $url, string $icon): array => compact('title', 'description', 'url', 'icon');
+        $payment = $menu('Nota Bayar Vendor', $user->canViewVendorFinance() ? 'Periksa nota beserta nilai bayar vendor.' : 'Periksa nota dan rincian perjalanan vendor.', route('vendor-operational.nota-bayar'), 'bayar.svg');
+        if ($user->isOperasional()) {
+            $payment = ['description' => 'Pilih vendor, lalu periksa nota dan rincian perjalanannya.', 'modal' => self::VENDOR_PICKER] + $payment;
+        }
         $documents = [
             $menu('Nota Muat Masuk', 'Pantau pengajuan dan hasil pemeriksaan nota.', route('billing.nota-muat.index'), 'nota-muat-masuk.svg'),
             $menu('Nota Bongkar', 'Lihat perjalanan dan progres pembongkaran.', route('vendor-operational.nota-bongkar'), 'bongkar.svg'),
-            $menu('Nota Bayar Vendor', $user->canViewVendorFinance() ? 'Periksa nota beserta nilai bayar vendor.' : 'Periksa nota dan rincian perjalanan vendor.', route('vendor-operational.nota-bayar'), 'bayar.svg'),
+            $payment,
             $menu('Invoice Vendor', 'Telusuri invoice dan nota yang tercantum.', route('vendor-operational.invoice'), 'invoice-bayar.svg'),
         ];
         if ($user->canViewVendorFinance()) {

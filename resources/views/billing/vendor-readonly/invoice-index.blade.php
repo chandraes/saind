@@ -26,6 +26,7 @@
                 <label for="search" class="form-label">Cari invoice</label>
                 <div class="invoice-vendor-search"><i class="fa fa-search" aria-hidden="true"></i><input id="search" name="search" class="form-control" maxlength="100" placeholder="Masukkan periode invoice" value="{{ $filters['search'] ?? '' }}"></div>
             </div>
+            @include('billing.vendor-readonly.vendor-filter', ['class' => 'invoice-filter-vendor'])
             <div class="invoice-filter-status">
                 <label for="status" class="form-label">Status pembayaran</label>
                 <select id="status" name="status" class="form-select">
@@ -80,5 +81,5 @@
 @endonce
 <script src="{{ asset('assets/js/load-note-inbox.js') }}?v={{ filemtime(public_path('assets/js/load-note-inbox.js')) }}"></script>
 <script src="{{ asset('assets/plugins/select2/select2.full.min.js') }}"></script>
-<script>$(function () { $('#status').select2({width: '100%', minimumResultsForSearch: Infinity}); });</script>
+<script>$(function () { $('#status').select2({width: '100%', minimumResultsForSearch: Infinity}); $('#vendor_id').select2({width: '100%'}); });</script>
 @endpush

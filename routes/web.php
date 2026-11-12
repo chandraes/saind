@@ -555,7 +555,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational'], function () {
         Route::middleware(EnsureVendorOperationalVehicle::class.':statistics')->group(function (): void {
-            Route::get('/statistik/upah-gendong', [StatistikController::class, 'upah_gendong'])->middleware('role:admin,user,su,vendor,vendor-operational')->name('statistik.upah-gendong');
+            Route::get('/statistik/upah-gendong', [StatistikController::class, 'upah_gendong'])->middleware('role:admin,user,su,vendor,vendor-operational,operasional')->name('statistik.upah-gendong');
             Route::prefix('statistik/perform-unit')->group(function () {
                 Route::get('/', [StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
                 Route::get('/print', [StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');
@@ -1044,7 +1044,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     });
 
-    Route::group(['middleware' => ['role:vendor,vendor-operational', EnsureVendorOperationalVehicle::class]], function () {
+    Route::group(['middleware' => ['role:vendor,vendor-operational,operasional', EnsureVendorOperationalVehicle::class]], function () {
         Route::prefix('vendor-operational')->group(function () {
             Route::name('vendor-operational.')->group(function (): void {
                 Route::get('/nota-bongkar', [VendorOperationalBillingController::class, 'unloading'])->name('nota-bongkar');

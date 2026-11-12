@@ -62,7 +62,10 @@
         @endif
     </section>
 
-    @empty($adminTable)
+</div>
+@empty($adminTable)
+{{-- Lebar penuh (container-fluid tanpa batas lebar) agar seluruh kolom muat satu layar. --}}
+<div class="container-fluid invoice-vendor-page invoice-vendor-page-wide">
     <section class="invoice-vendor-list" aria-labelledby="invoice-journeys-title">
         <div class="invoice-vendor-list-heading">
             <div><h2 id="invoice-journeys-title">Perjalanan dalam invoice</h2><p>Berat dalam ton. Data dimuat bertahap saat Anda menggulir.</p></div>
@@ -81,8 +84,8 @@
         @if (!$rows)<p class="text-center text-muted my-4">Belum ada perjalanan pada invoice ini.</p>@endif
         <div id="note-inbox-loading" class="invoice-vendor-loading" role="status" data-next="{{ $next }}">{{ $next ? 'Memuat data berikutnya saat Anda menggulir…' : 'Seluruh data telah ditampilkan.' }}</div>
     </section>
-    @endempty
 </div>
+@endempty
 @isset($adminTable)
 {{-- Di luar batas lebar halaman: tabel banyak kolom memakai container-fluid penuh seperti halaman admin. --}}
 <section class="invoice-detail-admin-table" aria-label="Perjalanan dalam invoice">
@@ -101,8 +104,10 @@
 <script>
     // Sama seperti halaman admin Invoice Bayar.
     $(function () {
-        $('#notaTable').DataTable({paging: false, ordering: false, searching: false, info: false, scrollCollapse: true, scrollX: true, scrollY: '550px',
-            fixedColumns: {leftColumns: 3, rightColumns: 1}});
+        // Lebar mengikuti layar (bukan lebar hitungan awal) agar seluruh kolom muat satu layar;
+        // geser kiri-kanan hanya bila layar memang terlalu sempit.
+        $('#notaTable').css('width', '100%').DataTable({paging: false, ordering: false, searching: false, info: false, autoWidth: false,
+            scrollCollapse: true, scrollX: true, scrollY: '550px', fixedColumns: {leftColumns: 3, rightColumns: 1}});
     });
 </script>
 @endif

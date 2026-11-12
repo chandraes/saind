@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class VendorOperationalBillingController extends Controller
@@ -40,13 +41,20 @@ class VendorOperationalBillingController extends Controller
     public function notes(Request $request): View|JsonResponse
     {
         $vendor = $this->vendor($request);
+        if ($vendor === null) {
+            // Operasional: seperti admin, pilih vendor dulu sebelum melihat nota bayar.
+            abort_if($request->expectsJson(), 422);
+
+            return view('billing.vendor-readonly.vendor-picker', ['vendors' => $this->vendorOptions()]);
+        }
         if (! $request->has('kind') && ! $request->expectsJson()) {
             $counts = [];
             foreach (array_keys(VendorOperationalBilling::CATEGORIES) as $kind) {
                 $counts[$kind] = $this->billing->payableNotes($vendor, $kind, (int) $request->user()->id)->count();
             }
 
-            return view('billing.vendor-readonly.note-menu', ['vendorName' => $request->user()->vendor->nama, 'counts' => $counts]);
+            return view('billing.vendor-readonly.note-menu', ['vendorName' => Vendor::whereKey($vendor)->value('nama'), 'counts' => $counts,
+                'vendorQuery' => $this->vendorQuery($request)]);
         }
         $filters = $this->filters($request, ['available' => 'Tersedia'], 'available');
         $kind = $filters['kind'];
@@ -80,18 +88,19 @@ class VendorOperationalBillingController extends Controller
         $query = $this->billing->invoices($vendor, $filters);
         $finance = $this->finance($request);
         $items = (clone $query)->simplePaginate(20)->withQueryString();
-        $vendorName = Vendor::whereKey($vendor)->value('nama');
-        $rows = $items->getCollection()->map(function ($invoice) use ($vendorName, $finance): array {
+        $vendorName = $vendor === null ? 'Seluruh vendor' : Vendor::whereKey($vendor)->value('nama');
+        $names = Vendor::whereIn('id', $items->getCollection()->pluck('vendor_id')->unique())->pluck('nama', 'id');
+        $rows = $items->getCollection()->map(function ($invoice) use ($names, $finance): array {
             $summary = $this->billing->invoiceSummary($invoice);
 
-            return ['tanggal' => $summary['issued_on'], 'vendor' => $vendorName, 'invoice' => $summary['invoice_number'],
+            return ['tanggal' => $summary['issued_on'], 'vendor' => $names[$invoice->vendor_id] ?? '—', 'invoice' => $summary['invoice_number'],
                 'tempo' => $summary['due_on'], 'paid' => $summary['paid'],
                 'total' => $finance ? number_format((float) $invoice->total, 0, ',', '.') : null,
                 'paid_on' => $summary['paid_on'] ? Carbon::parse($summary['paid_on'])->format('d-m-Y') : null,
                 'url' => route('vendor-operational.invoice.show', ['kind' => $summary['kind'], 'record' => $summary['id']])];
         })->all();
         $data = ['title' => 'Invoice Vendor', 'vendorName' => $vendorName, 'filters' => $filters, 'rows' => $rows, 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20,
-            'showTotal' => $finance];
+            'showTotal' => $finance, 'vendors' => $this->vendorOptions($request), 'vendorId' => $vendor];
         if ($request->expectsJson()) {
             return response()->json(['rows' => view('billing.vendor-readonly.invoice-rows', $data)->render(), 'next' => $data['next']]);
         }
@@ -153,7 +162,7 @@ class VendorOperationalBillingController extends Controller
     {
         $items = $query->orderByDesc('id')->simplePaginate(20)->withQueryString();
         $data = ['title' => $title, 'page' => $page, 'filters' => $filters, 'categories' => VendorOperationalBilling::CATEGORIES,
-            'vendorName' => $request->user()->vendor->nama, 'columns' => $page === 'nota-bayar' ? array_keys($this->billing->paymentColumns($filters['kind'] === 'utama', $this->finance($request))) : [],
+            'vendorName' => $this->vendorName($request), 'vendors' => $this->vendorOptions($request), 'vendorQuery' => $this->vendorQuery($request), 'columns' => $page === 'nota-bayar' ? array_keys($this->billing->paymentColumns($filters['kind'] === 'utama', $this->finance($request))) : [],
             'rows' => $items->getCollection()->map($project)->all(), 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
         $rowsView = $page === 'nota-bongkar' ? 'billing.vendor-readonly.unloading-rows' : 'billing.vendor-readonly.rows';
         if ($request->expectsJson()) {
@@ -181,11 +190,43 @@ class VendorOperationalBillingController extends Controller
         abort_unless(array_key_exists($kind, VendorOperationalBilling::CATEGORIES), 404);
     }
 
-    private function vendor(Request $request): int
+    /**
+     * Vendor yang datanya ditampilkan: vendor milik akun, atau untuk operasional
+     * vendor pilihan filter `vendor_id` (null = seluruh vendor).
+     */
+    private function vendor(Request $request): ?int
     {
-        abort_unless($request->user()?->isVendorAccount() && $request->user()->vendor_id && $request->user()->vendor()->exists(), 403);
         abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
+        if ($request->user()?->isOperasional()) {
+            $vendorId = $request->validate(['vendor_id' => ['nullable', 'integer', 'exists:vendors,id']])['vendor_id'] ?? null;
+
+            return $vendorId === null ? null : (int) $vendorId;
+        }
+        abort_unless($request->user()?->isVendorAccount() && $request->user()->vendor_id && $request->user()->vendor()->exists(), 403);
 
         return (int) $request->user()->vendor_id;
+    }
+
+    /** Pilihan vendor untuk filter; hanya operasional yang melihat seluruh vendor. */
+    private function vendorOptions(?Request $request = null): Collection
+    {
+        return $request === null || $request->user()->isOperasional()
+            ? Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname'])
+            : collect();
+    }
+
+    private function vendorName(Request $request): string
+    {
+        $vendor = $this->vendor($request);
+
+        return $vendor === null ? 'Seluruh vendor' : (string) Vendor::whereKey($vendor)->value('nama');
+    }
+
+    /** Parameter vendor yang dibawa ke tautan lanjutan (hanya operasional). */
+    private function vendorQuery(Request $request): array
+    {
+        $vendor = $request->user()->isOperasional() ? $this->vendor($request) : null;
+
+        return $vendor === null ? [] : ['vendor_id' => $vendor];
     }
 }

@@ -9,12 +9,14 @@ class LoadNoteDraftPolicy
 {
     public function inbox(User $user): bool
     {
-        return $this->reviewAny($user) || ($user->isVendorAccount() && $user->vendor_id !== null && $user->vendor()->exists());
+        return $this->reviewAny($user) || $user->isOperasional()
+            || ($user->isVendorAccount() && $user->vendor_id !== null && $user->vendor()->exists());
     }
 
     public function readInbox(User $user, LoadNoteDraft $note): bool
     {
-        return $this->reviewAny($user) || ($this->inbox($user) && (int) $user->vendor_id === $note->vendor_id);
+        // Operasional membaca nota seluruh vendor (tanpa aksi pemeriksaan).
+        return $this->reviewAny($user) || $user->isOperasional() || ($this->inbox($user) && (int) $user->vendor_id === $note->vendor_id);
     }
 
     public function reviewAny(User $user): bool

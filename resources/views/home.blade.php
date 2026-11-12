@@ -7,7 +7,7 @@
             <h1><u>DASHBOARD</u></h1>
         </div>
     </div>
-    <div class="row justify-content-left {{ auth()->user()->isVendorAccount() ? 'd-none' : 'mt-5' }}">
+    <div class="row justify-content-left {{ auth()->user()->usesVendorMenus() ? 'd-none' : 'mt-5' }}">
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database')}}" class="text-decoration-none">
@@ -103,7 +103,7 @@
         @endif
 
     </div>
-    @if (auth()->user()->isVendorAccount())
+    @if (auth()->user()->usesVendorMenus())
     @include('per-vendor-operational.index')
     @endif
     @if (auth()->user()->role === 'customer')
@@ -111,9 +111,6 @@
     @endif
     @if (auth()->user()->role === 'customer-admin')
     @include('per-customer-admin.index')
-    @endif
-    @if (auth()->user()->role === 'operasional')
-    @include('operasional.index')
     @endif
      @if (auth()->user()->role === 'investor')
     @include('per-investor.index')
@@ -126,28 +123,3 @@
     @endif
 </div>
 @endsection
-@if (auth()->user()->role === 'operasional')
-@push('css')
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.bootstrap5.css')}}">
-<link rel="stylesheet" href="{{asset('assets/plugins/select2/select2.min.css')}}">
-@endpush
-@push('js')
-<script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
-<script>
-    $(document).ready(function() {
-            $('.operasional-maintenance-select').each(function () {
-                $(this).select2({
-                    theme: 'bootstrap-5', placeholder: 'Cari nomor lambung kendaraan',
-                    width: '100%', dropdownParent: $(this).closest('.modal')
-                });
-            });
-            $('#vendor_id').select2({
-                placeholder: 'Pilih Vendor',
-                width: '100%',
-                dropdownParent: $('#vendorModal')
-            });
-        });
-</script>
-@endpush
-
-@endif

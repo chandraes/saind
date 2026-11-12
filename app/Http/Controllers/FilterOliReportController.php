@@ -58,7 +58,7 @@ class FilterOliReportController extends Controller
 
     public function statistics(Request $request): View|RedirectResponse
     {
-        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
+        if ($request->user()->usesVendorMenus() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'filter-oli']);
         }
         $filters = $request->validate(['vehicle_id' => ['nullable', 'integer', Rule::exists('vehicles', 'id')->where(fn ($query) => Vehicle::whereFilterOilEligible($query, $request->user()))]]);

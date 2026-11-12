@@ -7,13 +7,16 @@
     <div class="row g-4 justify-content-center mt-2">
         @foreach (['utama' => ['HPP', 'hpp.svg'], 'kompensasi_jr' => ['KOMPENSASI JALAN RUSAK', 'kompensasi-jr.svg'], 'penyesuaian_bbm' => ['PENYESUAIAN BBM', 'penyesuaian-bbm.svg'], 'achievement' => ['ACHIEVEMENT', 'achievement.svg']] as $kind => [$label, $icon])
             @php($disabled = $kind !== 'utama' && !$counts[$kind])
-            <div class="col-6 col-md-4 col-lg-2"><a href="{{ $disabled ? '#' : route('vendor-operational.nota-bayar', ['kind' => $kind]) }}" class="text-decoration-none {{ $disabled ? 'disabled-card' : '' }}" @if ($disabled) aria-disabled="true" tabindex="-1" @endif>
+            <div class="col-6 col-md-4 col-lg-2"><a href="{{ $disabled ? '#' : route('vendor-operational.nota-bayar', ['kind' => $kind] + ($vendorQuery ?? [])) }}" class="text-decoration-none {{ $disabled ? 'disabled-card' : '' }}" @if ($disabled) aria-disabled="true" tabindex="-1" @endif>
                 <div class="card h-100 border-0 shadow-sm text-center menu-card py-4 position-relative">
                     @if ($kind !== 'utama' && !$disabled)<span class="position-absolute badge rounded-pill bg-danger shadow-sm" style="top: 15px; right: 15px">{{ $counts[$kind] }}</span>@endif
                     <div class="card-body d-flex flex-column align-items-center justify-content-center"><div class="icon-wrapper mb-3"><img src="{{ asset('images/'.$icon) }}" alt="" width="60"></div><h6 class="fw-bold text-secondary mb-0">{{ $label }}</h6></div>
                 </div>
             </a></div>
         @endforeach
+        @if (! empty($vendorQuery))
+        <div class="col-6 col-md-4 col-lg-2"><a href="{{ route('vendor-operational.nota-bayar') }}" class="text-decoration-none"><div class="card h-100 border-0 shadow-sm text-center menu-card py-4 bg-light"><div class="card-body d-flex flex-column align-items-center justify-content-center"><div class="icon-wrapper mb-3"><i class="fa fa-exchange fa-3x text-secondary" aria-hidden="true"></i></div><h6 class="fw-bold text-secondary mb-0">GANTI VENDOR</h6></div></div></a></div>
+        @endif
         <div class="col-6 col-md-4 col-lg-2"><a href="{{ route('home') }}" class="text-decoration-none"><div class="card h-100 border-0 shadow-sm text-center menu-card py-4 bg-light"><div class="card-body d-flex flex-column align-items-center justify-content-center"><div class="icon-wrapper mb-3"><img src="{{ asset('images/back.svg') }}" alt="" width="60"></div><h6 class="fw-bold text-secondary mb-0">KEMBALI</h6></div></div></a></div>
     </div>
 </div>

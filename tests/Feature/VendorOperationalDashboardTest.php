@@ -19,8 +19,10 @@ class VendorOperationalDashboardTest extends TestCase
         DB::purge('sqlite');
         Schema::create('vendors', function (Blueprint $table): void {
             $table->id();
+            $table->string('nama')->nullable();
+            $table->string('nickname')->nullable();
         });
-        DB::table('vendors')->insert(['id' => 1]);
+        DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A', 'nickname' => 'VA'], ['id' => 2, 'nama' => 'Vendor B', 'nickname' => null]]);
         $this->withoutVite();
         View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
     }
@@ -34,6 +36,24 @@ class VendorOperationalDashboardTest extends TestCase
             'vendor operational' => ['vendor-operational', $documents],
             'vendor' => ['vendor', [...$documents, 'Kas Vendor']],
         ];
+    }
+
+    public function test_operasional_gets_vendor_operational_menus_and_picks_a_vendor_for_nota_bayar(): void
+    {
+        $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'operasional', 'vendor_id' => null]));
+        $response = $this->get('/home')->assertOk()->assertSee('seluruh vendor')
+            ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Perform Unit', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
+            ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('STATISTIK TONASE')->assertDontSee('Kas Vendor');
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($dom);
+        $this->assertSame(4, $xpath->query('//*[@data-vendor-menu-row="documents"]/a')->length);
+        // Nota Bayar opens the "Pilih Vendor" pop-up like the admin menu.
+        $card = $xpath->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-toggle="modal"]');
+        $this->assertSame(1, $card->length);
+        $this->assertStringContainsString('Nota Bayar Vendor', $card->item(0)->textContent);
+        $picker = $xpath->query('//div[@id="operasional-nota-bayar-vendor"]//form[@action="'.route('vendor-operational.nota-bayar').'"]//select[@name="vendor_id"]/option');
+        $this->assertSame(['-- Pilih Vendor --', 'Vendor A (VA)', 'Vendor B'], array_map(fn ($node): string => trim($node->textContent), iterator_to_array($picker)));
     }
 
     #[DataProvider('vendorAccounts')]

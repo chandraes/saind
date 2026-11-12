@@ -13,6 +13,12 @@ class EnsureVendorOperationalVehicle
 {
     public function handle(Request $request, Closure $next, string $context = 'vehicle'): Response
     {
+        if ($request->user()->isOperasional()) {
+            // Operasional melihat seluruh vendor, tetapi hanya membaca.
+            abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
+
+            return $next($request);
+        }
         if ($context === 'statistics' && ! $request->user()->isVendorAccount()) {
             return $next($request);
         }

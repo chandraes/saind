@@ -44,9 +44,14 @@ class StatistikController extends Controller
 
     public function vendorStatisticsVehicles(Request $request): View|JsonResponse
     {
-        $report = $request->validate(['report' => 'required|in:upah-gendong,aki,ban-luar,filter-oli', 'q' => 'nullable|string|max:100', 'page' => 'nullable|integer|min:1'])['report'];
+        $filters = $request->validate(['report' => 'required|in:upah-gendong,aki,ban-luar,filter-oli', 'q' => 'nullable|string|max:100', 'page' => 'nullable|integer|min:1',
+            'vendor_id' => 'nullable|integer|exists:vendors,id']);
+        $report = $filters['report'];
+        // Operasional memilih nolam dari seluruh vendor (bisa disaring per vendor).
+        $operasional = $request->user()->isOperasional();
         if ($request->ajax()) {
-            $query = Vehicle::where('vendor_id', $request->user()->vendor_id);
+            $vendorId = $operasional ? ($filters['vendor_id'] ?? null) : $request->user()->vendor_id;
+            $query = Vehicle::query()->with('vendor:id,nama,nickname')->when($vendorId !== null, fn ($query) => $query->where('vendor_id', $vendorId));
             if ($report === 'filter-oli') {
                 Vehicle::whereFilterOilEligible($query, $request->user());
             } else {
@@ -54,15 +59,18 @@ class StatistikController extends Controller
             }
             $vehicles = $query->where('nomor_lambung', 'like', '%'.$request->input('q', '').'%')->orderBy('nomor_lambung')->orderBy('id')->simplePaginate(25);
 
-            return response()->json(['results' => $vehicles->map(fn ($vehicle) => ['id' => $vehicle->id, 'text' => $vehicle->nomor_lambung]), 'pagination' => ['more' => $vehicles->hasMorePages()]]);
+            return response()->json(['results' => $vehicles->map(fn ($vehicle) => ['id' => $vehicle->id,
+                'text' => $operasional ? $vehicle->nomor_lambung.' · '.($vehicle->vendor?->nickname ?: $vehicle->vendor?->nama) : $vehicle->nomor_lambung]),
+                'pagination' => ['more' => $vehicles->hasMorePages()]]);
         }
 
-        return view('rekap.statistik.vendor-selection', compact('report'));
+        return view('rekap.statistik.vendor-selection', ['report' => $report,
+            'vendors' => $operasional ? Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname']) : collect()]);
     }
 
     public function upah_gendong(Request $request)
     {
-        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
+        if ($request->user()->usesVendorMenus() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'upah-gendong']);
         }
 
@@ -1581,7 +1589,7 @@ class StatistikController extends Controller
 
     public function aki_log(Request $request)
     {
-        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
+        if ($request->user()->usesVendorMenus() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'aki']);
         }
 

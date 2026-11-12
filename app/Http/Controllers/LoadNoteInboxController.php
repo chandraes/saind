@@ -25,14 +25,16 @@ class LoadNoteInboxController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         $canReview = $request->user()->can('reviewAny', LoadNoteDraft::class);
-        abort_if(! $canReview && $request->filled('vendor_id') && (string) $request->input('vendor_id') !== (string) $request->user()->vendor_id, 404);
+        // Operasional melihat seluruh vendor seperti tim internal, tetapi tanpa aksi.
+        $allVendors = $canReview || $request->user()->isOperasional();
+        abort_if(! $allVendors && $request->filled('vendor_id') && (string) $request->input('vendor_id') !== (string) $request->user()->vendor_id, 404);
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'vendor_id' => ['nullable', 'integer', 'exists:vendors,id'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ]);
         $query = LoadNoteDraft::with(['vendor:id,nama', 'creator:id,name'])->search($filters['search'] ?? '');
-        if (! $canReview) {
+        if (! $allVendors) {
             $query->where('vendor_id', $request->user()->vendor_id);
         }
         if (! empty($filters['vendor_id'])) {
@@ -50,7 +52,8 @@ class LoadNoteInboxController extends Controller
         return view('billing.nota-muat.index', [
             'notes' => $notes,
             'canReview' => $canReview,
-            'vendors' => $canReview ? Vendor::select(['id', 'nama'])->orderBy('nama')->get() : collect(),
+            'canFilterVendor' => $allVendors,
+            'vendors' => $allVendors ? Vendor::select(['id', 'nama'])->orderBy('nama')->get() : collect(),
             'filters' => $filters,
         ]);
     }

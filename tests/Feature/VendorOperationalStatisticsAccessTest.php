@@ -120,6 +120,34 @@ class VendorOperationalStatisticsAccessTest extends TestCase
         $this->json($method, $url)->assertForbidden();
     }
 
+    public function test_operasional_picks_nolam_of_every_vendor_but_cannot_change_history(): void
+    {
+        Schema::table('vendors', function (Blueprint $table): void {
+            $table->string('nama')->nullable();
+            $table->string('nickname')->nullable();
+        });
+        DB::table('vendors')->where('id', 1)->update(['nama' => 'Vendor A', 'nickname' => 'VA']);
+        DB::table('vendors')->insert(['id' => 2, 'nama' => 'Vendor B']);
+        DB::table('vehicles')->where('id', 1)->update(['nomor_lambung' => 'A-1']);
+        DB::table('vehicles')->where('id', 2)->update(['nomor_lambung' => 'B-2']);
+        DB::table('vehicles')->insert(['id' => 3, 'vendor_id' => 2, 'nomor_lambung' => 'B-OFF', 'status' => 'nonaktif']);
+        $this->actingAs(User::factory()->make(['password' => 'test-password', 'id' => 9, 'role' => 'operasional', 'vendor_id' => null]));
+
+        foreach (['aki', 'ban-luar', 'filter-oli', 'upah-gendong'] as $report) {
+            $this->get('/statistik/'.$report)->assertRedirect(route('vendor-operational.statistics.vehicles', ['report' => $report]));
+        }
+        $url = route('vendor-operational.statistics.vehicles', ['report' => 'aki']);
+        $this->get($url)->assertOk()->assertSee('statisticsVendor')->assertSee('Vendor B');
+        $all = $this->getJson($url, ['X-Requested-With' => 'XMLHttpRequest'])->assertOk();
+        $this->assertSame(['A-1 · VA', 'B-2 · Vendor B'], array_column($all->json('results'), 'text'));
+        $this->getJson($url.'&vendor_id=2', ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()->assertJsonPath('results.*.id', [2]);
+        // Read only: the shared history mutations stay closed.
+        foreach ([['POST', '/statistik/aki/histori-destroy/1'], ['PATCH', '/statistik/ban-luar/histori-update/1'], ['DELETE', '/statistik/filter-oli/histori/1']] as [$method, $path]) {
+            $this->json($method, $path)->assertForbidden();
+        }
+        $this->postJson('/statistics-access-test')->assertForbidden();
+    }
+
     public function test_selector_html_and_incremental_search_expose_only_owned_vehicles(): void
     {
         $url = route('vendor-operational.statistics.vehicles', ['report' => 'aki']);

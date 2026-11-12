@@ -15,7 +15,7 @@ class BanController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->user()->isVendorAccount() && ! $request->filled('vehicle_id')) {
+        if ($request->user()->usesVendorMenus() && ! $request->filled('vehicle_id')) {
             return redirect()->route('vendor-operational.statistics.vehicles', ['report' => 'ban-luar']);
         }
 

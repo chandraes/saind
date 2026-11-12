@@ -41,3 +41,11 @@
 @media(max-width:991.98px){.invoice-detail-summary-finance{grid-template-columns:1fr}.invoice-detail-summary-finance .invoice-detail-meta{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:767.98px){.invoice-detail-meta,.invoice-detail-summary-finance .invoice-detail-meta{grid-template-columns:1fr}.invoice-detail-finance{padding:18px}}
 @media(prefers-reduced-motion:reduce){.invoice-detail-progress-track span{transition:none}}
+
+@media(min-width:1151px){.invoice-vendor-filter-grid:has(.invoice-filter-vendor){grid-template-columns:minmax(180px,1.3fr) minmax(180px,1.3fr) minmax(140px,1fr) repeat(2,minmax(140px,1fr)) auto}}
+/* Detail invoice vendor (format admin): muat satu layar penuh tanpa geser kiri-kanan. */
+.invoice-detail-admin-table>.container-fluid{margin-top:1.5rem!important;padding-inline:12px}.invoice-detail-admin-table #notaTable{font-size:.78rem}.invoice-detail-admin-table #notaTable th,.invoice-detail-admin-table #notaTable td{padding:.4rem .3rem}.invoice-detail-admin-table #notaTable td{white-space:nowrap}.invoice-detail-admin-table #notaTable td:nth-child(5),.invoice-detail-admin-table #notaTable td:nth-child(6){white-space:normal;min-width:90px}
+@media(max-width:1439.98px){.invoice-detail-admin-table #notaTable{font-size:.7rem}.invoice-detail-admin-table #notaTable th,.invoice-detail-admin-table #notaTable td{padding:.35rem .2rem}.invoice-detail-admin-table #notaTable td:nth-child(5),.invoice-detail-admin-table #notaTable td:nth-child(6){min-width:76px}}
+/* Tabel perjalanan detail invoice (vendor-operational/operasional): lebar penuh, ringkas, angka tidak terpotong. */
+.invoice-vendor-page-wide{max-width:none;padding-inline:12px}.invoice-vendor-page-wide .invoice-vendor-table{font-size:.78rem}.invoice-vendor-page-wide .invoice-vendor-table th,.invoice-vendor-page-wide .invoice-vendor-table td{padding:.45rem .35rem}.invoice-vendor-page-wide .invoice-vendor-table td{white-space:nowrap}.invoice-vendor-page-wide .invoice-vendor-table td:nth-child(5),.invoice-vendor-page-wide .invoice-vendor-table td:nth-child(6){white-space:normal;min-width:90px}
+@media(max-width:1439.98px){.invoice-vendor-page-wide .invoice-vendor-table{font-size:.72rem}.invoice-vendor-page-wide .invoice-vendor-table th,.invoice-vendor-page-wide .invoice-vendor-table td{padding:.4rem .25rem}}

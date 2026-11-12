@@ -66,6 +66,21 @@ class User extends Authenticatable
         return in_array($this->role, self::VENDOR_OWNER_ROLES, true);
     }
 
+    /**
+     * Role operasional: menu sama dengan vendor-operational tetapi untuk seluruh
+     * vendor, hanya melihat (tanpa keuangan, tanpa scan nota muat).
+     */
+    public function isOperasional(): bool
+    {
+        return $this->role === 'operasional';
+    }
+
+    /** Akun yang memakai menu vendor-operational: akun vendor dan operasional (semua vendor). */
+    public function usesVendorMenus(): bool
+    {
+        return $this->isVendorAccount() || $this->isOperasional();
+    }
+
     /** Akun vendor hanya boleh menyentuh data milik vendornya sendiri. */
     public function canAccessVendor(int|string|null $vendorId): bool
     {

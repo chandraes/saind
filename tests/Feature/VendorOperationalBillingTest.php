@@ -165,7 +165,7 @@ class VendorOperationalBillingTest extends MobileApiTestCase
 
     public function test_accounts_without_vendor_and_other_roles_cannot_read_billing(): void
     {
-        $this->actingAs(User::factory()->create(['username' => 'wrong-role', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => 1]));
+        $this->actingAs(User::factory()->create(['username' => 'wrong-role', 'password' => 'secret-pass', 'role' => 'customer', 'vendor_id' => 1]));
         foreach (['nota-bongkar', 'nota-bayar', 'invoice'] as $path) {
             $this->get('/vendor-operational/'.$path)->assertForbidden();
         }
@@ -173,6 +173,29 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         foreach (['nota-bongkar', 'nota-bayar', 'invoice'] as $path) {
             $this->get('/vendor-operational/'.$path)->assertForbidden();
         }
+    }
+
+    public function test_operasional_reads_every_vendor_without_finance_and_picks_a_vendor_for_payment_notes(): void
+    {
+        $this->actingAs(User::factory()->create(['username' => 'ops-all', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]));
+        // Nota Bongkar: seluruh vendor secara default, bisa disaring per vendor.
+        DB::table('transaksis')->update(['status' => 2]);
+        $this->get('/vendor-operational/nota-bongkar')->assertOk()->assertSee('UNIT A')->assertSee('FOREIGN UNIT')->assertSee('Seluruh vendor')->assertDontSee('987654321');
+        $this->getJson('/vendor-operational/nota-bongkar?vendor_id=2')->assertOk()->assertSee('FOREIGN UNIT')->assertDontSee('UNIT A');
+        $this->get('/vendor-operational/nota-bongkar?vendor_id=999')->assertSessionHasErrors('vendor_id');
+        // Nota Bayar: pilih vendor dulu, lalu menu dan daftar vendor itu saja.
+        DB::table('transaksis')->update(['status' => 3]);
+        $this->get('/vendor-operational/nota-bayar')->assertOk()->assertSee('Pilih Vendor')->assertSee('FOREIGN VENDOR')->assertDontSee('UNIT A');
+        $this->getJson('/vendor-operational/nota-bayar?kind=utama')->assertStatus(422);
+        $this->get('/vendor-operational/nota-bayar?vendor_id=2')->assertOk()->assertSee('FOREIGN VENDOR')->assertSee('GANTI VENDOR')
+            ->assertSee(route('vendor-operational.nota-bayar', ['kind' => 'utama', 'vendor_id' => 2]));
+        $this->get('/vendor-operational/nota-bayar?vendor_id=1&kind=utama')->assertOk()->assertSee('UNIT A')->assertDontSee('FOREIGN UNIT')
+            ->assertSee('Ganti vendor')->assertDontSee('Bruto')->assertDontSee('987654321');
+        // Invoice: seluruh vendor dengan nama vendor per baris, tanpa nilai keuangan.
+        $this->get('/vendor-operational/invoice?status=all')->assertOk()->assertSee('PERIODE 1')->assertSee('PERIODE 2')->assertSee('FOREIGN VENDOR')
+            ->assertDontSee('Grand Total')->assertDontSee('Total Bayar');
+        $this->get('/vendor-operational/invoice?status=all&vendor_id=1')->assertOk()->assertSee('PERIODE 1')->assertDontSee('PERIODE 2');
+        $this->get('/vendor-operational/invoice/utama/2')->assertOk()->assertSee('PERIODE 2')->assertDontSee('Total Bayar')->assertDontSee('notaTable');
     }
 
     public function test_payment_notes_only_show_the_same_eligible_records_and_columns_as_source(): void
