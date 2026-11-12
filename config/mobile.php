@@ -6,6 +6,10 @@ return [
     'workspace_id' => env('MOBILE_WORKSPACE_ID'),
     'workspace_name' => env('MOBILE_WORKSPACE_NAME'),
     'company_name' => env('MOBILE_COMPANY_NAME'),
+    // Manifest bertanda tangan DS Groups (mobile:workspace-manifest); app menolak origin tanpa manifest sah.
+    'workspace_manifest' => env('MOBILE_WORKSPACE_MANIFEST'),
+    // Repo trust (GitHub Pages) yang memuat daftar pencabutan + timestamp; disalin oleh mobile:trust-sync.
+    'trust_url' => env('MOBILE_TRUST_URL', 'https://trust.ds-groups.com/hauling/trust.json'),
     'token_expiration_minutes' => (int) env('MOBILE_TOKEN_EXPIRATION_MINUTES', 43200),
     'load_note_rules' => [
         'max_do_count' => (int) env('MOBILE_NOTE_MAX_DO_COUNT', 2),

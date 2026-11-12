@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\MobileUpahGendongController;
 use App\Http\Controllers\Api\MobileUpahGendongSettingController;
 use App\Http\Controllers\Api\MobileVendorCashController;
 use App\Http\Controllers\Api\PaymentNoteController;
+use App\Http\Controllers\Api\TrustController;
 use App\Http\Controllers\Api\UnloadingNoteController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\VendorInvoiceController;
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('workspace', [WorkspaceController::class, 'show'])->name('workspace');
+    Route::get('trust', [TrustController::class, 'show'])->middleware('throttle:60,1')->name('trust');
     Route::middleware(EnsureMobileWorkspace::class)->group(function (): void {
         Route::post('login', [AuthController::class, 'store'])->middleware('throttle:mobile-login')->name('login');
         Route::middleware(['auth:sanctum', EnsureMobileToken::class])->group(function (): void {

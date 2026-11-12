@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:loan-vendor')->monthly();
         // inspire every minute
         $schedule->command('app:check-konfigurasi')->everyMinute();
+        $schedule->command('mobile:trust-sync')->hourly()->withoutOverlapping(10)->when(fn (): bool => (bool) config('mobile.trust_url'));
     }
 
     /**
