@@ -132,11 +132,21 @@ class User extends Authenticatable
         return in_array($this->role, ['vendor-induk', 'operasional'], true);
     }
 
-    /** Nolam yang boleh dipilih di Kas UJ Ditahan: tidak nonaktif, vendor-induk hanya vendornya. */
+    /**
+     * Nolam Kas UJ Ditahan seperti halaman admin: vendor-induk hanya nolam vendornya,
+     * operasional semua nolam; status nonaktif tetap ikut.
+     */
     public function heldCashVehicles(): Builder
     {
-        return Vehicle::query()->where('status', '!=', 'nonaktif')
-            ->when(! $this->isOperasional(), fn ($query) => $query->where('vendor_id', $this->vendor_id ?? 0));
+        return Vehicle::query()->when(! $this->isOperasional(), fn ($query) => $query->where('vendor_id', $this->vendor_id ?? 0));
+    }
+
+    /** Nolam yang masih bersaldo UJ ditahan (Sparepart atau Ban) pada periode mana pun. */
+    public function heldCashVehiclesWithBalance(): Builder
+    {
+        return $this->heldCashVehicles()->where(fn (Builder $query) => $query
+            ->whereIn('id', UjDitahan::query()->select('vehicle_id')->where('saldo', '!=', 0))
+            ->orWhereIn('id', UjDitahanBan::query()->select('vehicle_id')->where('saldo', '!=', 0)));
     }
 
     public function isDriver(): bool

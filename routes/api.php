@@ -42,6 +42,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::get('vehicles/{vehicle}/battery-positions/{position}/history', [MobileBatteryController::class, 'history'])->whereNumber(['vehicle', 'position'])->name('battery-history.index');
                 Route::get('vendor-options', MobileVendorOptionController::class)->name('vendor-options');
                 Route::get('maintenance/vehicles', MobileMaintenanceVehicleController::class)->name('maintenance.vehicles');
+                Route::get('held-cash/vehicles', [MobileDriverHeldCashController::class, 'vehicles'])->name('held-cash.vehicles');
                 Route::get('vehicles/{vehicle}/held-cash/{fund}', [MobileDriverHeldCashController::class, 'vehicle'])->whereNumber('vehicle')->whereIn('fund', ['sparepart', 'ban'])->name('vehicle-held-cash.index');
                 Route::get('filter-oil/vehicles', [MobileFilterOilController::class, 'vehicles'])->name('filter-oil.vehicles');
                 Route::get('vehicles/{vehicle}/filter-oil-monitoring', [MobileFilterOilController::class, 'show'])->whereNumber('vehicle')->name('filter-oil-monitoring.show');

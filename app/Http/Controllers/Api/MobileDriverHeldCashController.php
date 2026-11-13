@@ -11,8 +11,9 @@ use Illuminate\Http\Request;
 
 /**
  * Kas UJ ditahan di aplikasi (Sparepart | Ban), baca saja. Driver: mutasinya
- * sendiri pada nolam yang ditugaskan. Vendor-induk & operasional: seluruh
- * mutasi satu nolam yang tidak nonaktif (vendor-induk hanya nolam vendornya).
+ * sendiri pada nolam yang ditugaskan. Vendor-induk & operasional: daftar nolam
+ * yang masih bersaldo lalu seluruh mutasi satu nolam (vendor-induk hanya nolam
+ * vendornya; nolam nonaktif ikut, seperti halaman admin).
  */
 class MobileDriverHeldCashController extends Controller
 {
@@ -22,6 +23,23 @@ class MobileDriverHeldCashController extends Controller
         $vehicle = $request->attributes->get('driverVehicle');
 
         return $this->respond($request, new DriverHeldCash((int) $request->user()->driver_id, (int) MobileVendorScope::vehicleId($request), $fund), $fund, $vehicle);
+    }
+
+    /** Daftar nolam untuk dipilih: hanya yang masih bersaldo, seperti rekap admin. */
+    public function vehicles(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->canViewNolamHeldCash(), 403);
+        $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+        $search = trim($filters['search'] ?? '');
+        $page = MobileVendorScope::apply($request->user()->heldCashVehiclesWithBalance(), $request)->with('vendor:id,nama,nickname')
+            ->when($search !== '', fn ($query) => $query->where('nomor_lambung', 'like', '%'.$search.'%'))
+            ->orderBy('nomor_lambung')->orderBy('id')->paginate(25, ['id', 'vendor_id', 'nomor_lambung', 'nopol', 'status']);
+
+        return response()->json([
+            'data' => $page->getCollection()->map(fn (Vehicle $vehicle): array => $vehicle->only(['id', 'nomor_lambung', 'nopol', 'status'])
+                + ['vendor_name' => $vehicle->vendor?->nickname ?: $vehicle->vendor?->nama])->values(),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
+        ]);
     }
 
     public function vehicle(Request $request, int $vehicle, string $fund): JsonResponse

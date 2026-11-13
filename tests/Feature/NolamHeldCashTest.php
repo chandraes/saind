@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 /**
  * Kas UJ Ditahan, baca saja. Web: halaman admin UJ Ditahan Sparepart | Ban yang
  * sama, vendor-induk hanya nolam vendornya, operasional semua nolam. Mobile:
- * seluruh mutasi satu nolam yang tidak nonaktif.
+ * seluruh daftar nolam yang masih bersaldo lalu seluruh mutasi satu nolam.
  */
 class NolamHeldCashTest extends MobileApiTestCase
 {
@@ -46,6 +46,8 @@ class NolamHeldCashTest extends MobileApiTestCase
             ['id' => 1, 'vendor_id' => 1, 'driver_id' => 1, 'nomor_lambung' => 'NOLAM-INDUK', 'status' => 'aktif'],
             ['id' => 2, 'vendor_id' => 1, 'driver_id' => null, 'nomor_lambung' => 'NOLAM-NONAKTIF', 'status' => 'nonaktif'],
             ['id' => 3, 'vendor_id' => 2, 'driver_id' => 2, 'nomor_lambung' => 'NOLAM-LAIN', 'status' => 'proses'],
+            ['id' => 4, 'vendor_id' => 1, 'driver_id' => null, 'nomor_lambung' => 'NOLAM-LUNAS', 'status' => 'aktif'],
+            ['id' => 5, 'vendor_id' => 1, 'driver_id' => null, 'nomor_lambung' => 'NOLAM-KOSONG', 'status' => 'aktif'],
         ]);
         foreach (['sparepart' => 'uj_ditahans', 'ban' => 'uj_ditahan_bans'] as $fund => $accounts) {
             $foreignKey = $fund === 'ban' ? 'uj_ditahan_ban_id' : 'uj_ditahan_id';
@@ -78,6 +80,7 @@ class NolamHeldCashTest extends MobileApiTestCase
                 ['id' => 2, 'vehicle_id' => 1, 'bulan' => 12, 'tahun' => 2025, 'total_masuk' => 200000, 'total_keluar' => 0, 'saldo' => 200000],
                 ['id' => 3, 'vehicle_id' => 3, 'bulan' => 10, 'tahun' => 2026, 'total_masuk' => 70000, 'total_keluar' => 0, 'saldo' => 70000],
                 ['id' => 4, 'vehicle_id' => 2, 'bulan' => 10, 'tahun' => 2026, 'total_masuk' => 50000, 'total_keluar' => 0, 'saldo' => 50000],
+                ['id' => 5, 'vehicle_id' => 4, 'bulan' => 9, 'tahun' => 2026, 'total_masuk' => 50000, 'total_keluar' => 50000, 'saldo' => 0],
             ]);
             foreach ([[1, 1, 'masuk', 800000, 'Setoran Driver Satu', null], [1, 2, 'masuk', 900000, 'Setoran Driver Dua', null],
                 [1, null, 'keluar', 300000, 'Pencairan Tanpa Driver', 'BRI'], [2, 1, 'masuk', 200000, 'Mutasi Tahun Lalu', null], [3, 2, 'masuk', 70000, 'Mutasi Nolam Lain', null]] as [$account, $owner, $type, $amount, $description, $bank]) {
@@ -113,12 +116,23 @@ class NolamHeldCashTest extends MobileApiTestCase
         }
     }
 
-    #[TestWith(['induk', 2])]
-    #[TestWith(['induk', 3])]
-    #[TestWith(['operasional', 2])]
-    public function test_api_hides_nonaktif_and_other_vendor_nolam(string $account, int $vehicle): void
+    public function test_api_hides_other_vendor_nolam_but_keeps_nonaktif(): void
     {
-        $this->getJson('/api/v1/vehicles/'.$vehicle.'/held-cash/ban', $this->headers($this->{$account}))->assertNotFound();
+        $this->getJson('/api/v1/vehicles/3/held-cash/ban', $this->headers($this->induk))->assertNotFound();
+        $this->getJson('/api/v1/vehicles/2/held-cash/ban?month=10&year=2026', $this->headers($this->induk))->assertOk()->assertJsonPath('meta.balance', 0);
+        $this->getJson('/api/v1/vehicles/2/held-cash/ban', $this->headers($this->operasional))->assertOk();
+    }
+
+    public function test_api_lists_only_nolam_with_a_balance_like_the_admin_recap(): void
+    {
+        $this->getJson('/api/v1/held-cash/vehicles', $this->headers($this->induk))->assertOk()
+            ->assertJsonPath('data.*.nomor_lambung', ['NOLAM-INDUK', 'NOLAM-NONAKTIF'])->assertJsonPath('data.1.status', 'nonaktif')
+            ->assertJsonPath('meta.total', 2);
+        $this->getJson('/api/v1/held-cash/vehicles?search=lain', $this->headers($this->operasional))->assertOk()
+            ->assertJsonPath('data.*.nomor_lambung', ['NOLAM-LAIN'])->assertJsonPath('data.0.vendor_name', 'VENDOR LAIN');
+        $this->getJson('/api/v1/held-cash/vehicles?vendor_id=1', $this->headers($this->operasional))->assertOk()
+            ->assertJsonPath('data.*.nomor_lambung', ['NOLAM-INDUK', 'NOLAM-NONAKTIF']);
+        $this->getJson('/api/v1/held-cash/vehicles', $this->headers($this->operasional))->assertJsonPath('meta.total', 3);
     }
 
     #[TestWith(['vendor'])]
@@ -127,6 +141,7 @@ class NolamHeldCashTest extends MobileApiTestCase
     {
         $user = User::factory()->create(['username' => $role, 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => 1]);
         $this->getJson('/api/v1/vehicles/1/held-cash/sparepart', $this->headers($user))->assertForbidden();
+        $this->getJson('/api/v1/held-cash/vehicles', $this->headers($user))->assertForbidden();
         $this->getJson('/api/v1/me', $this->headers($user))->assertJsonPath('data.permissions.held_cash', false);
         $this->actingAs($user)->get(route('vendor-operational.uj-ditahan'))->assertForbidden();
         $this->actingAs($user)->get(route('vendor-operational.uj-ditahan-ban'))->assertForbidden();
