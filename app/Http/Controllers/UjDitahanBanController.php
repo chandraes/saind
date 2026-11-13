@@ -7,6 +7,7 @@ use App\Models\UjDitahanBan;
 use App\Models\UjDitahanBanDetail;
 use App\Services\UjDitahanBanPayoutService;
 use App\Services\UjDitahanWhatsAppService;
+use App\Support\HeldCashArea;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -34,9 +35,9 @@ class UjDitahanBanController extends Controller
         $request->validate(['bulan' => ['nullable', 'integer', 'between:1,12'], 'tahun' => ['nullable', 'integer', 'between:2000,2100']]);
         $bulan = $request->integer('bulan') ?: now()->month;
         $tahun = $request->integer('tahun') ?: now()->year;
-        $query = UjDitahanBan::query()->where('bulan', $bulan)->where('tahun', $tahun)->where('saldo', $recap ? '=' : '!=', 0);
+        $query = HeldCashArea::scope(UjDitahanBan::query(), $request->user())->where('bulan', $bulan)->where('tahun', $tahun)->where('saldo', $recap ? '=' : '!=', 0);
         if (! $request->ajax()) {
-            $activeBalanceMonths = UjDitahanBan::where('tahun', $tahun)->where('saldo', '!=', 0)
+            $activeBalanceMonths = HeldCashArea::scope(UjDitahanBan::query(), $request->user())->where('tahun', $tahun)->where('saldo', '!=', 0)
                 ->select('bulan')->distinct()->orderBy('bulan')->pluck('bulan')->map(fn ($month): int => (int) $month)->all();
 
             return view('billing.uj-ditahan-ban.index', compact('bulan', 'tahun', 'recap', 'activeBalanceMonths'));
@@ -57,7 +58,7 @@ class UjDitahanBanController extends Controller
             'data' => $rows->values()->map(fn (UjDitahanBan $row, int $index): array => [
                 'id' => $row->id, 'no' => $start + $index + 1, 'kendaraan' => $row->vehicle?->nomor_lambung ?? '-',
                 'total_masuk' => $row->total_masuk, 'total_keluar' => $row->total_keluar, 'saldo' => $row->saldo,
-                'detail_url' => route('billing.uj-ditahan-ban.show', $row),
+                'detail_url' => route(HeldCashArea::name().'.uj-ditahan-ban.show', $row),
                 'cutoff' => ! $recap && $row->saldo > 0 && in_array($request->user()?->role, ['admin', 'su'], true) ? [
                     'url' => route('billing.uj-ditahan-ban.cutoff', $row),
                     'token' => (string) Str::uuid(),
@@ -73,6 +74,7 @@ class UjDitahanBanController extends Controller
 
     public function show(Request $request, UjDitahanBan $account): View|JsonResponse
     {
+        abort_unless(HeldCashArea::scope(UjDitahanBan::query()->whereKey($account->getKey()), $request->user())->exists(), 404);
         $account->load('vehicle.driver');
         if (! $request->ajax()) {
             return view('billing.uj-ditahan-ban.show', compact('account'));
@@ -104,7 +106,7 @@ class UjDitahanBanController extends Controller
                 'is_reversal' => $row->payout_origin === 'payout_reversal',
                 'cancel_url' => in_array(request()->user()?->role, ['admin', 'su'], true) && $row->isManualPayout() && ! $row->cancellation ? route('billing.uj-ditahan.cancel', ['fund' => 'ban', 'detail' => $row->id]) : null,
                 'rekening' => implode(' / ', array_filter([$row->bank, $row->no_rekening, $row->nama_rekening])),
-                'proof_url' => $row->file_pdf ? route('billing.uj-ditahan-ban.bukti', $row) : null,
+                'proof_url' => $row->file_pdf ? route(HeldCashArea::name().'.uj-ditahan-ban.bukti', $row) : null,
             ]),
         ]);
     }
@@ -154,8 +156,9 @@ class UjDitahanBanController extends Controller
         return $response;
     }
 
-    public function proof(UjDitahanBanDetail $detail): StreamedResponse
+    public function proof(Request $request, UjDitahanBanDetail $detail): StreamedResponse
     {
+        abort_unless(HeldCashArea::scope(UjDitahanBan::query()->whereKey($detail->uj_ditahan_ban_id), $request->user())->exists(), 404);
         abort_unless($detail->file_pdf && str_starts_with($detail->file_pdf, 'uj-ditahan-ban-bukti/') && Storage::disk('local')->exists($detail->file_pdf), 404);
 
         return Storage::disk('local')->response($detail->file_pdf, 'bukti-uj-ditahan-ban-'.$detail->id.'.pdf', ['Content-Type' => 'application/pdf', 'X-Content-Type-Options' => 'nosniff']);

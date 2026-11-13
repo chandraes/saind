@@ -43,6 +43,7 @@ use App\Services\MaintenanceLogWriter;
 use App\Services\MaintenanceUjDitahanService;
 use App\Services\PayrollService;
 use App\Services\UjDitahanWhatsAppService;
+use App\Support\HeldCashArea;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -532,7 +533,10 @@ class BillingController extends Controller
         $tahun = $request->tahun ?? date('Y');
 
         // Ambil data HANYA yang saldonya lebih dari 0
-        $data = UjDitahan::with(['vehicle.driver'])
+        // Vendor-induk (area vendor-operational) hanya nolam vendornya.
+        $accounts = fn () => HeldCashArea::scope(UjDitahan::query(), $request->user());
+
+        $data = $accounts()->with(['vehicle.driver'])
             ->where('bulan', $bulan)
             ->where('tahun', $tahun)
             ->where('saldo', '!=', 0)
@@ -544,7 +548,7 @@ class BillingController extends Controller
         $totalKeluarBulanIni = $data->sum('total_keluar');
 
         // Cari tahu bulan & tahun mana saja yang saldonya belum 0 (untuk indikator filter)
-        $activeBalances = UjDitahan::where('saldo', '!=', 0)
+        $activeBalances = $accounts()->where('saldo', '!=', 0)
             ->select('bulan', 'tahun')
             ->distinct()
             ->get()
@@ -553,7 +557,7 @@ class BillingController extends Controller
             })->toArray();
 
         // Ambil list tahun
-        $listTahun = UjDitahan::select('tahun')->distinct()->pluck('tahun')->toArray();
+        $listTahun = $accounts()->select('tahun')->distinct()->pluck('tahun')->toArray();
         if (! in_array(date('Y'), $listTahun)) {
             $listTahun[] = date('Y');
         }
@@ -783,9 +787,9 @@ class BillingController extends Controller
         return redirect()->back()->with('success', 'Cutoff berhasil dieksekusi. Saldo menjadi 0 dan telah dipindahkan.');
     }
 
-    public function uj_ditahan_show($id)
+    public function uj_ditahan_show(Request $request, $id)
     {
-        $master = UjDitahan::with(['vehicle.driver'])->findOrFail($id);
+        $master = HeldCashArea::scope(UjDitahan::query(), $request->user())->with(['vehicle.driver'])->findOrFail($id);
 
         // Ambil detail dan urutkan dari yang paling lama ke baru agar seperti rekening koran
         $details = UjDitahanDetail::with(['driver', 'cancellation.actor'])->where('uj_ditahan_id', $id)

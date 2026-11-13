@@ -1,10 +1,11 @@
 @extends('layouts.app')
 @section('content')
+@php $heldCashArea = $recap ? 'billing' : \App\Support\HeldCashArea::name(); @endphp
 <div class="container-fluid ban-finance">
     @include('billing.uj-ditahan-ban.feedback')
     <div class="ban-hero"><div class="ban-hero-content">
         <div class="ban-hero-heading">@include('billing.uj-ditahan-ban.wheel')<div><span class="ban-period"><i class="fa fa-calendar" aria-hidden="true"></i> {{ \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->translatedFormat('F Y') }}</span><h3>UJ Ditahan Ban</h3><p>{{ $recap ? 'Telusuri periode saldo selesai dan riwayat penggunaan dana ban kendaraan.' : 'Pantau dana ban kendaraan, tinjau mutasi, dan kelola pencairan dalam satu tempat.' }}</p></div></div>
-        <div class="d-flex gap-2 flex-wrap ban-hero-actions"><a href="{{ route($recap ? 'rekap.index' : 'billing.index') }}" class="btn btn-outline-light"><i class="fa fa-arrow-left me-2" aria-hidden="true"></i>Kembali</a><a href="{{ route($recap ? 'billing.uj-ditahan-ban' : 'rekap.uj-ditahan-ban') }}" class="btn btn-light"><i class="fa {{ $recap ? 'fa-credit-card' : 'fa-archive' }} me-2" aria-hidden="true"></i>{{ $recap ? 'Saldo aktif' : 'Rekap saldo selesai' }}</a></div>
+        <div class="d-flex gap-2 flex-wrap ban-hero-actions">@if ($heldCashArea === 'vendor-operational')<a href="{{ route('home') }}" class="btn btn-outline-light"><i class="fa fa-arrow-left me-2" aria-hidden="true"></i>Kembali</a>@else<a href="{{ route($recap ? 'rekap.index' : 'billing.index') }}" class="btn btn-outline-light"><i class="fa fa-arrow-left me-2" aria-hidden="true"></i>Kembali</a><a href="{{ route($recap ? 'billing.uj-ditahan-ban' : 'rekap.uj-ditahan-ban') }}" class="btn btn-light"><i class="fa {{ $recap ? 'fa-credit-card' : 'fa-archive' }} me-2" aria-hidden="true"></i>{{ $recap ? 'Saldo aktif' : 'Rekap saldo selesai' }}</a>@endif</div>
     </div></div>
     @include('billing.uj-ditahan-ban.totals', ['masuk' => 0, 'keluar' => 0, 'saldo' => 0])
     <div class="ban-panel">
@@ -18,7 +19,7 @@
         <div class="small text-danger mt-3">❗ Menandakan bulan yang masih memiliki saldo tertahan pada tahun yang dipilih.</div>
         </div><div class="ban-table-wrap">
         <div class="small text-muted mb-2"><i class="fa fa-info-circle me-1" aria-hidden="true"></i> Gulir tabel untuk memuat data berikutnya.</div>
-        <table class="table table-hover align-middle w-100" data-ban-table data-kind="accounts" data-url="{{ route($recap ? 'rekap.uj-ditahan-ban' : 'billing.uj-ditahan-ban', compact('bulan', 'tahun')) }}">
+        <table class="table table-hover align-middle w-100" data-ban-table data-kind="accounts" data-url="{{ route($recap ? 'rekap.uj-ditahan-ban' : $heldCashArea.'.uj-ditahan-ban', compact('bulan', 'tahun')) }}">
             <thead class="table-success"><tr><th>No</th><th>Nomor Lambung</th><th>Masuk</th><th>Keluar</th><th>Saldo</th><th>Aksi</th></tr></thead>
             <tbody></tbody><tfoot><tr><th colspan="2">Grand total hasil pencarian</th><th data-total-masuk></th><th data-total-keluar></th><th data-total-saldo></th><th></th></tr></tfoot>
         </table>

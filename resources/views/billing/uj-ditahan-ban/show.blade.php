@@ -1,20 +1,22 @@
 @extends('layouts.app')
 @section('content')
+@php $heldCashArea = \App\Support\HeldCashArea::name(); @endphp
+@php $canWithdraw = ! \App\Support\HeldCashArea::readOnly() && $account->saldo > 0; @endphp
 <div class="container-fluid ban-finance">
     @include('billing.uj-ditahan-ban.feedback')
     <div class="ban-hero"><div class="ban-hero-content">
         <div class="ban-hero-heading">@include('billing.uj-ditahan-ban.wheel')<div><span class="ban-period"><i class="fa fa-calendar" aria-hidden="true"></i>{{ \Carbon\Carbon::createFromDate($account->tahun, $account->bulan, 1)->translatedFormat('F Y') }}</span><h3>UJ Ditahan Ban · {{ $account->vehicle?->nomor_lambung ?? '-' }}</h3><p><i class="fa fa-user-circle-o me-2" aria-hidden="true"></i>Driver: {{ $account->vehicle?->driver?->nama ?? '-' }}</p></div></div>
-        <div class="d-flex gap-2 flex-wrap ban-hero-actions"><a class="btn btn-outline-light" href="{{ route('billing.uj-ditahan-ban', ['bulan' => $account->bulan, 'tahun' => $account->tahun]) }}"><i class="fa fa-arrow-left me-2" aria-hidden="true"></i>Kembali</a>
-            @if($account->saldo > 0)<button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#withdraw-ban"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Cairkan saldo</button>@endif
+        <div class="d-flex gap-2 flex-wrap ban-hero-actions"><a class="btn btn-outline-light" href="{{ route($heldCashArea.'.uj-ditahan-ban', ['bulan' => $account->bulan, 'tahun' => $account->tahun]) }}"><i class="fa fa-arrow-left me-2" aria-hidden="true"></i>Kembali</a>
+            @if($canWithdraw)<button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#withdraw-ban"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Cairkan saldo</button>@endif
 
         </div>
     </div></div>
     @include('billing.uj-ditahan-ban.totals', ['masuk' => $account->total_masuk, 'keluar' => $account->total_keluar, 'saldo' => $account->saldo])
     <div class="ban-panel"><div class="ban-panel-head"><div class="d-flex align-items-center gap-3"><span class="ban-section-icon"><i class="fa fa-history" aria-hidden="true"></i></span><div><h5 class="ban-section-title">Riwayat mutasi</h5><p class="ban-section-subtitle">Transaksi terbaru ditampilkan lebih dahulu. Gunakan pencarian untuk menelusuri uraian atau rekening.</p></div></div><span class="ban-count"><i class="fa fa-list-ul me-1" aria-hidden="true"></i><span data-ban-count>0</span> mutasi</span></div><div class="ban-table-wrap">
-        <table class="table table-hover align-middle w-100" data-ban-table data-kind="details" data-url="{{ route('billing.uj-ditahan-ban.show', $account) }}"><thead class="table-success"><tr><th>No</th><th>Tanggal</th><th>Uraian</th><th>Driver</th><th>Nominal Masuk</th><th>Nominal Keluar</th><th>Rekening</th><th>Bukti</th><th>Aksi</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand total hasil pencarian</th><th data-total-masuk></th><th data-total-keluar></th><th colspan="3"></th></tr></tfoot></table>
+        <table class="table table-hover align-middle w-100" data-ban-table data-kind="details" data-url="{{ route($heldCashArea.'.uj-ditahan-ban.show', $account) }}"><thead class="table-success"><tr><th>No</th><th>Tanggal</th><th>Uraian</th><th>Driver</th><th>Nominal Masuk</th><th>Nominal Keluar</th><th>Rekening</th><th>Bukti</th><th>Aksi</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand total hasil pencarian</th><th data-total-masuk></th><th data-total-keluar></th><th colspan="3"></th></tr></tfoot></table>
     </div></div>
 </div>
-@if($account->saldo > 0)
+@if($canWithdraw)
 <div class="modal fade ban-modal" id="withdraw-ban" tabindex="-1" aria-labelledby="withdraw-ban-title" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow"><div class="modal-header"><h5 class="modal-title fw-bold" id="withdraw-ban-title"><i class="fa fa-exchange" aria-hidden="true"></i>Pencairan UJ Ditahan Ban</h5><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
 <form method="POST" action="{{ route('billing.uj-ditahan-ban.cairkan', $account) }}" enctype="multipart/form-data" data-maintenance-form data-confirm="Catat pencairan dan potong saldo UJ Ditahan Ban periode ini?" novalidate>@csrf
 <input type="hidden" name="request_token" value="{{ \Illuminate\Support\Str::uuid() }}">

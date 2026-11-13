@@ -41,7 +41,7 @@
                             <td class="text-right align-middle font-weight-bold text-danger">
                                 {{ $d->jenis == 'keluar' ? 'Rp ' . number_format($d->nominal, 0, ',', '.') : '-' }}
                             </td>
-                            @unless ($driverLedger ?? false)
+                            @unless ($readOnlyLedger ?? $driverLedger ?? false)
                             <td class="align-middle">
                                 @if(in_array(auth()->user()?->role, ['admin', 'su'], true) && $d->isManualPayout() && ! $d->cancellation)
                                 <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" data-payout-cancel-url="{{ route('billing.uj-ditahan.cancel', ['fund' => 'sparepart', 'detail' => $d->id]) }}" data-payout-amount="Rp {{ number_format($d->nominal, 0, ',', '.') }}"><i class="fa fa-undo me-1" aria-hidden="true"></i>Batalkan</button>
@@ -51,6 +51,6 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="{{ ($driverLedger ?? false) ? 7 : 8 }}" class="text-center py-4">Belum ada histori transaksi untuk data ini.</td>
+                            <td colspan="{{ ($readOnlyLedger ?? $driverLedger ?? false) ? 7 : 8 }}" class="text-center py-4">Belum ada histori transaksi untuk data ini.</td>
                         </tr>
                         @endforelse

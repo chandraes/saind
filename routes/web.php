@@ -1063,8 +1063,14 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/nota-bayar/{kind}/{record}', [VendorOperationalBillingController::class, 'noteShow'])->whereNumber('record')->name('nota-bayar.show');
                 Route::get('/invoice', [VendorOperationalBillingController::class, 'invoices'])->name('invoice');
                 Route::get('/invoice/{kind}/{record}', [VendorOperationalBillingController::class, 'invoiceShow'])->whereNumber('record')->name('invoice.show');
-                // Kas UJ Ditahan per nolam (baca saja): vendor-induk nolam vendornya, operasional semua nolam.
-                Route::get('/kas-uj-ditahan/{fund}', [DriverHeldCashController::class, 'vehicle'])->whereIn('fund', ['sparepart', 'ban'])->middleware('role:vendor-induk,operasional')->name('held-cash');
+                // UJ Ditahan seperti halaman admin (baca saja): vendor-induk nolam vendornya, operasional semua nolam.
+                Route::middleware('role:vendor-induk,operasional')->group(function (): void {
+                    Route::get('/uj-ditahan', [BillingController::class, 'uj_ditahan'])->name('uj-ditahan');
+                    Route::get('/uj-ditahan/{id}', [BillingController::class, 'uj_ditahan_show'])->whereNumber('id')->name('uj-ditahan.show');
+                    Route::get('/uj-ditahan-ban', [UjDitahanBanController::class, 'index'])->name('uj-ditahan-ban');
+                    Route::get('/uj-ditahan-ban/bukti/{detail}', [UjDitahanBanController::class, 'proof'])->name('uj-ditahan-ban.bukti');
+                    Route::get('/uj-ditahan-ban/{account}', [UjDitahanBanController::class, 'show'])->name('uj-ditahan-ban.show');
+                });
                 Route::get('/statistics/vehicles', [StatistikController::class, 'vendorStatisticsVehicles'])->middleware(EnsureVendorOperationalVehicle::class.':statistics')->name('statistics.vehicles');
             });
 

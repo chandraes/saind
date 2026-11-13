@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\TestWith;
 
 /**
- * Kas UJ Ditahan per nolam (web & mobile), baca saja: vendor-induk hanya nolam
- * vendornya yang tidak nonaktif, operasional semua nolam yang tidak nonaktif.
- * Mutasi yang tampil adalah seluruh mutasi nolam (semua driver), seperti ledger admin.
+ * Kas UJ Ditahan, baca saja. Web: halaman admin UJ Ditahan Sparepart | Ban yang
+ * sama, vendor-induk hanya nolam vendornya, operasional semua nolam. Mobile:
+ * seluruh mutasi satu nolam yang tidak nonaktif.
  */
 class NolamHeldCashTest extends MobileApiTestCase
 {
@@ -55,6 +55,9 @@ class NolamHeldCashTest extends MobileApiTestCase
                 $table->unsignedBigInteger('vehicle_id');
                 $table->integer('bulan');
                 $table->integer('tahun');
+                $table->bigInteger('total_masuk')->default(0);
+                $table->bigInteger('total_keluar')->default(0);
+                $table->bigInteger('saldo')->default(0);
             });
             Schema::create($ledger, function (Blueprint $table) use ($foreignKey): void {
                 $table->id();
@@ -71,9 +74,10 @@ class NolamHeldCashTest extends MobileApiTestCase
                 $table->timestamps();
             });
             DB::table($accounts)->insert([
-                ['id' => 1, 'vehicle_id' => 1, 'bulan' => 10, 'tahun' => 2026],
-                ['id' => 2, 'vehicle_id' => 1, 'bulan' => 12, 'tahun' => 2025],
-                ['id' => 3, 'vehicle_id' => 3, 'bulan' => 10, 'tahun' => 2026],
+                ['id' => 1, 'vehicle_id' => 1, 'bulan' => 10, 'tahun' => 2026, 'total_masuk' => 1700000, 'total_keluar' => 300000, 'saldo' => 1400000],
+                ['id' => 2, 'vehicle_id' => 1, 'bulan' => 12, 'tahun' => 2025, 'total_masuk' => 200000, 'total_keluar' => 0, 'saldo' => 200000],
+                ['id' => 3, 'vehicle_id' => 3, 'bulan' => 10, 'tahun' => 2026, 'total_masuk' => 70000, 'total_keluar' => 0, 'saldo' => 70000],
+                ['id' => 4, 'vehicle_id' => 2, 'bulan' => 10, 'tahun' => 2026, 'total_masuk' => 50000, 'total_keluar' => 0, 'saldo' => 50000],
             ]);
             foreach ([[1, 1, 'masuk', 800000, 'Setoran Driver Satu', null], [1, 2, 'masuk', 900000, 'Setoran Driver Dua', null],
                 [1, null, 'keluar', 300000, 'Pencairan Tanpa Driver', 'BRI'], [2, 1, 'masuk', 200000, 'Mutasi Tahun Lalu', null], [3, 2, 'masuk', 70000, 'Mutasi Nolam Lain', null]] as [$account, $owner, $type, $amount, $description, $bank]) {
@@ -124,7 +128,8 @@ class NolamHeldCashTest extends MobileApiTestCase
         $user = User::factory()->create(['username' => $role, 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => 1]);
         $this->getJson('/api/v1/vehicles/1/held-cash/sparepart', $this->headers($user))->assertForbidden();
         $this->getJson('/api/v1/me', $this->headers($user))->assertJsonPath('data.permissions.held_cash', false);
-        $this->actingAs($user)->get(route('vendor-operational.held-cash', 'sparepart'))->assertForbidden();
+        $this->actingAs($user)->get(route('vendor-operational.uj-ditahan'))->assertForbidden();
+        $this->actingAs($user)->get(route('vendor-operational.uj-ditahan-ban'))->assertForbidden();
     }
 
     public function test_me_grants_held_cash_to_induk_and_operasional(): void
@@ -133,25 +138,50 @@ class NolamHeldCashTest extends MobileApiTestCase
         $this->getJson('/api/v1/me', $this->headers($this->operasional))->assertJsonPath('data.permissions.held_cash', true);
     }
 
-    public function test_web_picker_lists_only_selectable_nolam_and_shows_the_full_ledger(): void
+    public function test_web_sparepart_matches_admin_pages_scoped_to_the_vendor(): void
     {
-        $this->actingAs($this->induk)->get(route('vendor-operational.held-cash', 'sparepart'))->assertOk()
-            ->assertSee('Pilih nolam terlebih dahulu')->assertSee('NOLAM-INDUK')->assertDontSee('NOLAM-NONAKTIF')->assertDontSee('NOLAM-LAIN');
-        $this->actingAs($this->operasional)->get(route('vendor-operational.held-cash', 'ban'))->assertOk()
-            ->assertSee('NOLAM-INDUK')->assertSee('NOLAM-LAIN — VENDOR LAIN')->assertDontSee('NOLAM-NONAKTIF');
+        $period = ['bulan' => 10, 'tahun' => 2026];
+        $this->actingAs($this->induk)->get(route('vendor-operational.uj-ditahan', $period))->assertOk()
+            ->assertSee('Rekapitulasi UJ Ditahan Sparepart')->assertSee('NOLAM-INDUK')->assertSee('NOLAM-NONAKTIF')->assertDontSee('NOLAM-LAIN')
+            ->assertSee('Rp 1.450.000')->assertSee(route('vendor-operational.uj-ditahan.show', 1), false)
+            ->assertDontSee('data-saldo=', false)->assertDontSee(route('billing.index'), false);
+        $this->actingAs($this->operasional)->get(route('vendor-operational.uj-ditahan', $period))->assertOk()
+            ->assertSee('NOLAM-INDUK')->assertSee('NOLAM-NONAKTIF')->assertSee('NOLAM-LAIN')->assertSee('Rp 1.520.000');
 
-        $this->actingAs($this->induk)->get(route('vendor-operational.held-cash', ['fund' => 'ban', 'vehicle_id' => 1, 'bulan' => 10, 'tahun' => 2026]))->assertOk()
+        $this->actingAs($this->induk)->get(route('vendor-operational.uj-ditahan.show', 1))->assertOk()
             ->assertSee('Setoran Driver Satu')->assertSee('Setoran Driver Dua')->assertSee('Pencairan Tanpa Driver')->assertSee('a.n Pemilik')
-            ->assertSee('Rp 1.600.000')->assertDontSee('Mutasi Nolam Lain')->assertDontSee('Cairkan Saldo')->assertDontSee('Batalkan');
-        $this->actingAs($this->induk)->get(route('vendor-operational.held-cash', ['fund' => 'ban', 'vehicle_id' => 3]))->assertNotFound();
-        $this->actingAs($this->operasional)->get(route('vendor-operational.held-cash', ['fund' => 'ban', 'vehicle_id' => 2]))->assertNotFound();
+            ->assertSee(route('vendor-operational.uj-ditahan', $period))
+            ->assertDontSee('Cairkan Saldo')->assertDontSee('Batalkan')->assertDontSee('Mutasi Nolam Lain');
+        $this->actingAs($this->induk)->get(route('vendor-operational.uj-ditahan.show', 3))->assertNotFound();
+        $this->actingAs($this->operasional)->get(route('vendor-operational.uj-ditahan.show', 3))->assertOk()->assertSee('Mutasi Nolam Lain');
+    }
+
+    public function test_web_ban_matches_admin_pages_scoped_to_the_vendor(): void
+    {
+        $ajax = ['X-Requested-With' => 'XMLHttpRequest'];
+        $period = ['bulan' => 10, 'tahun' => 2026];
+        $this->actingAs($this->induk)->get(route('vendor-operational.uj-ditahan-ban', $period))->assertOk()
+            ->assertSee('UJ Ditahan Ban')->assertSee(route('vendor-operational.uj-ditahan-ban', $period))->assertDontSee('Rekap saldo selesai');
+        $this->actingAs($this->induk)->getJson(route('vendor-operational.uj-ditahan-ban', $period), $ajax)->assertOk()
+            ->assertJsonCount(2, 'data')->assertJsonPath('data.0.kendaraan', 'NOLAM-INDUK')->assertJsonPath('data.1.kendaraan', 'NOLAM-NONAKTIF')
+            ->assertJsonPath('data.0.detail_url', route('vendor-operational.uj-ditahan-ban.show', 1))->assertJsonPath('data.0.cutoff', null)
+            ->assertJsonPath('totals.saldo', 1450000);
+        $this->actingAs($this->operasional)->getJson(route('vendor-operational.uj-ditahan-ban', $period), $ajax)->assertOk()
+            ->assertJsonCount(3, 'data')->assertJsonPath('totals.saldo', 1520000);
+
+        $this->actingAs($this->induk)->get(route('vendor-operational.uj-ditahan-ban.show', 1))->assertOk()
+            ->assertSee('NOLAM-INDUK')->assertDontSee('Cairkan saldo')->assertDontSee('withdraw-ban');
+        $this->actingAs($this->induk)->getJson(route('vendor-operational.uj-ditahan-ban.show', 1), $ajax)->assertOk()
+            ->assertJsonCount(3, 'data')->assertJsonPath('data.0.cancel_url', null)->assertJsonPath('totals.masuk', 1700000);
+        $this->actingAs($this->induk)->get(route('vendor-operational.uj-ditahan-ban.show', 3))->assertNotFound();
+        $this->actingAs($this->operasional)->get(route('vendor-operational.uj-ditahan-ban.show', 3))->assertOk();
     }
 
     public function test_dashboard_links_held_cash_for_induk_and_operasional(): void
     {
         foreach ([$this->induk, $this->operasional] as $user) {
             $this->actingAs($user)->get(route('home'))->assertOk()->assertSee('Kas UJ Ditahan')
-                ->assertSee(route('vendor-operational.held-cash', 'sparepart'), false)->assertSee(route('vendor-operational.held-cash', 'ban'), false);
+                ->assertSee(route('vendor-operational.uj-ditahan'), false)->assertSee(route('vendor-operational.uj-ditahan-ban'), false);
         }
     }
 }

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@php $heldCashArea = \App\Support\HeldCashArea::name(); @endphp
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12 text-center">
@@ -20,9 +21,11 @@
                     <a href="{{ route('home') }}" class="btn btn-outline-secondary">
                         <i class="fa fa-cloud me-2"></i> Dashboard
                     </a>
+                    @unless (\App\Support\HeldCashArea::readOnly())
                     <a href="{{ route('billing.index') }}" class="btn btn-outline-info">
                         <i class="fa fa-database me-2"></i> BILLING
                     </a>
+                    @endunless
                 </div>
             </div>
         </div>
@@ -126,7 +129,7 @@
         </div>
         <div class="card-body">
             <!-- Form Filter -->
-            <form action="{{ route('billing.uj-ditahan') }}" method="GET" class="mb-4">
+            <form action="{{ route($heldCashArea.'.uj-ditahan') }}" method="GET" class="mb-4">
                 <div class="row align-items-start">
                     <div class="col-md-3 mb-3">
                         <label for="bulan" class="form-label font-weight-bold">Filter Bulan</label>
@@ -188,7 +191,7 @@
                                 Rp {{ number_format($item->saldo, 0, ',', '.') }}
                             </td>
                             <td class="text-center align-middle">
-                                <a href="{{ route('billing.uj-ditahan.show', $item->id) }}" class="btn btn-sm btn-info text-white mb-1">
+                                <a href="{{ route($heldCashArea.'.uj-ditahan.show', $item->id) }}" class="btn btn-sm btn-info text-white mb-1">
                                     <i class="fa fa-list"></i> Detail
                                 </a>
                                 <!-- Tombol Form Cutoff -->

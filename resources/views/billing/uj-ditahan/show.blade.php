@@ -1,10 +1,11 @@
 @extends('layouts.app') <!-- Sesuaikan dengan layout Anda -->
 
 @section('content')
+@php $heldCashArea = \App\Support\HeldCashArea::name(); @endphp
+@php $readOnlyLedger = ($driverLedger ?? false) || \App\Support\HeldCashArea::readOnly(); @endphp
 <div class="container-fluid">
     @if ($driverLedger ?? false)
         <h1 class="h3 mb-3">Kas UJ Ditahan {{ $fundLabel }}</h1>
-        @if ($master->vehicle)
         <div class="card border-success bg-success bg-opacity-10 shadow-sm rounded-4 mb-4">
             <div class="card-body p-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div>
@@ -14,22 +15,10 @@
                 <div class="text-muted">{{ $activePeriodCount }} periode dengan saldo tertahan</div>
             </div>
         </div>
-        @endif
         <form method="get" class="card shadow-sm rounded-3 mb-4" aria-labelledby="ledger-period-title">
             <div class="card-body p-3 p-md-4">
-                <h2 id="ledger-period-title" class="h6 fw-bold mb-3"><i class="fa fa-calendar-o me-2 text-success" aria-hidden="true"></i>{{ isset($vehicleOptions) ? 'Nolam & Periode Mutasi' : 'Periode Mutasi' }}</h2>
+                <h2 id="ledger-period-title" class="h6 fw-bold mb-3"><i class="fa fa-calendar-o me-2 text-success" aria-hidden="true"></i>Periode Mutasi</h2>
                 <div class="row g-3 align-items-end">
-                    @isset($vehicleOptions)
-                    <div class="col-12 col-lg-4">
-                        <label for="vehicle_id" class="form-label">Nolam</label>
-                        <select id="vehicle_id" name="vehicle_id" class="form-select" required>
-                            <option value="">-- Pilih Nolam --</option>
-                            @foreach ($vehicleOptions as $option)
-                                <option value="{{ $option->id }}" @selected($master->vehicle?->id === $option->id)>{{ $option->nomor_lambung }}@if ($showVehicleVendor) — {{ $option->vendor?->nickname ?: $option->vendor?->nama }}@endif</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    @endisset
                     <div class="col-7 col-md-4 col-lg-3">
                         <label for="bulan" class="form-label">Bulan</label>
                         <select id="bulan" name="bulan" class="form-select" aria-describedby="held-balance-legend">
@@ -43,7 +32,7 @@
                         <input id="tahun" name="tahun" class="form-control" type="number" min="2000" max="2100" value="{{ $master->tahun }}">
                     </div>
                     <div class="col-12 col-md-auto d-grid">
-                        <button type="submit" class="btn btn-success"><i class="fa fa-filter me-2" aria-hidden="true"></i>{{ isset($vehicleOptions) ? 'Tampilkan' : 'Tampilkan periode' }}</button>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-filter me-2" aria-hidden="true"></i>Tampilkan periode</button>
                     </div>
                 </div>
                 <div id="held-balance-legend" class="small text-danger mt-3">&#10071; Ada saldo tertahan pada tahun yang ditampilkan</div>
@@ -54,9 +43,6 @@
     <!-- SweetAlert Session Handler dari layout/include -->
     @include('billing.form-maintenance.filter-oli.feedback')
 
-    @if ($master->vehicle === null)
-        <div class="alert alert-info" role="status"><i class="fa fa-truck me-2" aria-hidden="true"></i>Pilih nolam terlebih dahulu untuk melihat saldo dan mutasi Kas UJ Ditahan {{ $fundLabel }}.</div>
-    @else
     <!-- Header Card: Info Master -->
     <div class="card shadow mb-4 border-left-info">
         <div class="card-body">
@@ -91,13 +77,13 @@
                         <i class="fa fa-arrow-left"></i> Kembali ke Rekap
                     </a>
                 @else
-                    <a href="{{ route('billing.uj-ditahan') }}" class="btn btn-sm btn-secondary shadow-sm">
+                    <a href="{{ route($heldCashArea.'.uj-ditahan', ['bulan' => $master->bulan, 'tahun' => $master->tahun]) }}" class="btn btn-sm btn-secondary shadow-sm">
                         <i class="fa fa-arrow-left"></i> Kembali ke UJ Ditahan Sparepart
                     </a>
                 @endif
 
                 <!-- Tombol pencairan dengan Bootstrap 5 attributes -->
-                @if(!($driverLedger ?? false) && $master->saldo > 0)
+                @if(! $readOnlyLedger && $master->saldo > 0)
                 <button type="button" class="btn btn-sm btn-success shadow-sm ml-2" data-bs-toggle="modal" data-bs-target="#modalCairkan">
                     <i class="fa fa-money-bill-wave me-1"></i> Cairkan Saldo
                 </button>
@@ -115,7 +101,7 @@
                             <th width="15%">Info Rekening</th>
                             <th class="text-center" width="15%">Bukti Dokumen</th>
                             <th class="text-right text-success" width="15%">Masuk (+)</th>
-                            <th class="text-right text-danger" width="15%">Keluar (-)</th>@unless ($driverLedger ?? false)<th>Aksi</th>@endunless
+                            <th class="text-right text-danger" width="15%">Keluar (-)</th>@unless ($readOnlyLedger)<th>Aksi</th>@endunless
                         </tr>
                     </thead>
                     <tbody>
@@ -126,7 +112,7 @@
                             <!-- Colspan disesuaikan dari 4 menjadi 5 karena ada kolom baru -->
                             <td colspan="5" class="text-right">Total Kumulatif:</td>
                             <td class="text-right text-success">Rp {{ number_format($master->total_masuk, 0, ',', '.') }}</td>
-                            <td class="text-right text-danger">Rp {{ number_format($master->total_keluar, 0, ',', '.') }}</td>@unless ($driverLedger ?? false)<td></td>@endunless
+                            <td class="text-right text-danger">Rp {{ number_format($master->total_keluar, 0, ',', '.') }}</td>@unless ($readOnlyLedger)<td></td>@endunless
                         </tr>
                     </tfoot>
                 </table>
@@ -134,11 +120,10 @@
             </div>
         </div>
     </div>
-    @endif
 </div>
 
 <!-- Modal Pencairan Saldo (Dikunci dengan static backdrop) -->
-@if(!($driverLedger ?? false) && $master->saldo > 0)
+@if(! $readOnlyLedger && $master->saldo > 0)
 <div class="modal fade" id="modalCairkan" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalCairkanLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <form id="formPencairan" action="{{ route('billing.uj-ditahan.cairkan') }}" method="POST" enctype="multipart/form-data">
@@ -319,18 +304,6 @@
 
 @endunless
 
-@isset($vehicleOptions)
-@push('css')
-<link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.bootstrap5.css') }}">
-@endpush
-@push('js')
-<script src="{{ asset('assets/plugins/select2/select2.full.min.js') }}"></script>
-<script>
-    $(function () { $('#vehicle_id').select2({theme: 'bootstrap-5', width: '100%', placeholder: '-- Pilih Nolam --'}); });
-</script>
-@endpush
-@endisset
 @if ($driverLedger ?? false)
 @push('js')
 <script src="{{ asset('assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
