@@ -9,7 +9,6 @@ use App\Http\Requests\StoreScannedLoadNoteRequest;
 use App\Http\Resources\MobileLoadNoteDraftResource;
 use App\Http\Resources\MobileVehicleResource;
 use App\Models\LoadNoteDraft;
-use App\Models\Vehicle;
 use App\Services\LoadNoteDraftService;
 use App\Services\LoadNoteMatcher;
 use App\Services\MobileNotePayment;
@@ -43,7 +42,7 @@ class LoadNoteDraftController extends Controller
     {
         $this->authorize('create', LoadNoteDraft::class);
         $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
-        $query = Vehicle::select(['id', 'nomor_lambung', 'vendor_id', 'status'])->where('vendor_id', $request->user()->vendor_id);
+        $query = $request->user()->noteVehicles()->select(['id', 'nomor_lambung', 'vendor_id', 'status']);
         if (($filters['search'] ?? '') !== '') {
             $query->where('nomor_lambung', 'like', '%'.$filters['search'].'%');
         }

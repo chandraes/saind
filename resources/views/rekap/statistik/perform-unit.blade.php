@@ -15,13 +15,14 @@
             <a href="{{route('home')}}" class="btn btn-outline-secondary">
                 <i class="fa fa-tachometer-alt me-1"></i> Dashboard
             </a>
-            @if (!in_array(auth()->user()->role, ['vendor', 'vendor-induk', 'operasional', 'asisten-user', 'vendor-operational']))
+            @if (!in_array(auth()->user()->role, ['vendor', 'vendor-induk', 'operasional', 'asisten-user', 'vendor-operational', 'driver']))
             <a href="{{route('statisik.index')}}" class="btn btn-outline-secondary">
                 <i class="fa fa-chart-bar me-1"></i> STATISTIK
             </a>
             @endif
 
 
+            @unless (auth()->user()->isDriver())
             <form id="printForm" target="_blank" action="{{route('statistik.perform-unit.print')}}" method="get"
                 class="d-inline">
                 <input type="hidden" name="start_date" value="{{$start_date}}">
@@ -31,6 +32,7 @@
                     <i class="fa fa-print me-1"></i> Print Perform Unit
                 </button>
             </form>
+            @endunless
         </div>
     </div>
 
@@ -151,7 +153,7 @@
                         <input type="date" class="form-control" name="end_date" id="end_date" value="{{$end_date}}">
                     </div>
                     @endisset
-                    @if (!auth()->user()->isVendorAccount())
+                    @if (!auth()->user()->readsVendorStatistics())
                     <div class="col-md-3">
                         <label for="vendor" class="form-label fw-bold small text-muted">Filter Vendor <span
                                 class="text-danger small">*Wajib untuk Print</span></label>

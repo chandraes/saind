@@ -13,6 +13,8 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DatabaseController;
 use App\Http\Controllers\DireksiController;
 use App\Http\Controllers\DokumenController;
+use App\Http\Controllers\DriverHeldCashController;
+use App\Http\Controllers\DriverNotesController;
 use App\Http\Controllers\FilterOliGantiController;
 use App\Http\Controllers\FilterOliReportController;
 use App\Http\Controllers\FormBarangController;
@@ -92,6 +94,14 @@ Auth::routes([
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/mobile/ruang-kerja', [MobileConnectionController::class, 'show'])->name('mobile.workspace.show');
+
+    Route::prefix('driver')->name('driver.')->middleware('role:driver')->controller(DriverNotesController::class)->group(function (): void {
+        Route::get('nota/{kind}', 'index')->whereIn('kind', ['muat', 'bongkar'])->name('notes');
+        Route::get('nota/{kind}/{id}', 'show')->whereIn('kind', ['muat', 'bongkar'])->whereNumber('id')->name('notes.show');
+    });
+
+    Route::get('driver/kas-uj-ditahan/{fund}', DriverHeldCashController::class)
+        ->whereIn('fund', ['sparepart', 'ban'])->middleware('role:driver')->name('driver.held-cash');
 
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -553,9 +563,9 @@ Route::group(['middleware' => ['auth']], function () {
 
     });
 
-    Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational'], function () {
+    Route::group(['middleware' => 'role:admin,user,su,asisten-user,vendor,operasional,vendor-operational,driver'], function () {
         Route::middleware(EnsureVendorOperationalVehicle::class.':statistics')->group(function (): void {
-            Route::get('/statistik/upah-gendong', [StatistikController::class, 'upah_gendong'])->middleware('role:admin,user,su,vendor,vendor-operational,operasional')->name('statistik.upah-gendong');
+            Route::get('/statistik/upah-gendong', [StatistikController::class, 'upah_gendong'])->middleware('role:admin,user,su,vendor,vendor-operational,operasional,driver')->name('statistik.upah-gendong');
             Route::prefix('statistik/perform-unit')->group(function () {
                 Route::get('/', [StatistikController::class, 'perform_unit'])->name('statistik.perform-unit');
                 Route::get('/print', [StatistikController::class, 'perform_unit_print'])->name('statistik.perform-unit.print');

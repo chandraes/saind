@@ -12,7 +12,7 @@
             <a href="{{ route('home') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/dashboard.svg') }}" width="18" alt="Dashboard"> Dashboard
             </a>
-            @if (!in_array(auth()->user()->role, ['asisten-user', 'operasional', 'vendor', 'vendor-induk', 'vendor-operational']) )
+            @if (!in_array(auth()->user()->role, ['asisten-user', 'operasional', 'vendor', 'vendor-induk', 'vendor-operational', 'driver']) )
             <a href="{{ route('rekap.index') }}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
                 <img src="{{ asset('images/rekap.svg') }}" width="18" alt="Rekap"> Rekap
             </a>
@@ -189,7 +189,7 @@
         $(document).on('click', '.show-transaksi', function() {
             var banLogId = $(this).data('id');
             var tbody = $('#tbodyDetailRitase');
-            @if (auth()->user()->isVendorAccount())
+            @if (auth()->user()->readsVendorStatistics())
             vendorStatisticsAudit($('#modalDetailRitase .modal-body'), @json(route('statistik.ban-luar.transaksi-ritase', ['banLogId' => 'LOGID'])).replace('LOGID', banLogId), false);
             $('#modalDetailRitase').modal('show');
             return;

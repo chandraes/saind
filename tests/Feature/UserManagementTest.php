@@ -31,8 +31,9 @@ class UserManagementTest extends TestCase
             $table->timestamps();
             $table->unsignedBigInteger('vendor_id')->nullable();
             $table->unsignedBigInteger('customer_id')->nullable();
+            $table->unsignedBigInteger('driver_id')->nullable()->unique();
         });
-        foreach (['vendors', 'customers'] as $name) {
+        foreach (['vendors', 'customers', 'drivers'] as $name) {
             Schema::create($name, function (Blueprint $table): void {
                 $table->id();
                 $table->string('nama');
@@ -41,6 +42,136 @@ class UserManagementTest extends TestCase
         }
         View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
         $this->withoutVite();
+    }
+
+    public function test_admin_links_only_one_account_per_driver(): void
+    {
+        $driverId = DB::table('drivers')->insertGetId(['nama' => 'Driver A', 'status' => 'aktif']);
+        $this->actingAs($this->user());
+        $payload = $this->payload(['role' => 'driver', 'driver_id' => $driverId, 'vendor_id' => 99]);
+
+        $this->postJson(route('pengguna.store'), $payload)->assertOk();
+        $user = User::where('username', $payload['username'])->firstOrFail();
+        $this->assertTrue($user->isDriver());
+        $this->assertSame($driverId, $user->driver->id);
+        $this->assertNull($user->vendor_id);
+        $this->postJson(route('pengguna.store'), array_replace($payload, ['username' => 'lain']))
+            ->assertUnprocessable()->assertJsonValidationErrors('driver_id');
+    }
+
+    public function test_driver_requires_active_assignment_and_loses_access_when_disabled(): void
+    {
+        Schema::create('vehicles', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('driver_id')->unique();
+            $table->string('nomor_lambung')->default('288');
+            $table->string('status');
+        });
+        $driverId = DB::table('drivers')->insertGetId(['nama' => 'Driver A', 'status' => 'aktif']);
+        $user = $this->user('driver', ['driver_id' => $driverId]);
+        $credentials = ['username' => $user->username, 'password' => 'secret123'];
+
+        $this->post(route('login'), $credentials)->assertSessionHasErrors('username');
+        $this->assertGuest();
+        DB::table('vehicles')->insert(['driver_id' => $driverId, 'status' => 'nonaktif']);
+        $this->post(route('login'), $credentials)->assertSessionHasErrors('username');
+        $this->assertGuest();
+
+        DB::table('vehicles')->where('driver_id', $driverId)->update(['status' => 'proses']);
+        $this->post(route('login'), $credentials)->assertRedirect(route('home'));
+        $this->assertAuthenticatedAs($user);
+        $this->get(route('home'))->assertOk()->assertSee('Dashboard Driver')->assertSee('Kas UJ Ditahan')
+            ->assertSee('class="navbar-brand" href="'.route('home').'"', false);
+        Schema::create('load_note_drafts', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vehicle_id');
+            $table->string('ticket_number');
+            $table->string('status');
+        });
+        $vehicleId = DB::table('vehicles')->where('driver_id', $driverId)->value('id');
+        DB::table('load_note_drafts')->insert([
+            ['id' => 10, 'vehicle_id' => $vehicleId, 'ticket_number' => 'NOTA-DRIVER', 'status' => 'processed'],
+            ['id' => 20, 'vehicle_id' => $vehicleId + 1, 'ticket_number' => 'NOTA-UNIT-LAIN', 'status' => 'processed'],
+        ]);
+        $this->getJson(route('driver.notes', 'muat'))->assertOk()->assertSee('NOTA-DRIVER')->assertDontSee('NOTA-UNIT-LAIN');
+        $this->get(route('driver.notes', 'muat'))->assertOk()->assertSee('NOTA-DRIVER');
+        $this->get(route('driver.notes.show', ['muat', 10]))->assertOk()->assertSee('NOTA-DRIVER')->assertSee('UJ Ditahan Ban');
+        $this->get(route('driver.notes.show', ['muat', 20]))->assertNotFound();
+        $this->patch(route('transaksi.nota-bongkar.update', 20))->assertForbidden();
+
+        Schema::create('kas_uang_jalans', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vehicle_id');
+        });
+        Schema::create('transaksis', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('kas_uang_jalan_id');
+            $table->integer('status');
+            $table->boolean('void');
+            $table->string('nota_muat');
+            $table->string('nota_bongkar')->nullable();
+        });
+        DB::table('kas_uang_jalans')->insert([
+            ['id' => 11, 'vehicle_id' => $vehicleId],
+            ['id' => 22, 'vehicle_id' => $vehicleId + 1],
+        ]);
+        DB::table('transaksis')->insert([
+            ['id' => 30, 'kas_uang_jalan_id' => 11, 'status' => 2, 'void' => 0, 'nota_muat' => 'MUAT-DRIVER', 'nota_bongkar' => null],
+            ['id' => 40, 'kas_uang_jalan_id' => 22, 'status' => 2, 'void' => 0, 'nota_muat' => 'MUAT-UNIT-LAIN', 'nota_bongkar' => null],
+        ]);
+        DB::table('transaksis')->insert([
+            ['id' => 50, 'kas_uang_jalan_id' => 11, 'status' => 3, 'void' => 0, 'nota_muat' => 'SUDAH-BONGKAR', 'nota_bongkar' => 'SELESAI'],
+            ['id' => 60, 'kas_uang_jalan_id' => 11, 'status' => 2, 'void' => 1, 'nota_muat' => 'NOTA-VOID', 'nota_bongkar' => null],
+        ]);
+        $this->getJson(route('driver.notes', 'bongkar'))->assertOk()->assertSee('MUAT-DRIVER')->assertDontSee('MUAT-UNIT-LAIN')->assertDontSee('SUDAH-BONGKAR')->assertDontSee('NOTA-VOID');
+        $this->get(route('driver.notes', 'bongkar'))->assertOk()->assertSee('MUAT-DRIVER')
+            ->assertSee('Detail Nota Bongkar')->assertDontSee('MUAT-UNIT-LAIN')->assertDontSee('SUDAH-BONGKAR')->assertDontSee('NOTA-VOID');
+        $this->get(route('driver.notes.show', ['bongkar', 40]))->assertNotFound();
+        $this->get(route('driver.notes.show', ['bongkar', 50]))->assertNotFound();
+
+        Schema::create('uj_ditahan_payout_cancellations', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('detail_id');
+            $table->string('fund');
+        });
+        foreach (['sparepart' => 'uj_ditahans', 'ban' => 'uj_ditahan_bans'] as $fund => $accounts) {
+            $foreignKey = $fund === 'ban' ? 'uj_ditahan_ban_id' : 'uj_ditahan_id';
+            $ledger = $fund === 'ban' ? 'uj_ditahan_ban_details' : 'uj_ditahan_details';
+            Schema::create($accounts, function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('vehicle_id');
+                $table->integer('bulan');
+                $table->integer('tahun');
+            });
+            Schema::create($ledger, function (Blueprint $table) use ($foreignKey): void {
+                $table->id();
+                $table->unsignedBigInteger($foreignKey);
+                $table->unsignedBigInteger('driver_id');
+                $table->string('jenis');
+                $table->integer('nominal');
+                $table->string('keterangan');
+                $table->timestamps();
+            });
+            DB::table($accounts)->insert(['id' => 1, 'vehicle_id' => $vehicleId, 'bulan' => 10, 'tahun' => 2026]);
+            foreach ([[$driverId, 'masuk', 800000, 'Setoran Driver'], [$driverId, 'keluar', 300000, 'Pencairan Driver'], [$driverId + 1, 'masuk', 900000, 'Mutasi Driver Lain']] as [$owner, $type, $amount, $description]) {
+                DB::table($ledger)->insert([$foreignKey => 1, 'driver_id' => $owner, 'jenis' => $type, 'nominal' => $amount, 'keterangan' => $description, 'created_at' => now()]);
+            }
+            DB::table($accounts)->insert(['id' => 2, 'vehicle_id' => $vehicleId, 'bulan' => 12, 'tahun' => 2025]);
+            DB::table($ledger)->insert([$foreignKey => 2, 'driver_id' => $driverId, 'jenis' => 'masuk',
+                'nominal' => 200000, 'keterangan' => 'Mutasi Tahun Lalu', 'created_at' => now()]);
+            $url = route('driver.held-cash', ['fund' => $fund, 'bulan' => 10, 'tahun' => 2026]);
+            $this->get($url)->assertOk()->assertSee('Rp 500.000')->assertSee('Ada saldo tertahan')->assertSee('Rp 700.000')->assertDontSee('Mutasi Tahun Lalu')->assertSee('Pencairan Driver')
+                ->assertDontSee('Mutasi Driver Lain')->assertDontSee('Cairkan Saldo');
+            $this->getJson($url)->assertOk()->assertJsonPath('next', null);
+        }
+
+        $this->get(route('pengguna.index'))->assertForbidden();
+
+        DB::table('drivers')->where('id', $driverId)->update(['status' => 'non_aktif']);
+        $this->get(route('home'))->assertRedirect(route('login'));
+        $this->assertGuest();
+        $this->post(route('login'), $credentials)->assertSessionHasErrors('username');
+        $this->assertGuest();
     }
 
     private function user(string $role = 'admin', array $attributes = []): User

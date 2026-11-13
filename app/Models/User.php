@@ -3,7 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,6 +27,7 @@ class User extends Authenticatable
         'password',
         'vendor_id',
         'customer_id',
+        'driver_id',
     ];
 
     /**
@@ -121,6 +124,47 @@ class User extends Authenticatable
     public function canViewVendorFinance(): bool
     {
         return $this->isVendorOwner();
+    }
+
+    public function isDriver(): bool
+    {
+        return $this->role === 'driver';
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class);
+    }
+
+    public function activeDriverVehicle(): ?Vehicle
+    {
+        if (! $this->isDriver() || $this->driver_id === null || ! $this->driver()->where('status', 'aktif')->exists()) {
+            return null;
+        }
+
+        return Vehicle::where('driver_id', $this->driver_id)->where('status', '!=', 'nonaktif')->first();
+    }
+
+    /**
+     * Statistik & maintenance versi vendor (baca saja, satu nolam): akun vendor
+     * dan driver (dikunci ke nolam yang sedang ditugaskan).
+     */
+    public function readsVendorStatistics(): bool
+    {
+        return $this->isVendorAccount() || $this->isDriver();
+    }
+
+    /** Vendor pemilik data akun: vendor akun, atau vendor nolam yang ditugaskan ke driver. */
+    public function effectiveVendorId(): ?int
+    {
+        return $this->isDriver() ? $this->activeDriverVehicle()?->vendor_id : $this->vendor_id;
+    }
+
+    /** Nolam yang boleh dipakai akun untuk nota muat: milik vendor akun, atau hanya nolam driver. */
+    public function noteVehicles(): Builder
+    {
+        return Vehicle::query()->where('vehicles.vendor_id', $this->effectiveVendorId())
+            ->when($this->isDriver(), fn (Builder $query): Builder => $query->where('vehicles.driver_id', $this->driver_id));
     }
 
     public function vendor()

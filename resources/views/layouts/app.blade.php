@@ -45,7 +45,7 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-dark shadow-sm" style="background-color: {{ $global_app_nav_bg }};">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
+                <a class="navbar-brand" href="{{ auth()->check() ? route('home') : url('/') }}">
                     @if ($global_app_logo)
                     <img src="{{ $global_app_logo }}" alt="{{ $global_app_name }}" class="img-responsive" width="80">
                     @else

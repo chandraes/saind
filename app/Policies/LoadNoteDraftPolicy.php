@@ -36,6 +36,11 @@ class LoadNoteDraftPolicy
 
     public function viewAny(User $user): bool
     {
+        // Driver: hanya selama masih memegang nolam aktif.
+        if ($user->isDriver()) {
+            return $user->activeDriverVehicle() !== null;
+        }
+
         return in_array($user->role, config('mobile.load_note_roles', []), true)
             && $user->vendor_id !== null && $user->vendor()->exists();
     }
@@ -53,6 +58,7 @@ class LoadNoteDraftPolicy
 
     public function view(User $user, LoadNoteDraft $note): bool
     {
-        return $this->viewAny($user) && (int) $user->vendor_id === $note->vendor_id;
+        return $this->viewAny($user) && (int) $user->effectiveVendorId() === $note->vendor_id
+            && (! $user->isDriver() || $note->vehicle_id === $user->activeDriverVehicle()?->getKey());
     }
 }

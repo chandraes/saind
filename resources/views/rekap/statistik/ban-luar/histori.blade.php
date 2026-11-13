@@ -83,7 +83,7 @@
                 <table class="table table-bordered table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
                     <thead class="table-dark">
                         <tr>
-                            @if (auth()->user()->isVendorAccount())<th>No</th>@endif
+                            @if (auth()->user()->readsVendorStatistics())<th>No</th>@endif
                             <th class="text-center">MEREK</th>
                             <th class="text-center">NO. SERI BAN</th>
                             <th class="text-center">KONDISI BAN</th>
@@ -152,7 +152,7 @@
           $(document).on('click', '.show-transaksi', function() {
             var banLogId = $(this).data('id');
             var tbody = $('#tbodyDetailRitase');
-            @if (auth()->user()->isVendorAccount())
+            @if (auth()->user()->readsVendorStatistics())
             vendorStatisticsAudit($('#modalDetailRitase .modal-body'), @json(route('statistik.ban-luar.transaksi-ritase', ['banLogId' => 'LOGID'])).replace('LOGID', banLogId), false);
             $('#modalDetailRitase').modal('show');
             return;
@@ -265,7 +265,7 @@
         }
 
         @endif
-        @if (auth()->user()->isVendorAccount())
+        @if (auth()->user()->readsVendorStatistics())
         columns.unshift({data: null, render: (data, type, row, meta) => meta.row + 1});
         vendorStatisticsTable('#rekapTable', {columns: columns,
             url: @json(route('statistik.ban-luar.histori-data')),

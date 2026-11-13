@@ -236,7 +236,8 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         $this->getJson('/api/v1/unloading-notes?vendor_id=999', $headers)->assertUnprocessable();
         $this->getJson('/api/v1/vendor-options', $headers)->assertOk()->assertJsonPath('data.*.name', ['Vendor A', 'Vendor B']);
         // Hanya membaca: tidak bisa scan atau mengirim nota muat.
-        $this->postJson('/api/v1/load-notes', [], $headers)->assertForbidden();
+        // Kirim manual ditutup untuk semua role (hanya lewat scan).
+        $this->postJson('/api/v1/load-notes', [], $headers)->assertMethodNotAllowed();
         $this->postJson('/api/v1/load-notes/inspect', [], $headers)->assertForbidden();
         $this->getJson('/api/v1/load-notes/vehicles', $headers)->assertForbidden();
         // Vendor biasa tidak boleh memakai filter vendor operasional.

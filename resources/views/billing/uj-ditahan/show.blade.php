@@ -2,6 +2,42 @@
 
 @section('content')
 <div class="container-fluid">
+    @if ($driverLedger ?? false)
+        <h1 class="h3 mb-3">Kas UJ Ditahan {{ $fundLabel }}</h1>
+        <div class="card border-success bg-success bg-opacity-10 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <div class="fw-semibold mb-1"><i class="fa fa-credit-card me-2" aria-hidden="true"></i>Total Saldo Semua Periode</div>
+                    <div class="h2 fw-bold mb-0">Rp {{ number_format($totalBalance, 0, ',', '.') }}</div>
+                </div>
+                <div class="text-muted">{{ $activePeriodCount }} periode dengan saldo tertahan</div>
+            </div>
+        </div>
+        <form method="get" class="card shadow-sm rounded-3 mb-4" aria-labelledby="ledger-period-title">
+            <div class="card-body p-3 p-md-4">
+                <h2 id="ledger-period-title" class="h6 fw-bold mb-3"><i class="fa fa-calendar-o me-2 text-success" aria-hidden="true"></i>Periode Mutasi</h2>
+                <div class="row g-3 align-items-end">
+                    <div class="col-7 col-md-4 col-lg-3">
+                        <label for="bulan" class="form-label">Bulan</label>
+                        <select id="bulan" name="bulan" class="form-select" aria-describedby="held-balance-legend">
+                            @foreach (range(1, 12) as $month)
+                                <option value="{{ $month }}" @selected($master->bulan === $month)>{{ now()->startOfMonth()->month($month)->translatedFormat('F') }}{{ in_array($month, $activeBalanceMonths, true) ? ' ❗' : '' }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-5 col-md-3 col-lg-2">
+                        <label for="tahun" class="form-label">Tahun</label>
+                        <input id="tahun" name="tahun" class="form-control" type="number" min="2000" max="2100" value="{{ $master->tahun }}">
+                    </div>
+                    <div class="col-12 col-md-auto d-grid">
+                        <button type="submit" class="btn btn-success"><i class="fa fa-filter me-2" aria-hidden="true"></i>Tampilkan periode</button>
+                    </div>
+                </div>
+                <div id="held-balance-legend" class="small text-danger mt-3">&#10071; Ada saldo tertahan pada tahun yang ditampilkan</div>
+                @if ($errors->any())<p class="text-danger mt-2 mb-0" role="alert">{{ $errors->first() }}</p>@endif
+            </div>
+        </form>
+    @endif
     <!-- SweetAlert Session Handler dari layout/include -->
     @include('billing.form-maintenance.filter-oli.feedback')
 
@@ -32,7 +68,9 @@
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Rincian Transaksi (Ledger)</h6>
             <div>
-                @if(request('from') == 'rekap')
+                @if ($driverLedger ?? false)
+                    <a href="{{ route('home') }}" class="btn btn-sm btn-secondary">Kembali ke Dashboard</a>
+                @elseif(request('from') == 'rekap')
                     <a href="{{ route('rekap.uj-ditahan') }}" class="btn btn-sm btn-secondary shadow-sm">
                         <i class="fa fa-arrow-left"></i> Kembali ke Rekap
                     </a>
@@ -43,7 +81,7 @@
                 @endif
 
                 <!-- Tombol pencairan dengan Bootstrap 5 attributes -->
-                @if($master->saldo > 0)
+                @if(!($driverLedger ?? false) && $master->saldo > 0)
                 <button type="button" class="btn btn-sm btn-success shadow-sm ml-2" data-bs-toggle="modal" data-bs-target="#modalCairkan">
                     <i class="fa fa-money-bill-wave me-1"></i> Cairkan Saldo
                 </button>
@@ -52,7 +90,7 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                <table @if ($driverLedger ?? false) id="note-inbox-table" @endif class="table table-bordered table-hover" width="100%" cellspacing="0">
                     <thead class="table-success">
                         <tr>
                             <th class="text-center" width="5%">No</th>
@@ -61,81 +99,29 @@
                             <th width="15%">Info Rekening</th>
                             <th class="text-center" width="15%">Bukti Dokumen</th>
                             <th class="text-right text-success" width="15%">Masuk (+)</th>
-                            <th class="text-right text-danger" width="15%">Keluar (-)</th><th>Aksi</th>
+                            <th class="text-right text-danger" width="15%">Keluar (-)</th>@unless ($driverLedger ?? false)<th>Aksi</th>@endunless
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($details as $d)
-                        <tr>
-                            <td class="text-center align-middle">{{ $loop->iteration }}</td>
-                            <td class="align-middle">{{ $d->created_at->format('d-m-Y') }}</td>
-                            <td class="align-middle">
-                                {{ $d->keterangan }}
-                                @if($d->payout_origin === 'payout_reversal')<div><span class="badge bg-primary">Transaksi pembalik</span></div>@endif
-                                @if($d->cancellation)
-                                    <div class="mt-2"><span class="badge bg-danger">Dibatalkan</span><div class="small text-muted mt-1">{{ $d->cancellation->reason }}<br>Oleh {{ $d->cancellation->actor?->name ?? '-' }} · {{ $d->cancellation->created_at->format('d-m-Y H:i') }}</div></div>
-                                @endif
-                                @if($d->driver)
-                                    <br><small class="text-muted">Driver: {{ $d->driver->nama }}</small>
-                                @endif
-                            </td>
-                            <td class="align-middle">
-                                @if($d->bank && $d->no_rekening)
-                                    <strong>{{ $d->bank }}</strong> - {{ $d->no_rekening }}<br>
-                                    <small>a.n {{ $d->nama_rekening }}</small>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-
-                            <!-- Kolom Bukti PDF Baru -->
-                            <td class="text-center align-middle">
-                                @if($d->file_pdf)
-                                    <a href="{{ Storage::url($d->file_pdf) }}" target="_blank" class="btn btn-sm btn-outline-danger shadow-sm" title="Lihat Dokumen PDF">
-                                        <i class="fa fa-file me-1"></i> PDF
-                                    </a>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-
-                            <!-- Kolom Uang Masuk -->
-                            <td class="text-right align-middle font-weight-bold text-success">
-                                {{ $d->jenis == 'masuk' ? 'Rp ' . number_format($d->nominal, 0, ',', '.') : '-' }}
-                            </td>
-
-                            <!-- Kolom Uang Keluar -->
-                            <td class="text-right align-middle font-weight-bold text-danger">
-                                {{ $d->jenis == 'keluar' ? 'Rp ' . number_format($d->nominal, 0, ',', '.') : '-' }}
-                            </td>
-                            <td class="align-middle">
-                                @if(in_array(auth()->user()?->role, ['admin', 'su'], true) && $d->isManualPayout() && ! $d->cancellation)
-                                <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" data-payout-cancel-url="{{ route('billing.uj-ditahan.cancel', ['fund' => 'sparepart', 'detail' => $d->id]) }}" data-payout-amount="Rp {{ number_format($d->nominal, 0, ',', '.') }}"><i class="fa fa-undo me-1" aria-hidden="true"></i>Batalkan</button>
-                                @else<span class="text-muted">—</span>@endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center py-4">Belum ada histori transaksi untuk data ini.</td>
-                        </tr>
-                        @endforelse
+                        @include('billing.uj-ditahan.ledger-rows')
                     </tbody>
                     <tfoot class="table-light font-weight-bold">
                         <tr>
                             <!-- Colspan disesuaikan dari 4 menjadi 5 karena ada kolom baru -->
                             <td colspan="5" class="text-right">Total Kumulatif:</td>
                             <td class="text-right text-success">Rp {{ number_format($master->total_masuk, 0, ',', '.') }}</td>
-                            <td class="text-right text-danger">Rp {{ number_format($master->total_keluar, 0, ',', '.') }}</td><td></td>
+                            <td class="text-right text-danger">Rp {{ number_format($master->total_keluar, 0, ',', '.') }}</td>@unless ($driverLedger ?? false)<td></td>@endunless
                         </tr>
                     </tfoot>
                 </table>
+                @if ($driverLedger ?? false)<div id="note-inbox-loading" role="status" class="text-center py-2" data-next="{{ $details->nextPageUrl() }}"></div>@endif
             </div>
         </div>
     </div>
 </div>
 
 <!-- Modal Pencairan Saldo (Dikunci dengan static backdrop) -->
-@if($master->saldo > 0)
+@if(!($driverLedger ?? false) && $master->saldo > 0)
 <div class="modal fade" id="modalCairkan" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalCairkanLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <form id="formPencairan" action="{{ route('billing.uj-ditahan.cairkan') }}" method="POST" enctype="multipart/form-data">
@@ -201,6 +187,7 @@
 @include('billing.uj-ditahan.payout-cancellation')
 @endsection
 
+@unless ($driverLedger ?? false)
 @push('js')
 <!-- JavaScript Inisialisasi Cleave.js & SweetAlert -->
 <script>
@@ -312,3 +299,13 @@
     });
 </script>
 @endpush
+
+@endunless
+
+@if ($driverLedger ?? false)
+@push('js')
+<script src="{{ asset('assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('assets/js/incremental-data-table.js') }}"></script>
+<script src="{{ asset('assets/js/load-note-inbox.js') }}"></script>
+@endpush
+@endif

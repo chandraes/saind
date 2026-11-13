@@ -41,7 +41,7 @@ class BanController extends Controller
 
         // UPDATE: Tambahkan 'id' di dalam select
         $banLogs = BanLog::where('vehicle_id', $request->vehicle_id)
-            ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('id', function ($latest) {
+            ->when($request->user()->readsVendorStatistics(), fn ($query) => $query->where('id', function ($latest) {
                 $latest->from('ban_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'ban_logs.vehicle_id')->whereColumn('latest.posisi_ban_id', 'ban_logs.posisi_ban_id')->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
             }))
             ->select('id', 'posisi_ban_id', 'merk', 'no_seri', 'kondisi', 'ritase', 'created_at')
@@ -89,8 +89,8 @@ class BanController extends Controller
                 'ban_log_transaksis.created_at'
             )
             ->orderBy('kas_uang_jalans.tanggal', 'desc')->orderByDesc('transaksis.id');
-        if ($request->user()->isVendorAccount()) {
-            $transaksis->where('kas_uang_jalans.vendor_id', $request->user()->vendor_id)->where('kas_uang_jalans.vehicle_id', BanLog::findOrFail($banLogId)->vehicle_id);
+        if ($request->user()->readsVendorStatistics()) {
+            $transaksis->where('kas_uang_jalans.vendor_id', $request->user()->effectiveVendorId())->where('kas_uang_jalans.vehicle_id', BanLog::findOrFail($banLogId)->vehicle_id);
             $total = (clone $transaksis)->count();
 
             return response()->json(['data' => $transaksis->offset(max(0, $request->integer('start')))->limit(25)->get(), 'recordsFiltered' => $total]);

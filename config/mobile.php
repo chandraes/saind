@@ -23,5 +23,5 @@ return [
     ],
     'load_note_roles' => ['vendor', 'vendor-induk', 'vendor-operational'],
     'database_roles' => ['admin', 'su'],
-    'roles' => ['admin', 'su', 'user', 'asisten-user', 'vendor', 'vendor-induk', 'vendor-operational', 'operasional'],
+    'roles' => ['admin', 'su', 'user', 'asisten-user', 'vendor', 'vendor-induk', 'vendor-operational', 'operasional', 'driver'],
 ];

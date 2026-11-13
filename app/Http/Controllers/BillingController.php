@@ -6,7 +6,6 @@ use App\Http\Requests\CheckoutBanGantiRequest;
 use App\Models\AchievementHistory;
 use App\Models\AkiGantiInvoice;
 use App\Models\AkiGantiInvoiceDetail;
-use App\Models\AkiLog;
 use App\Models\BanGantiCart;
 use App\Models\BanGantiInvoice;
 use App\Models\BanGantiInvoiceDetail;
@@ -36,11 +35,11 @@ use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
 use App\Services\KasBesarService;
-use App\Services\MaintenanceLogWriter;
 use App\Services\KasVendorService;
 use App\Services\MaintenanceAuthorizationService;
 use App\Services\MaintenanceBanUjDitahanService;
 use App\Services\MaintenanceKasBesarWhatsAppService;
+use App\Services\MaintenanceLogWriter;
 use App\Services\MaintenanceUjDitahanService;
 use App\Services\PayrollService;
 use App\Services\UjDitahanWhatsAppService;
@@ -860,6 +859,7 @@ class BillingController extends Controller
                 'uj_ditahan_id' => $master->id,
                 'jenis' => 'keluar',
                 'payout_origin' => 'manual',
+                'driver_id' => $master->vehicle?->driver_id,
                 'nominal' => $nominalCair,
                 'keterangan' => $request->keterangan,
                 'bank' => $request->bank,

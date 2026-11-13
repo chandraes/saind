@@ -2,20 +2,33 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Api\LoadNoteDraftController;
+use App\Http\Middleware\EnsureMobileToken;
+use App\Http\Middleware\EnsureMobileVendorContext;
+use App\Http\Middleware\EnsureMobileWorkspace;
 use App\Models\LoadNoteDraft;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+/**
+ * Kirim nota muat manual (POST load-notes) sedang DITUTUP di routes/api.php
+ * karena dari mobile nota hanya boleh lewat scan. Rute diaktifkan hanya di tes
+ * ini agar kode cadangannya tetap teruji bila kelak dibuka kembali.
+ */
 class MobileLoadNoteDraftTest extends MobileApiTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
+        Route::middleware(['api', EnsureMobileWorkspace::class, 'auth:sanctum', EnsureMobileToken::class, EnsureMobileVendorContext::class])
+            ->post('api/v1/load-notes', [LoadNoteDraftController::class, 'store'])->name('api.v1.load-notes.store');
+        Route::getRoutes()->refreshNameLookups();
         Storage::fake('local');
         (require database_path('migrations/2026_11_03_104025_create_load_note_drafts_table.php'))->up();
         Schema::create('transaksis', function (Blueprint $table): void {

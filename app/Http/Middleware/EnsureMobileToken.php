@@ -22,6 +22,9 @@ class EnsureMobileToken
         if ($user->isVendorAccount()) {
             abort_unless($user->vendor_id && $user->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');
         }
+        if ($user->isDriver()) {
+            abort_unless($user->activeDriverVehicle() !== null, 403, 'Akun driver tidak aktif atau belum memegang nolam aktif.');
+        }
 
         return $next($request);
     }

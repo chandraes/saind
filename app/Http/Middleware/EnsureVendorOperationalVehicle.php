@@ -13,6 +13,9 @@ class EnsureVendorOperationalVehicle
 {
     public function handle(Request $request, Closure $next, string $context = 'vehicle'): Response
     {
+        if ($request->user()->isDriver()) {
+            return $this->driver($request, $next);
+        }
         if ($request->user()->isOperasional()) {
             // Operasional melihat seluruh vendor, tetapi hanya membaca.
             abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
@@ -47,6 +50,28 @@ class EnsureVendorOperationalVehicle
             }
             $request->merge(['vendor' => $vendorId]);
         }
+
+        return $next($request);
+    }
+
+    /**
+     * Driver: baca saja dan dikunci ke nolam yang sedang ditugaskan. Nolam itu
+     * selalu menjadi vehicle_id sehingga tidak ada halaman pemilih nolam.
+     */
+    private function driver(Request $request, Closure $next): Response
+    {
+        abort_unless($request->isMethodSafe(), 403);
+        $vehicle = $request->attributes->get('driverVehicle') ?? $request->user()->activeDriverVehicle();
+        abort_if($vehicle === null, 403);
+        foreach ([$request->route('vehicle'), $request->input('vehicle_id'), $request->input('vehicle')] as $vehicleId) {
+            abort_unless($vehicleId === null || (is_scalar($vehicleId) && (string) $vehicleId === (string) $vehicle->getKey()), 404);
+        }
+        foreach (['banLogId' => BanLog::class, 'log' => FilterOliLog::class] as $parameter => $model) {
+            if ($request->route($parameter) !== null) {
+                abort_unless((int) $model::findOrFail($request->route($parameter))->vehicle_id === $vehicle->getKey(), 404);
+            }
+        }
+        $request->merge(['vehicle_id' => $vehicle->getKey()]);
 
         return $next($request);
     }

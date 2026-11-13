@@ -22,6 +22,10 @@ class MobileUserResource extends JsonResource
                 'all_vendors' => $this->resource->isOperasional(),
                 'vendor_finance' => $this->resource->canViewVendorFinance(),
                 'maintenance_history' => $this->resource->isVendorAccount() && $this->resource->canManageMaintenanceHistory(),
-                'upah_gendong_settings' => $this->resource->isVendorAccount() && $this->resource->canManageUpahGendong()]];
+                'upah_gendong_settings' => $this->resource->isVendorAccount() && $this->resource->canManageUpahGendong(),
+                // Driver: menu driver, dikunci ke satu nolam (lihat driver_vehicle).
+                'driver' => $this->resource->isDriver()],
+            'driver_vehicle' => $this->when($this->resource->isDriver(), fn (): ?array => ($vehicle = $this->resource->activeDriverVehicle())
+                ? ['id' => $vehicle->id, 'nomor_lambung' => (string) $vehicle->nomor_lambung, 'vendor_id' => (int) $vehicle->vendor_id] : null)];
     }
 }

@@ -26,8 +26,8 @@
                 </div>
             </div>
             <div class="table-responsive">
-                <table id="user" class="table table-hover align-middle w-100">
-                    <thead class="table-success"><tr><th>No</th><th>Username</th><th>Nama</th><th>Role</th><th>Vendor / Customer</th><th class="text-center">Aksi</th></tr></thead>
+                <table id="user" class="table table-bordered table-hover align-middle w-100">
+                    <thead class="table-success"><tr><th>No</th><th>Username</th><th>Nama</th><th>Role</th><th>Vendor / Customer / Driver</th><th class="text-center">Aksi</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -82,7 +82,7 @@ $(function () {
             {data: 'username', render: textRenderer},
             {data: 'name', render: textRenderer},
             {data: 'role', render: value => '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">' + escapeText(roles[value] || value) + '</span>'},
-            {data: null, orderable: false, render: (value, type, row) => escapeText(row.vendor_name || row.customer_name || '—')},
+            {data: null, orderable: false, render: (value, type, row) => escapeText(row.vendor_name || row.customer_name || row.driver_name || '—')},
             {data: 'action', orderable: false, searchable: false}
         ],
         language: {processing: 'Memuat pengguna…', search: 'Cari:', searchPlaceholder: 'Nama atau username…', lengthMenu: 'Tampilkan _MENU_ pengguna', info: 'Menampilkan _START_–_END_ dari _TOTAL_ pengguna', infoEmpty: 'Belum ada pengguna', infoFiltered: '(disaring dari _MAX_ pengguna)', emptyTable: 'Belum ada pengguna. Tambahkan akun pertama Anda.', zeroRecords: 'Tidak ada pengguna yang sesuai pencarian.', paginate: {first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya'}}
@@ -90,7 +90,7 @@ $(function () {
     $('#user-role-filter').select2({width: '100%'}).on('change', () => table.ajax.reload());
     $('#user_length select').select2({width: 'auto', minimumResultsForSearch: Infinity});
     $('#user-role').select2({width: '100%', dropdownParent: $('#user-modal')}).on('change', toggleRelations);
-    ['vendor', 'customer'].forEach(type => {
+    ['vendor', 'customer', 'driver'].forEach(type => {
         $('#user-' + type).select2({
             width: '100%', dropdownParent: $('#user-modal'), placeholder: 'Cari ' + type + '…', allowClear: true,
             ajax: {url: @json(route('pengguna.options')), dataType: 'json', delay: 350,
@@ -104,8 +104,9 @@ $(function () {
 
     function toggleRelations() {
         const role = $('#user-role').val();
-        ['vendor', 'customer'].forEach(type => {
-            const active = type === 'vendor' ? ['vendor', 'vendor-induk', 'vendor-operational'].includes(role) : ['customer', 'customer-admin'].includes(role);
+        ['vendor', 'customer', 'driver'].forEach(type => {
+            const relationRoles = {vendor: ['vendor', 'vendor-induk', 'vendor-operational'], customer: ['customer', 'customer-admin'], driver: ['driver']};
+            const active = relationRoles[type].includes(role);
             $('#user-' + type + '-group').prop('hidden', !active);
             $('#user-' + type).prop('disabled', !active).prop('required', active);
             if (!active) $('#user-' + type).val(null).trigger('change');
@@ -117,7 +118,7 @@ $(function () {
     }
     function resetForm() {
         form.reset(); clearErrors();
-        $('#user-vendor, #user-customer').empty().trigger('change');
+        $('#user-vendor, #user-customer, #user-driver').empty().trigger('change');
         $('#user-role').val('user').trigger('change');
         $('#user-password').attr('type', 'password').prop('required', !editing);
         $('#user-password-toggle i').attr('class', 'fa fa-eye');
@@ -143,7 +144,7 @@ $(function () {
                 form.action = button.data('update-url');
                 ['name', 'username', 'email'].forEach(field => $('#user-' + field).val(user[field] || ''));
                 $('#user-role').val(user.role).trigger('change');
-                ['vendor', 'customer'].forEach(type => {
+                ['vendor', 'customer', 'driver'].forEach(type => {
                     if (user[type]) $('#user-' + type).append(new Option(user[type].nama, user[type].id, true, true)).trigger('change');
                 });
                 showModal();

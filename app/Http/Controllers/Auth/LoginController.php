@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -36,6 +39,23 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    protected function authenticated(Request $request, $user): ?RedirectResponse
+    {
+        if (! $user->isDriver()) {
+            return null;
+        }
+
+        if ($user->activeDriverVehicle() === null) {
+            $this->guard()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages(['username' => 'Akun Driver memerlukan driver aktif dan nolam yang tidak berstatus nonaktif.']);
+        }
+
+        return redirect()->route('home');
     }
 
     public function username()

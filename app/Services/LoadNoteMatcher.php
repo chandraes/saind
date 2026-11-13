@@ -7,7 +7,6 @@ use App\Models\Customer;
 use App\Models\CustomerTagihan;
 use App\Models\RuteNoteAlias;
 use App\Models\User;
-use App\Models\Vehicle;
 use Illuminate\Support\Str;
 
 class LoadNoteMatcher
@@ -47,13 +46,13 @@ class LoadNoteMatcher
             throw new LoadNoteRuleException('unit_code', 'Nomor unit tidak terbaca dengan pasti. Foto ulang nota.', 'unit_unreadable', 'retake_photo');
         }
         $number = ltrim($unit[1], '0') ?: '0';
-        $vehicles = Vehicle::where('vendor_id', $user->vendor_id)->whereIn('nomor_lambung', [$number, $unit[1]])->limit(2)->get();
+        $vehicles = $user->noteVehicles()->whereIn('nomor_lambung', [$number, $unit[1]])->limit(2)->get();
         if ($vehicles->count() !== 1) {
-            throw new LoadNoteRuleException('unit_code', 'Nomor lambung tidak ditemukan secara pasti pada vendor Anda. Periksa foto atau hubungi admin.', 'unit_not_found', 'contact_admin');
+            throw new LoadNoteRuleException('unit_code', ($user->isDriver() ? 'Nomor lambung pada nota bukan nolam Anda.' : 'Nomor lambung tidak ditemukan secara pasti pada vendor Anda.').' Periksa foto atau hubungi admin.', 'unit_not_found', 'contact_admin');
         }
         $vehicle = $vehicles->first();
         app(LoadNoteRules::class)->assertVehicle($vehicle);
-        app(LoadNoteRules::class)->assertTicket((int) $user->vendor_id, $data['ticket_number']);
+        app(LoadNoteRules::class)->assertTicket((int) $user->effectiveVendorId(), $data['ticket_number']);
         $alias = RuteNoteAlias::with('rute')->where('normalized_name', RuteNoteAlias::normalize($data['route_reference']))->first();
         if (! $alias || ! CustomerTagihan::where('customer_id', $customer->id)->where('rute_id', $alias->rute_id)->exists()) {
             throw new LoadNoteRuleException('route_reference', 'Alias rute atau tarif customer–rute belum diatur. Hubungi admin; foto ulang tidak diperlukan.', 'route_reference_missing', 'contact_admin');

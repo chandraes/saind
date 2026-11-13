@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
 use App\Http\Controllers\Api\MobileBatteryController;
+use App\Http\Controllers\Api\MobileDriverHeldCashController;
 use App\Http\Controllers\Api\MobileFilterOilController;
 use App\Http\Controllers\Api\MobileMaintenanceHistoryController;
 use App\Http\Controllers\Api\MobileMaintenanceVehicleController;
@@ -77,10 +78,14 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('load-notes/scanned', [LoadNoteDraftController::class, 'storeScanned'])->middleware('throttle:30,1')->name('load-notes.scanned');
                 Route::post('load-notes/inspect', [LoadNoteDraftController::class, 'inspect'])->middleware('throttle:30,1')->name('load-notes.inspect');
                 Route::get('load-notes/vehicles', [LoadNoteDraftController::class, 'vehicles'])->name('load-notes.vehicles');
+                Route::get('driver/held-cash/{fund}', MobileDriverHeldCashController::class)->whereIn('fund', ['sparepart', 'ban'])->name('driver-held-cash.index');
                 Route::get('unloading-notes', [UnloadingNoteController::class, 'index'])->name('unloading-notes.index');
                 Route::get('unloading-notes/{transaction}', [UnloadingNoteController::class, 'show'])->whereNumber('transaction')->name('unloading-notes.show');
                 Route::get('load-notes', [LoadNoteDraftController::class, 'index'])->name('load-notes.index');
-                Route::post('load-notes', [LoadNoteDraftController::class, 'store'])->middleware('throttle:30,1')->name('load-notes.store');
+                // Kirim nota muat manual (isian + foto) DITUTUP: dari mobile nota hanya boleh lewat scan
+                // (load-notes/inspect -> load-notes/scanned). Disimpan sebagai komentar bila kelak ada
+                // pengembangan input manual; aktifkan lagi beserta tesnya (lihat MobileManualLoadNoteClosedTest).
+                // Route::post('load-notes', [LoadNoteDraftController::class, 'store'])->middleware('throttle:30,1')->name('load-notes.store');
                 Route::get('load-notes/{note}', [LoadNoteDraftController::class, 'show'])->whereNumber('note')->name('load-notes.show');
                 Route::get('load-notes/{note}/photo', [LoadNoteDraftController::class, 'photo'])->whereNumber('note')->name('load-notes.photo');
             });

@@ -26,6 +26,11 @@ class VendorOperationalBilling
             ->with(['kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'kas_uang_jalan.vehicle.driver']);
     }
 
+    public function pendingUnloading(?int $vendorId): Builder
+    {
+        return $this->journeys($vendorId)->where('status', 2);
+    }
+
     public function payableNotes(?int $vendorId, string $kind, int $userId): Builder
     {
         return $kind === 'utama'

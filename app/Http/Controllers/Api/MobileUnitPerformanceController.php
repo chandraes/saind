@@ -39,13 +39,17 @@ class MobileUnitPerformanceController extends Controller
         // Akun vendor: vendornya sendiri; operasional: seluruh vendor atau filter vendor_id.
         $vendorId = MobileVendorScope::id($request);
         abort_if($vendorId !== null && $vendorId <= 0, 403);
+        // Driver: hanya nolam yang sedang ditugaskan.
+        $vehicleId = MobileVendorScope::vehicleId($request);
         $firstDate = DB::table('kas_uang_jalans as kuj')->join('vehicles as v', 'v.id', '=', 'kuj.vehicle_id')
-            ->when($vendorId !== null, fn ($query) => $query->where('v.vendor_id', $vendorId))->min('kuj.tanggal');
+            ->when($vendorId !== null, fn ($query) => $query->where('v.vendor_id', $vendorId))
+            ->when($vehicleId !== null, fn ($query) => $query->where('v.id', $vehicleId))->min('kuj.tanggal');
         $firstYear = $firstDate ? min(CarbonImmutable::parse($firstDate)->year, $start->year) : $start->year;
         $search = trim($filters['search'] ?? '');
 
         $vehicles = DB::table('vehicles')->leftJoin('vendors as vd', 'vd.id', '=', 'vehicles.vendor_id')
             ->when($vendorId !== null, fn ($query) => $query->where('vehicles.vendor_id', $vendorId))
+            ->when($vehicleId !== null, fn ($query) => $query->where('vehicles.id', $vehicleId))
             ->where('vehicles.status', '!=', 'nonaktif')
             ->when($search !== '', fn ($query) => $query->where('vehicles.nomor_lambung', 'like', '%'.$search.'%'))
             ->orderBy('vehicles.nomor_lambung')->orderBy('vehicles.id')

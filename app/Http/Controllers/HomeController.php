@@ -32,6 +32,10 @@ class HomeController extends Controller
     {
         $user = Auth::user();
 
+        if ($user->isDriver()) {
+            return view('driver.dashboard', ['vehicle' => request()->attributes->get('driverVehicle')]);
+        }
+
         if ($user->role == 'asisten-user') {
 
             $data = UpahGendong::with(['vehicle'])->get();

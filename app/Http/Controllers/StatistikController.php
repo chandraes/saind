@@ -87,7 +87,10 @@ class StatistikController extends Controller
 
         $db = new Transaksi;
 
-        $isVendorOperational = $request->user()->isVendorAccount();
+        $isVendorOperational = $request->user()->readsVendorStatistics();
+        if ($request->user()->isDriver() && ! UpahGendong::where('vehicle_id', $check->id)->exists()) {
+            return redirect()->route('home')->with('error', 'Upah gendong belum diaktifkan untuk Nolam '.$check->nomor_lambung.'.');
+        }
         if ($isVendorOperational) {
             $request->validate(['bulan' => 'nullable|integer|between:1,12', 'tahun' => 'nullable|integer|between:2000,2100', 'tanggal_filter' => ['nullable', 'regex:/^\d{2}-\d{2}-\d{4}( to \d{2}-\d{2}-\d{4})?$/'], 'start' => 'nullable|integer|min:0']);
         }
@@ -183,7 +186,7 @@ class StatistikController extends Controller
 
     public function perform_unit(Request $request)
     {
-        if (Auth::user()->isVendorAccount()) {
+        if (Auth::user()->readsVendorStatistics()) {
             return $this->performUnitByMonth($request);
         }
 
@@ -223,8 +226,10 @@ class StatistikController extends Controller
      */
     private function performUnitByMonth(Request $request)
     {
-        $vendorId = (int) Auth::user()->vendor_id;
+        $vendorId = (int) Auth::user()->effectiveVendorId();
         abort_if($vendorId <= 0, 403);
+        // Driver hanya melihat nolam yang sedang ditugaskan.
+        $vehicleId = Auth::user()->isDriver() ? Auth::user()->activeDriverVehicle()?->id : null;
         $filters = $request->validate([
             'bulan' => ['nullable', 'integer', 'between:1,12'],
             'tahun' => ['nullable', 'integer', 'between:2000,2100'],
@@ -237,8 +242,9 @@ class StatistikController extends Controller
             $end = now()->startOfDay();
         }
 
-        $all = (new Transaksi)->performUnitRange($start->toDateString(), $end->toDateString(), $vendorId);
-        $firstDate = DB::table('kas_uang_jalans')->where('vendor_id', $vendorId)->min('tanggal');
+        $all = (new Transaksi)->performUnitRange($start->toDateString(), $end->toDateString(), $vendorId, $vehicleId);
+        $firstDate = DB::table('kas_uang_jalans')->where('vendor_id', $vendorId)
+            ->when($vehicleId, fn ($query, $vehicleId) => $query->where('vehicle_id', $vehicleId))->min('tanggal');
         $firstYear = $firstDate ? min((int) Carbon::parse($firstDate)->year, $year) : $year;
 
         return view('rekap.statistik.perform-unit', $all + [
@@ -1601,7 +1607,7 @@ class StatistikController extends Controller
         $vehicle = Vehicle::findOrFail($vehicleId);
 
         $latestLogs = AkiLog::where('vehicle_id', $vehicleId)
-            ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('id', function ($latest) {
+            ->when($request->user()->readsVendorStatistics(), fn ($query) => $query->where('id', function ($latest) {
                 $latest->from('aki_logs as latest')->select('latest.id')->whereColumn('latest.vehicle_id', 'aki_logs.vehicle_id')->whereColumn('latest.posisi_aki_id', 'aki_logs.posisi_aki_id')->orderByDesc('latest.created_at')->orderByDesc('latest.id')->limit(1);
             }))
             ->orderByDesc('created_at')->orderByDesc('id')->get()

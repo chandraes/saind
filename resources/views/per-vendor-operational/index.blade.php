@@ -1,11 +1,11 @@
-@php($sections = \App\Support\VendorDashboardMenu::sections(auth()->user()))
+@php($sections = $sections ?? \App\Support\VendorDashboardMenu::sections(auth()->user()))
 @php($operasional = auth()->user()->isOperasional())
 
 <div class="vendor-dashboard" data-vendor-dashboard>
     <div class="vendor-dashboard-intro">
         <div>
-            <span class="vendor-dashboard-eyebrow">{{ $operasional ? 'OPERASIONAL' : (auth()->user()->canViewVendorFinance() ? 'AKUN VENDOR' : 'OPERASIONAL VENDOR') }}</span>
-            <p class="mb-0 text-muted">{{ $operasional ? 'Pantau dokumen perjalanan dan statistik armada seluruh vendor.' : (auth()->user()->canViewVendorFinance() ? 'Pantau dokumen, keuangan, dan statistik armada vendor Anda.' : 'Pantau dokumen perjalanan dan statistik armada vendor Anda.') }}</p>
+            <span class="vendor-dashboard-eyebrow">{{ $dashboardLabel ?? ($operasional ? 'OPERASIONAL' : (auth()->user()->canViewVendorFinance() ? 'AKUN VENDOR' : 'OPERASIONAL VENDOR')) }}</span>
+            <p class="mb-0 text-muted">@isset($dashboardDescription){{ $dashboardDescription }}@else{{ $operasional ? 'Pantau dokumen perjalanan dan statistik armada seluruh vendor.' : (auth()->user()->canViewVendorFinance() ? 'Pantau dokumen, keuangan, dan statistik armada vendor Anda.' : 'Pantau dokumen perjalanan dan statistik armada vendor Anda.') }}@endisset</p>
         </div>
         <span class="vendor-dashboard-access"><span aria-hidden="true"></span>Akses baca saja</span>
     </div>
@@ -14,12 +14,21 @@
             <h2 id="vendor-section-{{ $section['key'] }}">{{ $section['title'] }}</h2>
             <div class="vendor-dashboard-grid vendor-dashboard-grid-{{ $section['key'] }}" data-vendor-menu-row="{{ $section['key'] }}">
                 @foreach ($section['menus'] as $menu)
+                    @if (isset($menu['url']))
                     <a class="vendor-menu-card" href="{{ isset($menu['modal']) ? '#' : $menu['url'] }}" @isset($menu['modal']) data-bs-toggle="modal" data-bs-target="#{{ $menu['modal'] }}" @endisset>
+                    @else
+                        <div class="vendor-menu-card bg-light">
+                    @endif
                         <span class="vendor-menu-icon"><img src="{{ asset('images/'.$menu['icon']) }}" alt="" width="48" height="48"></span>
                         <h3>{{ $menu['title'] }}</h3>
                         <p>{{ $menu['description'] }}</p>
+                    @if (isset($menu['url']))
                         <span class="vendor-menu-link">Lihat data <span aria-hidden="true">→</span></span>
                     </a>
+                    @else
+                        <span class="text-muted small mt-auto">Belum tersedia</span>
+                        </div>
+                    @endif
                 @endforeach
             </div>
         </section>

@@ -29,6 +29,9 @@ class AuthController extends BaseController
         if ($user->isVendorAccount()) {
             abort_unless($user->vendor_id && $user->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');
         }
+        if ($user->isDriver()) {
+            abort_unless($user->activeDriverVehicle() !== null, 403, 'Akun driver tidak aktif atau belum memegang nolam aktif.');
+        }
         $identity = $workspace->identity();
         $expiresAt = now()->addMinutes(max(1, (int) config('mobile.token_expiration_minutes')));
         $token = $user->createToken($data['device_name'], ['workspace:'.$identity['id']], $expiresAt);

@@ -586,7 +586,7 @@ class Transaksi extends Model
         return $all;
     }
 
-    public function performUnitRange($start_date, $end_date, $vendor = null)
+    public function performUnitRange($start_date, $end_date, $vendor = null, $vehicleId = null)
     {
         $start = Carbon::parse($start_date);
         $end = Carbon::parse($end_date);
@@ -610,6 +610,7 @@ class Transaksi extends Model
             ->when($vendor, function ($query, $vendor) {
                 return $query->where('v.vendor_id', $vendor);
             })
+            ->when($vehicleId, fn ($query, $vehicleId) => $query->where('kuj.vehicle_id', $vehicleId))
             ->get();
 
         $grand_total_tonase = $data->reduce(function ($carry, $transaction) {
@@ -622,6 +623,7 @@ class Transaksi extends Model
                 return $query->where('vendor_id', $vendor);
             })
             ->whereNot('vehicles.status', 'nonaktif')
+            ->when($vehicleId, fn ($query, $vehicleId) => $query->whereKey($vehicleId))
             ->get(); // <- LIMIT & OFFSET dihapus di sini
 
         $statistics = [];

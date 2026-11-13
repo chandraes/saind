@@ -85,7 +85,7 @@
                 <table class="table table-bordered table-hover align-middle mb-0" id="rekapTable" style="width: 100%;">
                     <thead class="table-success">
                         <tr>
-                            @if (auth()->user()->isVendorAccount())<th>No</th>@endif
+                            @if (auth()->user()->readsVendorStatistics())<th>No</th>@endif
                             <th class="text-center">MEREK</th>
                             <th class="text-center">KONDISI AKI</th>
                             <th class="text-center">TANGGAL GANTI</th>
@@ -187,7 +187,7 @@
         }
 
         @endif
-        @if (auth()->user()->isVendorAccount())
+        @if (auth()->user()->readsVendorStatistics())
         columns.unshift({data: null, render: (data, type, row, meta) => meta.row + 1});
         vendorStatisticsTable('#rekapTable', {columns: columns,
             url: @json(route('statistik.aki.histori-data')),

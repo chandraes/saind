@@ -24,7 +24,7 @@ class VendorOperationalBillingController extends Controller
     {
         $vendor = $this->vendor($request);
         $filters = $this->filters($request, ['waiting' => 'Menunggu bongkar'], 'waiting');
-        $query = $this->billing->journeys($vendor)->where('status', 2);
+        $query = $this->billing->pendingUnloading($vendor);
         $this->billing->searchJourneys($query, $filters['search']);
 
         return $this->listing($request, $query, 'Nota Bongkar', 'nota-bongkar', $filters,
@@ -33,7 +33,7 @@ class VendorOperationalBillingController extends Controller
 
     public function unloadingShow(Request $request, int $transaction): View
     {
-        $item = $this->billing->journeys($this->vendor($request))->where('status', 2)->findOrFail($transaction);
+        $item = $this->billing->pendingUnloading($this->vendor($request))->findOrFail($transaction);
 
         return view('billing.vendor-readonly.detail', ['title' => 'Nota Bongkar · '.$item->nota_muat, 'fields' => $this->billing->journey($item)]);
     }

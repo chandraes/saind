@@ -7,12 +7,12 @@
             <h1 class="h3 fw-bold mb-2">Nota Muat Masuk</h1>
             <p class="text-muted mb-0">{{ $canReview ? 'Kiriman vendor dari aplikasi mobile untuk seluruh vendor pada SAIND ini.' : ($canFilterVendor ? 'Pantau kiriman dan progres nota seluruh vendor. Halaman ini hanya untuk melihat.' : 'Pantau kiriman dan progres nota vendor Anda. Halaman ini hanya untuk melihat.') }}</p>
         </div>
-        <span class="badge bg-light text-dark border p-3">{{ number_format($notes->total(), 0, ',', '.') }} nota ditemukan</span>
+        <span class="badge bg-light text-dark border p-3">{{ method_exists($notes, 'total') ? number_format($notes->total(), 0, ',', '.').' nota ditemukan' : 'Akses baca saja' }}</span>
     </div>
     <div class="alert alert-info">Pengiriman nota dari aplikasi mobile tidak otomatis mencairkan uang jalan. Pantau status dan riwayat pemeriksaan pada detail nota.</div>
     <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('billing.nota-muat.index') }}" class="row g-3 align-items-end">
+            <form method="GET" action="{{ ($indexUrl ?? route('billing.nota-muat.index')) }}" class="row g-3 align-items-end">
                 <div class="col-md-5">
                     <label for="search" class="form-label">Cari nota</label>
                     <input id="search" name="search" type="search" class="form-control @error('search') is-invalid @enderror" value="{{ old('search', $filters['search'] ?? '') }}" maxlength="100" placeholder="Nomor tiket, lambung, atau tambang">
@@ -32,7 +32,7 @@
                 @endif
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">Terapkan</button>
-                    <a href="{{ route('billing.nota-muat.index') }}" class="btn btn-outline-secondary">Reset</a>
+                    <a href="{{ ($indexUrl ?? route('billing.nota-muat.index')) }}" class="btn btn-outline-secondary">Reset</a>
                 </div>
             </form>
             @error('page')<p class="text-danger mt-2 mb-0">{{ $message }}</p>@enderror
@@ -53,8 +53,14 @@
         <div id="note-inbox-loading" class="card-footer bg-white text-center" role="status" data-next="{{ $notes->nextPageUrl() }}">{{ $notes->hasMorePages() ? 'Memuat nota berikutnya saat Anda menggulir…' : 'Seluruh nota telah ditampilkan.' }}</div>
     </div>
 </div>
+@if ($driverView ?? false)
+@include('billing.vendor-readonly.modal', ['title' => 'Nota Muat Masuk'])
+@endif
 @endsection
 
+@if ($driverView ?? false)
+@include('billing.vendor-readonly.scripts')
+@else
 @push('js')
 <script src="{{ asset('assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script>
@@ -66,3 +72,5 @@
 @push('css')
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}">
 @endpush
+
+@endif

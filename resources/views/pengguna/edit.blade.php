@@ -16,7 +16,7 @@
         </select>
         <div class="invalid-feedback" data-error="role"></div>
     </div>
-    @foreach (['vendor' => 'Vendor', 'customer' => 'Customer'] as $type => $label)
+    @foreach (['vendor' => 'Vendor', 'customer' => 'Customer', 'driver' => 'Driver'] as $type => $label)
         <div class="col-12" id="user-{{ $type }}-group" hidden>
             <label for="user-{{ $type }}" class="form-label fw-bold">{{ $label }} <span class="text-danger">*</span></label>
             <select id="user-{{ $type }}" name="{{ $type }}_id" class="form-select" disabled><option value=""></option></select>

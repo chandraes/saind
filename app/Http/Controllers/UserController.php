@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Driver;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Contracts\View\View;
@@ -20,7 +21,7 @@ class UserController extends Controller
     public const ROLES = [
         'admin' => 'Admin', 'user' => 'User', 'asisten-user' => 'Asisten User',
         'operasional' => 'Operasional', 'investor' => 'Investor', 'vendor' => 'Vendor',
-        'vendor-induk' => 'Vendor Induk', 'vendor-operational' => 'Vendor Operational', 'customer' => 'Customer', 'customer-admin' => 'Customer Admin',
+        'vendor-induk' => 'Vendor Induk', 'vendor-operational' => 'Vendor Operational', 'customer' => 'Customer', 'customer-admin' => 'Customer Admin', 'driver' => 'Driver',
     ];
 
     public function index(Request $request): View|JsonResponse
@@ -33,8 +34,9 @@ class UserController extends Controller
         $query = DB::table('users')
             ->leftJoin('vendors', 'users.vendor_id', '=', 'vendors.id')
             ->leftJoin('customers', 'users.customer_id', '=', 'customers.id')
+            ->leftJoin('drivers', 'users.driver_id', '=', 'drivers.id')
             ->where('users.role', '!=', 'su')
-            ->select('users.id', 'users.username', 'users.name', 'users.role', 'vendors.nama as vendor_name', 'customers.nama as customer_name');
+            ->select('users.id', 'users.username', 'users.name', 'users.role', 'vendors.nama as vendor_name', 'customers.nama as customer_name', 'drivers.nama as driver_name');
 
         return DataTables::of($query)
             ->filter(function (Builder $query) use ($request): void {
@@ -44,7 +46,7 @@ class UserController extends Controller
                 $search = mb_substr($request->string('search.value')->trim()->toString(), 0, 100);
                 if ($search !== '') {
                     $query->where(function (Builder $query) use ($search): void {
-                        foreach (['users.username', 'users.name', 'users.role', 'vendors.nama', 'customers.nama'] as $column) {
+                        foreach (['users.username', 'users.name', 'users.role', 'vendors.nama', 'customers.nama', 'drivers.nama'] as $column) {
                             $query->orWhere($column, 'like', '%'.$search.'%');
                         }
                     });
@@ -65,10 +67,12 @@ class UserController extends Controller
 
     public function options(Request $request): JsonResponse
     {
-        $data = $request->validate(['type' => ['required', Rule::in(['vendor', 'customer'])], 'q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1']]);
-        $query = $data['type'] === 'vendor'
-            ? Vendor::query()->where('status', 'aktif')
-            : Customer::query()->where('status', true);
+        $data = $request->validate(['type' => ['required', Rule::in(['vendor', 'customer', 'driver'])], 'q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1']]);
+        $query = match ($data['type']) {
+            'vendor' => Vendor::query()->where('status', 'aktif'),
+            'customer' => Customer::query()->where('status', true),
+            'driver' => Driver::query()->where('status', 'aktif'),
+        };
         $page = min(1000, $request->integer('page', 1));
         $items = $query->select('id', 'nama')->when($request->filled('q'), fn ($query) => $query->where('nama', 'like', '%'.$data['q'].'%'))
             ->orderBy('nama')->orderBy('id')->offset(($page - 1) * 20)->limit(21)->get();
@@ -90,8 +94,8 @@ class UserController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $user = User::where('role', '!=', 'su')->select('id', 'name', 'username', 'role', 'email', 'vendor_id', 'customer_id')
-            ->with(['vendor:id,nama', 'customer:id,nama'])->findOrFail($id);
+        $user = User::where('role', '!=', 'su')->select('id', 'name', 'username', 'role', 'email', 'vendor_id', 'customer_id', 'driver_id')
+            ->with(['vendor:id,nama', 'customer:id,nama', 'driver:id,nama'])->findOrFail($id);
 
         return response()->json(['data' => $user]);
     }
@@ -143,12 +147,14 @@ class UserController extends Controller
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:6', 'max:255'],
             'role' => ['required', Rule::in(array_keys(self::ROLES))],
             'vendor_id' => ['exclude_unless:role,vendor,vendor-induk,vendor-operational', 'required', 'integer', 'exists:vendors,id'],
+            'driver_id' => ['exclude_unless:role,driver', 'required', 'integer', 'exists:drivers,id', Rule::unique('users', 'driver_id')->ignore($user?->id)],
             'customer_id' => ['exclude_unless:role,customer,customer-admin', 'required', 'integer', 'exists:customers,id'],
         ], [
             'username.unique' => 'Username sudah digunakan.', 'email.unique' => 'Email sudah digunakan.',
             'vendor_id.required' => 'Pilih vendor untuk role ini.', 'customer_id.required' => 'Pilih customer untuk role ini.',
             'password.min' => 'Password minimal 6 karakter.',
         ]);
+        $data['driver_id'] = $data['driver_id'] ?? null;
         $data['vendor_id'] = $data['vendor_id'] ?? null;
         $data['customer_id'] = $data['customer_id'] ?? null;
         if (empty($data['password'])) {

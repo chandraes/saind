@@ -2,7 +2,9 @@
 @section('content')
 <div class="container-fluid px-4 py-4">
     <div class="d-flex flex-wrap gap-3 justify-content-between mb-4"><div><h1 class="h3">Statistik Upah Gendong</h1><p class="text-muted">Kendaraan {{ $ug->vehicle->nomor_lambung }} · {{ $ug->nama_driver }} · Pengurus {{ $ug->nama_pengurus }}</p></div><a href="{{ route('home') }}" class="btn btn-outline-secondary align-self-start">Dashboard</a></div>
+    @unless (auth()->user()->isDriver())
     <a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'upah-gendong']) }}" class="btn btn-outline-primary mb-3"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a>
+    @endunless
     <div class="card mb-4"><div class="card-body">
         <p>Bank {{ $ug->bank }} · Rekening {{ $ug->nama_rek }} · {{ $ug->no_rek }} · Minimum {{ $ug->tonase_min }} ton · Upah Rp{{ number_format($ug->nominal, 0, ',', '.') }}/ton</p>
         <form method="get" class="row g-3">
