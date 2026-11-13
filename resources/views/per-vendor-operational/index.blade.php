@@ -34,6 +34,9 @@
         </section>
     @endforeach
 </div>
+@if (auth()->user()->canViewNolamHeldCash())
+@include('layouts.uj-ditahan-menu', ['menuArea' => 'vendor-operational'])
+@endif
 @if ($operasional)
 {{-- Seperti admin: Nota Bayar dibuka per vendor. --}}
 <div class="modal fade" id="{{ \App\Support\VendorDashboardMenu::VENDOR_PICKER }}" tabindex="-1" aria-labelledby="{{ \App\Support\VendorDashboardMenu::VENDOR_PICKER }}-title" aria-hidden="true">

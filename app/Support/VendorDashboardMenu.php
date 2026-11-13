@@ -15,6 +15,9 @@ class VendorDashboardMenu
     /** Id pop-up "Pilih Vendor" untuk Nota Bayar role operasional. */
     public const VENDOR_PICKER = 'operasional-nota-bayar-vendor';
 
+    /** Id pop-up Sparepart | Ban untuk Kas UJ Ditahan (layouts.uj-ditahan-menu). */
+    public const HELD_CASH_PICKER = 'ujDitahanMenu';
+
     /** @return list<array{key: string, title: string, menus: list<array{title: string, description: string, url: string, icon: string, modal?: string}>}> */
     public static function sections(User $user): array
     {
@@ -29,6 +32,9 @@ class VendorDashboardMenu
             $payment,
             $menu('Invoice Vendor', 'Telusuri invoice dan nota yang tercantum.', route('vendor-operational.invoice'), 'invoice-bayar.svg'),
         ];
+        if ($user->canViewNolamHeldCash()) {
+            $documents[] = $menu('Kas UJ Ditahan', 'Pilih nolam, lalu lihat saldo dan mutasi dana sparepart atau ban.', '#'.self::HELD_CASH_PICKER, 'uj-ditahan.svg') + ['modal' => self::HELD_CASH_PICKER];
+        }
         if ($user->canViewVendorFinance()) {
             $documents[] = $menu('Kas Vendor', 'Mutasi kas dan saldo vendor per bulan.', route('kas-per-vendor.index', $user->vendor_id), 'kas-vendor.svg');
         }

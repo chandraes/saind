@@ -9,10 +9,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
- * Kas UJ ditahan milik driver (web & mobile): master kas dibatasi ke nolam yang
- * ditugaskan, mutasi dibatasi ke driver_id akun. Saldo = masuk - keluar dari
- * mutasi tersebut; mutasi lama tanpa driver_id tidak ikut karena pemiliknya
- * tidak bisa dipastikan.
+ * Kas UJ ditahan per nolam (web & mobile), baca saja. Driver: master kas dibatasi
+ * ke nolam yang ditugaskan dan mutasi ke driver_id akun (mutasi lama tanpa
+ * driver_id tidak ikut karena pemiliknya tidak bisa dipastikan). Tanpa driver
+ * (vendor-induk & operasional): seluruh mutasi nolam, sama dengan ledger admin.
  */
 class DriverHeldCash
 {
@@ -22,15 +22,15 @@ class DriverHeldCash
 
     private HasMany $relation;
 
-    public function __construct(private int $driverId, private int $vehicleId, string $fund)
+    public function __construct(?int $driverId, int $vehicleId, string $fund)
     {
         $account = $fund === 'ban' ? new UjDitahanBan : new UjDitahan;
         $this->accounts = $account->newQuery()->where('vehicle_id', $vehicleId);
         $this->relation = $account->details();
-        $this->mutations = $this->relation->getRelated()->newQuery()->where('driver_id', $driverId);
+        $this->mutations = $this->relation->getRelated()->newQuery()->when($driverId !== null, fn (Builder $query) => $query->where('driver_id', $driverId));
     }
 
-    /** Mutasi milik driver pada satu bulan & tahun. */
+    /** Mutasi (milik driver, bila dibatasi) pada satu bulan & tahun. */
     public function period(int $month, int $year): Builder
     {
         return (clone $this->mutations)->whereIn($this->relation->getForeignKeyName(),
@@ -45,7 +45,7 @@ class DriverHeldCash
         return ['masuk' => (int) $totals->masuk, 'keluar' => (int) $totals->keluar, 'saldo' => (int) $totals->masuk - (int) $totals->keluar];
     }
 
-    /** Saldo per periode (tahun, bulan, saldo) untuk seluruh mutasi driver pada nolam ini. */
+    /** Saldo per periode (tahun, bulan, saldo) untuk seluruh mutasi (driver) pada nolam ini. */
     public function periodBalances(): Collection
     {
         return (clone $this->mutations)

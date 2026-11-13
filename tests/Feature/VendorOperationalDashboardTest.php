@@ -42,15 +42,16 @@ class VendorOperationalDashboardTest extends TestCase
     {
         $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'operasional', 'vendor_id' => null]));
         $response = $this->get('/home')->assertOk()->assertSee('seluruh vendor')
-            ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Perform Unit', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
+            ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Perform Unit', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
             ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('STATISTIK TONASE')->assertDontSee('Kas Vendor');
         $dom = new \DOMDocument;
         @$dom->loadHTML($response->getContent());
         $xpath = new \DOMXPath($dom);
-        $this->assertSame(4, $xpath->query('//*[@data-vendor-menu-row="documents"]/a')->length);
-        // Nota Bayar opens the "Pilih Vendor" pop-up like the admin menu.
-        $card = $xpath->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-toggle="modal"]');
+        $this->assertSame(5, $xpath->query('//*[@data-vendor-menu-row="documents"]/a')->length);
+        // Nota Bayar opens the "Pilih Vendor" pop-up like the admin menu; Kas UJ Ditahan the Sparepart | Ban pop-up.
+        $card = $xpath->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-target="#operasional-nota-bayar-vendor"]');
         $this->assertSame(1, $card->length);
+        $this->assertSame(1, $xpath->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-target="#ujDitahanMenu"]')->length);
         $this->assertStringContainsString('Nota Bayar Vendor', $card->item(0)->textContent);
         $picker = $xpath->query('//div[@id="operasional-nota-bayar-vendor"]//form[@action="'.route('vendor-operational.nota-bayar').'"]//select[@name="vendor_id"]/option');
         $this->assertSame(['-- Pilih Vendor --', 'Vendor A (VA)', 'Vendor B'], array_map(fn ($node): string => trim($node->textContent), iterator_to_array($picker)));

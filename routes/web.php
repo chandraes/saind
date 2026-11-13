@@ -1063,6 +1063,8 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/nota-bayar/{kind}/{record}', [VendorOperationalBillingController::class, 'noteShow'])->whereNumber('record')->name('nota-bayar.show');
                 Route::get('/invoice', [VendorOperationalBillingController::class, 'invoices'])->name('invoice');
                 Route::get('/invoice/{kind}/{record}', [VendorOperationalBillingController::class, 'invoiceShow'])->whereNumber('record')->name('invoice.show');
+                // Kas UJ Ditahan per nolam (baca saja): vendor-induk nolam vendornya, operasional semua nolam.
+                Route::get('/kas-uj-ditahan/{fund}', [DriverHeldCashController::class, 'vehicle'])->whereIn('fund', ['sparepart', 'ban'])->middleware('role:vendor-induk,operasional')->name('held-cash');
                 Route::get('/statistics/vehicles', [StatistikController::class, 'vendorStatisticsVehicles'])->middleware(EnsureVendorOperationalVehicle::class.':statistics')->name('statistics.vehicles');
             });
 

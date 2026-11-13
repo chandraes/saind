@@ -126,6 +126,19 @@ class User extends Authenticatable
         return $this->isVendorOwner();
     }
 
+    /** Kas UJ Ditahan per nolam (baca saja): vendor-induk untuk nolam vendornya, operasional semua nolam. */
+    public function canViewNolamHeldCash(): bool
+    {
+        return in_array($this->role, ['vendor-induk', 'operasional'], true);
+    }
+
+    /** Nolam yang boleh dipilih di Kas UJ Ditahan: tidak nonaktif, vendor-induk hanya vendornya. */
+    public function heldCashVehicles(): Builder
+    {
+        return Vehicle::query()->where('status', '!=', 'nonaktif')
+            ->when(! $this->isOperasional(), fn ($query) => $query->where('vendor_id', $this->vendor_id ?? 0));
+    }
+
     public function isDriver(): bool
     {
         return $this->role === 'driver';
