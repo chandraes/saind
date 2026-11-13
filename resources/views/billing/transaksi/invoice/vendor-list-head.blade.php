@@ -1,10 +1,10 @@
                 <thead class="table-success border-bottom">
                     <tr>
                         @if($vendorReadonly ?? false)<th class="text-center" style="width: 45px;">No</th>@endif
-                        <th class="text-center" style="width: 110px;">Tanggal</th>
-                        <th class="text-center" style="width: 180px;">Vendor</th>
-                        <th class="text-center" style="width: 160px;">Invoice</th>
-                        <th class="text-center" style="width: 130px;">Jatuh Tempo</th>
+                        <th class="text-center" style="width: 110px;">@if($vendorReadonly ?? false)@include('billing.vendor-readonly.sort-link', ['label' => 'Tanggal', 'key' => 'tanggal'])@else{{ 'Tanggal' }}@endif</th>
+                        <th class="text-center" style="width: 180px;">@if($vendorReadonly ?? false)@include('billing.vendor-readonly.sort-link', ['label' => 'Vendor', 'key' => 'vendor'])@else{{ 'Vendor' }}@endif</th>
+                        <th class="text-center" style="width: 160px;">@if($vendorReadonly ?? false)@include('billing.vendor-readonly.sort-link', ['label' => 'Invoice', 'key' => 'invoice'])@else{{ 'Invoice' }}@endif</th>
+                        <th class="text-center" style="width: 130px;">@if($vendorReadonly ?? false)@include('billing.vendor-readonly.sort-link', ['label' => 'Jatuh Tempo', 'key' => 'tempo'])@else{{ 'Jatuh Tempo' }}@endif</th>
                         @if($vendorReadonly ?? false)<th class="text-center" style="width: 170px;">Status</th>@endif
                         @if(($vendorReadonly ?? false) && ($showTotal ?? false))<th class="text-end" style="width: 180px;">Total Bayar</th>@endif
                         @unless($vendorReadonly ?? false)<th class="text-end" style="width: 180px;">Total Bayar</th>@endunless

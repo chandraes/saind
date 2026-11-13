@@ -4,19 +4,29 @@ namespace App\Services;
 
 use App\Models\InvoiceAddVendor;
 use App\Models\InvoiceBayar;
+use App\Models\KasUangJalan;
 use App\Models\KeranjangNotaBayar;
 use App\Models\Pajak\PphSimpan;
 use App\Models\Pajak\PpnMasukan;
+use App\Models\Rute;
 use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
+use App\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class VendorOperationalBilling
 {
     public const CATEGORIES = ['utama' => 'HPP'] + TransaksiAdditional::JENIS;
+
+    /** Kolom tabel nota bayar/invoice yang bisa diurutkan: kunci sort => judul kolom. */
+    public const SORTS = ['tanggal_uj' => 'Tanggal UJ', 'kode' => 'Kode', 'rute' => 'Rute', 'tanggal_muat' => 'Tanggal Muat', 'tanggal_bongkar' => 'Tanggal Bongkar'];
+
+    /** Kolom daftar invoice vendor yang bisa diurutkan: kunci sort => judul kolom. */
+    public const INVOICE_SORTS = ['tanggal' => 'Tanggal', 'vendor' => 'Vendor', 'invoice' => 'Invoice', 'tempo' => 'Jatuh Tempo'];
 
     /** Perjalanan aktif satu vendor, atau seluruh vendor bila $vendorId null (role operasional). */
     public function journeys(?int $vendorId): Builder
@@ -86,6 +96,94 @@ class VendorOperationalBilling
             'net_amount' => $gross === null || $cash === null ? null : $gross - (int) $cash];
     }
 
+    /**
+     * Rute yang muncul pada nota hasil $base (sebelum filter rute/cari), untuk
+     * pilihan filter. Nota tambahan memakai rute miliknya bila ada.
+     */
+    public function routeOptions(Builder $base, string $kind): Collection
+    {
+        $journeys = (clone $base)->reorder()->select($kind === 'utama' ? 'transaksis.id' : 'transaksi_additionals.transaksi_id');
+        $cashRoutes = KasUangJalan::query()->select('rute_id')
+            ->whereIn('id', Transaksi::query()->select('kas_uang_jalan_id')->whereIn('id', $journeys));
+
+        return Rute::query()->whereIn('id', $cashRoutes)
+            ->when($kind !== 'utama', fn (Builder $query): Builder => $query->orWhereIn('id', (clone $base)->reorder()->select('transaksi_additionals.rute_id')))
+            ->orderBy('nama')->get(['id', 'nama']);
+    }
+
+    /** Saring nota per rute: rute nota tambahan bila diisi, selain itu rute uang jalan. */
+    public function filterRoute(Builder $query, string $kind, ?int $routeId): void
+    {
+        if ($routeId === null) {
+            return;
+        }
+        $cashRoute = fn (Builder $query): Builder => $query->where('rute_id', $routeId);
+        if ($kind === 'utama') {
+            $query->whereHas('kas_uang_jalan', $cashRoute);
+
+            return;
+        }
+        $query->where(fn (Builder $query): Builder => $query->where('transaksi_additionals.rute_id', $routeId)
+            ->orWhere(fn (Builder $query): Builder => $query->whereNull('transaksi_additionals.rute_id')->whereHas('transaksi.kas_uang_jalan', $cashRoute)));
+    }
+
+    /**
+     * Urutkan nota menurut kolom perjalanan (lihat SORTS). Tanpa $sort urutan
+     * tidak diubah; pemanggil tetap menambahkan id sebagai pengurut terakhir.
+     */
+    public function sortJourneys(Builder $query, string $kind, ?string $sort, string $direction = 'asc'): void
+    {
+        if ($sort === null || ! array_key_exists($sort, self::SORTS)) {
+            return;
+        }
+        $direction = $direction === 'desc' ? 'desc' : 'asc';
+        $journey = $kind === 'utama' ? 'transaksis.id' : 'transaksi_additionals.transaksi_id';
+        $journeyColumn = fn (string $column): QueryBuilder => DB::table('transaksis as sort_journey')
+            ->leftJoin('kas_uang_jalans as sort_cash', 'sort_cash.id', '=', 'sort_journey.kas_uang_jalan_id')
+            ->leftJoin('rutes as sort_route', 'sort_route.id', '=', 'sort_cash.rute_id')
+            ->whereColumn('sort_journey.id', $journey)->select($column)->limit(1);
+        $value = match ($sort) {
+            'tanggal_uj' => $journeyColumn('sort_cash.tanggal'),
+            'kode' => $journeyColumn('sort_cash.nomor_uang_jalan'),
+            'rute' => $journeyColumn('sort_route.nama'),
+            'tanggal_muat' => $journeyColumn('sort_journey.tanggal_muat'),
+            'tanggal_bongkar' => $journeyColumn('sort_journey.tanggal_bongkar'),
+        };
+        if ($sort === 'rute' && $kind !== 'utama') {
+            // Nota tambahan menampilkan rutenya sendiri bila diisi, selain itu rute uang jalan.
+            $query->orderByRaw('COALESCE((SELECT own_route.nama FROM rutes own_route WHERE own_route.id = transaksi_additionals.rute_id), ('
+                .'SELECT cash_route.nama FROM transaksis cash_journey LEFT JOIN kas_uang_jalans cash_kas ON cash_kas.id = cash_journey.kas_uang_jalan_id '
+                .'LEFT JOIN rutes cash_route ON cash_route.id = cash_kas.rute_id WHERE cash_journey.id = transaksi_additionals.transaksi_id LIMIT 1)) '.$direction);
+
+            return;
+        }
+        $query->orderBy($value, $direction);
+    }
+
+    /**
+     * Total tonase muat, tonase bongkar dan (HPP) uang jalan atas seluruh nota
+     * hasil filter, bukan hanya baris yang sudah dimuat.
+     *
+     * @return array<string, string>
+     */
+    public function journeyTotals(Builder $filtered, string $kind): array
+    {
+        $query = DB::query()->fromSub((clone $filtered)->reorder()->toBase(), 'notes');
+        $journey = 'notes';
+        if ($kind !== 'utama') {
+            $query->join('transaksis as journey', 'journey.id', '=', 'notes.transaksi_id');
+            $journey = 'journey';
+        }
+        $totals = $query->leftJoin('kas_uang_jalans as cash', 'cash.id', '=', $journey.'.kas_uang_jalan_id')
+            ->selectRaw("COALESCE(SUM($journey.tonase), 0) as loaded")
+            ->selectRaw("COALESCE(SUM(CAST(REPLACE($journey.timbangan_bongkar, ',', '.') AS DECIMAL(14,3))), 0) as unloaded")
+            ->selectRaw('COALESCE(SUM(cash.nominal_transaksi), 0) as cash')->first();
+        $ton = fn ($value): string => number_format((float) $value, 2, ',', '.').' ton';
+
+        return ['Total Tonase Muat' => $ton($totals->loaded), 'Total Tonase Bongkar' => $ton($totals->unloaded)]
+            + ($kind === 'utama' ? ['Total Uang Jalan' => 'Rp'.number_format((float) $totals->cash, 0, ',', '.')] : []);
+    }
+
     public function searchJourneys(Builder $query, string $search): void
     {
         if ($search === '') {
@@ -123,6 +221,14 @@ class VendorOperationalBilling
         if (! empty($filters['end_date'])) {
             $query->whereDate('tempo', '<=', $filters['end_date']);
         }
+        $direction = ($filters['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+        match ($filters['sort'] ?? null) {
+            'tanggal' => $query->orderBy('tanggal', $direction),
+            'vendor' => $query->orderBy(Vendor::query()->select('nama')->whereColumn('vendors.id', 'vendor_invoices.vendor_id')->limit(1), $direction),
+            'invoice' => $query->orderBy('periode', $direction),
+            'tempo' => $query->orderBy('tempo', $direction),
+            default => null,
+        };
 
         return $query->orderByDesc('tanggal')->orderByDesc('id')->orderBy('kind');
     }

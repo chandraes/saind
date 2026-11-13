@@ -59,15 +59,21 @@ class VendorOperationalBillingController extends Controller
         $filters = $this->filters($request, ['available' => 'Tersedia'], 'available');
         $kind = $filters['kind'];
         $query = $this->billing->payableNotes($vendor, $kind, (int) $request->user()->id);
+        $extra = $request->expectsJson() ? [] : ['routes' => $this->billing->routeOptions($query, $kind)];
         if ($kind === 'utama') {
             $this->billing->searchJourneys($query, $filters['search']);
         } elseif ($filters['search'] !== '') {
             $query->whereHas('transaksi', fn (Builder $query) => $this->billing->searchJourneys($query, $filters['search']));
         }
+        $this->billing->filterRoute($query, $kind, $filters['rute_id']);
+        if (! $request->expectsJson()) {
+            $extra['totals'] = $this->billing->journeyTotals($query, $kind);
+        }
+        $this->billing->sortJourneys($query, $kind, $filters['sort'], $filters['dir']);
 
         return $this->listing($request, $query, $kind === 'utama' ? 'Nota Bayar' : VendorOperationalBilling::CATEGORIES[$kind], 'nota-bayar', $filters,
             fn ($item): array => ['cells' => $this->billing->paymentCells($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama', $this->finance($request)),
-                'url' => null]);
+                'url' => null], $extra);
     }
 
     public function noteShow(Request $request, string $kind, int $record): View
@@ -115,9 +121,11 @@ class VendorOperationalBillingController extends Controller
     {
         $vendor = $this->vendor($request);
         $this->validKind($kind);
-        $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
+        $sort = $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'sort' => ['nullable', Rule::in(array_keys(VendorOperationalBilling::SORTS))],
+            'dir' => ['nullable', Rule::in(['asc', 'desc'])]]);
         $invoice = $this->billing->invoiceQuery($vendor, $kind)->findOrFail($record);
         $query = $this->billing->invoiceJourneys($vendor, $kind, $invoice);
+        $this->billing->sortJourneys($query, $kind, $sort['sort'] ?? null, $sort['dir'] ?? 'asc');
         $items = $query->orderByDesc('id')->simplePaginate(20)->withQueryString();
         $finance = $this->finance($request);
         $rows = $items->getCollection()->map(fn ($item): array => ['cells' => $this->billing->paymentCells($kind === 'utama' ? $item : $item->transaksi, $kind === 'utama', $finance), 'url' => null])->all();
@@ -158,10 +166,10 @@ class VendorOperationalBillingController extends Controller
             'status' => $status, 'status_label' => ['cart' => 'Dalam keranjang', 'paid' => 'Lunas', 'unpaid' => 'Belum lunas'][$status]];
     }
 
-    private function listing(Request $request, Builder $query, string $title, string $page, array $filters, callable $project): View|JsonResponse
+    private function listing(Request $request, Builder $query, string $title, string $page, array $filters, callable $project, array $extra = []): View|JsonResponse
     {
         $items = $query->orderByDesc('id')->simplePaginate(20)->withQueryString();
-        $data = ['title' => $title, 'page' => $page, 'filters' => $filters, 'categories' => VendorOperationalBilling::CATEGORIES,
+        $data = $extra + ['title' => $title, 'page' => $page, 'filters' => $filters, 'categories' => VendorOperationalBilling::CATEGORIES,
             'vendorName' => $this->vendorName($request), 'vendors' => $this->vendorOptions($request), 'vendorQuery' => $this->vendorQuery($request), 'columns' => $page === 'nota-bayar' ? array_keys($this->billing->paymentColumns($filters['kind'] === 'utama', $this->finance($request))) : [],
             'rows' => $items->getCollection()->map($project)->all(), 'next' => $items->nextPageUrl(), 'offset' => ($items->currentPage() - 1) * 20];
         $rowsView = $page === 'nota-bongkar' ? 'billing.vendor-readonly.unloading-rows' : 'billing.vendor-readonly.rows';
@@ -175,9 +183,11 @@ class VendorOperationalBillingController extends Controller
     private function filters(Request $request, array $statuses, string $defaultStatus = 'all'): array
     {
         $filters = $request->validate(['kind' => ['sometimes', Rule::in(array_keys(VendorOperationalBilling::CATEGORIES))],
-            'status' => ['sometimes', Rule::in(array_keys($statuses))], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+            'status' => ['sometimes', Rule::in(array_keys($statuses))], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1'],
+            'rute_id' => ['nullable', 'integer'], 'sort' => ['nullable', Rule::in(array_keys(VendorOperationalBilling::SORTS))], 'dir' => ['nullable', Rule::in(['asc', 'desc'])]]);
 
-        return ['kind' => $filters['kind'] ?? 'utama', 'status' => $filters['status'] ?? $defaultStatus, 'search' => trim($filters['search'] ?? ''), 'statuses' => $statuses];
+        return ['kind' => $filters['kind'] ?? 'utama', 'status' => $filters['status'] ?? $defaultStatus, 'search' => trim($filters['search'] ?? ''), 'statuses' => $statuses,
+            'rute_id' => isset($filters['rute_id']) ? (int) $filters['rute_id'] : null, 'sort' => $filters['sort'] ?? null, 'dir' => $filters['dir'] ?? 'asc'];
     }
 
     private function finance(Request $request): bool

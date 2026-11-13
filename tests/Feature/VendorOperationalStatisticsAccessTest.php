@@ -249,6 +249,28 @@ class VendorOperationalStatisticsAccessTest extends TestCase
         $this->getJson($url.'&start=25', ['X-Requested-With' => 'XMLHttpRequest'])->assertOk()->assertJsonCount(5, 'data');
     }
 
+    /** Operasional tidak punya akses Rekap/Statistik, jadi navigasinya tidak ditampilkan. */
+    public function test_operasional_upah_gendong_hides_rekap_and_statistik_navigation(): void
+    {
+        $this->createTransactionFixtures();
+        Schema::create('upah_gendongs', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('vehicle_id');
+            $table->decimal('tonase_min');
+            $table->integer('nominal');
+            $table->string('nama_driver')->nullable();
+            $table->string('nama_pengurus')->nullable();
+        });
+        DB::table('upah_gendongs')->insert(['vehicle_id' => 1, 'tonase_min' => 30, 'nominal' => 1000]);
+        // Halaman versi admin memakai fungsi MySQL YEAR(); sediakan padanannya di SQLite.
+        $pdo = DB::connection()->getPdo();
+        $year = fn ($date): ?int => $date === null ? null : (int) substr((string) $date, 0, 4);
+        method_exists($pdo, 'createFunction') ? $pdo->createFunction('YEAR', $year, 1) : $pdo->sqliteCreateFunction('YEAR', $year, 1);
+        $this->actingAs(User::factory()->make(['password' => 'test-password', 'id' => 9, 'role' => 'operasional', 'vendor_id' => null]));
+        $this->get('/statistik/upah-gendong?vehicle_id=1&bulan=11&tahun=2026')->assertOk()->assertSee('STATISTIK UPAH GENDONG')
+            ->assertSee(route('home'), false)->assertDontSee(route('rekap.index'), false)->assertDontSee(route('statisik.index'), false);
+    }
+
     public function test_upah_web_counts_a_50_km_route_as_long_route(): void
     {
         $this->createTransactionFixtures();

@@ -4,7 +4,7 @@
             <caption class="px-3">{{ $title }}. Data dimuat bertahap saat Anda menggulir. Berat dalam ton.</caption>
             <thead class="table-success"><tr>
                 <th scope="col" style="width: 45px">No</th>
-                @foreach ($columns as $column)<th scope="col">{{ $column }}</th>@endforeach
+                @foreach ($columns as $column)<th scope="col">@include('billing.vendor-readonly.sort-link', ['label' => $column, 'key' => array_search($column, \App\Services\VendorOperationalBilling::SORTS, true) ?: null])</th>@endforeach
                 @if ($showAction)<th scope="col">Aksi</th>@endif
             </tr></thead>
             <tbody>@include('billing.vendor-readonly.rows')</tbody>

@@ -27,6 +27,7 @@
                 <div class="invoice-vendor-search"><i class="fa fa-search" aria-hidden="true"></i><input id="search" name="search" class="form-control" maxlength="100" placeholder="Masukkan periode invoice" value="{{ $filters['search'] ?? '' }}"></div>
             </div>
             @include('billing.vendor-readonly.vendor-filter', ['class' => 'invoice-filter-vendor'])
+            @if (! empty($filters['sort']))<input type="hidden" name="sort" value="{{ $filters['sort'] }}"><input type="hidden" name="dir" value="{{ $filters['dir'] ?? 'asc' }}">@endif
             <div class="invoice-filter-status">
                 <label for="status" class="form-label">Status pembayaran</label>
                 <select id="status" name="status" class="form-select">

@@ -226,7 +226,9 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->assertSame($expected, $headers);
         $this->assertSame(0, $xpath->query('//select[@name="status"]')->length);
         $this->assertSame(0, $xpath->query('//table[@id="note-inbox-table"]//input')->length);
-        $this->assertSame(0, $xpath->query('//table[@id="note-inbox-table"]//a')->length);
+        // Tautan hanya di judul kolom untuk mengurutkan, tidak ada aksi di baris nota.
+        $this->assertSame(0, $xpath->query('//table[@id="note-inbox-table"]/tbody//a')->length);
+        $this->assertSame(5, $xpath->query('//table[@id="note-inbox-table"]/thead//a[@data-sort]')->length);
         foreach (['kompensasi_jr', 'penyesuaian_bbm', 'achievement'] as $kind) {
             $response = $this->get('/vendor-operational/nota-bayar?kind='.$kind)->assertOk()->assertDontSee('Harga');
             @$html->loadHTML($response->getContent());
@@ -277,6 +279,81 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->assertSame(20, substr_count($rows->json('rows'), '<tr>'));
         $this->assertNotNull($rows->json('next'));
         $this->getJson($rows->json('next'))->assertOk()->assertJsonPath('next', null);
+    }
+
+    /** Nota bayar: urut per kolom, saring per rute, total seluruh nota hasil filter. */
+    public function test_payment_notes_sort_filter_route_and_total_every_filtered_note(): void
+    {
+        $this->actingAs(User::factory()->create(['username' => 'ops-sort', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]));
+        DB::table('rutes')->insert(['id' => 2, 'nama' => 'Rute B', 'jarak' => 20]);
+        DB::table('kas_uang_jalans')->insert([
+            ['id' => 3, 'vendor_id' => 1, 'vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 2, 'nomor_uang_jalan' => 9, 'tanggal' => '2026-10-15', 'nominal_transaksi' => 100000],
+            ['id' => 4, 'vendor_id' => 1, 'vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 2, 'nomor_uang_jalan' => 3, 'tanggal' => '2026-11-20', 'nominal_transaksi' => 200000],
+        ]);
+        DB::table('transaksis')->where('id', 1)->update(['tanggal_muat' => '2026-11-02', 'tanggal_bongkar' => '2026-11-03']);
+        DB::table('transaksis')->insert([
+            ['id' => 3, 'kas_uang_jalan_id' => 3, 'nota_muat' => 'TICKET OKT', 'tonase' => '10.5', 'timbangan_bongkar' => '10,25', 'tanggal_muat' => '2026-10-16', 'tanggal_bongkar' => '2026-11-30'],
+            ['id' => 4, 'kas_uang_jalan_id' => 4, 'nota_muat' => 'TICKET NOV', 'tonase' => '20', 'timbangan_bongkar' => '19', 'tanggal_muat' => '2026-11-21', 'tanggal_bongkar' => '2026-11-22'],
+        ]);
+        $order = function (string $query): array {
+            $rows = $this->getJson('/vendor-operational/nota-bayar?vendor_id=1&kind=utama'.$query)->assertOk()->json('rows');
+            preg_match_all('/TICKET (?:OKT|NOV|1)/', $rows, $matches);
+
+            return $matches[0];
+        };
+        $this->assertSame(['TICKET OKT', 'TICKET 1', 'TICKET NOV'], $order('&sort=tanggal_uj'));
+        $this->assertSame(['TICKET NOV', 'TICKET 1', 'TICKET OKT'], $order('&sort=tanggal_uj&dir=desc'));
+        $this->assertSame(['TICKET 1', 'TICKET NOV', 'TICKET OKT'], $order('&sort=kode'));
+        $this->assertSame(['TICKET 1', 'TICKET NOV', 'TICKET OKT'], $order('&sort=rute'));
+        $this->assertSame(['TICKET OKT', 'TICKET 1', 'TICKET NOV'], $order('&sort=tanggal_muat'));
+        $this->assertSame(['TICKET OKT', 'TICKET NOV', 'TICKET 1'], $order('&sort=tanggal_bongkar&dir=desc'));
+        $this->assertSame(['TICKET NOV', 'TICKET OKT'], $order('&rute_id=2&sort=kode'));
+        $this->getJson('/vendor-operational/nota-bayar?vendor_id=1&kind=utama&sort=harga')->assertUnprocessable();
+
+        // Halaman: pilihan rute, judul kolom bisa diklik, total seluruh nota (bukan per halaman).
+        $this->get('/vendor-operational/nota-bayar?vendor_id=1&kind=utama')->assertOk()
+            ->assertSee('<option value="2" >Rute B</option>', false)->assertSee('data-sort="tanggal_uj"', false)->assertSee('data-sort="tanggal_bongkar"', false)
+            ->assertSee('Total Tonase Muat')->assertSee('60,50 ton')->assertSee('58,25 ton')->assertSee('Rp423.456');
+        $this->get('/vendor-operational/nota-bayar?vendor_id=1&kind=utama&rute_id=2&sort=kode&dir=desc')->assertOk()
+            ->assertSee('30,50 ton')->assertSee('29,25 ton')->assertSee('Rp300.000')->assertDontSee('TICKET 1')
+            ->assertSee('name="sort" value="kode"', false)->assertSee('aria-sort="descending"', false);
+
+        // Nota tambahan: rute miliknya dipakai bila diisi; tanpa total uang jalan.
+        DB::table('transaksi_additionals')->insert(['id' => 40, 'vendor_id' => 1, 'transaksi_id' => 3, 'jenis' => 'achievement', 'rute_id' => 1]);
+        $rows = $this->getJson('/vendor-operational/nota-bayar?vendor_id=1&kind=achievement&rute_id=1')->assertOk()->json('rows');
+        $this->assertSame(2, substr_count($rows, '<tr>'));
+        $this->assertStringNotContainsString('TICKET NOV', $rows);
+        $this->get('/vendor-operational/nota-bayar?vendor_id=1&kind=achievement&sort=rute')->assertOk()
+            ->assertSee('40,50 ton')->assertDontSee('Total Uang Jalan');
+    }
+
+    public function test_invoice_list_and_detail_sort_by_column(): void
+    {
+        $this->actingAs(User::factory()->create(['username' => 'ops-invoice-sort', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]));
+        DB::table('invoice_bayars')->where('id', 1)->update(['tanggal' => '2026-11-05', 'tempo' => '2026-12-20']);
+        DB::table('invoice_bayars')->where('id', 2)->update(['tanggal' => '2026-11-01', 'tempo' => '2026-12-01']);
+        DB::table('invoice_add_vendors')->update(['status' => 0]);
+        $order = function (string $query): array {
+            $rows = $this->getJson('/vendor-operational/invoice?status=all'.$query)->assertOk()->json('rows');
+            preg_match_all('/PERIODE \d/', $rows, $matches);
+
+            return $matches[0];
+        };
+        $this->assertSame(['PERIODE 2', 'PERIODE 1'], $order('&sort=tanggal'));
+        $this->assertSame(['PERIODE 1', 'PERIODE 2'], $order('&sort=tempo&dir=desc'));
+        $this->assertSame(['PERIODE 2', 'PERIODE 1'], $order('&sort=vendor'));
+        $this->assertSame(['PERIODE 2', 'PERIODE 1'], $order('&sort=invoice&dir=desc'));
+        $this->getJson('/vendor-operational/invoice?sort=total')->assertUnprocessable();
+        $this->get('/vendor-operational/invoice?sort=vendor')->assertOk()->assertSee('data-sort="tempo"', false)->assertSee('name="sort" value="vendor"', false);
+
+        DB::table('kas_uang_jalans')->insert(['id' => 3, 'vendor_id' => 1, 'vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 1, 'nomor_uang_jalan' => 7, 'tanggal' => '2026-10-01']);
+        DB::table('transaksis')->insert(['id' => 3, 'kas_uang_jalan_id' => 3, 'nota_muat' => 'TICKET 3']);
+        DB::table('invoice_bayar_details')->insert(['invoice_bayar_id' => 1, 'transaksi_id' => 3]);
+        $detail = fn (string $query): string => $this->getJson('/vendor-operational/invoice/utama/1'.$query)->assertOk()->json('rows');
+        $this->assertLessThan(strpos($detail('?sort=tanggal_uj'), 'TICKET 1'), strpos($detail('?sort=tanggal_uj'), 'TICKET 3'));
+        $this->assertLessThan(strpos($detail('?sort=kode&dir=desc'), 'TICKET 1'), strpos($detail('?sort=kode&dir=desc'), 'TICKET 3'));
+        $this->get('/vendor-operational/invoice/utama/1')->assertOk()->assertSee('data-sort="kode"', false);
+        $this->getJson('/vendor-operational/invoice/utama/1?sort=vendor')->assertUnprocessable();
     }
 
     public function test_invoice_list_follows_source_columns_and_only_active_unpaid_invoices(): void

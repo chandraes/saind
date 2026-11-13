@@ -76,7 +76,7 @@
                 <caption class="visually-hidden">{{ $title }}</caption>
                 <thead class="table-success"><tr>
                     <th scope="col" style="width: 45px">No</th>
-                    @foreach ($columns as $column)<th scope="col">{{ $column }}</th>@endforeach
+                    @foreach ($columns as $column)<th scope="col">@include('billing.vendor-readonly.sort-link', ['label' => $column, 'key' => array_search($column, \App\Services\VendorOperationalBilling::SORTS, true) ?: null])</th>@endforeach
                 </tr></thead>
                 <tbody>@include('billing.vendor-readonly.rows')</tbody>
             </table>
@@ -100,14 +100,35 @@
 @push('js')
 @isset($adminTable)
 <script src="{{ asset('assets/js/dt5.min.js') }}"></script>
+<script>
+    // Urutkan Tanggal UJ, Kode, Rute, Tanggal Muat dan Tanggal Bongkar (kolom 1, 2, 5, 8, 11) di tabel versi admin.
+    window.invoiceJourneySort = (() => {
+        const date = value => { const match = String(value).trim().match(/^(\d{2})-(\d{2})-(\d{4})$/); return match ? match[3] + match[2] + match[1] : String(value).trim(); };
+        const text = value => $('<div>').html(value).text().trim();
+        return {ordering: true, order: [], columnDefs: [
+            // Sel Kode tabel admin juga memuat isi modal; ambil angka dari "UJxx".
+            {targets: [2], render: (data, type) => type === 'sort' ? Number((text(data).match(/UJ\s*(\d+)/) || [])[1] || 0) : data},
+            {targets: [8, 11], render: (data, type) => type === 'sort' ? date(text(data)) : data},
+            {targets: '_all', orderable: false},
+            {targets: [1, 2, 5, 8, 11], orderable: true},
+        ], drawCallback() { this.api().column(0, {order: 'applied'}).nodes().each((cell, index) => { cell.textContent = index + 1; }); }};
+    })();
+</script>
 @if ($adminTable['view'] === 'billing.transaksi.invoice.bayar.table')
 <script>
     // Sama seperti halaman admin Invoice Bayar.
     $(function () {
         // Lebar mengikuti layar (bukan lebar hitungan awal) agar seluruh kolom muat satu layar;
         // geser kiri-kanan hanya bila layar memang terlalu sempit.
-        $('#notaTable').css('width', '100%').DataTable({paging: false, ordering: false, searching: false, info: false, autoWidth: false,
-            scrollCollapse: true, scrollX: true, scrollY: '550px', fixedColumns: {leftColumns: 3, rightColumns: 1}});
+        $('#notaTable').css('width', '100%').DataTable({paging: false, searching: false, info: false, autoWidth: false,
+            scrollCollapse: true, scrollX: true, scrollY: '550px', fixedColumns: {leftColumns: 3, rightColumns: 1}, ...window.invoiceJourneySort});
+    });
+</script>
+@else
+<script>
+    $(function () {
+        $('#notaTable').css('width', '100%').DataTable({paging: false, searching: false, info: false, autoWidth: false,
+            scrollCollapse: true, scrollX: true, ...window.invoiceJourneySort});
     });
 </script>
 @endif
