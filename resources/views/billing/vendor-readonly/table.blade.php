@@ -8,6 +8,17 @@
                 @if ($showAction)<th scope="col">Aksi</th>@endif
             </tr></thead>
             <tbody>@include('billing.vendor-readonly.rows')</tbody>
+            @if (!empty($totals))
+            @php
+                $firstTotal = collect($columns)->search(fn ($column): bool => array_key_exists($column, $totals));
+            @endphp
+            {{-- Total seluruh nota hasil cari/filter (bukan hanya baris yang sudah dimuat), tepat di bawah kolomnya. --}}
+            <tfoot class="table-light fw-bold"><tr>
+                <th scope="row" colspan="{{ $firstTotal + 1 }}" class="text-end">Total seluruh hasil filter</th>
+                @foreach (array_slice($columns, $firstTotal) as $column)<td class="text-center text-nowrap">{{ $totals[$column] ?? '' }}</td>@endforeach
+                @if ($showAction)<td></td>@endif
+            </tr></tfoot>
+            @endif
         </table>
     </div>
     @if (!$rows)<p class="text-center text-muted my-4">Belum ada data sesuai filter.</p>@endif

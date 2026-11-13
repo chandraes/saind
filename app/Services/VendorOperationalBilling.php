@@ -180,8 +180,9 @@ class VendorOperationalBilling
             ->selectRaw('COALESCE(SUM(cash.nominal_transaksi), 0) as cash')->first();
         $ton = fn ($value): string => number_format((float) $value, 2, ',', '.').' ton';
 
-        return ['Total Tonase Muat' => $ton($totals->loaded), 'Total Tonase Bongkar' => $ton($totals->unloaded)]
-            + ($kind === 'utama' ? ['Total Uang Jalan' => 'Rp'.number_format((float) $totals->cash, 0, ',', '.')] : []);
+        // Kunci = judul kolom tabel, agar total tampil tepat di bawah kolomnya (footer).
+        return ['Tonase Muat' => $ton($totals->loaded), 'Tonase Bongkar' => $ton($totals->unloaded)]
+            + ($kind === 'utama' ? ['Uang Jalan' => 'Rp'.number_format((float) $totals->cash, 0, ',', '.')] : []);
     }
 
     public function searchJourneys(Builder $query, string $search): void
