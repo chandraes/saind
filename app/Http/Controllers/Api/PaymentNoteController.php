@@ -20,7 +20,8 @@ class PaymentNoteController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate(['kind' => ['sometimes', Rule::in(array_keys(VendorOperationalBilling::CATEGORIES))],
-            'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
+            'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1'],
+            'sort' => ['nullable', Rule::in(array_keys(VendorOperationalBilling::SORTS))], 'dir' => ['nullable', Rule::in(['asc', 'desc'])]]);
         $kind = $filters['kind'] ?? 'utama';
         // Operasional memilih vendor dulu (seperti admin); akun vendor selalu vendornya sendiri.
         $query = $this->billing->payableNotes(MobileVendorScope::required($request), $kind, (int) $request->user()->id);
@@ -34,6 +35,8 @@ class PaymentNoteController extends Controller
         if ($kind === 'utama' && $request->user()->canViewVendorFinance()) {
             $summary += $this->billing->paymentFinanceSummary($query);
         }
+        // Urutan sama seperti web (klik judul kolom); tanpa sort = terbaru dulu.
+        $this->billing->sortJourneys($query, $kind, $filters['sort'] ?? null, $filters['dir'] ?? 'asc');
         $items = $query->orderByDesc('id')->paginate(20)->withQueryString();
         $items->getCollection()->each(fn (Transaksi|TransaksiAdditional $item) => $item->setAttribute('mobile_kind', $kind));
 
