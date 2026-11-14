@@ -26,7 +26,9 @@ class MobileUserResource extends JsonResource
                 // Kas UJ Ditahan per nolam: vendor-induk (nolam vendornya) & operasional (semua nolam).
                 'held_cash' => $this->resource->canViewNolamHeldCash(),
                 // Driver: menu driver, dikunci ke satu nolam (lihat driver_vehicle).
-                'driver' => $this->resource->isDriver()],
+                'driver' => $this->resource->isDriver(),
+                // HRD: hanya menu Potongan Absensi (baca saja).
+                'attendance_deductions' => $this->resource->isHrd()],
             'driver_vehicle' => $this->when($this->resource->isDriver(), fn (): ?array => ($vehicle = $this->resource->activeDriverVehicle())
                 ? ['id' => $vehicle->id, 'nomor_lambung' => (string) $vehicle->nomor_lambung, 'vendor_id' => (int) $vehicle->vendor_id] : null)];
     }

@@ -32,6 +32,10 @@ class HomeController extends Controller
     {
         $user = Auth::user();
 
+        if ($user->isHrd()) {
+            return view('hrd.dashboard');
+        }
+
         if ($user->isDriver()) {
             return view('driver.dashboard', ['vehicle' => request()->attributes->get('driverVehicle')]);
         }

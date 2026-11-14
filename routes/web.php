@@ -30,6 +30,7 @@ use App\Http\Controllers\FormStoringConroller;
 use App\Http\Controllers\FormVendorController;
 use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\HrdAttendanceDeductionController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KategoriBarangController;
@@ -102,6 +103,12 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('driver/kas-uj-ditahan/{fund}', DriverHeldCashController::class)
         ->whereIn('fund', ['sparepart', 'ban'])->middleware('role:driver')->name('driver.held-cash');
+
+    Route::prefix('hrd/potongan-absensi')->name('hrd.attendance-deductions')->middleware('role:hrd')->controller(HrdAttendanceDeductionController::class)->group(function (): void {
+        Route::get('/', 'index');
+        Route::get('{key}', 'show')->whereNumber('key')->name('.show');
+        Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
+    });
 
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 

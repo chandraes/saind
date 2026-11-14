@@ -154,6 +154,12 @@ class User extends Authenticatable
         return $this->role === 'driver';
     }
 
+    /** HRD: hanya menu Potongan Absensi (baca saja, tanpa nominal gaji lain). */
+    public function isHrd(): bool
+    {
+        return $this->role === 'hrd';
+    }
+
     public function driver(): BelongsTo
     {
         return $this->belongsTo(Driver::class);

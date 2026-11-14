@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
+use App\Http\Controllers\Api\MobileAttendanceDeductionController;
 use App\Http\Controllers\Api\MobileBatteryController;
 use App\Http\Controllers\Api\MobileDriverHeldCashController;
 use App\Http\Controllers\Api\MobileFilterOilController;
@@ -90,6 +91,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 // Route::post('load-notes', [LoadNoteDraftController::class, 'store'])->middleware('throttle:30,1')->name('load-notes.store');
                 Route::get('load-notes/{note}', [LoadNoteDraftController::class, 'show'])->whereNumber('note')->name('load-notes.show');
                 Route::get('load-notes/{note}/photo', [LoadNoteDraftController::class, 'photo'])->whereNumber('note')->name('load-notes.photo');
+            });
+            Route::middleware('role:hrd')->group(function (): void {
+                Route::get('attendance-deductions', [MobileAttendanceDeductionController::class, 'index'])->name('attendance-deductions.index');
+                Route::get('attendance-deductions/{key}', [MobileAttendanceDeductionController::class, 'show'])->whereNumber('key')->name('attendance-deductions.show');
             });
             Route::prefix('database')->name('database.')->middleware('role:'.implode(',', config('mobile.database_roles')))->group(function (): void {
                 Route::get('vendors', [DatabaseController::class, 'vendors'])->name('vendors.index');
