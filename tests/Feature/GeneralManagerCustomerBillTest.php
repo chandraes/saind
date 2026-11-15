@@ -36,6 +36,21 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
             $table->string('jenis');
             $table->integer('status')->default(0);
         });
+        Schema::create('invoice_tagihans', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('customer_id');
+            $table->integer('lunas')->default(0);
+            $table->string('no_invoice');
+            foreach (['tanggal', 'tanggal_hardcopy', 'estimasi_pembayaran'] as $date) {
+                $table->date($date)->nullable();
+            }
+            foreach (['penyesuaian', 'penalty', 'penalty_akhir', 'ppn', 'pph', 'total_awal', 'kompensasi_jr', 'penyesuaian_bbm', 'achievement', 'total_tagihan'] as $money) {
+                $table->bigInteger($money)->default(0);
+            }
+            $table->string('no_resi')->nullable();
+            $table->string('no_validasi')->nullable();
+            $table->timestamps();
+        });
         Schema::create('rutes', function (Blueprint $table): void {
             $table->id();
             $table->string('nama');
@@ -163,6 +178,32 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         $this->assertSame(['number', 'id', 'vehicle_number', 'money_out_number', 'route_name', 'vendor_name', 'load_weight', 'unload_weight', 'physical_note'], array_keys($response->json('data.0')));
         $this->getJson('/api/v1/customers/1/bills?kind=achievement', $headers)->assertUnprocessable();
         $this->getJson('/api/v1/customers/2/bills', $headers)->assertOk()->assertJsonPath('meta.categories', ['utama' => 'HPP']);
+    }
+
+    public function test_tagihan_and_invoice_web_and_mobile_tabs(): void
+    {
+        DB::table('invoice_tagihans')->insert([
+            ['customer_id' => 2, 'no_invoice' => 'INV-02', 'tanggal' => '2026-11-02', 'estimasi_pembayaran' => '2026-11-30', 'total_tagihan' => 4000000, 'lunas' => 0],
+            ['customer_id' => 2, 'no_invoice' => 'INV-01', 'tanggal' => '2026-11-01', 'estimasi_pembayaran' => null, 'total_tagihan' => 1500000, 'lunas' => 0],
+            ['customer_id' => 1, 'no_invoice' => 'INV-LUNAS', 'tanggal' => '2026-10-01', 'estimasi_pembayaran' => null, 'total_tagihan' => 9999999, 'lunas' => 1],
+        ]);
+        $this->actingAs($this->gm)->get('/home')->assertOk()->assertSee('Tagihan &amp; Invoice', false)->assertSee(route('rekap.tagihan-invoice'));
+        $this->get('/rekap/tagihan-invoice')->assertOk()->assertSee('TA')->assertSee('INV-02')->assertDontSee('INV-LUNAS')->assertDontSee(route('rekap.index').'"', false);
+
+        $response = $this->getJson('/api/v1/billing-invoices', $this->headers($this->gm))->assertOk()
+            // Tagihan: nota belum ditagih (−PPh 2%) per tambang; TA 3 jt + 6 jt, TB 9 jt.
+            ->assertJsonPath('bills.0.customer', 'TA')->assertJsonPath('bills.0.amount', 8820000)->assertJsonPath('bills.0.from', '01-11-2026')->assertJsonPath('bills.0.to', '02-11-2026')
+            ->assertJsonPath('bills.1.customer', 'TB')->assertJsonPath('bills.1.amount', 8820000)
+            // Invoice: satu baris per invoice belum lunas, urut nomor invoice.
+            ->assertJsonPath('invoices.0.invoice', 'INV-01')->assertJsonPath('invoices.0.estimated_payment', null)
+            ->assertJsonPath('invoices.1.payment', 4000000)->assertJsonPath('invoices.1.estimated_payment', '30-11-2026')
+            ->assertJsonPath('meta.total_bill', 17640000)->assertJsonPath('meta.total_invoice', 5500000)->assertJsonPath('meta.grand_total', 23140000);
+        $this->assertCount(2, $response->json('invoices'));
+
+        $ops = User::factory()->create(['username' => 'ops-ti', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]);
+        $this->getJson('/api/v1/billing-invoices', $this->headers($ops))->assertForbidden();
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($ops)->get('/rekap/tagihan-invoice')->assertForbidden();
     }
 
     public function test_other_roles_cannot_read_customer_bills(): void

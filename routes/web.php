@@ -111,6 +111,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
     });
 
+    // Rekap Tagihan & Invoice (tampilan saja): admin dan General Manager.
+    Route::get('rekap/tagihan-invoice', [RekapController::class, 'tagihan_invoice'])->middleware('role:admin,user,su,general-manager')->name('rekap.tagihan-invoice');
+
     // Nota Tagihan per customer: admin (beserta aksi di bawah) dan General Manager (baca saja + export):
     // menu kategori, HPP, dan Kompensasi JR / Penyesuaian BBM / Achievement.
     Route::prefix('billing/nota-tagihan')->middleware('role:admin,user,su,asisten-user,general-manager')->controller(BillingController::class)->group(function (): void {
@@ -941,10 +944,6 @@ Route::group(['middleware' => ['auth']], function () {
 
             Route::prefix('bunga-investor')->group(function () {
                 Route::get('/', [RekapController::class, 'bunga_investor'])->name('rekap.bunga-investor');
-            });
-
-            Route::prefix('tagihan-invoice')->group(function () {
-                Route::get('/', [RekapController::class, 'tagihan_invoice'])->name('rekap.tagihan-invoice');
             });
 
             Route::prefix('cost-opertaional')->group(function () {

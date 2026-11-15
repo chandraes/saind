@@ -40,6 +40,7 @@ class VendorDashboardMenu
         }
         if ($user->isGeneralManager()) {
             $documents[] = $menu('Nota Tagihan', 'Pilih customer, lalu periksa nota tagihannya.', '#'.self::CUSTOMER_PICKER, 'tagihan.svg') + ['modal' => self::CUSTOMER_PICKER];
+            $documents[] = $menu('Tagihan & Invoice', 'Rekap tagihan dan invoice belum lunas per tambang.', route('rekap.tagihan-invoice'), 'tagihan-invoice.svg');
         }
         if ($user->canViewVendorFinance() && ! $user->seesAllVendors()) {
             $documents[] = $menu('Kas Vendor', 'Mutasi kas dan saldo vendor per bulan.', route('kas-per-vendor.index', $user->vendor_id), 'kas-vendor.svg');

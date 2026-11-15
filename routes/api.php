@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
 use App\Http\Controllers\Api\MobileAttendanceDeductionController;
 use App\Http\Controllers\Api\MobileBatteryController;
+use App\Http\Controllers\Api\MobileBillingInvoiceController;
 use App\Http\Controllers\Api\MobileCustomerBillController;
 use App\Http\Controllers\Api\MobileDriverHeldCashController;
 use App\Http\Controllers\Api\MobileFilterOilController;
@@ -96,6 +97,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             // General Manager: Nota Tagihan per customer (baca saja).
             Route::middleware('role:general-manager')->group(function (): void {
                 Route::get('customer-options', [MobileCustomerBillController::class, 'customers'])->name('customer-options');
+                Route::get('billing-invoices', MobileBillingInvoiceController::class)->name('billing-invoices.index');
                 Route::get('customers/{customer}/bills', [MobileCustomerBillController::class, 'index'])->whereNumber('customer')->name('customer-bills.index');
             });
             Route::middleware('role:hrd')->group(function (): void {
