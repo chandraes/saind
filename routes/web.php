@@ -28,6 +28,7 @@ use App\Http\Controllers\FormLainController;
 use App\Http\Controllers\FormMaintenanceController;
 use App\Http\Controllers\FormStoringConroller;
 use App\Http\Controllers\FormVendorController;
+use App\Http\Controllers\GeneralManagerPayrollController;
 use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HrdAttendanceDeductionController;
@@ -105,8 +106,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('driver/kas-uj-ditahan/{fund}', DriverHeldCashController::class)
         ->whereIn('fund', ['sparepart', 'ban'])->middleware('role:driver')->name('driver.held-cash');
 
-    Route::prefix('hrd/potongan-absensi')->name('hrd.attendance-deductions')->middleware('role:hrd')->controller(HrdAttendanceDeductionController::class)->group(function (): void {
-        Route::get('/', 'index');
+    Route::prefix('hrd/potongan-absensi')->name('hrd.attendance-deductions')->middleware('role:hrd,general-manager')->controller(HrdAttendanceDeductionController::class)->group(function (): void {
+        Route::get('/', 'index')->middleware('role:hrd');
         Route::get('{key}', 'show')->whereNumber('key')->name('.show');
         Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
     });
@@ -125,6 +126,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/{customer}', 'nota_tagihan')->whereNumber('customer')->name('transaksi.nota-tagihan');
         Route::get('/{customer}/export', 'tagihan_export')->whereNumber('customer')->name('transaksi.nota-tagihan.export');
     });
+
+    // Gaji Karyawan General Manager (baca saja); rincian potongan memakai rute HRD di atas.
+    Route::get('general-manager/gaji', [GeneralManagerPayrollController::class, 'index'])->middleware('role:general-manager')->name('gm.payroll');
 
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 

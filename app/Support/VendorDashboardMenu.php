@@ -58,6 +58,10 @@ class VendorDashboardMenu
                 $menu('Aki', 'Kondisi dan histori aki kendaraan.', route('statistik.aki'), 'aki.svg'),
                 $menu('Filter & Oli Mesin', 'Pemakaian dan histori penggantian.', route('statistik.filter-oli'), 'filter-oli-mesin.svg'),
             ]],
+            // General Manager: Gaji Karyawan (baca saja).
+            ...($user->isGeneralManager() ? [['key' => 'payroll', 'title' => 'Lain-lain', 'menus' => [
+                $menu('Gaji Karyawan', 'Tabel gaji karyawan per periode seperti Form Gaji.', route('gm.payroll'), 'gaji.svg'),
+            ]]] : []),
         ];
     }
 }

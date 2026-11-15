@@ -166,6 +166,34 @@ class HrdAttendanceDeductionTest extends MobileApiTestCase
         $this->getJson('/api/v1/attendance-deductions/'.$this->late->id, $this->headers($this->hrd))->assertUnprocessable();
     }
 
+    public function test_general_manager_reads_the_full_payroll_table_with_deduction_detail(): void
+    {
+        DB::table('bpjs_health_minimums')->insert(['year' => 2026, 'minimum_wage' => 1, 'basis' => 'UMK', 'reference' => 'Fixture pengujian']);
+        $gm = User::factory()->create(['username' => 'gm', 'role' => 'general-manager', 'password' => 'secret-pass']);
+        $page = $this->actingAs($gm)->get('/general-manager/gaji')->assertOk()->assertSee('GAJI KARYAWAN')->assertSee('Oktober 2026')
+            ->assertSeeInOrder(['Gaji Pokok', 'Tunjangan', 'Kasbon', 'Potongan Absensi', 'Sisa Gaji Dibayar'])
+            ->assertSeeInOrder(['Budi Terlambat', '5.000.000', '200.000', '4.800.000'])
+            ->assertSee(route('hrd.attendance-deductions.show', ['key' => $this->late->id, 'bulan' => 10, 'tahun' => 2026]))
+            ->assertSee('Grand total seluruh hasil filter');
+        $this->assertStringNotContainsString('<form method="POST"', $page->getContent());
+        // Rincian potongan memakai rute HRD; menu HRD sendiri tetap tertutup.
+        $this->getJson('/hrd/potongan-absensi/'.$this->late->id.'?bulan=10&tahun=2026')->assertOk()->assertJsonPath('data.detail.amount', 200000);
+        $this->get('/hrd/potongan-absensi')->assertForbidden();
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->hrd)->get('/general-manager/gaji')->assertForbidden();
+
+        $headers = $this->headers($gm);
+        $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.payroll', true)->assertJsonPath('data.permissions.attendance_deductions', false);
+        $response = $this->getJson('/api/v1/payroll', $headers)->assertOk()
+            ->assertJsonPath('data.1.nama', 'Budi Terlambat')->assertJsonPath('data.1.gp', 5000000)->assertJsonPath('data.1.kasbon', 0)
+            ->assertJsonPath('data.1.potongan_absensi', 200000)->assertJsonPath('data.1.total', 4800000)->assertJsonPath('data.1.has_detail', true)
+            ->assertJsonPath('meta.totals.total', 4800000 + 4000000 + 9000000);
+        $this->assertSame(0, $response->json('data.0.potongan_absensi'));
+        $this->getJson('/api/v1/attendance-deductions/'.$this->late->id.'?bulan=10&tahun=2026', $headers)->assertOk()->assertJsonPath('data.detail.amount', 200000);
+        $this->getJson('/api/v1/attendance-deductions', $headers)->assertForbidden();
+        $this->getJson('/api/v1/payroll', $this->headers($this->hrd))->assertForbidden();
+    }
+
     #[TestWith(['admin'])]
     #[TestWith(['operasional'])]
     #[TestWith(['vendor'])]

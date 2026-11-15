@@ -12,7 +12,9 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Menu Potongan Absensi untuk HRD (web & mobile, baca saja). Hanya nama, jabatan
- * dan potongan absensi; nominal gaji lain tidak pernah dikirim.
+ * dan potongan absensi; nominal gaji lain tidak pernah dikirim ke HRD. Menu Gaji
+ * Karyawan General Manager memakai periode & rincian yang sama, ditambah seluruh
+ * kolom Form Gaji (salaryRows).
  *
  * - Periode gaji berjalan (belum disahkan): dihitung langsung dari snapshot
  *   absensi, sama seperti pratinjau Form Gaji (status "Sementara").
@@ -70,9 +72,9 @@ class HrdAttendanceDeductions
      *
      * @return Collection<int, array{key: ?int, nama: string, jabatan: string, potongan_absensi: int, has_detail: bool}>
      */
-    public function rows(array $period, string $search = '', bool $deductionsOnly = false): Collection
+    public function rows(array $period, string $search = '', bool $deductionsOnly = false, bool $salary = false): Collection
     {
-        $rows = $period['final'] ? $this->savedRows($period) : $this->liveRows($period);
+        $rows = $period['final'] ? $this->savedRows($period, $salary) : $this->liveRows($period, $salary);
         $search = mb_strtolower(trim($search));
 
         return $rows->filter(fn (array $row): bool => ($search === '' || str_contains(mb_strtolower($row['nama']), $search) || str_contains(mb_strtolower($row['jabatan']), $search))
@@ -142,10 +144,35 @@ class HrdAttendanceDeductions
         return $this->payroll->employeesQueryForPeriod($period['month'], $period['year'])->setEagerLoads([])->with('jabatan:id,nama');
     }
 
+    /**
+     * Gaji Karyawan (General Manager): baris yang sama ditambah seluruh kolom
+     * Form Gaji — gp, tj, tk, btk, bk, ptk, pk, pkotor, pbersih, kasbon, total.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function salaryRows(array $period, string $search = ''): Collection
+    {
+        return $this->rows($period, $search, false, true);
+    }
+
     /** @return Collection<int, array<string, mixed>> */
-    private function liveRows(array $period): Collection
+    private function liveRows(array $period, bool $salary = false): Collection
     {
         $this->payroll->attendance->clear();
+        if ($salary) {
+            // Sama persis dengan pratinjau Form Gaji (PayrollService::previewRow).
+            $people = $this->payroll->directorsForPeriod($period['month'], $period['year'])
+                ->concat($this->payroll->employeesForPeriod($period['month'], $period['year']));
+
+            return collect($people->all())->map(function ($person) use ($period): array {
+                $row = $this->payroll->previewRow($person, $period['month'], $period['year']);
+                $detail = $row['attendance_detail'];
+
+                return ['key' => $row['employee_id'] === null ? null : (int) $row['employee_id'], 'nama' => (string) $row['nama'], 'jabatan' => (string) $row['jabatan'],
+                    'potongan_absensi' => (int) $row['potongan_absensi'], 'has_detail' => $row['potongan_absensi'] > 0 && ! empty($detail['days'])]
+                    + array_map('intval', array_intersect_key($row, array_flip(self::SALARY)));
+            })->values();
+        }
         $directors = $this->payroll->directorsForPeriod($period['month'], $period['year'])
             ->map(fn (Direksi $director): array => ['key' => null, 'nama' => (string) $director->nama, 'jabatan' => (string) ($director->jabatan ?: '—'), 'potongan_absensi' => 0, 'has_detail' => false]);
         $employees = $this->employees($period)->get()->map(function (Karyawan $employee) use ($period): array {
@@ -158,17 +185,24 @@ class HrdAttendanceDeductions
         return collect($directors->all())->concat($employees->all())->values();
     }
 
+    /** Kolom gaji Form Gaji => kolom rekap_gaji_details yang tersimpan. */
+    private const SALARY_COLUMNS = ['gp' => 'gaji_pokok', 'tj' => 'tunjangan_jabatan', 'tk' => 'tunjangan_keluarga', 'btk' => 'bpjs_tk', 'bk' => 'bpjs_k',
+        'ptk' => 'potongan_bpjs_tk', 'pk' => 'potongan_bpjs_kesehatan', 'pkotor' => 'pendapatan_kotor', 'pbersih' => 'pendapatan_bersih', 'kasbon' => 'kasbon', 'total' => 'sisa_gaji_dibayar'];
+
+    public const SALARY = ['gp', 'tj', 'tk', 'btk', 'bk', 'ptk', 'pk', 'pkotor', 'pbersih', 'kasbon', 'total'];
+
     /** @return Collection<int, array<string, mixed>> */
-    private function savedRows(array $period): Collection
+    private function savedRows(array $period, bool $salary = false): Collection
     {
         return RekapGajiDetail::where('rekap_gaji_id', $this->rekap($period)->id)->orderBy('id')
-            ->get(['id', 'nama', 'jabatan', 'potongan_absensi', 'rincian_absensi'])
-            ->map(function (RekapGajiDetail $record): array {
+            ->get(['id', 'nama', 'jabatan', 'potongan_absensi', 'rincian_absensi', ...($salary ? array_values(self::SALARY_COLUMNS) : [])])
+            ->map(function (RekapGajiDetail $record) use ($salary): array {
                 $detail = json_decode($record->rincian_absensi ?? 'null', true);
                 $amount = (int) $record->potongan_absensi;
 
                 return ['key' => (int) $record->id, 'nama' => (string) $record->nama, 'jabatan' => (string) ($record->jabatan ?: '—'),
-                    'potongan_absensi' => $amount, 'has_detail' => $amount > 0 && is_array($detail) && ! empty($detail['days'])];
+                    'potongan_absensi' => $amount, 'has_detail' => $amount > 0 && is_array($detail) && ! empty($detail['days'])]
+                    + ($salary ? array_map(fn (string $column): int => (int) $record->{$column}, self::SALARY_COLUMNS) : []);
             })->values()->toBase();
     }
 }

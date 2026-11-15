@@ -8,7 +8,7 @@
     $money = fn (int $value) => number_format($value, 0, ',', '.');
 @endphp
 <div class="container-fluid hrd-deductions">
-    <div class="row justify-content-center"><div class="col-md-12 text-center"><h1><u>POTONGAN ABSENSI</u></h1><h2><u>{{ $period['label'] }}</u></h2></div></div>
+    <div class="row justify-content-center"><div class="col-md-12 text-center"><h1><u>{{ $title }}</u></h1><h2><u>{{ $period['label'] }}</u></h2></div></div>
     <div class="d-flex flex-wrap gap-4 align-items-center mt-3 mb-4">
         <a href="{{ route('home') }}" class="d-inline-flex align-items-center gap-2"><img src="{{ asset('images/dashboard.svg') }}" alt="" width="30">Dashboard</a>
     </div>
@@ -54,7 +54,7 @@
                     </div>
                 </div>
                 <div class="col-sm-auto ms-xl-auto">
-                    <a class="btn btn-outline-secondary w-100 {{ $filtered ? '' : 'disabled' }}" @if (!$filtered) aria-disabled="true" tabindex="-1" @endif href="{{ route('hrd.attendance-deductions', $periodQuery) }}"><i class="fa fa-undo me-1" aria-hidden="true"></i>Reset</a>
+                    <a class="btn btn-outline-secondary w-100 {{ $filtered ? '' : 'disabled' }}" @if (!$filtered) aria-disabled="true" tabindex="-1" @endif href="{{ route($indexRoute, $periodQuery) }}"><i class="fa fa-undo me-1" aria-hidden="true"></i>Reset</a>
                 </div>
             </div>
         </div>
@@ -77,16 +77,35 @@
     <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle" id="hrd-deductions-table">
             <thead class="table-success text-center align-middle">
+                @if ($salary)
+                {{-- Kolom sama dengan Form Gaji. --}}
+                <tr>
+                    @foreach (['No', 'Nama', 'Jabatan', 'Gaji Pokok'] as $heading)<th rowspan="2">{{ $heading }}</th>@endforeach
+                    <th colspan="2">Tunjangan</th>
+                    @foreach (['BPJS-TK (4,89%)', 'BPJS-Kesehatan (4%)', 'Potongan BPJS-TK (2%)', 'Potongan BPJS-Kesehatan (1%)', 'Total Pendapatan Kotor', 'Total Pendapatan Bersih', 'Kasbon', 'Potongan Absensi', 'Sisa Gaji Dibayar'] as $heading)<th rowspan="2">{{ $heading }}</th>@endforeach
+                </tr>
+                <tr><th>Jabatan</th><th>Keluarga</th></tr>
+                @else
                 <tr><th style="width:4rem">No</th><th>Nama</th><th>Jabatan</th><th style="width:14rem">Potongan Absensi</th></tr>
+                @endif
             </thead>
             <tbody>
                 @include('hrd.attendance-deduction-rows')
             </tbody>
             <tfoot class="table-light fw-bold">
+                @if ($salary)
+                <tr>
+                    <th colspan="3" class="text-end">Grand total seluruh hasil filter</th>
+                    @foreach (['gp', 'tj', 'tk', 'btk', 'bk', 'ptk', 'pk', 'pkotor', 'pbersih', 'kasbon'] as $key)<th class="text-end @if ($key === 'kasbon') text-danger @endif">{{ $money($totals[$key]) }}</th>@endforeach
+                    <th class="text-end text-danger">{{ $money($total) }}</th>
+                    <th class="text-end bg-success text-white">{{ $money($totals['total']) }}</th>
+                </tr>
+                @else
                 <tr>
                     <th colspan="3" class="text-end">Total seluruh hasil filter · {{ $deductedCount }} pegawai berpotongan</th>
                     <th class="text-end text-danger">{{ $money($total) }}</th>
                 </tr>
+                @endif
             </tfoot>
         </table>
     </div>

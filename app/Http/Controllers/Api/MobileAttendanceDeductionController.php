@@ -7,10 +7,16 @@ use App\Services\HrdAttendanceDeductions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/** Potongan Absensi di aplikasi untuk role HRD (baca saja), sama dengan menu web. */
+/**
+ * Potongan Absensi di aplikasi untuk role HRD (baca saja), sama dengan menu web.
+ * Gaji Karyawan General Manager (MobilePayrollController) memakai daftar yang
+ * sama dengan seluruh kolom Form Gaji; rincian potongan (show) dipakai keduanya.
+ */
 class MobileAttendanceDeductionController extends Controller
 {
-    public function __construct(private HrdAttendanceDeductions $deductions) {}
+    protected bool $salary = false;
+
+    public function __construct(protected HrdAttendanceDeductions $deductions) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -19,7 +25,7 @@ class MobileAttendanceDeductionController extends Controller
             'search' => ['nullable', 'string', 'max:100'], 'deductions_only' => ['sometimes', 'boolean'], 'page' => ['sometimes', 'integer', 'min:1'],
         ]);
         $period = $this->deductions->resolve(isset($filters['bulan']) ? (int) $filters['bulan'] : null, isset($filters['tahun']) ? (int) $filters['tahun'] : null);
-        $rows = $this->deductions->rows($period, $filters['search'] ?? '', $request->boolean('deductions_only'));
+        $rows = $this->deductions->rows($period, $filters['search'] ?? '', $request->boolean('deductions_only'), $this->salary);
         $perPage = HrdAttendanceDeductions::PER_PAGE;
         $page = (int) ($filters['page'] ?? 1);
         $offset = ($page - 1) * $perPage;
@@ -30,7 +36,7 @@ class MobileAttendanceDeductionController extends Controller
                 'current_page' => $page, 'last_page' => max(1, (int) ceil($rows->count() / $perPage)), 'total' => $rows->count(),
                 'total_deduction' => (int) $rows->sum('potongan_absensi'), 'deducted_count' => $rows->where('potongan_absensi', '>', 0)->count(),
                 'period' => $period, 'periods' => $this->deductions->periods(), 'status' => $this->deductions->status($period),
-            ],
+            ] + ($this->salary ? ['totals' => collect(HrdAttendanceDeductions::SALARY)->mapWithKeys(fn (string $key): array => [$key => (int) $rows->sum($key)])->all()] : []),
         ]);
     }
 

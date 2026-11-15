@@ -11,10 +11,21 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
-/** Menu Potongan Absensi role HRD (baca saja). */
+/**
+ * Menu Potongan Absensi role HRD (baca saja). Halaman yang sama melayani Gaji
+ * Karyawan General Manager (GeneralManagerPayrollController) dengan seluruh
+ * kolom Form Gaji; rincian potongan (show/pdf) dipakai keduanya.
+ */
 class HrdAttendanceDeductionController extends Controller
 {
-    public function __construct(private HrdAttendanceDeductions $deductions) {}
+    /** Tampilkan seluruh kolom Form Gaji (General Manager). */
+    protected bool $salary = false;
+
+    protected string $indexRoute = 'hrd.attendance-deductions';
+
+    protected string $title = 'POTONGAN ABSENSI';
+
+    public function __construct(protected HrdAttendanceDeductions $deductions) {}
 
     public function index(Request $request): View|JsonResponse
     {
@@ -24,14 +35,14 @@ class HrdAttendanceDeductionController extends Controller
         ]);
         $period = $this->period($filters);
         $search = trim($filters['search'] ?? '');
-        $rows = $this->deductions->rows($period, $search, $request->boolean('potongan'));
+        $rows = $this->deductions->rows($period, $search, $request->boolean('potongan'), $this->salary);
         $page = LengthAwarePaginator::resolveCurrentPage();
         $paginator = new LengthAwarePaginator($rows->forPage($page, HrdAttendanceDeductions::PER_PAGE)->values(), $rows->count(), HrdAttendanceDeductions::PER_PAGE, $page,
             ['path' => $request->url(), 'query' => $request->except('page')]);
 
         if ($request->ajax()) {
             // Infinite scroll: hanya baris halaman berikutnya.
-            return response()->json(['html' => $paginator->isEmpty() ? '' : view('hrd.attendance-deduction-rows', ['rows' => $paginator, 'period' => $period, 'filtered' => true])->render(),
+            return response()->json(['html' => $paginator->isEmpty() ? '' : view('hrd.attendance-deduction-rows', ['rows' => $paginator, 'period' => $period, 'filtered' => true, 'salary' => $this->salary])->render(),
                 'next' => $paginator->nextPageUrl()]);
         }
 
@@ -39,6 +50,8 @@ class HrdAttendanceDeductionController extends Controller
             'period' => $period, 'periods' => $this->deductions->periods(), 'status' => $this->deductions->status($period),
             'rows' => $paginator, 'search' => $search, 'deductionsOnly' => $request->boolean('potongan'),
             'total' => $rows->sum('potongan_absensi'), 'deductedCount' => $rows->where('potongan_absensi', '>', 0)->count(),
+            'salary' => $this->salary, 'indexRoute' => $this->indexRoute, 'title' => $this->title,
+            'totals' => $this->salary ? collect(HrdAttendanceDeductions::SALARY)->mapWithKeys(fn (string $key): array => [$key => (int) $rows->sum($key)])->all() : [],
         ]);
     }
 
