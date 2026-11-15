@@ -48,7 +48,7 @@ class StatistikController extends Controller
             'vendor_id' => 'nullable|integer|exists:vendors,id']);
         $report = $filters['report'];
         // Operasional memilih nolam dari seluruh vendor (bisa disaring per vendor).
-        $operasional = $request->user()->isOperasional();
+        $operasional = $request->user()->seesAllVendors();
         if ($request->ajax()) {
             $vendorId = $operasional ? ($filters['vendor_id'] ?? null) : $request->user()->vendor_id;
             $query = Vehicle::query()->with('vendor:id,nama,nickname')->when($vendorId !== null, fn ($query) => $query->where('vendor_id', $vendorId));

@@ -462,7 +462,8 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->assertStringNotContainsString('Belum lunas', $first->json('rows').$second->json('rows'));
     }
 
-    public function test_vendor_sees_own_finance_while_vendor_operational_only_sees_travel_cash(): void
+    /** Kolom & nilai keuangan: harga/nominal bayar nota, total/bayar/sisa invoice, PPN & PPh. */
+    private function withFinance(): void
     {
         Schema::table('transaksis', fn (Blueprint $table) => $table->bigInteger('nominal_bayar')->nullable());
         Schema::table('invoice_bayars', function (Blueprint $table): void {
@@ -483,6 +484,11 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         DB::table('invoice_bayars')->where('id', 1)->update(['total_bayar' => 2220000, 'bayar' => 1000000, 'sisa_bayar' => 1220000]);
         DB::table('ppn_masukans')->insert(['invoice_bayar_id' => 1, 'nominal' => 220000]);
         DB::table('pph_simpans')->insert(['invoice_bayar_id' => 1, 'nominal' => 40000]);
+    }
+
+    public function test_vendor_sees_own_finance_while_vendor_operational_only_sees_travel_cash(): void
+    {
+        $this->withFinance();
 
         $vendor = User::factory()->create(['username' => 'vendor-owner', 'password' => 'secret-pass', 'role' => 'vendor', 'vendor_id' => 1]);
         $this->actingAs($vendor);
@@ -518,6 +524,29 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->get('/vendor-operational/nota-bayar?kind=utama')->assertOk()->assertSee('123.456')->assertDontSee('2.000.000')->assertDontSee('Bruto');
         $this->get('/vendor-operational/invoice/utama/1')->assertOk()->assertDontSee('Total Bayar')->assertDontSee('2.220.000');
         $this->get('/vendor-operational/invoice?status=all')->assertOk()->assertDontSee('Total Bayar')->assertDontSee('2.220.000')->assertDontSee('Grand Total');
+    }
+
+    public function test_general_manager_reads_every_vendor_with_finance_and_cannot_write(): void
+    {
+        $this->withFinance();
+        $gm = User::factory()->create(['username' => 'gm-all', 'password' => 'secret-pass', 'role' => 'general-manager', 'vendor_id' => null]);
+        $this->actingAs($gm);
+        $this->get('/vendor-operational/nota-bayar')->assertOk()->assertSee('Pilih Vendor');
+        $this->get('/vendor-operational/nota-bayar?vendor_id=1&kind=utama')->assertOk()->assertSee('70.000')->assertSee('2.000.000')->assertSee('Bruto')->assertDontSee('FOREIGN UNIT');
+        $this->get('/vendor-operational/nota-bayar?vendor_id=2&kind=utama')->assertOk()->assertSee('5.555.555')->assertDontSee('UNIT A');
+        $this->get('/vendor-operational/invoice?status=all')->assertOk()->assertSee('FOREIGN VENDOR')->assertSee('Total Bayar')->assertSee('Rp 2.220.000');
+        $this->get('/vendor-operational/invoice/utama/1')->assertOk()->assertSeeInOrder(['Total Bayar', 'Rp2.220.000', 'Sisa Bayar', 'Rp1.220.000']);
+        // Baca saja: setiap penulisan ditolak, termasuk rute yang dibuka untuk operasional.
+        foreach (['/transaksi/nota-bayar/1/masuk-keranjang', '/billing/nota-bayar/1/achievement'] as $url) {
+            $this->post($url)->assertForbidden();
+        }
+
+        $this->app['auth']->forgetGuards();
+        $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$gm->createToken('billing-test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+        $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.all_vendors', true)->assertJsonPath('data.permissions.vendor_finance', true)
+            ->assertJsonPath('data.permissions.held_cash', true);
+        $this->getJson('/api/v1/payment-notes?kind=utama&vendor_id=1', $headers)->assertOk()->assertJsonPath('meta.total_gross_amount', fn ($value): bool => $value > 0);
+        $this->getJson('/api/v1/vendor-invoices?status=all', $headers)->assertOk()->assertSee('FOREIGN VENDOR');
     }
 
     public function test_mobile_vendor_sees_own_finance_and_vendor_operational_does_not(): void

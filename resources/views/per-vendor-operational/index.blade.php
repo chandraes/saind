@@ -1,11 +1,11 @@
 @php($sections = $sections ?? \App\Support\VendorDashboardMenu::sections(auth()->user()))
-@php($operasional = auth()->user()->isOperasional())
+@php($operasional = auth()->user()->seesAllVendors())
 
 <div class="vendor-dashboard" data-vendor-dashboard>
     <div class="vendor-dashboard-intro">
         <div>
-            <span class="vendor-dashboard-eyebrow">{{ $dashboardLabel ?? ($operasional ? 'OPERASIONAL' : (auth()->user()->canViewVendorFinance() ? 'AKUN VENDOR' : 'OPERASIONAL VENDOR')) }}</span>
-            <p class="mb-0 text-muted">@isset($dashboardDescription){{ $dashboardDescription }}@else{{ $operasional ? 'Pantau dokumen perjalanan dan statistik armada seluruh vendor.' : (auth()->user()->canViewVendorFinance() ? 'Pantau dokumen, keuangan, dan statistik armada vendor Anda.' : 'Pantau dokumen perjalanan dan statistik armada vendor Anda.') }}@endisset</p>
+            <span class="vendor-dashboard-eyebrow">{{ $dashboardLabel ?? ($operasional ? (auth()->user()->isGeneralManager() ? 'GENERAL MANAGER' : 'OPERASIONAL') : (auth()->user()->canViewVendorFinance() ? 'AKUN VENDOR' : 'OPERASIONAL VENDOR')) }}</span>
+            <p class="mb-0 text-muted">@isset($dashboardDescription){{ $dashboardDescription }}@else{{ $operasional ? (auth()->user()->isGeneralManager() ? 'Pantau dokumen, nilai bayar, dan statistik armada seluruh vendor.' : 'Pantau dokumen perjalanan dan statistik armada seluruh vendor.') : (auth()->user()->canViewVendorFinance() ? 'Pantau dokumen, keuangan, dan statistik armada vendor Anda.' : 'Pantau dokumen perjalanan dan statistik armada vendor Anda.') }}@endisset</p>
         </div>
         <span class="vendor-dashboard-access"><span aria-hidden="true"></span>Akses baca saja</span>
     </div>

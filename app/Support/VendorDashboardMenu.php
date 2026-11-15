@@ -23,7 +23,7 @@ class VendorDashboardMenu
     {
         $menu = fn (string $title, string $description, string $url, string $icon): array => compact('title', 'description', 'url', 'icon');
         $payment = $menu('Nota Bayar Vendor', $user->canViewVendorFinance() ? 'Periksa nota beserta nilai bayar vendor.' : 'Periksa nota dan rincian perjalanan vendor.', route('vendor-operational.nota-bayar'), 'bayar.svg');
-        if ($user->isOperasional()) {
+        if ($user->seesAllVendors()) {
             $payment = ['description' => 'Pilih vendor, lalu periksa nota dan rincian perjalanannya.', 'modal' => self::VENDOR_PICKER] + $payment;
         }
         $documents = [
@@ -35,7 +35,7 @@ class VendorDashboardMenu
         if ($user->canViewNolamHeldCash()) {
             $documents[] = $menu('Kas UJ Ditahan', 'Rekap saldo dan mutasi dana sparepart atau ban per nolam.', '#'.self::HELD_CASH_PICKER, 'uj-ditahan.svg') + ['modal' => self::HELD_CASH_PICKER];
         }
-        if ($user->canViewVendorFinance()) {
+        if ($user->canViewVendorFinance() && ! $user->seesAllVendors()) {
             $documents[] = $menu('Kas Vendor', 'Mutasi kas dan saldo vendor per bulan.', route('kas-per-vendor.index', $user->vendor_id), 'kas-vendor.svg');
         }
 

@@ -24,7 +24,7 @@ class VendorInvoiceController extends Controller
         $finance = $request->user()->canViewVendorFinance();
         $items = (clone $query)->paginate(20)->withQueryString();
         // Nama vendor per invoice hanya untuk operasional (seluruh vendor).
-        $operasional = $request->user()->isOperasional();
+        $operasional = $request->user()->seesAllVendors();
         $names = $operasional ? Vendor::whereIn('id', $items->getCollection()->pluck('vendor_id')->unique())->get(['id', 'nama', 'nickname'])->keyBy('id') : collect();
         $items->through(fn (object $invoice): array => $this->billing->invoiceSummary($invoice)
             + ($operasional ? ['vendor_name' => $names->get($invoice->vendor_id)?->nickname ?: $names->get($invoice->vendor_id)?->nama] : [])
@@ -49,7 +49,7 @@ class VendorInvoiceController extends Controller
         $items->getCollection()->each(fn (Transaksi|TransaksiAdditional $item) => $item->setAttribute('mobile_kind', $kind));
 
         $summary = (new MobileVendorInvoiceResource($this->billing->invoiceSummary($invoice, $kind)
-            + ($request->user()->isOperasional() ? ['vendor_name' => $invoice->vendor?->nickname ?: $invoice->vendor?->nama] : [])))->resolve($request);
+            + ($request->user()->seesAllVendors() ? ['vendor_name' => $invoice->vendor?->nickname ?: $invoice->vendor?->nama] : [])))->resolve($request);
         if ($request->user()->canViewVendorFinance()) {
             $summary['finance'] = $this->billing->invoiceFinance($invoice);
         }

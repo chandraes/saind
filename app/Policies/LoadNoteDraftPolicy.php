@@ -9,14 +9,14 @@ class LoadNoteDraftPolicy
 {
     public function inbox(User $user): bool
     {
-        return $this->reviewAny($user) || $user->isOperasional()
+        return $this->reviewAny($user) || $user->seesAllVendors()
             || ($user->isVendorAccount() && $user->vendor_id !== null && $user->vendor()->exists());
     }
 
     public function readInbox(User $user, LoadNoteDraft $note): bool
     {
         // Operasional membaca nota seluruh vendor (tanpa aksi pemeriksaan).
-        return $this->reviewAny($user) || $user->isOperasional() || ($this->inbox($user) && (int) $user->vendor_id === $note->vendor_id);
+        return $this->reviewAny($user) || $user->seesAllVendors() || ($this->inbox($user) && (int) $user->vendor_id === $note->vendor_id);
     }
 
     public function reviewAny(User $user): bool
@@ -48,7 +48,7 @@ class LoadNoteDraftPolicy
     /** Membaca nota muat/bongkar di aplikasi: akun vendor, dan operasional untuk seluruh vendor. */
     public function readMobile(User $user): bool
     {
-        return $user->isOperasional() || $this->viewAny($user);
+        return $user->seesAllVendors() || $this->viewAny($user);
     }
 
     public function create(User $user): bool

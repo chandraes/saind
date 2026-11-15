@@ -81,7 +81,7 @@ class HomeController extends Controller
 
         }
 
-        if ($user->isOperasional()) {
+        if ($user->seesAllVendors()) {
             // Menu sama dengan vendor-operational (VendorDashboardMenu), untuk seluruh vendor.
             return view('home');
         }

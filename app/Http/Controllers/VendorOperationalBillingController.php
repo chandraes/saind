@@ -207,7 +207,7 @@ class VendorOperationalBillingController extends Controller
     private function vendor(Request $request): ?int
     {
         abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
-        if ($request->user()?->isOperasional()) {
+        if ($request->user()?->seesAllVendors()) {
             $vendorId = $request->validate(['vendor_id' => ['nullable', 'integer', 'exists:vendors,id']])['vendor_id'] ?? null;
 
             return $vendorId === null ? null : (int) $vendorId;
@@ -220,7 +220,7 @@ class VendorOperationalBillingController extends Controller
     /** Pilihan vendor untuk filter; hanya operasional yang melihat seluruh vendor. */
     private function vendorOptions(?Request $request = null): Collection
     {
-        return $request === null || $request->user()->isOperasional()
+        return $request === null || $request->user()->seesAllVendors()
             ? Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname'])
             : collect();
     }
@@ -235,7 +235,7 @@ class VendorOperationalBillingController extends Controller
     /** Parameter vendor yang dibawa ke tautan lanjutan (hanya operasional). */
     private function vendorQuery(Request $request): array
     {
-        $vendor = $request->user()->isOperasional() ? $this->vendor($request) : null;
+        $vendor = $request->user()->seesAllVendors() ? $this->vendor($request) : null;
 
         return $vendor === null ? [] : ['vendor_id' => $vendor];
     }

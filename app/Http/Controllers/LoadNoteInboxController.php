@@ -26,7 +26,7 @@ class LoadNoteInboxController extends Controller
     {
         $canReview = $request->user()->can('reviewAny', LoadNoteDraft::class);
         // Operasional melihat seluruh vendor seperti tim internal, tetapi tanpa aksi.
-        $allVendors = $canReview || $request->user()->isOperasional();
+        $allVendors = $canReview || $request->user()->seesAllVendors();
         abort_if(! $allVendors && $request->filled('vendor_id') && (string) $request->input('vendor_id') !== (string) $request->user()->vendor_id, 404);
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],

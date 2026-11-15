@@ -28,7 +28,7 @@ class EnsureMobileVendorContext
         if ($request->user()?->isDriver()) {
             return $this->driver($request, $next);
         }
-        if ($request->user()?->isOperasional()) {
+        if ($request->user()?->seesAllVendors()) {
             // Operasional: seluruh vendor, hanya membaca (tanpa scan/kirim nota muat).
             abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
 

@@ -78,10 +78,22 @@ class User extends Authenticatable
         return $this->role === 'operasional';
     }
 
+    /** General Manager: menu operasional untuk seluruh vendor beserta nilai uang, Nota Tagihan, Tagihan & Invoice, Gaji; baca saja. */
+    public function isGeneralManager(): bool
+    {
+        return $this->role === 'general-manager';
+    }
+
+    /** Membaca data seluruh vendor (filter vendor), baca saja: operasional dan General Manager. */
+    public function seesAllVendors(): bool
+    {
+        return $this->isOperasional() || $this->isGeneralManager();
+    }
+
     /** Akun yang memakai menu vendor-operational: akun vendor dan operasional (semua vendor). */
     public function usesVendorMenus(): bool
     {
-        return $this->isVendorAccount() || $this->isOperasional();
+        return $this->isVendorAccount() || $this->seesAllVendors();
     }
 
     /** Akun vendor hanya boleh menyentuh data milik vendornya sendiri. */
@@ -120,16 +132,16 @@ class User extends Authenticatable
         return $this->role !== 'vendor';
     }
 
-    /** Vendor & vendor-induk boleh melihat keuangannya sendiri; vendor operational hanya uang jalan. */
+    /** Vendor & vendor-induk melihat keuangannya sendiri, General Manager seluruh vendor; vendor operational hanya uang jalan. */
     public function canViewVendorFinance(): bool
     {
-        return $this->isVendorOwner();
+        return $this->isVendorOwner() || $this->isGeneralManager();
     }
 
     /** Kas UJ Ditahan per nolam (baca saja): vendor-induk untuk nolam vendornya, operasional semua nolam. */
     public function canViewNolamHeldCash(): bool
     {
-        return in_array($this->role, ['vendor-induk', 'operasional'], true);
+        return in_array($this->role, ['vendor-induk', 'operasional', 'general-manager'], true);
     }
 
     /**
@@ -138,7 +150,7 @@ class User extends Authenticatable
      */
     public function heldCashVehicles(): Builder
     {
-        return Vehicle::query()->when(! $this->isOperasional(), fn ($query) => $query->where('vendor_id', $this->vendor_id ?? 0));
+        return Vehicle::query()->when(! $this->seesAllVendors(), fn ($query) => $query->where('vendor_id', $this->vendor_id ?? 0));
     }
 
     /** Nolam yang masih bersaldo UJ ditahan (Sparepart atau Ban) pada periode mana pun. */

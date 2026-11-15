@@ -16,7 +16,7 @@ class EnsureVendorOperationalVehicle
         if ($request->user()->isDriver()) {
             return $this->driver($request, $next);
         }
-        if ($request->user()->isOperasional()) {
+        if ($request->user()->seesAllVendors()) {
             // Operasional melihat seluruh vendor, tetapi hanya membaca.
             abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
 

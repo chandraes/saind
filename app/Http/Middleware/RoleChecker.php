@@ -19,6 +19,10 @@ class RoleChecker
         if (in_array('vendor', $roles, true)) {
             $roles[] = 'vendor-induk';
         }
+        // General Manager membaca semua menu operasional (penulisan diblok EnsureReadOnlyRole).
+        if (in_array('operasional', $roles, true)) {
+            $roles[] = 'general-manager';
+        }
         if (! in_array($request->user()->role, $roles)) {
             abort(403);
         }

@@ -57,6 +57,17 @@ class VendorOperationalDashboardTest extends TestCase
         $this->assertSame(['-- Pilih Vendor --', 'Vendor A (VA)', 'Vendor B'], array_map(fn ($node): string => trim($node->textContent), iterator_to_array($picker)));
     }
 
+    public function test_general_manager_gets_the_operasional_menus_without_kas_vendor(): void
+    {
+        $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'general-manager', 'vendor_id' => null]));
+        $response = $this->get('/home')->assertOk()->assertSee('GENERAL MANAGER')->assertSee('nilai bayar')
+            ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Perform Unit', 'Perform Unit All', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
+            ->assertDontSee('Kas Vendor');
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $this->assertSame(1, (new \DOMXPath($dom))->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-target="#operasional-nota-bayar-vendor"]')->length);
+    }
+
     #[DataProvider('vendorAccounts')]
     public function test_dashboard_groups_the_same_menus_for_both_vendor_accounts(string $role, array $documents): void
     {

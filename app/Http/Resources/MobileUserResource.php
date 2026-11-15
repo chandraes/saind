@@ -17,9 +17,9 @@ class MobileUserResource extends JsonResource
                 'load_notes' => $this->resource->can('viewAny', LoadNoteDraft::class),
                 // Menu vendor di aplikasi: billing (vendor & vendor operational), keuangan dan
                 // edit/hapus riwayat ban & aki hanya untuk akun vendor.
-                'vendor_billing' => ($this->resource->isVendorAccount() && $this->vendor_id !== null) || $this->resource->isOperasional(),
+                'vendor_billing' => ($this->resource->isVendorAccount() && $this->vendor_id !== null) || $this->resource->seesAllVendors(),
                 // Operasional: menu vendor-operational untuk seluruh vendor (filter vendor, baca saja).
-                'all_vendors' => $this->resource->isOperasional(),
+                'all_vendors' => $this->resource->seesAllVendors(),
                 'vendor_finance' => $this->resource->canViewVendorFinance(),
                 'maintenance_history' => $this->resource->isVendorAccount() && $this->resource->canManageMaintenanceHistory(),
                 'upah_gendong_settings' => $this->resource->isVendorAccount() && $this->resource->canManageUpahGendong(),

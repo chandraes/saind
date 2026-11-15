@@ -19,7 +19,7 @@ class MobileVendorScope
     public static function id(Request $request): ?int
     {
         $user = $request->user();
-        if (! $user->isOperasional()) {
+        if (! $user->seesAllVendors()) {
             return (int) $user->effectiveVendorId();
         }
         $vendorId = $request->validate(['vendor_id' => ['nullable', 'integer', 'exists:vendors,id']])['vendor_id'] ?? null;
