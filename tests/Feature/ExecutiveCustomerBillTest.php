@@ -7,15 +7,14 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
- * Nota Tagihan untuk General Manager: halaman admin tanpa aksi (web) dan
+ * Nota Tagihan untuk eksekutif (General Manager & Direksi): halaman admin tanpa aksi (web) dan
  * tabel per customer di aplikasi (Ton sesuai "tagihan dari", tanpa profit).
  */
-class GeneralManagerCustomerBillTest extends MobileApiTestCase
+class ExecutiveCustomerBillTest extends MobileApiTestCase
 {
-    private User $gm;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -101,7 +100,11 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         // Kompensasi JR menunggu ditagih untuk nota 2; nota 1 sudah masuk keranjang (status 1).
         DB::table('transaksi_additionals')->insert([['transaksi_id' => 2, 'customer_id' => 1, 'jenis' => 'kompensasi_jr', 'status' => 0],
             ['transaksi_id' => 1, 'customer_id' => 1, 'jenis' => 'kompensasi_jr', 'status' => 1]]);
-        $this->gm = User::factory()->create(['username' => 'gm', 'password' => 'secret-pass', 'role' => 'general-manager', 'vendor_id' => null]);
+    }
+
+    private function executive(string $role): User
+    {
+        return User::factory()->create(['username' => $role.'-test', 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => null]);
     }
 
     /** @return array<string, string> */
@@ -113,9 +116,11 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
             'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
     }
 
-    public function test_web_shows_the_admin_table_without_any_action(): void
+    #[DataProvider('executiveRoles')]
+    public function test_web_shows_the_admin_table_without_any_action(string $role): void
     {
-        $this->actingAs($this->gm)->get('/home')->assertOk()->assertSee('Nota Tagihan')->assertSee('gm-nota-tagihan-customer')->assertSee('Tambang A (TA)');
+        $executive = $this->executive($role);
+        $this->actingAs($executive)->get('/home')->assertOk()->assertSee('Nota Tagihan')->assertSee('gm-nota-tagihan-customer')->assertSee('Tambang A (TA)');
         $page = $this->get('/transaksi/nota-tagihan/1')->assertOk()->assertSee('Tambang A')->assertSee('UJ07')->assertSee('UJ08')->assertDontSee('999.999')
             ->assertSee('Export')->assertDontSee('Lanjutkan Pilihan')->assertDontSee('Keranjang')->assertDontSee('id="checkAll"', false)->assertDontSee('Total Tagihan Dipilih');
         $dom = new \DOMDocument;
@@ -136,9 +141,11 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         $this->post('/transaksi/nota-tagihan/edit/1')->assertForbidden();
     }
 
-    public function test_mobile_lists_bills_per_customer_with_the_billing_weight_and_no_profit(): void
+    #[DataProvider('executiveRoles')]
+    public function test_mobile_lists_bills_per_customer_with_the_billing_weight_and_no_profit(string $role): void
     {
-        $headers = $this->headers($this->gm);
+        $executive = $this->executive($role);
+        $headers = $this->headers($executive);
         $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.customer_bills', true);
         $this->getJson('/api/v1/customer-options', $headers)->assertOk()->assertJsonPath('data.0.name', 'Tambang A')->assertJsonPath('data.0.short', 'TA');
         $response = $this->getJson('/api/v1/customers/1/bills', $headers)->assertOk()
@@ -153,9 +160,11 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         $this->getJson('/api/v1/customers/999/bills', $headers)->assertNotFound();
     }
 
-    public function test_web_category_menu_and_additional_category_are_read_only(): void
+    #[DataProvider('executiveRoles')]
+    public function test_web_category_menu_and_additional_category_are_read_only(string $role): void
     {
-        $this->actingAs($this->gm)->get('/home')->assertOk()->assertSee(url('billing/nota-tagihan/__ID__'), false);
+        $executive = $this->executive($role);
+        $this->actingAs($executive)->get('/home')->assertOk()->assertSee(url('billing/nota-tagihan/__ID__'), false);
         $this->get('/billing/nota-tagihan/1')->assertOk()->assertSee('HPP')->assertSee('KOMPENSASI')->assertDontSee('PENYESUAIAN<br>BBM', false)
             ->assertSee(route('billing.nota-tagihan.detail-jenis', ['customer' => 1, 'jenis' => 'kompensasi_jr']));
         $this->get('/billing/nota-tagihan/1/kompensasi_jr')->assertOk()->assertSee('Kompensasi Jalan Rusak')->assertSee('UJ08')->assertDontSee('UJ07')
@@ -163,13 +172,15 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         $this->get('/billing/nota-tagihan/1/unknown')->assertStatus(405);
         $this->post('/billing/nota-tagihan/1/kompensasi_jr', ['dpp' => 1000])->assertForbidden();
         $this->get('/billing/nota-tagihan/1/kompensasi_jr/keranjang')->assertForbidden();
-        // HPP: GM kembali ke menu kategori.
+        // HPP: eksekutif kembali ke menu kategori.
         $this->get('/transaksi/nota-tagihan/1')->assertOk()->assertSee(route('billing.nota-tagihan', 1));
     }
 
-    public function test_mobile_additional_category_lists_tonnage_and_physical_note_without_money(): void
+    #[DataProvider('executiveRoles')]
+    public function test_mobile_additional_category_lists_tonnage_and_physical_note_without_money(string $role): void
     {
-        $headers = $this->headers($this->gm);
+        $executive = $this->executive($role);
+        $headers = $this->headers($executive);
         $this->getJson('/api/v1/customers/1/bills', $headers)->assertOk()
             ->assertJsonPath('meta.kind', 'utama')->assertJsonPath('meta.categories', ['utama' => 'HPP', 'kompensasi_jr' => 'Kompensasi Jalan Rusak']);
         $response = $this->getJson('/api/v1/customers/1/bills?kind=kompensasi_jr', $headers)->assertOk()
@@ -180,17 +191,19 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         $this->getJson('/api/v1/customers/2/bills', $headers)->assertOk()->assertJsonPath('meta.categories', ['utama' => 'HPP']);
     }
 
-    public function test_tagihan_and_invoice_web_and_mobile_tabs(): void
+    #[DataProvider('executiveRoles')]
+    public function test_tagihan_and_invoice_web_and_mobile_tabs(string $role): void
     {
+        $executive = $this->executive($role);
         DB::table('invoice_tagihans')->insert([
             ['customer_id' => 2, 'no_invoice' => 'INV-02', 'tanggal' => '2026-11-02', 'estimasi_pembayaran' => '2026-11-30', 'total_tagihan' => 4000000, 'lunas' => 0],
             ['customer_id' => 2, 'no_invoice' => 'INV-01', 'tanggal' => '2026-11-01', 'estimasi_pembayaran' => null, 'total_tagihan' => 1500000, 'lunas' => 0],
             ['customer_id' => 1, 'no_invoice' => 'INV-LUNAS', 'tanggal' => '2026-10-01', 'estimasi_pembayaran' => null, 'total_tagihan' => 9999999, 'lunas' => 1],
         ]);
-        $this->actingAs($this->gm)->get('/home')->assertOk()->assertSee('Tagihan &amp; Invoice', false)->assertSee(route('rekap.tagihan-invoice'));
+        $this->actingAs($executive)->get('/home')->assertOk()->assertSee('Tagihan &amp; Invoice', false)->assertSee(route('rekap.tagihan-invoice'));
         $this->get('/rekap/tagihan-invoice')->assertOk()->assertSee('TA')->assertSee('INV-02')->assertDontSee('INV-LUNAS')->assertDontSee(route('rekap.index').'"', false);
 
-        $response = $this->getJson('/api/v1/billing-invoices', $this->headers($this->gm))->assertOk()
+        $response = $this->getJson('/api/v1/billing-invoices', $this->headers($executive))->assertOk()
             // Tagihan: nota belum ditagih (−PPh 2%) per tambang; TA 3 jt + 6 jt, TB 9 jt.
             ->assertJsonPath('bills.0.customer', 'TA')->assertJsonPath('bills.0.amount', 8820000)->assertJsonPath('bills.0.from', '01-11-2026')->assertJsonPath('bills.0.to', '02-11-2026')
             ->assertJsonPath('bills.1.customer', 'TB')->assertJsonPath('bills.1.amount', 8820000)

@@ -57,7 +57,8 @@ class VendorOperationalDashboardTest extends TestCase
         $this->assertSame(['-- Pilih Vendor --', 'Vendor A (VA)', 'Vendor B'], array_map(fn ($node): string => trim($node->textContent), iterator_to_array($picker)));
     }
 
-    public function test_general_manager_gets_the_operasional_menus_without_kas_vendor(): void
+    #[DataProvider('executiveRoles')]
+    public function test_executive_gets_the_operasional_menus_without_kas_vendor(string $role): void
     {
         Schema::create('customers', function (Blueprint $table): void {
             $table->id();
@@ -65,8 +66,8 @@ class VendorOperationalDashboardTest extends TestCase
             $table->string('singkatan')->nullable();
         });
         DB::table('customers')->insert(['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA']);
-        $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'general-manager', 'vendor_id' => null]));
-        $response = $this->get('/home')->assertOk()->assertSee('GENERAL MANAGER')->assertSee('nilai bayar')
+        $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => $role, 'vendor_id' => null]));
+        $response = $this->get('/home')->assertOk()->assertSee($role === 'direksi' ? 'DIREKSI' : 'GENERAL MANAGER')->assertSee('nilai bayar')
             ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Nota Tagihan', 'Perform Unit', 'Perform Unit All', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
             ->assertDontSee('Kas Vendor')->assertSee('Tambang A (TA)');
         $dom = new \DOMDocument;

@@ -15,6 +15,7 @@ use App\Http\Controllers\DireksiController;
 use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\DriverHeldCashController;
 use App\Http\Controllers\DriverNotesController;
+use App\Http\Controllers\ExecutivePayrollController;
 use App\Http\Controllers\FilterOliGantiController;
 use App\Http\Controllers\FilterOliReportController;
 use App\Http\Controllers\FormBarangController;
@@ -28,7 +29,6 @@ use App\Http\Controllers\FormLainController;
 use App\Http\Controllers\FormMaintenanceController;
 use App\Http\Controllers\FormStoringConroller;
 use App\Http\Controllers\FormVendorController;
-use App\Http\Controllers\GeneralManagerPayrollController;
 use App\Http\Controllers\HistoriController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HrdAttendanceDeductionController;
@@ -106,29 +106,30 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('driver/kas-uj-ditahan/{fund}', DriverHeldCashController::class)
         ->whereIn('fund', ['sparepart', 'ban'])->middleware('role:driver')->name('driver.held-cash');
 
-    Route::prefix('hrd/potongan-absensi')->name('hrd.attendance-deductions')->middleware('role:hrd,general-manager')->controller(HrdAttendanceDeductionController::class)->group(function (): void {
+    Route::prefix('hrd/potongan-absensi')->name('hrd.attendance-deductions')->middleware('role:hrd,executive')->controller(HrdAttendanceDeductionController::class)->group(function (): void {
         Route::get('/', 'index')->middleware('role:hrd');
         Route::get('{key}', 'show')->whereNumber('key')->name('.show');
         Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
     });
 
-    // Rekap Tagihan & Invoice (tampilan saja): admin dan General Manager.
-    Route::get('rekap/tagihan-invoice', [RekapController::class, 'tagihan_invoice'])->middleware('role:admin,user,su,general-manager')->name('rekap.tagihan-invoice');
+    // Rekap Tagihan & Invoice (tampilan saja): admin dan eksekutif (GM & Direksi).
+    Route::get('rekap/tagihan-invoice', [RekapController::class, 'tagihan_invoice'])->middleware('role:admin,user,su,executive')->name('rekap.tagihan-invoice');
 
-    // Nota Tagihan per customer: admin (beserta aksi di bawah) dan General Manager (baca saja + export):
+    // Nota Tagihan per customer: admin (beserta aksi di bawah) dan eksekutif (baca saja + export):
     // menu kategori, HPP, dan Kompensasi JR / Penyesuaian BBM / Achievement.
-    Route::prefix('billing/nota-tagihan')->middleware('role:admin,user,su,asisten-user,general-manager')->controller(BillingController::class)->group(function (): void {
+    Route::prefix('billing/nota-tagihan')->middleware('role:admin,user,su,asisten-user,executive')->controller(BillingController::class)->group(function (): void {
         Route::get('/{customer}', 'nota_tagihan')->whereNumber('customer')->name('billing.nota-tagihan');
         Route::get('/{customer}/{jenis}', 'nota_tagihan_detail_by_jenis')->whereNumber('customer')->whereIn('jenis', array_keys(TransaksiAdditional::JENIS))->name('billing.nota-tagihan.detail-jenis');
     });
-    // Nota Tagihan per customer: admin (beserta aksi di bawah) dan General Manager (baca saja + export).
-    Route::prefix('transaksi/nota-tagihan')->middleware('role:admin,user,su,asisten-user,general-manager')->controller(TransaksiController::class)->group(function (): void {
+    // Nota Tagihan per customer: admin (beserta aksi di bawah) dan eksekutif (baca saja + export).
+    Route::prefix('transaksi/nota-tagihan')->middleware('role:admin,user,su,asisten-user,executive')->controller(TransaksiController::class)->group(function (): void {
         Route::get('/{customer}', 'nota_tagihan')->whereNumber('customer')->name('transaksi.nota-tagihan');
         Route::get('/{customer}/export', 'tagihan_export')->whereNumber('customer')->name('transaksi.nota-tagihan.export');
     });
 
-    // Gaji Karyawan General Manager (baca saja); rincian potongan memakai rute HRD di atas.
-    Route::get('general-manager/gaji', [GeneralManagerPayrollController::class, 'index'])->middleware('role:general-manager')->name('gm.payroll');
+    // Gaji Karyawan eksekutif (GM & Direksi, baca saja); rincian potongan memakai rute HRD di atas.
+    Route::get('eksekutif/gaji', [ExecutivePayrollController::class, 'index'])->middleware('role:executive')->name('executive.payroll');
+    Route::permanentRedirect('general-manager/gaji', 'eksekutif/gaji');
 
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 

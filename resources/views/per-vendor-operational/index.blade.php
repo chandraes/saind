@@ -4,8 +4,8 @@
 <div class="vendor-dashboard" data-vendor-dashboard>
     <div class="vendor-dashboard-intro">
         <div>
-            <span class="vendor-dashboard-eyebrow">{{ $dashboardLabel ?? ($operasional ? (auth()->user()->isGeneralManager() ? 'GENERAL MANAGER' : 'OPERASIONAL') : (auth()->user()->canViewVendorFinance() ? 'AKUN VENDOR' : 'OPERASIONAL VENDOR')) }}</span>
-            <p class="mb-0 text-muted">@isset($dashboardDescription){{ $dashboardDescription }}@else{{ $operasional ? (auth()->user()->isGeneralManager() ? 'Pantau dokumen, nilai bayar, dan statistik armada seluruh vendor.' : 'Pantau dokumen perjalanan dan statistik armada seluruh vendor.') : (auth()->user()->canViewVendorFinance() ? 'Pantau dokumen, keuangan, dan statistik armada vendor Anda.' : 'Pantau dokumen perjalanan dan statistik armada vendor Anda.') }}@endisset</p>
+            <span class="vendor-dashboard-eyebrow">{{ $dashboardLabel ?? ($operasional ? (auth()->user()->isExecutive() ? (auth()->user()->isDireksi() ? 'DIREKSI' : 'GENERAL MANAGER') : 'OPERASIONAL') : (auth()->user()->canViewVendorFinance() ? 'AKUN VENDOR' : 'OPERASIONAL VENDOR')) }}</span>
+            <p class="mb-0 text-muted">@isset($dashboardDescription){{ $dashboardDescription }}@else{{ $operasional ? (auth()->user()->isExecutive() ? 'Pantau dokumen, nilai bayar, dan statistik armada seluruh vendor.' : 'Pantau dokumen perjalanan dan statistik armada seluruh vendor.') : (auth()->user()->canViewVendorFinance() ? 'Pantau dokumen, keuangan, dan statistik armada vendor Anda.' : 'Pantau dokumen perjalanan dan statistik armada vendor Anda.') }}@endisset</p>
         </div>
         <span class="vendor-dashboard-access"><span aria-hidden="true"></span>Akses baca saja</span>
     </div>
@@ -38,11 +38,11 @@
 @include('layouts.uj-ditahan-menu', ['menuArea' => 'vendor-operational'])
 @endif
 @if ($operasional)
-{{-- Seperti admin: Nota Bayar dibuka per vendor; GM membuka Nota Tagihan per customer. --}}
+{{-- Seperti admin: Nota Bayar dibuka per vendor; eksekutif membuka Nota Tagihan per customer. --}}
 @include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::VENDOR_PICKER, 'title' => 'Pilih Vendor', 'icon' => 'fa-truck',
     'action' => route('vendor-operational.nota-bayar'), 'name' => 'vendor_id', 'label' => 'Nama Vendor', 'placeholder' => '-- Pilih Vendor --',
     'options' => \App\Models\Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname'])->mapWithKeys(fn ($v) => [$v->id => $v->nama.($v->nickname ? ' ('.$v->nickname.')' : '')])])
-@if (auth()->user()->isGeneralManager())
+@if (auth()->user()->isExecutive())
 @include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::CUSTOMER_PICKER, 'title' => 'Pilih Customer', 'icon' => 'fa-building',
     'action' => url('transaksi/nota-tagihan'), 'pathTemplate' => route('billing.nota-tagihan', ['customer' => '__ID__']), 'name' => 'customer', 'label' => 'Nama Customer', 'placeholder' => '-- Pilih Customer --',
     'options' => \App\Models\Customer::query()->orderBy('nama')->get(['id', 'nama', 'singkatan'])->mapWithKeys(fn ($c) => [$c->id => $c->nama.($c->singkatan ? ' ('.$c->singkatan.')' : '')])])

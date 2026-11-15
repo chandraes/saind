@@ -21,7 +21,7 @@
                 <a href="{{ route('home') }}" class="text-decoration-none text-dark">
                     <img src="{{ asset('images/dashboard.svg') }}" alt="dashboard" width="30" class="me-1"> Dashboard
                 </a>
-                @if (!in_array(auth()->user()->role, ['operasional', 'general-manager', 'vendor', 'vendor-induk', 'vendor-operational'], true))
+                @if (!in_array(auth()->user()->role, ['operasional', ...\App\Models\User::EXECUTIVE_ROLES, 'vendor', 'vendor-induk', 'vendor-operational'], true))
                 <a href="{{ route('statisik.index') }}" class="text-decoration-none text-dark">
                     <img src="{{ asset('images/statistik.svg') }}" alt="dokumen" width="30" class="me-1"> STATISTIK
                 </a>

@@ -95,16 +95,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::get('load-notes/{note}', [LoadNoteDraftController::class, 'show'])->whereNumber('note')->name('load-notes.show');
                 Route::get('load-notes/{note}/photo', [LoadNoteDraftController::class, 'photo'])->whereNumber('note')->name('load-notes.photo');
             });
-            // General Manager: Nota Tagihan per customer (baca saja).
-            Route::middleware('role:general-manager')->group(function (): void {
+            // Eksekutif (GM & Direksi): Nota Tagihan per customer & Tagihan & Invoice (baca saja).
+            Route::middleware('role:executive')->group(function (): void {
                 Route::get('customer-options', [MobileCustomerBillController::class, 'customers'])->name('customer-options');
                 Route::get('billing-invoices', MobileBillingInvoiceController::class)->name('billing-invoices.index');
                 Route::get('customers/{customer}/bills', [MobileCustomerBillController::class, 'index'])->whereNumber('customer')->name('customer-bills.index');
             });
             Route::get('attendance-deductions', [MobileAttendanceDeductionController::class, 'index'])->middleware('role:hrd')->name('attendance-deductions.index');
-            // Rincian potongan absensi: HRD dan General Manager (dari Gaji Karyawan).
-            Route::get('attendance-deductions/{key}', [MobileAttendanceDeductionController::class, 'show'])->whereNumber('key')->middleware('role:hrd,general-manager')->name('attendance-deductions.show');
-            Route::get('payroll', [MobilePayrollController::class, 'index'])->middleware('role:general-manager')->name('payroll.index');
+            // Rincian potongan absensi: HRD dan eksekutif (dari Gaji Karyawan).
+            Route::get('attendance-deductions/{key}', [MobileAttendanceDeductionController::class, 'show'])->whereNumber('key')->middleware('role:hrd,executive')->name('attendance-deductions.show');
+            Route::get('payroll', [MobilePayrollController::class, 'index'])->middleware('role:executive')->name('payroll.index');
             Route::prefix('database')->name('database.')->middleware('role:'.implode(',', config('mobile.database_roles')))->group(function (): void {
                 Route::get('vendors', [DatabaseController::class, 'vendors'])->name('vendors.index');
                 Route::get('vendors/{vendor}', [DatabaseController::class, 'vendor'])->whereNumber('vendor')->name('vendors.show');

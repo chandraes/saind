@@ -15,7 +15,7 @@
             <a href="{{route('home')}}" class="btn btn-outline-secondary">
                 <i class="fa fa-tachometer-alt me-1"></i> Dashboard
             </a>
-            @if (!in_array(auth()->user()->role, ['vendor', 'vendor-induk', 'operasional', 'general-manager', 'asisten-user', 'vendor-operational', 'driver']))
+            @if (!in_array(auth()->user()->role, ['vendor', 'vendor-induk', 'operasional', ...\App\Models\User::EXECUTIVE_ROLES, 'asisten-user', 'vendor-operational', 'driver']))
             <a href="{{route('statisik.index')}}" class="btn btn-outline-secondary">
                 <i class="fa fa-chart-bar me-1"></i> STATISTIK
             </a>

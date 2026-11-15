@@ -21,7 +21,7 @@ class UserController extends Controller
     public const ROLES = [
         'admin' => 'Admin', 'user' => 'User', 'asisten-user' => 'Asisten User',
         'operasional' => 'Operasional', 'investor' => 'Investor', 'vendor' => 'Vendor',
-        'vendor-induk' => 'Vendor Induk', 'vendor-operational' => 'Vendor Operational', 'customer' => 'Customer', 'customer-admin' => 'Customer Admin', 'driver' => 'Driver', 'hrd' => 'HRD', 'general-manager' => 'General Manager',
+        'vendor-induk' => 'Vendor Induk', 'vendor-operational' => 'Vendor Operational', 'customer' => 'Customer', 'customer-admin' => 'Customer Admin', 'driver' => 'Driver', 'hrd' => 'HRD', 'general-manager' => 'General Manager', 'direksi' => 'Direksi',
     ];
 
     public function index(Request $request): View|JsonResponse

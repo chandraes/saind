@@ -6,7 +6,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\EnsureApiJson;
 use App\Http\Middleware\EnsureDriverWebAccess;
-use App\Http\Middleware\EnsureGeneralManagerReadOnly;
+use App\Http\Middleware\EnsureExecutiveReadOnly;
 use App\Http\Middleware\EnsureHrdWebAccess;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -63,7 +63,7 @@ class Kernel extends HttpKernel
             StartSession::class,
             EnsureDriverWebAccess::class,
             EnsureHrdWebAccess::class,
-            EnsureGeneralManagerReadOnly::class,
+            EnsureExecutiveReadOnly::class,
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,

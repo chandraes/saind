@@ -38,7 +38,7 @@ class VendorDashboardMenu
         if ($user->canViewNolamHeldCash()) {
             $documents[] = $menu('Kas UJ Ditahan', 'Rekap saldo dan mutasi dana sparepart atau ban per nolam.', '#'.self::HELD_CASH_PICKER, 'uj-ditahan.svg') + ['modal' => self::HELD_CASH_PICKER];
         }
-        if ($user->isGeneralManager()) {
+        if ($user->isExecutive()) {
             $documents[] = $menu('Nota Tagihan', 'Pilih customer, lalu periksa nota tagihannya.', '#'.self::CUSTOMER_PICKER, 'tagihan.svg') + ['modal' => self::CUSTOMER_PICKER];
             $documents[] = $menu('Tagihan & Invoice', 'Rekap tagihan dan invoice belum lunas per tambang.', route('rekap.tagihan-invoice'), 'tagihan-invoice.svg');
         }
@@ -58,9 +58,9 @@ class VendorDashboardMenu
                 $menu('Aki', 'Kondisi dan histori aki kendaraan.', route('statistik.aki'), 'aki.svg'),
                 $menu('Filter & Oli Mesin', 'Pemakaian dan histori penggantian.', route('statistik.filter-oli'), 'filter-oli-mesin.svg'),
             ]],
-            // General Manager: Gaji Karyawan (baca saja).
-            ...($user->isGeneralManager() ? [['key' => 'payroll', 'title' => 'Lain-lain', 'menus' => [
-                $menu('Gaji Karyawan', 'Tabel gaji karyawan per periode seperti Form Gaji.', route('gm.payroll'), 'gaji.svg'),
+            // Eksekutif (GM & Direksi): Gaji Karyawan (baca saja).
+            ...($user->isExecutive() ? [['key' => 'payroll', 'title' => 'Lain-lain', 'menus' => [
+                $menu('Gaji Karyawan', 'Tabel gaji karyawan per periode seperti Form Gaji.', route('executive.payroll'), 'gaji.svg'),
             ]]] : []),
         ];
     }

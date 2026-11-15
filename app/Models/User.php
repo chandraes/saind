@@ -59,6 +59,13 @@ class User extends Authenticatable
      */
     public const VENDOR_OWNER_ROLES = ['vendor', 'vendor-induk'];
 
+    /**
+     * Role eksekutif (General Manager & Direksi): fitur bersama baca saja untuk seluruh
+     * vendor beserta nilai uang. Pakai isGeneralManager()/isDireksi() untuk fitur khusus.
+     * Di rute, `role:executive` mengizinkan semua role ini (lihat RoleChecker).
+     */
+    public const EXECUTIVE_ROLES = ['general-manager', 'direksi'];
+
     public function isVendorAccount(): bool
     {
         return in_array($this->role, self::VENDOR_ACCOUNT_ROLES, true);
@@ -78,16 +85,27 @@ class User extends Authenticatable
         return $this->role === 'operasional';
     }
 
-    /** General Manager: menu operasional untuk seluruh vendor beserta nilai uang, Nota Tagihan, Tagihan & Invoice, Gaji; baca saja. */
     public function isGeneralManager(): bool
     {
         return $this->role === 'general-manager';
     }
 
-    /** Membaca data seluruh vendor (filter vendor), baca saja: operasional dan General Manager. */
+    /** Role akun Direksi (bukan model App\Models\Direksi yang berisi data penggajian direksi). */
+    public function isDireksi(): bool
+    {
+        return $this->role === 'direksi';
+    }
+
+    /** Eksekutif (GM/Direksi): menu operasional seluruh vendor beserta nilai uang, Nota Tagihan, Tagihan & Invoice, Gaji; baca saja. */
+    public function isExecutive(): bool
+    {
+        return in_array($this->role, self::EXECUTIVE_ROLES, true);
+    }
+
+    /** Membaca data seluruh vendor (filter vendor), baca saja: operasional dan eksekutif. */
     public function seesAllVendors(): bool
     {
-        return $this->isOperasional() || $this->isGeneralManager();
+        return $this->isOperasional() || $this->isExecutive();
     }
 
     /** Akun yang memakai menu vendor-operational: akun vendor dan operasional (semua vendor). */
@@ -132,16 +150,16 @@ class User extends Authenticatable
         return $this->role !== 'vendor';
     }
 
-    /** Vendor & vendor-induk melihat keuangannya sendiri, General Manager seluruh vendor; vendor operational hanya uang jalan. */
+    /** Vendor & vendor-induk melihat keuangannya sendiri, eksekutif seluruh vendor; vendor operational hanya uang jalan. */
     public function canViewVendorFinance(): bool
     {
-        return $this->isVendorOwner() || $this->isGeneralManager();
+        return $this->isVendorOwner() || $this->isExecutive();
     }
 
     /** Kas UJ Ditahan per nolam (baca saja): vendor-induk untuk nolam vendornya, operasional semua nolam. */
     public function canViewNolamHeldCash(): bool
     {
-        return in_array($this->role, ['vendor-induk', 'operasional', 'general-manager'], true);
+        return in_array($this->role, ['vendor-induk', 'operasional'], true) || $this->isExecutive();
     }
 
     /**

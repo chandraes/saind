@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,9 +20,10 @@ class RoleChecker
         if (in_array('vendor', $roles, true)) {
             $roles[] = 'vendor-induk';
         }
-        // General Manager membaca semua menu operasional (penulisan diblok EnsureReadOnlyRole).
-        if (in_array('operasional', $roles, true)) {
-            $roles[] = 'general-manager';
+        // Eksekutif (GM & Direksi) membaca semua menu operasional (penulisan diblok EnsureExecutiveReadOnly);
+        // `executive` adalah alias semua role eksekutif.
+        if (in_array('operasional', $roles, true) || in_array('executive', $roles, true)) {
+            array_push($roles, ...User::EXECUTIVE_ROLES);
         }
         if (! in_array($request->user()->role, $roles)) {
             abort(403);

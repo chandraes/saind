@@ -12,7 +12,7 @@
             <h1><u>{{$customer->nama}} ({{$customer->singkatan}})</u></h1>
         </div>
     </div>
-    @php($readonly = auth()->user()->isGeneralManager())
+    @php($readonly = auth()->user()->isExecutive())
     @include('swal')
     {{-- if errors has any --}}
 

@@ -15,6 +15,12 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
     }
 
+    /** Role eksekutif yang berbagi fitur (lihat User::EXECUTIVE_ROLES). */
+    public static function executiveRoles(): array
+    {
+        return ['general manager' => ['general-manager'], 'direksi' => ['direksi']];
+    }
+
     protected function tearDown(): void
     {
         $this->clearGuardableColumns();

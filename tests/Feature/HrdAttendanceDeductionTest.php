@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 
 /**
@@ -166,11 +167,14 @@ class HrdAttendanceDeductionTest extends MobileApiTestCase
         $this->getJson('/api/v1/attendance-deductions/'.$this->late->id, $this->headers($this->hrd))->assertUnprocessable();
     }
 
-    public function test_general_manager_reads_the_full_payroll_table_with_deduction_detail(): void
+    #[DataProvider('executiveRoles')]
+    public function test_executive_reads_the_full_payroll_table_with_deduction_detail(string $role): void
     {
         DB::table('bpjs_health_minimums')->insert(['year' => 2026, 'minimum_wage' => 1, 'basis' => 'UMK', 'reference' => 'Fixture pengujian']);
-        $gm = User::factory()->create(['username' => 'gm', 'role' => 'general-manager', 'password' => 'secret-pass']);
-        $page = $this->actingAs($gm)->get('/general-manager/gaji')->assertOk()->assertSee('GAJI KARYAWAN')->assertSee('Oktober 2026')
+        $gm = User::factory()->create(['username' => $role.'-test', 'role' => $role, 'password' => 'secret-pass']);
+        // URL lama GM dialihkan ke URL eksekutif.
+        $this->actingAs($gm)->get('/general-manager/gaji')->assertRedirect('/eksekutif/gaji');
+        $page = $this->get('/eksekutif/gaji')->assertOk()->assertSee('GAJI KARYAWAN')->assertSee('Oktober 2026')
             ->assertSeeInOrder(['Gaji Pokok', 'Tunjangan', 'Kasbon', 'Potongan Absensi', 'Sisa Gaji Dibayar'])
             ->assertSeeInOrder(['Budi Terlambat', '5.000.000', '200.000', '4.800.000'])
             ->assertSee(route('hrd.attendance-deductions.show', ['key' => $this->late->id, 'bulan' => 10, 'tahun' => 2026]))
@@ -180,7 +184,7 @@ class HrdAttendanceDeductionTest extends MobileApiTestCase
         $this->getJson('/hrd/potongan-absensi/'.$this->late->id.'?bulan=10&tahun=2026')->assertOk()->assertJsonPath('data.detail.amount', 200000);
         $this->get('/hrd/potongan-absensi')->assertForbidden();
         $this->app['auth']->forgetGuards();
-        $this->actingAs($this->hrd)->get('/general-manager/gaji')->assertForbidden();
+        $this->actingAs($this->hrd)->get('/eksekutif/gaji')->assertForbidden();
 
         $headers = $this->headers($gm);
         $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.payroll', true)->assertJsonPath('data.permissions.attendance_deductions', false);

@@ -14,7 +14,7 @@
     $profit = $data->sum('profit');
     $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
     // General Manager: baca saja — tanpa kolom pilih, aksi, keranjang, dan lanjut; export tetap.
-    $readonly = auth()->user()->isGeneralManager();
+    $readonly = auth()->user()->isExecutive();
     $offset = $readonly ? 1 : 0;
     @endphp
     <div class="row justify-content-center">

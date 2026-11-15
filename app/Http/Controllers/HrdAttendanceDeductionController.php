@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Menu Potongan Absensi role HRD (baca saja). Halaman yang sama melayani Gaji
- * Karyawan General Manager (GeneralManagerPayrollController) dengan seluruh
+ * Karyawan eksekutif (ExecutivePayrollController) dengan seluruh
  * kolom Form Gaji; rincian potongan (show/pdf) dipakai keduanya.
  */
 class HrdAttendanceDeductionController extends Controller

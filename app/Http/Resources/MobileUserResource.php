@@ -29,10 +29,10 @@ class MobileUserResource extends JsonResource
                 'driver' => $this->resource->isDriver(),
                 // HRD: hanya menu Potongan Absensi (baca saja).
                 'attendance_deductions' => $this->resource->isHrd(),
-                // General Manager: Nota Tagihan per customer (baca saja).
-                'customer_bills' => $this->resource->isGeneralManager(),
-                // General Manager: Gaji Karyawan (seluruh kolom Form Gaji, baca saja).
-                'payroll' => $this->resource->isGeneralManager()],
+                // Eksekutif (GM & Direksi): Nota Tagihan per customer (baca saja).
+                'customer_bills' => $this->resource->isExecutive(),
+                // Eksekutif (GM & Direksi): Gaji Karyawan (seluruh kolom Form Gaji, baca saja).
+                'payroll' => $this->resource->isExecutive()],
             'driver_vehicle' => $this->when($this->resource->isDriver(), fn (): ?array => ($vehicle = $this->resource->activeDriverVehicle())
                 ? ['id' => $vehicle->id, 'nomor_lambung' => (string) $vehicle->nomor_lambung, 'vendor_id' => (int) $vehicle->vendor_id] : null)];
     }

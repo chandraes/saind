@@ -7,6 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class VendorOperationalBillingTest extends MobileApiTestCase
 {
@@ -526,10 +527,11 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->get('/vendor-operational/invoice?status=all')->assertOk()->assertDontSee('Total Bayar')->assertDontSee('2.220.000')->assertDontSee('Grand Total');
     }
 
-    public function test_general_manager_reads_every_vendor_with_finance_and_cannot_write(): void
+    #[DataProvider('executiveRoles')]
+    public function test_executive_reads_every_vendor_with_finance_and_cannot_write(string $role): void
     {
         $this->withFinance();
-        $gm = User::factory()->create(['username' => 'gm-all', 'password' => 'secret-pass', 'role' => 'general-manager', 'vendor_id' => null]);
+        $gm = User::factory()->create(['username' => $role.'-all', 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => null]);
         $this->actingAs($gm);
         $this->get('/vendor-operational/nota-bayar')->assertOk()->assertSee('Pilih Vendor');
         $this->get('/vendor-operational/nota-bayar?vendor_id=1&kind=utama')->assertOk()->assertSee('70.000')->assertSee('2.000.000')->assertSee('Bruto')->assertDontSee('FOREIGN UNIT');
