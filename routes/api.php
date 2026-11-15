@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\DatabaseController;
 use App\Http\Controllers\Api\LoadNoteDraftController;
 use App\Http\Controllers\Api\MobileAttendanceDeductionController;
 use App\Http\Controllers\Api\MobileBatteryController;
+use App\Http\Controllers\Api\MobileCustomerBillController;
 use App\Http\Controllers\Api\MobileDriverHeldCashController;
 use App\Http\Controllers\Api\MobileFilterOilController;
 use App\Http\Controllers\Api\MobileMaintenanceHistoryController;
@@ -91,6 +92,11 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 // Route::post('load-notes', [LoadNoteDraftController::class, 'store'])->middleware('throttle:30,1')->name('load-notes.store');
                 Route::get('load-notes/{note}', [LoadNoteDraftController::class, 'show'])->whereNumber('note')->name('load-notes.show');
                 Route::get('load-notes/{note}/photo', [LoadNoteDraftController::class, 'photo'])->whereNumber('note')->name('load-notes.photo');
+            });
+            // General Manager: Nota Tagihan per customer (baca saja).
+            Route::middleware('role:general-manager')->group(function (): void {
+                Route::get('customer-options', [MobileCustomerBillController::class, 'customers'])->name('customer-options');
+                Route::get('customers/{customer}/bills', [MobileCustomerBillController::class, 'index'])->whereNumber('customer')->name('customer-bills.index');
             });
             Route::middleware('role:hrd')->group(function (): void {
                 Route::get('attendance-deductions', [MobileAttendanceDeductionController::class, 'index'])->name('attendance-deductions.index');

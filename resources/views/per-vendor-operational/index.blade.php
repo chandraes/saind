@@ -38,30 +38,15 @@
 @include('layouts.uj-ditahan-menu', ['menuArea' => 'vendor-operational'])
 @endif
 @if ($operasional)
-{{-- Seperti admin: Nota Bayar dibuka per vendor. --}}
-<div class="modal fade" id="{{ \App\Support\VendorDashboardMenu::VENDOR_PICKER }}" tabindex="-1" aria-labelledby="{{ \App\Support\VendorDashboardMenu::VENDOR_PICKER }}-title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title" id="{{ \App\Support\VendorDashboardMenu::VENDOR_PICKER }}-title"><i class="fa fa-truck me-2" aria-hidden="true"></i>Pilih Vendor</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Tutup"></button>
-        </div>
-        <form action="{{ route('vendor-operational.nota-bayar') }}" method="get">
-            <div class="modal-body">
-                <label for="operasional-vendor-select" class="form-label fw-semibold">Nama Vendor <span class="text-danger">*</span></label>
-                <select class="form-select" id="operasional-vendor-select" name="vendor_id" required>
-                    <option value="" selected disabled>-- Pilih Vendor --</option>
-                    @foreach (\App\Models\Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname']) as $option)
-                    <option value="{{ $option->id }}">{{ $option->nama }}@if ($option->nickname) ({{ $option->nickname }})@endif</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="submit" class="btn btn-primary px-4">Lanjutkan <i class="fa fa-arrow-right ms-1" aria-hidden="true"></i></button>
-            </div>
-        </form>
-    </div></div>
-</div>
+{{-- Seperti admin: Nota Bayar dibuka per vendor; GM membuka Nota Tagihan per customer. --}}
+@include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::VENDOR_PICKER, 'title' => 'Pilih Vendor', 'icon' => 'fa-truck',
+    'action' => route('vendor-operational.nota-bayar'), 'name' => 'vendor_id', 'label' => 'Nama Vendor', 'placeholder' => '-- Pilih Vendor --',
+    'options' => \App\Models\Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname'])->mapWithKeys(fn ($v) => [$v->id => $v->nama.($v->nickname ? ' ('.$v->nickname.')' : '')])])
+@if (auth()->user()->isGeneralManager())
+@include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::CUSTOMER_PICKER, 'title' => 'Pilih Customer', 'icon' => 'fa-building',
+    'action' => url('transaksi/nota-tagihan'), 'pathTemplate' => route('transaksi.nota-tagihan', ['customer' => '__ID__']), 'name' => 'customer', 'label' => 'Nama Customer', 'placeholder' => '-- Pilih Customer --',
+    'options' => \App\Models\Customer::query()->orderBy('nama')->get(['id', 'nama', 'singkatan'])->mapWithKeys(fn ($c) => [$c->id => $c->nama.($c->singkatan ? ' ('.$c->singkatan.')' : '')])])
+@endif
 @push('css')
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}">
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.bootstrap5.css') }}">
@@ -70,8 +55,14 @@
 <script src="{{ asset('assets/plugins/select2/select2.full.min.js') }}"></script>
 <script>
     $(function () {
-        $('#operasional-vendor-select').select2({theme: 'bootstrap-5', width: '100%', placeholder: '-- Pilih Vendor --',
-            dropdownParent: $('#{{ \App\Support\VendorDashboardMenu::VENDOR_PICKER }}')});
+        $('.dashboard-picker-select').each(function () {
+            $(this).select2({theme: 'bootstrap-5', width: '100%', placeholder: this.dataset.placeholder, dropdownParent: $(this).closest('.modal')});
+        });
+        // Customer menjadi bagian path (/transaksi/nota-tagihan/{customer}).
+        $('form[data-path-template]').on('submit', function (event) {
+            event.preventDefault();
+            window.location.href = this.dataset.pathTemplate.replace('__ID__', encodeURIComponent($(this).find('select').val()));
+        });
     });
 </script>
 @endpush

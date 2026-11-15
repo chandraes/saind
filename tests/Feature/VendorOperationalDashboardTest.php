@@ -59,10 +59,16 @@ class VendorOperationalDashboardTest extends TestCase
 
     public function test_general_manager_gets_the_operasional_menus_without_kas_vendor(): void
     {
+        Schema::create('customers', function (Blueprint $table): void {
+            $table->id();
+            $table->string('nama');
+            $table->string('singkatan')->nullable();
+        });
+        DB::table('customers')->insert(['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA']);
         $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'general-manager', 'vendor_id' => null]));
         $response = $this->get('/home')->assertOk()->assertSee('GENERAL MANAGER')->assertSee('nilai bayar')
-            ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Perform Unit', 'Perform Unit All', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
-            ->assertDontSee('Kas Vendor');
+            ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Nota Tagihan', 'Perform Unit', 'Perform Unit All', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
+            ->assertDontSee('Kas Vendor')->assertSee('Tambang A (TA)');
         $dom = new \DOMDocument;
         @$dom->loadHTML($response->getContent());
         $this->assertSame(1, (new \DOMXPath($dom))->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-target="#operasional-nota-bayar-vendor"]')->length);

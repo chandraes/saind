@@ -15,6 +15,9 @@ class VendorDashboardMenu
     /** Id pop-up "Pilih Vendor" untuk Nota Bayar role operasional. */
     public const VENDOR_PICKER = 'operasional-nota-bayar-vendor';
 
+    /** Id pop-up "Pilih Customer" untuk Nota Tagihan General Manager. */
+    public const CUSTOMER_PICKER = 'gm-nota-tagihan-customer';
+
     /** Id pop-up Sparepart | Ban untuk Kas UJ Ditahan (layouts.uj-ditahan-menu). */
     public const HELD_CASH_PICKER = 'ujDitahanMenu';
 
@@ -39,8 +42,14 @@ class VendorDashboardMenu
             $documents[] = $menu('Kas Vendor', 'Mutasi kas dan saldo vendor per bulan.', route('kas-per-vendor.index', $user->vendor_id), 'kas-vendor.svg');
         }
 
+        // General Manager: tagihan customer (baca saja).
+        $billing = $user->isGeneralManager() ? [['key' => 'billing', 'title' => 'Tagihan Customer', 'menus' => [
+            $menu('Nota Tagihan', 'Pilih customer, lalu periksa nota tagihannya.', '#'.self::CUSTOMER_PICKER, 'tagihan.svg') + ['modal' => self::CUSTOMER_PICKER],
+        ]]] : [];
+
         return [
             ['key' => 'documents', 'title' => 'Nota & Invoice', 'menus' => $documents],
+            ...$billing,
             ['key' => 'statistics', 'title' => 'Performa & Upah Gendong', 'menus' => [
                 $menu('Perform Unit', 'Performa dan aktivitas kendaraan.', route('statistik.perform-unit'), 'perform-unit.svg'),
                 $menu('Perform Unit All', 'Rekap ritase bulanan seluruh unit vendor Anda.', route('statistik.perform-unit.all-vendor'), 'all-vendor.svg'),

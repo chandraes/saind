@@ -110,6 +110,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
     });
 
+    // Nota Tagihan per customer: admin (beserta aksi di bawah) dan General Manager (baca saja + export).
+    Route::prefix('transaksi/nota-tagihan')->middleware('role:admin,user,su,asisten-user,general-manager')->controller(TransaksiController::class)->group(function (): void {
+        Route::get('/{customer}', 'nota_tagihan')->whereNumber('customer')->name('transaksi.nota-tagihan');
+        Route::get('/{customer}/export', 'tagihan_export')->whereNumber('customer')->name('transaksi.nota-tagihan.export');
+    });
+
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::group(['middleware' => 'role:user'], function () {});
@@ -539,8 +545,6 @@ Route::group(['middleware' => ['auth']], function () {
             Route::patch('/nota-bongkar/update/{transaksi}', [TransaksiController::class, 'nota_bongkar_update'])->name('transaksi.nota-bongkar.update');
 
             Route::prefix('nota-tagihan')->group(function () {
-                Route::get('/{customer}', [TransaksiController::class, 'nota_tagihan'])->name('transaksi.nota-tagihan');
-                Route::get('/{customer}/export', [TransaksiController::class, 'tagihan_export'])->name('transaksi.nota-tagihan.export');
                 Route::get('/{transaksi}/check', [TransaksiController::class, 'nota_tagihan_checked'])->name('transaksi.nota-tagihan.check');
                 Route::post('/{transaksi}/uncheck', [TransaksiController::class, 'nota_tagihan_unchecked'])->name('transaksi.nota-tagihan.uncheck');
                 Route::post('/edit/{transaksi}', [TransaksiController::class, 'nota_tagihan_edit'])->name('transaksi.nota-tagihan.edit');

@@ -28,7 +28,9 @@ class MobileUserResource extends JsonResource
                 // Driver: menu driver, dikunci ke satu nolam (lihat driver_vehicle).
                 'driver' => $this->resource->isDriver(),
                 // HRD: hanya menu Potongan Absensi (baca saja).
-                'attendance_deductions' => $this->resource->isHrd()],
+                'attendance_deductions' => $this->resource->isHrd(),
+                // General Manager: Nota Tagihan per customer (baca saja).
+                'customer_bills' => $this->resource->isGeneralManager()],
             'driver_vehicle' => $this->when($this->resource->isDriver(), fn (): ?array => ($vehicle = $this->resource->activeDriverVehicle())
                 ? ['id' => $vehicle->id, 'nomor_lambung' => (string) $vehicle->nomor_lambung, 'vendor_id' => (int) $vehicle->vendor_id] : null)];
     }

@@ -13,6 +13,9 @@
     $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
     $profit = $data->sum('profit');
     $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
+    // General Manager: baca saja — tanpa kolom pilih, aksi, keranjang, dan lanjut; export tetap.
+    $readonly = auth()->user()->isGeneralManager();
+    $offset = $readonly ? 1 : 0;
     @endphp
     <div class="row justify-content-center">
         <div class="col-md-12 text-center">
@@ -43,6 +46,7 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    @unless ($readonly)
                                  @if (auth()->user()->role != 'asisten-user')
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
                                 alt="dokumen" width="30"> Billing</a></td>
@@ -52,6 +56,7 @@
                             </td>
                     <td class="align-middle"><a href="{{route('transaksi.nota-tagihan.keranjang', ['customer' => $customer->id])}}"><i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang @if ($keranjang > 0) <span
                             class="badge bg-danger">{{$keranjang}}</span> @endif</a></td>
+                    @endunless
 
                 </tr>
             </table>
@@ -74,11 +79,13 @@
     <table class="table table-bordered table-hover" id="notaTable">
         <thead class="table-success">
             <tr>
+                @unless ($readonly)
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">
                     Select
                     {{-- select all --}}
                     <input style="height: 25px; width:25px" type="checkbox" onclick="checkAll(this)" id="checkAll">
                 </th>
+                @endunless
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif  class="text-center align-middle">No</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tanggal UJ</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Kode</th>
@@ -109,7 +116,9 @@
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit (%)</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">DO Fisik</th>
+                @unless ($readonly)
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Action</th>
+                @endunless
             </tr>
             @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1)
             <tr>
@@ -130,12 +139,14 @@
             @foreach ($data as $d)
             <tr>
                 {{-- check list --}}
+                @unless ($readonly)
                 <td class="text-center align-middle">
                     {{-- checklist on check push $d->id to $selectedData --}}
                     <input style="height: 25px; width:25px" type="checkbox" value="{{$d->id}}"
                         data-tagihan="{{$d->nominal_tagihan}}" onclick="check(this, {{$d->id}})"
                         id="idSelect-{{$d->id}}" {{$d->nota_fisik == 0 ? 'disabled' : ''}}>
                 </td>
+                @endunless
                 <td class="text-center align-middle"></td>
                 <td class="text-center align-middle">
                     {{$d->kas_uang_jalan->tanggal}} <br>
@@ -202,7 +213,9 @@
                     {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
                 </td>
                 <td class="text-center align-middle">
-                    @if ($d->nota_fisik == 0)
+                    @if ($readonly)
+                    <span class="badge {{ $d->nota_fisik == 1 ? 'bg-success' : 'bg-secondary' }}">{{ $d->nota_fisik == 1 ? 'Ada' : 'Belum' }}</span>
+                    @elseif ($d->nota_fisik == 0)
                     <form action="{{route('transaksi.nota-tagihan.check', $d->id)}}" method="get">
                         <input style="height: 25px; width:25px" type="checkbox" {{ $d->nota_fisik == 1 ? 'checked' : ''
                         }} onchange="this.form.submit()">
@@ -216,6 +229,7 @@
                     Checker: <strong>{{$d->do_checker->name}}</strong>
                     @endif
                 </td>
+                @unless ($readonly)
                 <td class="text-center align-middle">
                     @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
                     <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
@@ -283,6 +297,7 @@
                     @endif
 
                 </td>
+                @endunless
             </tr>
             <script>
                 $('#masukForm{{$d->id}}').submit(function(e){
@@ -307,8 +322,9 @@
         <tfoot>
             <tr>
                 <td class=""
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 - $offset + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
+                    @unless ($readonly)
                     <div class="row text-center">
                         <div class="col-md-4 mt-2">
                             <label for="" class="form-label">Total Tagihan Dipilih : </label>
@@ -321,6 +337,7 @@
                             </div>
                         </div>
                     </div>
+                    @endunless
                 </td>
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td class="text-end align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
@@ -328,11 +345,11 @@
                 <td class="text-end align-middle">{{number_format($profit, 0, ',', '.')}}</td>
                 <td class="text-end align-middle">{{number_format($profit_persen, 2, ',', '.')}}%</td>
                 <td></td>
-                <td></td>
+                @unless ($readonly)<td></td>@endunless
             </tr>
             <tr>
                 <td class="text-center align-middle"
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 - $offset + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}"></td>
                 <td class="text-center align-middle"><strong>PPN</strong></td>
                 <td class="text-end align-middle">
@@ -343,11 +360,11 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td></td>
+                @unless ($readonly)<td></td>@endunless
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 - $offset + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>PPh</strong></td>
@@ -359,11 +376,11 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td></td>
+                @unless ($readonly)<td></td>@endunless
             </tr>
             <tr>
                 <td class="align-middle"
-                    colspan="{{10 + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
+                    colspan="{{10 - $offset + ($customer->tanggal_muat == 1 ? 1 : 0) + ($customer->nota_muat == 1 ? 1 : 0) + ($customer->tonase == 1 ? 1 : 0) +
                                                                 ($customer->tanggal_bongkar == 1 ? 1 : 0) + ($customer->selisih == 1 ? 2 : 0) + ($customer->gt_bongkar == 1 ? 2 : 0) + ($customer->gt_muat == 1 ? 2 : 0)}}">
                 </td>
                 <td class="text-center align-middle"><strong>Tagihan</strong></td>
@@ -373,7 +390,7 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td></td>
+                @unless ($readonly)<td></td>@endunless
             </tr>
         </tfoot>
     </table>
@@ -381,11 +398,13 @@
 <input type="hidden" name="total_tagihan" id="total_tagihan" value="0">
 <div class="container-fluid mt-3 mb-3">
     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+        @unless ($readonly)
         <form action="{{route('transaksi.nota-tagihan.lanjut-pilih', $customer)}}" method="post" id="lanjutForm">
             @csrf
             <input type="hidden" name="selectedData" required>
             <button class="btn btn-primary me-md-3 btn-lg" type="submit">Lanjutkan Pilihan</button>
         </form>
+        @endunless
         <form target="_blank" action="{{route('transaksi.nota-tagihan.export', $customer)}}" method="get">
             <input type="hidden" name="rute_id" value="{{$rute_id}}">
             <input type="hidden" name="tanggal_filter" value="{{$tanggal_filter}}">
@@ -461,18 +480,18 @@
             "scrollX": true,
             "stateSave": true,
             "fixedColumns": {
-                "leftColumns": 4, // Increase this by 1 because we're adding a column
-                "rightColumns": 1
+                "leftColumns": {{ 4 - $offset }}, // Increase this by 1 because we're adding a column
+                "rightColumns": {{ 1 - $offset }}
             },
             "columnDefs": [
-                { "type": "date-eu", "targets": [tanggalMuatColumnIndex + 1, tanggalBongkarColumnIndex + 1] }, // Increase these by 1 because we're adding a column
-                { "orderable": false, "targets": [0,1,-1] } // Make the numbering column unsortable
+                { "type": "date-eu", "targets": [tanggalMuatColumnIndex + {{ 1 - $offset }}, tanggalBongkarColumnIndex + {{ 1 - $offset }}] }, // Increase these by 1 because we're adding a column
+                { "orderable": false, "targets": @json($readonly ? [0] : [0, 1, -1]) } // Make the numbering column unsortable
             ],
-            "order": [[ 2, "asc" ]],
+            "order": [[ {{ 2 - $offset }}, "asc" ]],
             "drawCallback": function (settings) {
                 var api = this.api();
                 var startIndex = api.context[0]._iDisplayStart; // Get the start index for the current page
-                api.column(1, {page: 'current'}).nodes().each(function (cell, i) {
+                api.column({{ 1 - $offset }}, {page: 'current'}).nodes().each(function (cell, i) {
                     cell.innerHTML = startIndex + i + 1; // Update the numbering column
                 });
             }
