@@ -25,9 +25,16 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
             $table->id();
             $table->string('nama');
             $table->string('singkatan')->nullable();
-            foreach (['ppn', 'pph', 'gt_muat', 'gt_bongkar', 'tanggal_muat', 'nota_muat', 'tonase', 'tanggal_bongkar', 'selisih', 'tagihan_dari', 'status'] as $flag) {
+            foreach (['is_kompensasi_jr', 'is_penyesuaian_bbm', 'is_achievement', 'ppn', 'pph', 'gt_muat', 'gt_bongkar', 'tanggal_muat', 'nota_muat', 'tonase', 'tanggal_bongkar', 'selisih', 'tagihan_dari', 'status'] as $flag) {
                 $table->integer($flag)->default(0);
             }
+        });
+        Schema::create('transaksi_additionals', function (Blueprint $table): void {
+            $table->id();
+            $table->integer('transaksi_id');
+            $table->integer('customer_id');
+            $table->string('jenis');
+            $table->integer('status')->default(0);
         });
         Schema::create('rutes', function (Blueprint $table): void {
             $table->id();
@@ -62,8 +69,8 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         });
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A', 'nickname' => 'VA'], ['id' => 2, 'nama' => 'Vendor B', 'nickname' => null]]);
         DB::table('vehicles')->insert([['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '288'], ['id' => 2, 'vendor_id' => 2, 'nomor_lambung' => '512']]);
-        DB::table('customers')->insert([['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA', 'ppn' => 1, 'pph' => 1, 'tagihan_dari' => 2, 'status' => 1],
-            ['id' => 2, 'nama' => 'Tambang B', 'singkatan' => 'TB', 'ppn' => 0, 'pph' => 0, 'tagihan_dari' => 1, 'status' => 1]]);
+        DB::table('customers')->insert([['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA', 'is_kompensasi_jr' => 1, 'ppn' => 1, 'pph' => 1, 'tagihan_dari' => 2, 'status' => 1],
+            ['id' => 2, 'nama' => 'Tambang B', 'singkatan' => 'TB', 'is_kompensasi_jr' => 0, 'ppn' => 0, 'pph' => 0, 'tagihan_dari' => 1, 'status' => 1]]);
         DB::table('rutes')->insert(['id' => 1, 'nama' => 'Pit - Port', 'jarak' => 40]);
         DB::table('customer_rute')->insert(['customer_id' => 1, 'rute_id' => 1]);
         foreach ([[1, 1, 1, 7], [2, 2, 1, 8], [3, 1, 2, 9]] as [$id, $vendor, $customer, $number]) {
@@ -76,6 +83,9 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         // Sudah ditagih: tidak tampil.
         DB::table('kas_uang_jalans')->insert(['id' => 4, 'vendor_id' => 1, 'vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 1, 'nomor_uang_jalan' => 10, 'tanggal' => '2026-11-04']);
         DB::table('transaksis')->insert(['id' => 4, 'kas_uang_jalan_id' => 4, 'status' => 3, 'tagihan' => 1, 'nominal_tagihan' => 999999]);
+        // Kompensasi JR menunggu ditagih untuk nota 2; nota 1 sudah masuk keranjang (status 1).
+        DB::table('transaksi_additionals')->insert([['transaksi_id' => 2, 'customer_id' => 1, 'jenis' => 'kompensasi_jr', 'status' => 0],
+            ['transaksi_id' => 1, 'customer_id' => 1, 'jenis' => 'kompensasi_jr', 'status' => 1]]);
         $this->gm = User::factory()->create(['username' => 'gm', 'password' => 'secret-pass', 'role' => 'general-manager', 'vendor_id' => null]);
     }
 
@@ -128,6 +138,33 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         $this->getJson('/api/v1/customers/999/bills', $headers)->assertNotFound();
     }
 
+    public function test_web_category_menu_and_additional_category_are_read_only(): void
+    {
+        $this->actingAs($this->gm)->get('/home')->assertOk()->assertSee(url('billing/nota-tagihan/__ID__'), false);
+        $this->get('/billing/nota-tagihan/1')->assertOk()->assertSee('HPP')->assertSee('KOMPENSASI')->assertDontSee('PENYESUAIAN<br>BBM', false)
+            ->assertSee(route('billing.nota-tagihan.detail-jenis', ['customer' => 1, 'jenis' => 'kompensasi_jr']));
+        $this->get('/billing/nota-tagihan/1/kompensasi_jr')->assertOk()->assertSee('Kompensasi Jalan Rusak')->assertSee('UJ08')->assertDontSee('UJ07')
+            ->assertDontSee('lanjutForm"', false)->assertDontSee('Nominal DPP')->assertDontSee('Keranjang')->assertDontSee('images/billing.svg');
+        $this->get('/billing/nota-tagihan/1/unknown')->assertStatus(405);
+        $this->post('/billing/nota-tagihan/1/kompensasi_jr', ['dpp' => 1000])->assertForbidden();
+        $this->get('/billing/nota-tagihan/1/kompensasi_jr/keranjang')->assertForbidden();
+        // HPP: GM kembali ke menu kategori.
+        $this->get('/transaksi/nota-tagihan/1')->assertOk()->assertSee(route('billing.nota-tagihan', 1));
+    }
+
+    public function test_mobile_additional_category_lists_tonnage_and_physical_note_without_money(): void
+    {
+        $headers = $this->headers($this->gm);
+        $this->getJson('/api/v1/customers/1/bills', $headers)->assertOk()
+            ->assertJsonPath('meta.kind', 'utama')->assertJsonPath('meta.categories', ['utama' => 'HPP', 'kompensasi_jr' => 'Kompensasi Jalan Rusak']);
+        $response = $this->getJson('/api/v1/customers/1/bills?kind=kompensasi_jr', $headers)->assertOk()
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('meta.total_load_weight', 30.5)->assertJsonPath('meta.total_unload_weight', 30)
+            ->assertJsonPath('data.0.money_out_number', 'UJ08')->assertJsonPath('data.0.physical_note', false)->assertJsonMissingPath('meta.total_bill');
+        $this->assertSame(['number', 'id', 'vehicle_number', 'money_out_number', 'route_name', 'vendor_name', 'load_weight', 'unload_weight', 'physical_note'], array_keys($response->json('data.0')));
+        $this->getJson('/api/v1/customers/1/bills?kind=achievement', $headers)->assertUnprocessable();
+        $this->getJson('/api/v1/customers/2/bills', $headers)->assertOk()->assertJsonPath('meta.categories', ['utama' => 'HPP']);
+    }
+
     public function test_other_roles_cannot_read_customer_bills(): void
     {
         $ops = User::factory()->create(['username' => 'ops', 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]);
@@ -136,5 +173,7 @@ class GeneralManagerCustomerBillTest extends MobileApiTestCase
         $this->getJson('/api/v1/me', $this->headers($ops))->assertJsonPath('data.permissions.customer_bills', false);
         $this->app['auth']->forgetGuards();
         $this->actingAs($ops)->get('/transaksi/nota-tagihan/1')->assertForbidden();
+        $this->get('/billing/nota-tagihan/1')->assertForbidden();
+        $this->get('/billing/nota-tagihan/1/kompensasi_jr')->assertForbidden();
     }
 }

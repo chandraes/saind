@@ -12,6 +12,7 @@
             <h1><u>{{$customer->nama}} ({{$customer->singkatan}})</u></h1>
         </div>
     </div>
+    @php($readonly = auth()->user()->isGeneralManager())
     @include('swal')
     {{-- if errors has any --}}
 
@@ -21,15 +22,17 @@
                 <tr class="text-center">
                     <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
                                 width="30"> Dashboard</a></td>
+                    @unless ($readonly)
                                  @if (auth()->user()->role != 'asisten-user')
                     <td><a href="{{route('billing.index')}}"><img src="{{asset('images/billing.svg')}}"
                                 alt="dokumen" width="30"> Billing</a></td>
                                 @endif
+                    @endunless
                                   <td><a href="{{route('billing.nota-tagihan', $customer->id)}}"><img src="{{asset('images/back.svg')}}"
                                 alt="dokumen" width="30"> Kembali</a>
                             </td>
-                    <td class="align-middle"><a href="{{route('billing.nota-tagihan.detail-jenis.keranjang', ['customer' => $customer->id, 'jenis' => $jenis])}}"><i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang @if ($keranjang > 0) <span
-                            class="badge bg-danger">{{$keranjang}}</span> @endif</a></td>
+                    @unless ($readonly)<td class="align-middle"><a href="{{route('billing.nota-tagihan.detail-jenis.keranjang', ['customer' => $customer->id, 'jenis' => $jenis])}}"><i class="fa fa-cart-arrow-down me-2" style="font-size: 30px"></i> Keranjang @if ($keranjang > 0) <span
+                            class="badge bg-danger">{{$keranjang}}</span> @endif</a></td>@endunless
 
                 </tr>
             </table>
@@ -248,6 +251,7 @@
         </tfoot> --}}
     </table>
 </div>
+@unless ($readonly)
 <div class="container mt-4 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -285,6 +289,7 @@
     </div>
 </div>
 
+@endunless
 @endsection
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
@@ -309,7 +314,8 @@
             // ... your DataTable options ...
         });
 
-          var dpp = new Cleave('#dpp', {
+          // Kolom DPP tidak ada untuk General Manager (baca saja).
+          var dpp = document.getElementById('dpp') && new Cleave('#dpp', {
                 numeral: true,
                 numeralThousandsGroupStyle: 'thousand',
                 numeralDecimalMark: ',',

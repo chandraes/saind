@@ -44,7 +44,7 @@
     'options' => \App\Models\Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname'])->mapWithKeys(fn ($v) => [$v->id => $v->nama.($v->nickname ? ' ('.$v->nickname.')' : '')])])
 @if (auth()->user()->isGeneralManager())
 @include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::CUSTOMER_PICKER, 'title' => 'Pilih Customer', 'icon' => 'fa-building',
-    'action' => url('transaksi/nota-tagihan'), 'pathTemplate' => route('transaksi.nota-tagihan', ['customer' => '__ID__']), 'name' => 'customer', 'label' => 'Nama Customer', 'placeholder' => '-- Pilih Customer --',
+    'action' => url('transaksi/nota-tagihan'), 'pathTemplate' => route('billing.nota-tagihan', ['customer' => '__ID__']), 'name' => 'customer', 'label' => 'Nama Customer', 'placeholder' => '-- Pilih Customer --',
     'options' => \App\Models\Customer::query()->orderBy('nama')->get(['id', 'nama', 'singkatan'])->mapWithKeys(fn ($c) => [$c->id => $c->nama.($c->singkatan ? ' ('.$c->singkatan.')' : '')])])
 @endif
 @push('css')

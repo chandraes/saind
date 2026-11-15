@@ -70,6 +70,7 @@ use App\Http\Controllers\VendorOperationalBillingController;
 use App\Http\Controllers\WaController;
 use App\Http\Middleware\EnsureVendorOperationalVehicle;
 use App\Models\LoadNoteDraft;
+use App\Models\TransaksiAdditional;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -110,6 +111,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
     });
 
+    // Nota Tagihan per customer: admin (beserta aksi di bawah) dan General Manager (baca saja + export):
+    // menu kategori, HPP, dan Kompensasi JR / Penyesuaian BBM / Achievement.
+    Route::prefix('billing/nota-tagihan')->middleware('role:admin,user,su,asisten-user,general-manager')->controller(BillingController::class)->group(function (): void {
+        Route::get('/{customer}', 'nota_tagihan')->whereNumber('customer')->name('billing.nota-tagihan');
+        Route::get('/{customer}/{jenis}', 'nota_tagihan_detail_by_jenis')->whereNumber('customer')->whereIn('jenis', array_keys(TransaksiAdditional::JENIS))->name('billing.nota-tagihan.detail-jenis');
+    });
     // Nota Tagihan per customer: admin (beserta aksi di bawah) dan General Manager (baca saja + export).
     Route::prefix('transaksi/nota-tagihan')->middleware('role:admin,user,su,asisten-user,general-manager')->controller(TransaksiController::class)->group(function (): void {
         Route::get('/{customer}', 'nota_tagihan')->whereNumber('customer')->name('transaksi.nota-tagihan');
@@ -564,8 +571,6 @@ Route::group(['middleware' => ['auth']], function () {
         });
 
         Route::prefix('billing/nota-tagihan')->group(function () {
-            Route::get('/{customer}', [BillingController::class, 'nota_tagihan'])->name('billing.nota-tagihan');
-            Route::get('/{customer}/{jenis}', [BillingController::class, 'nota_tagihan_detail_by_jenis'])->name('billing.nota-tagihan.detail-jenis');
             Route::post('{customer}/{jenis}', [BillingController::class, 'nota_tagihan_detail_by_jenis_lanjut'])->name('billing.nota-tagihan.detail-jenis.lanjut');
             Route::get('/{customer}/{jenis}/keranjang', [BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang'])->name('billing.nota-tagihan.detail-jenis.keranjang');
             Route::post('{customer}/{jenis}/keranjang/{invoice}/lanjut', [BillingController::class, 'nota_tagihan_detail_by_jenis_keranjang_lanjut'])->name('billing.nota-tagihan.detail-jenis.keranjang.lanjut');
