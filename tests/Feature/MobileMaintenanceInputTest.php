@@ -7,7 +7,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/** Akun vendor mencatat ban, aki, dan filter & oli langsung dari mobile (tanpa otorisasi admin). */
+/**
+ * Akun vendor mencatat ban, aki, dan filter & oli langsung dari mobile dan web (tanpa
+ * otorisasi admin). Kedua jalur memakai VendorMaintenanceInput yang sama.
+ */
 class MobileMaintenanceInputTest extends MobileApiTestCase
 {
     protected function setUp(): void
@@ -168,5 +171,88 @@ class MobileMaintenanceInputTest extends MobileApiTestCase
         // Vendor-induk mengganti maintenance lewat Form Maintenance admin, bukan input langsung.
         $this->postJson('/api/v1/vehicles/1/battery-logs', $body, $this->headers('vendor-induk'))->assertForbidden();
         $this->assertDatabaseCount('aki_logs', 0);
+    }
+
+    private function webUser(string $role = 'vendor'): User
+    {
+        $user = User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => 1]);
+        $this->actingAs($user);
+
+        return $user;
+    }
+
+    public function test_web_vendor_records_tire_battery_and_filter_oil_from_statistics_pages(): void
+    {
+        $this->webUser();
+        $date = now()->subDays(5)->toDateString();
+        $this->from('/statistik/ban-luar?vehicle_id=1')->post('/statistik/ban-luar/1/ganti', ['position_id' => 1, 'source' => 'baru',
+            'brand' => 'bridgestone', 'serial_number' => 'sn-1', 'condition' => 90, 'replaced_on' => $date])
+            ->assertRedirect('/statistik/ban-luar?vehicle_id=1')->assertSessionHas('success');
+        $this->assertSame(1.5, (float) DB::table('ban_logs')->where('merk', 'BRIDGESTONE')->value('ritase'));
+
+        $this->post('/statistik/aki/1/ganti', ['position_id' => 1, 'brand' => 'gs', 'serial_number' => '', 'condition' => 100, 'replaced_on' => $date])
+            ->assertSessionHas('success');
+        $this->assertDatabaseHas('aki_logs', ['vehicle_id' => 1, 'merk' => 'GS', 'no_seri' => null]);
+
+        $this->post('/statistik/filter-oli/1/ganti', ['category_id' => 1, 'brand' => 'shell', 'condition' => 100, 'replaced_on' => $date])
+            ->assertSessionHas('success');
+        $this->assertSame(1.5, (float) DB::table('filter_oli_logs')->where('merk', 'SHELL')->value('ritase'));
+    }
+
+    public function test_web_spare_tire_swap_and_validation_errors_return_to_the_form(): void
+    {
+        DB::table('ban_logs')->insert([
+            ['vehicle_id' => 1, 'posisi_ban_id' => 11, 'merk' => 'SEREP', 'no_seri' => 'S1', 'kondisi' => 80, 'ritase' => 4, 'created_at' => '2026-01-01'],
+            ['vehicle_id' => 1, 'posisi_ban_id' => 1, 'merk' => 'LAMA', 'no_seri' => 'L1', 'kondisi' => 40, 'ritase' => 70, 'created_at' => '2026-01-01'],
+        ]);
+        $this->webUser();
+        $this->post('/statistik/ban-luar/1/ganti', ['position_id' => 11, 'source' => 'serep', 'replaced_on' => now()->toDateString()])
+            ->assertSessionHasErrors('position_id');
+        $this->post('/statistik/ban-luar/1/ganti', ['position_id' => 1, 'source' => 'serep', 'replaced_on' => now()->toDateString()])
+            ->assertSessionHas('success');
+        $this->assertSame('LAMA', DB::table('ban_logs')->where('posisi_ban_id', 11)->orderByDesc('id')->value('merk'));
+
+        $this->post('/statistik/aki/1/ganti', ['position_id' => 1, 'brand' => 'gs', 'condition' => 101, 'replaced_on' => now()->addDay()->toDateString()])
+            ->assertSessionHasErrors(['condition', 'replaced_on']);
+        $this->assertDatabaseCount('aki_logs', 0);
+    }
+
+    public function test_web_vendor_edits_and_deletes_filter_oil_history_with_account_password(): void
+    {
+        $this->webUser();
+        $this->post('/statistik/filter-oli/1/ganti', ['category_id' => 1, 'brand' => 'shell', 'condition' => 100, 'replaced_on' => now()->subDays(5)->toDateString()]);
+        $id = DB::table('filter_oli_logs')->value('id');
+
+        $this->patch("/statistik/filter-oli/1/histori-vendor/{$id}", ['replaced_on' => now()->subDays(40)->toDateString(), 'password' => 'wrong'])
+            ->assertSessionHasErrors('password');
+        $this->patch("/statistik/filter-oli/1/histori-vendor/{$id}", ['replaced_on' => now()->subDays(40)->toDateString(), 'password' => 'secret-pass'])
+            ->assertSessionHas('success');
+        $this->assertSame(2.5, (float) DB::table('filter_oli_logs')->where('id', $id)->value('ritase'));
+        $this->delete("/statistik/filter-oli/1/histori-vendor/{$id}", ['password' => 'secret-pass'])->assertSessionHas('success');
+        $this->assertDatabaseMissing('filter_oli_logs', ['id' => $id]);
+    }
+
+    public function test_web_other_vendor_inactive_vehicle_and_read_only_accounts_are_rejected(): void
+    {
+        $body = ['position_id' => 1, 'brand' => 'gs', 'condition' => 100, 'replaced_on' => now()->toDateString()];
+        $this->webUser();
+        $this->post('/statistik/aki/2/ganti', $body)->assertNotFound();
+        $this->post('/statistik/aki/3/ganti', $body)->assertNotFound();
+        foreach (['vendor-operational', 'vendor-induk'] as $role) {
+            $this->webUser($role);
+            $this->post('/statistik/aki/1/ganti', $body)->assertForbidden();
+            $this->post('/statistik/filter-oli/1/ganti', ['category_id' => 1] + $body)->assertForbidden();
+        }
+        $this->assertDatabaseCount('aki_logs', 0);
+        $this->assertDatabaseCount('filter_oli_logs', 0);
+    }
+
+    public function test_web_filter_oil_history_shows_actions_only_to_vendor(): void
+    {
+        $this->webUser();
+        $this->get('/statistik/filter-oli/1/1/histori')->assertOk()
+            ->assertSee('vendorFilterEditModal', false)->assertSee('histori-vendor', false);
+        $this->webUser('vendor-induk');
+        $this->get('/statistik/filter-oli/1/1/histori')->assertOk()->assertDontSee('vendorFilterEditModal', false);
     }
 }

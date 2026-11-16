@@ -67,6 +67,7 @@ use App\Http\Controllers\UjDitahanPayoutCancellationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\VendorMaintenanceController;
 use App\Http\Controllers\VendorOperationalBillingController;
 use App\Http\Controllers\WaController;
 use App\Http\Middleware\EnsureVendorOperationalVehicle;
@@ -616,6 +617,16 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::get('/{vehicle}/{posisi}/histori', [StatistikController::class, 'aki_histori'])->name('statistik.aki.histori');
                 Route::post('/histori-destroy/{histori}', [StatistikController::class, 'aki_histori_delete'])->name('statistik.aki.histori-destroy');
                 Route::patch('/histori-update/{histori}', [StatistikController::class, 'aki_histori_update'])->name('statistik.aki.histori-update');
+            });
+
+            // Akun vendor: catat penggantian langsung ke riwayat dan ubah/hapus histori filter & oli
+            // (sama dengan aplikasi mobile). Vendor-induk & vendor-operational ditolak di VendorMaintenanceInput.
+            Route::middleware(['role:vendor', 'throttle:30,1'])->controller(VendorMaintenanceController::class)->group(function (): void {
+                Route::post('statistik/ban-luar/{vehicle}/ganti', 'storeTire')->whereNumber('vehicle')->name('statistik.ban-luar.ganti');
+                Route::post('statistik/aki/{vehicle}/ganti', 'storeBattery')->whereNumber('vehicle')->name('statistik.aki.ganti');
+                Route::post('statistik/filter-oli/{vehicle}/ganti', 'storeFilterOil')->whereNumber('vehicle')->name('statistik.filter-oli.ganti');
+                Route::patch('statistik/filter-oli/{vehicle}/histori-vendor/{log}', 'updateFilterOil')->whereNumber(['vehicle', 'log'])->name('statistik.filter-oli.vendor-histori.update');
+                Route::delete('statistik/filter-oli/{vehicle}/histori-vendor/{log}', 'destroyFilterOil')->whereNumber(['vehicle', 'log'])->name('statistik.filter-oli.vendor-histori.destroy');
             });
         });
     });

@@ -135,6 +135,15 @@ class User extends Authenticatable
         return in_array($this->role, ['admin', 'su', 'vendor'], true);
     }
 
+    /**
+     * Mencatat penggantian ban, aki, filter & oli langsung ke riwayat (mobile & web), tanpa
+     * Form Maintenance/otorisasi: hanya akun vendor, untuk kendaraannya sendiri.
+     */
+    public function canRecordMaintenanceDirectly(): bool
+    {
+        return $this->isVendorAccount() && $this->canManageMaintenanceHistory();
+    }
+
     /** Mengatur Database Upah Gendong (vendor & vendor-induk: hanya kendaraannya sendiri). */
     public function canManageUpahGendong(): bool
     {

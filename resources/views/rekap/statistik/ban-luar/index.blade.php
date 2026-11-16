@@ -28,6 +28,10 @@
     @endif
     @include('swal')
     {{-- @include('rekap.statistik.ban-luar.tambah') --}}
+    @php $canGanti = auth()->user()->canRecordMaintenanceDirectly() && $vehicle->status !== 'nonaktif'; @endphp
+    @if ($canGanti)
+    @include('rekap.statistik.vendor-ganti-modal', ['kind' => 'ban'])
+    @endif
 
     @if ($errors->any())
     <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
@@ -76,6 +80,9 @@
                             <th class="text-center">KONDISI</th>
                             <th class="text-center">RITASE</th>
                             <th class="text-center">TGL GANTI BAN</th>
+                            @if ($canGanti)
+                            <th class="text-center">AKSI</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -123,6 +130,9 @@
                                 -
                                 @endif
                             </td>
+                            @if ($canGanti)
+                            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary text-nowrap vendor-ganti-btn" data-bs-toggle="modal" data-bs-target="#vendorGantiModal" data-option-id="{{ $d->id }}" data-option-name="{{ $d->nama }}"><i class="fa fa-refresh me-1"></i>Ganti</button></td>
+                            @endif
                         </tr>
                         @endforeach
                     </tbody>

@@ -27,6 +27,10 @@
     <a href="{{ route('vendor-operational.statistics.vehicles', ['report' => 'aki']) }}" class="btn btn-outline-primary mb-3"><i class="fa fa-exchange me-2" aria-hidden="true"></i>Ganti kendaraan</a>
     @endif
     @include('swal')
+    @php $canGanti = auth()->user()->canRecordMaintenanceDirectly() && $vehicle->status !== 'nonaktif'; @endphp
+    @if ($canGanti)
+    @include('rekap.statistik.vendor-ganti-modal', ['kind' => 'aki'])
+    @endif
 
     @if ($errors->any())
     <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert">
@@ -80,6 +84,9 @@
                             <th class="text-center">TANGGAL GANTI</th>
                             <th class="text-center">UMUR AKI</th>
                             <th class="text-center">RIWAYAT</th>
+                            @if ($canGanti)
+                            <th class="text-center">AKSI</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -112,6 +119,9 @@
                             </td>
                             <td class="text-center text-nowrap fw-semibold">{{ isset($d->akiLog['umur_hari']) ? $d->akiLog['umur_hari'].' hari' : '-' }}</td>
                             <td class="text-center"><a href="{{ route('statistik.aki.histori', ['vehicle' => $vehicle->id, 'posisi' => $d->id]) }}" class="btn btn-sm btn-outline-primary"><i class="fa fa-history me-1"></i> Lihat histori</a></td>
+                            @if ($canGanti)
+                            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-primary text-nowrap vendor-ganti-btn" data-bs-toggle="modal" data-bs-target="#vendorGantiModal" data-option-id="{{ $d->id }}" data-option-name="{{ $d->nama }}"><i class="fa fa-refresh me-1"></i>Ganti</button></td>
+                            @endif
                         </tr>
                         @endforeach
                     </tbody>
