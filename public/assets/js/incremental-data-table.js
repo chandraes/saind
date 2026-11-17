@@ -12,6 +12,16 @@ window.createIncrementalDataTable = function (element, options = {}) {
     body.setAttribute('role', 'region');
     body.setAttribute('aria-label', 'Data tabel, gulir untuk melihat baris berikutnya');
     body.style.overscrollBehavior = 'contain';
+    // Header & isi adalah dua tabel terpisah (scrollY): hitung ulang lebar kolom setelah font web
+    // termuat dan saat lebar wadah berubah, agar garis kolom header selalu sejajar dengan isi.
+    let frame = 0;
+    const align = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => { if (node.isConnected) grid.columns.adjust(); }); };
+    document.fonts?.ready.then(align);
+    let lastWidth = 0;
+    new ResizeObserver(entries => {
+        const width = Math.round(entries[0].contentRect.width);
+        if (width !== lastWidth) { lastWidth = width; align(); }
+    }).observe(grid.table().container());
     return {
         grid, body,
         nearEnd: () => body.isConnected && body.clientHeight > 0 && body.scrollHeight - body.scrollTop - body.clientHeight <= 200,

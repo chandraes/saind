@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ReminderPreferences
 {
-    /** @return list<array{key: string, title: string, enabled: bool}> semua tabel milik role, urut sesuai pengaturan */
+    /** @return list<array{key: string, label: string, title: string, description: string, icon: string, enabled: bool}> semua tabel milik role, urut sesuai pengaturan */
     public function layout(User $user): array
     {
         $allowed = ReminderRegistry::for($user);
@@ -23,7 +23,7 @@ class ReminderPreferences
         // Tabel tanpa pengaturan (mis. tabel baru) menyusul di belakang dengan urutan bawaan, aktif.
         return collect($allowed)
             ->sortBy(fn (string $key, int $default): array => [$saved->has($key) ? 0 : 1, $saved[$key]->position ?? $default, $default])
-            ->map(fn (string $key): array => ['key' => $key, 'title' => ReminderRegistry::title($key), 'enabled' => (bool) ($saved[$key]->enabled ?? true)])
+            ->map(fn (string $key): array => ReminderRegistry::meta($key) + ['enabled' => (bool) ($saved[$key]->enabled ?? true)])
             ->values()->all();
     }
 

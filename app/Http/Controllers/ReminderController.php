@@ -28,7 +28,7 @@ class ReminderController extends Controller
 
         return view('reminders.index', [
             'layout' => $layout,
-            'tables' => collect($types)->map(fn (string $type): array => ['key' => $type, 'title' => ReminderRegistry::title($type),
+            'tables' => collect($types)->map(fn (string $type): array => ReminderRegistry::meta($type) + [
                 'count' => $this->reader->query($request->user(), $type)->count(), 'refreshed_at' => $this->reader->refreshedAt($type)])->all(),
             'categories' => in_array(ReminderRegistry::FILTER_OIL, $types, true) ? KategoriFilterOliMesin::orderBy('id')->get(['id', 'nama']) : collect(),
             'attendanceEnabled' => (bool) config('attendance.enabled'),

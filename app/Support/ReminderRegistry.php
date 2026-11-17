@@ -34,13 +34,22 @@ class ReminderRegistry
 
     private const VEHICLE_ROLES = ['su', 'admin', 'direksi', 'general-manager', 'operasional', 'vendor', 'vendor-induk', 'vendor-operational'];
 
-    /** @var array<string, array{title: string, roles: list<string>}> urutan = urutan bawaan */
+    /**
+     * label = nama singkat (ringkasan & pengaturan), icon = Font Awesome 4.
+     *
+     * @var array<string, array{label: string, title: string, description: string, icon: string, roles: list<string>}> urutan = urutan bawaan
+     */
     private const DEFINITIONS = [
-        self::STANDBY => ['title' => 'RFU / BD — standby lebih dari 48 jam sejak bongkar terakhir', 'roles' => self::VEHICLE_ROLES],
-        self::UNLOADING => ['title' => 'Belum bongkar lebih dari 24 jam sejak muat', 'roles' => self::VEHICLE_ROLES],
-        self::FILTER_OIL => ['title' => 'Filter & oli mesin mendekati limit ritase', 'roles' => [...self::VEHICLE_ROLES, 'user']],
-        self::INVOICE_DUE => ['title' => 'Invoice mendekati jatuh tempo', 'roles' => ['su', 'admin', 'user', 'direksi', 'general-manager']],
-        self::ATTENDANCE => ['title' => 'Karyawan tidak masuk (alpa) kemarin', 'roles' => ['su', 'admin', 'user', 'direksi', 'general-manager', 'hrd']],
+        self::STANDBY => ['label' => 'RFU / BD', 'title' => 'Unit standby sejak bongkar terakhir', 'icon' => 'fa-truck',
+            'description' => 'Nolam aktif yang belum jalan lagi lebih dari 48 jam sejak bongkar terakhir.', 'roles' => self::VEHICLE_ROLES],
+        self::UNLOADING => ['label' => 'Belum Bongkar', 'title' => 'Unit belum bongkar sejak muat', 'icon' => 'fa-hourglass-half',
+            'description' => 'Perjalanan yang sudah UJ keluar tetapi belum bongkar lebih dari 24 jam.', 'roles' => self::VEHICLE_ROLES],
+        self::FILTER_OIL => ['label' => 'Filter & Oli', 'title' => 'Filter & oli mesin mendekati limit', 'icon' => 'fa-tint',
+            'description' => 'Sisa ritase kategori yang tinggal 2 rit atau kurang; negatif berarti sudah melewati limit.', 'roles' => [...self::VEHICLE_ROLES, 'user']],
+        self::INVOICE_DUE => ['label' => 'Jatuh Tempo', 'title' => 'Invoice mendekati jatuh tempo', 'icon' => 'fa-file-text-o',
+            'description' => 'Invoice belum lunas yang jatuh tempo dalam 2 hari atau sudah lewat (sisa hari negatif).', 'roles' => ['su', 'admin', 'user', 'direksi', 'general-manager']],
+        self::ATTENDANCE => ['label' => 'Absensi', 'title' => 'Karyawan alpa kemarin', 'icon' => 'fa-user-times',
+            'description' => 'Karyawan yang tidak masuk tanpa keterangan kemarin; hari libur tidak dihitung.', 'roles' => ['su', 'admin', 'user', 'direksi', 'general-manager', 'hrd']],
     ];
 
     /** @return list<string> */
@@ -52,6 +61,12 @@ class ReminderRegistry
     public static function title(string $key): string
     {
         return self::DEFINITIONS[$key]['title'];
+    }
+
+    /** @return array{key: string, label: string, title: string, description: string, icon: string} */
+    public static function meta(string $key): array
+    {
+        return ['key' => $key] + array_diff_key(self::DEFINITIONS[$key], ['roles' => true]);
     }
 
     public static function allows(User $user, string $key): bool
