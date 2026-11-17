@@ -341,6 +341,11 @@ class TransaksiController extends Controller
 
         $data = Transaksi::getTagihanData($customer->id, $rute_id, $filter_date, $tanggal_filter);
 
+        // Tabel DomPDF butuh ±1,2 MB per baris walau CSS sudah ringan (pdf-nota-tagihan.css); batas server
+        // 128 MB / 30 dtk membuat nota panjang gagal. Naikkan khusus ekspor ini (±850 baris).
+        ini_set('memory_limit', '1024M');
+        set_time_limit(120);
+
         // get latest data from month before current month
         // dd($bulan);
         if (Auth::user()->role == 'admin') {

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <link rel="stylesheet" href="{{public_path('assets/plugins/bootstrap/css/bootstrap.min.css')}}">
+    {{-- View boleh memakai stylesheet ringan (@section('pdf-stylesheet', 'assets/css/...')); bawaan Bootstrap penuh. --}}
+    <link rel="stylesheet" href="{{ public_path(trim($__env->yieldContent('pdf-stylesheet')) ?: 'assets/plugins/bootstrap/css/bootstrap.min.css') }}">
     <title>@yield('title', 'Document')</title>
     <style>
         header {

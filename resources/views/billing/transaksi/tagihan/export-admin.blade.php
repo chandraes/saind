@@ -1,4 +1,6 @@
 @extends('layouts.doc-nologo-2')
+{{-- Bootstrap penuh membuat DomPDF kehabisan memori untuk nota panjang. --}}
+@section('pdf-stylesheet', 'assets/css/pdf-nota-tagihan.css')
 @section('content')
 <div class="container-fluid">
     <center>
