@@ -3,12 +3,13 @@
 namespace App\Http\Resources;
 
 use App\Models\LoadNoteDraft;
+use App\Support\ReminderRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class MobileUserResource extends JsonResource
 {
-    /** @return array{id: int, username: string, name: string, role: string, vendor_id: ?int, permissions: array{database: bool, load_notes: bool, vendor_billing: bool, all_vendors: bool, vendor_finance: bool, maintenance_history: bool}} */
+    /** @return array{id: int, username: string, name: string, role: string, vendor_id: ?int, permissions: array{database: bool, load_notes: bool, vendor_billing: bool, all_vendors: bool, vendor_finance: bool, maintenance_history: bool, reminders: bool}} */
     public function toArray(Request $request): array
     {
         return ['id' => $this->id, 'username' => $this->username, 'name' => $this->name,
@@ -32,7 +33,9 @@ class MobileUserResource extends JsonResource
                 // Eksekutif (GM & Direksi): Nota Tagihan per customer (baca saja).
                 'customer_bills' => $this->resource->isExecutive(),
                 // Eksekutif (GM & Direksi): Gaji Karyawan (seluruh kolom Form Gaji, baca saja).
-                'payroll' => $this->resource->isExecutive()],
+                'payroll' => $this->resource->isExecutive(),
+                // Dashboard Pengingat: role yang punya minimal satu tabel pengingat.
+                'reminders' => ReminderRegistry::for($this->resource) !== []],
             'driver_vehicle' => $this->when($this->resource->isDriver(), fn (): ?array => ($vehicle = $this->resource->activeDriverVehicle())
                 ? ['id' => $vehicle->id, 'nomor_lambung' => (string) $vehicle->nomor_lambung, 'vendor_id' => (int) $vehicle->vendor_id] : null)];
     }

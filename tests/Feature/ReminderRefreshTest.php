@@ -310,4 +310,71 @@ class ReminderRefreshTest extends MobileApiTestCase
         $this->actingAs($this->user('hrd'))->post('/statistik/aki/1/ganti')->assertForbidden();
         $this->actingAs($this->user('asisten-user'))->post('/pengingat/pengaturan', ['order' => []])->assertForbidden();
     }
+
+    /** Header token mobile (tanpa X-Vendor-ID: pengingat di luar konteks vendor). */
+    private function api(User $user): array
+    {
+        $this->app['auth']->forgetGuards();
+
+        return ['Accept' => 'application/json', 'X-Workspace-ID' => self::WORKSPACE,
+            'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+    }
+
+    public function test_mobile_api_lists_tables_rows_and_saves_shared_settings(): void
+    {
+        DB::table('vehicles')->insert([
+            ['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '101', 'pembatasan_filter_oli' => true],
+            ['id' => 2, 'vendor_id' => 2, 'nomor_lambung' => '201', 'pembatasan_filter_oli' => true],
+        ]);
+        $this->trip(1, 1, '2026-11-15 08:00:00', null);
+        $this->trip(2, 2, '2026-11-15 08:00:00', null);
+        DB::table('kategori_filter_oli_mesins')->insert([['id' => 1, 'nama' => 'Oli Mesin', 'limit_ritase' => 100], ['id' => 2, 'nama' => 'Filter Solar', 'limit_ritase' => 50]]);
+        DB::table('filter_oli_logs')->insert(['vehicle_id' => 1, 'kategori_filter_oli_mesin_id' => 2, 'merk' => 'B', 'kondisi' => 100, 'ritase' => 51, 'created_at' => '2026-11-01']);
+        $this->artisan('reminders:refresh')->assertSuccessful();
+        $vendor = $this->user('vendor', 1);
+        $headers = $this->api($vendor);
+
+        $this->getJson('/api/v1/me', $headers)->assertOk()->assertJsonPath('data.permissions.reminders', true);
+        $this->getJson('/api/v1/reminders', $headers)->assertOk()
+            ->assertJsonPath('data.*.key', ['standby', 'unloading', 'filter_oil'])
+            ->assertJson(['data' => [1 => ['key' => 'unloading', 'label' => 'Belum Bongkar', 'title' => ReminderRegistry::title('unloading'),
+                'description' => ReminderRegistry::meta('unloading')['description'], 'icon' => 'fa-hourglass-half', 'enabled' => true, 'count' => 1,
+                'refreshed_at' => '2026-11-17T10:00:00+07:00']]])
+            ->assertJsonPath('meta.total', 2);
+        // Baris: hanya vendor sendiri, bentuk NotePage (id + meta halaman), nomor urut.
+        $this->getJson('/api/v1/reminders/unloading', $headers)->assertOk()
+            ->assertJsonPath('data.0.number', 1)->assertJsonPath('data.0.nomor_lambung', '101')
+            ->assertJsonPath('data.0.elapsed', ['days' => 2, 'hours' => 2])->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta', ['current_page' => 1, 'last_page' => 1, 'total' => 1, 'refreshed_at' => '2026-11-17T10:00:00+07:00']);
+        // Filter & oli: hanya kategori yang perlu perhatian beserta namanya.
+        $this->getJson('/api/v1/reminders/filter_oil', $headers)->assertOk()
+            ->assertJsonPath('data.0.kategori', [['id' => 2, 'nama' => 'Filter Solar', 'sisa' => -1]]);
+        $this->getJson('/api/v1/reminders/invoice_due', $headers)->assertForbidden();
+
+        // Pengaturan dari HP berlaku juga di web (tabel yang sama).
+        $this->postJson('/api/v1/reminders/settings', ['order' => ['filter_oil', 'standby', 'unloading'], 'enabled' => ['filter_oil', 'standby']], $headers)
+            ->assertOk()->assertJsonPath('data.*.key', ['filter_oil', 'standby', 'unloading'])
+            ->assertJsonPath('data.2.enabled', false)->assertJsonPath('data.2.count', null)->assertJsonPath('meta.total', 1);
+        $this->assertSame(['filter_oil', 'standby'], app(ReminderPreferences::class)->enabled($vendor));
+        $this->postJson('/api/v1/reminders/settings', ['order' => ['filter_oil'], 'enabled' => []], $headers)->assertUnprocessable();
+    }
+
+    public function test_mobile_api_roles_without_reminders_and_read_only_roles(): void
+    {
+        $this->artisan('reminders:refresh')->assertSuccessful();
+        $hrd = $this->user('hrd');
+        $headers = $this->api($hrd);
+        $this->getJson('/api/v1/reminders', $headers)->assertOk()->assertJsonPath('data.*.key', ['attendance'])->assertJsonPath('meta.attendance_enabled', false);
+        $this->postJson('/api/v1/reminders/settings', ['order' => ['attendance'], 'enabled' => []], $headers)->assertOk()->assertJsonPath('meta.total', 0);
+        $this->getJson('/api/v1/reminders/standby', $headers)->assertForbidden();
+
+        $gm = $this->api($this->user('general-manager'));
+        $this->getJson('/api/v1/reminders', $gm)->assertOk()->assertJsonCount(5, 'data');
+
+        $assistant = $this->api($this->user('asisten-user'));
+        $this->getJson('/api/v1/me', $assistant)->assertOk()->assertJsonPath('data.permissions.reminders', false);
+        $this->getJson('/api/v1/reminders', $assistant)->assertForbidden();
+        $this->postJson('/api/v1/reminders/settings', ['order' => [], 'enabled' => []], $assistant)->assertForbidden();
+        $this->getJson('/api/v1/reminders/unknown', $assistant)->assertNotFound();
+    }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\MobileFilterOilController;
 use App\Http\Controllers\Api\MobileMaintenanceHistoryController;
 use App\Http\Controllers\Api\MobileMaintenanceVehicleController;
 use App\Http\Controllers\Api\MobilePayrollController;
+use App\Http\Controllers\Api\MobileReminderController;
 use App\Http\Controllers\Api\MobileTireHistoryController;
 use App\Http\Controllers\Api\MobileTireMonitoringController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Middleware\EnsureMobileToken;
 use App\Http\Middleware\EnsureMobileVendorContext;
 use App\Http\Middleware\EnsureMobileWorkspace;
+use App\Support\ReminderRegistry;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
@@ -106,6 +108,10 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             // Rincian potongan absensi: HRD dan eksekutif (dari Gaji Karyawan).
             Route::get('attendance-deductions/{key}', [MobileAttendanceDeductionController::class, 'show'])->whereNumber('key')->middleware('role:hrd,executive')->name('attendance-deductions.show');
             Route::get('payroll', [MobilePayrollController::class, 'index'])->middleware('role:executive')->name('payroll.index');
+            // Dashboard Pengingat: akses per tabel & cakupan vendor diatur ReminderRegistry (sama dengan web).
+            Route::get('reminders', [MobileReminderController::class, 'index'])->name('reminders.index');
+            Route::post('reminders/settings', [MobileReminderController::class, 'settings'])->middleware('throttle:30,1')->name('reminders.settings');
+            Route::get('reminders/{type}', [MobileReminderController::class, 'show'])->whereIn('type', ReminderRegistry::keys())->name('reminders.show');
             Route::prefix('database')->name('database.')->middleware('role:'.implode(',', config('mobile.database_roles')))->group(function (): void {
                 Route::get('vendors', [DatabaseController::class, 'vendors'])->name('vendors.index');
                 Route::get('vendors/{vendor}', [DatabaseController::class, 'vendor'])->whereNumber('vendor')->name('vendors.show');
