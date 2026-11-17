@@ -50,6 +50,11 @@ class ExecutiveCustomerBillTest extends MobileApiTestCase
             $table->string('no_validasi')->nullable();
             $table->timestamps();
         });
+        Schema::create('invoice_tagihan_details', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('invoice_tagihan_id');
+            $table->foreignId('transaksi_id');
+        });
         Schema::create('rutes', function (Blueprint $table): void {
             $table->id();
             $table->string('nama');
@@ -219,6 +224,23 @@ class ExecutiveCustomerBillTest extends MobileApiTestCase
         $this->getJson('/api/v1/billing-invoices', $this->headers($ops))->assertForbidden();
         $this->app['auth']->forgetGuards();
         $this->actingAs($ops)->get('/rekap/tagihan-invoice')->assertForbidden();
+    }
+
+    public function test_invoice_transactions_are_scoped_to_the_selected_unpaid_invoice(): void
+    {
+        DB::table('invoice_tagihans')->insert([
+            ['id' => 1, 'customer_id' => 1, 'lunas' => 0, 'no_invoice' => 'INV-1'],
+            ['id' => 2, 'customer_id' => 1, 'lunas' => 1, 'no_invoice' => 'INV-2'],
+        ]);
+        DB::table('invoice_tagihan_details')->insert([
+            ['invoice_tagihan_id' => 1, 'transaksi_id' => 4],
+            ['invoice_tagihan_id' => 2, 'transaksi_id' => 2],
+        ]);
+        $headers = $this->headers($this->executive('general-manager'));
+        $this->getJson('/api/v1/billing-invoices/1/transactions', $headers)
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', 4)
+            ->assertJsonPath('data.0.number', 1)->assertJsonPath('data.0.amount', 999999)->assertJsonPath('meta.last_page', 1);
+        $this->getJson('/api/v1/billing-invoices/2/transactions', $headers)->assertNotFound();
     }
 
     public function test_other_roles_cannot_read_customer_bills(): void

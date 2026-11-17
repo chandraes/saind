@@ -97,6 +97,7 @@ class Customer extends Model
 
                     foreach ($inv as $i) {
                         $customerData['invoices'][] = [
+                            'id' => (int) $i->id,
                             'periode' => $i->no_invoice,
                             'tanggal_submit_softcopy' => Carbon::parse($i->tanggal)->translatedFormat('d-m-Y'),
                             'tanggal_hardcopy' => $i->tanggal_hardcopy ? Carbon::parse($i->tanggal_hardcopy)->translatedFormat('d-m-Y') : '-',

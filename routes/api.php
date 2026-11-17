@@ -99,6 +99,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             Route::middleware('role:executive')->group(function (): void {
                 Route::get('customer-options', [MobileCustomerBillController::class, 'customers'])->name('customer-options');
                 Route::get('billing-invoices', MobileBillingInvoiceController::class)->name('billing-invoices.index');
+                Route::get('billing-invoices/{invoice}/transactions', [MobileBillingInvoiceController::class, 'transactions'])->whereNumber('invoice')->name('billing-invoices.transactions');
                 Route::get('customers/{customer}/bills', [MobileCustomerBillController::class, 'index'])->whereNumber('customer')->name('customer-bills.index');
             });
             Route::get('attendance-deductions', [MobileAttendanceDeductionController::class, 'index'])->middleware('role:hrd')->name('attendance-deductions.index');
