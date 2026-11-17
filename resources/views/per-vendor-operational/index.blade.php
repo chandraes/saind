@@ -10,6 +10,11 @@
         <span class="vendor-dashboard-access"><span aria-hidden="true"></span>Akses baca saja</span>
     </div>
     @foreach ($sections as $section)
+        {{-- Pengingat: tombol panjang satu baris (REMINDERS_DASHBOARD_ENTRY=button) atau seksi kartu (card). --}}
+        @if ($section['key'] === 'reminders' && config('reminders.dashboard_entry') === 'button')
+            @include('per-vendor-operational.reminder-button', ['menu' => $section['menus'][0]])
+            @continue
+        @endif
         <section class="vendor-dashboard-section" aria-labelledby="vendor-section-{{ $section['key'] }}">
             <h2 id="vendor-section-{{ $section['key'] }}">{{ $section['title'] }}</h2>
             <div class="vendor-dashboard-grid vendor-dashboard-grid-{{ $section['key'] }}" data-vendor-menu-row="{{ $section['key'] }}">

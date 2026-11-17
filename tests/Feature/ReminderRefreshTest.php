@@ -268,6 +268,32 @@ class ReminderRefreshTest extends MobileApiTestCase
         $this->assertSame('0', $badge($this->get('/home')->assertOk()->assertSee('Potongan Absensi')->getContent()));
     }
 
+    public function test_card_dashboards_show_a_one_row_reminder_button_and_can_switch_back_to_cards(): void
+    {
+        $this->artisan('reminders:refresh')->assertSuccessful();
+        $vendor = $this->user('vendor', 1);
+        $admin = $this->user('admin');
+
+        // Bawaan: tombol panjang, tanpa seksi/judul "Pengingat"; tile klasik admin tidak berubah.
+        $this->actingAs($vendor)->get('/home')->assertOk()
+            ->assertSee('class="vendor-reminder-button"', false)->assertDontSee('id="vendor-section-reminders"', false)
+            // Tanpa pengingat: tidak menempel saat digulir.
+            ->assertDontSee('vendor-reminder-button is-sticky', false)
+            ->assertSeeInOrder(['vendor-reminder-button', 'vendor-section-documents'], false);
+        $this->actingAs($admin)->get('/home')->assertOk()->assertSee('PENGINGAT')->assertDontSee('vendor-reminder-button', false);
+
+        // Ada pengingat: tombol menempel di atas layar.
+        DB::table('vehicles')->insert(['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '101']);
+        $this->trip(1, 1, '2026-11-15 08:00:00', null);
+        $this->artisan('reminders:refresh')->assertSuccessful();
+        $this->actingAs($vendor)->get('/home')->assertOk()->assertSee('class="vendor-reminder-button is-sticky"', false);
+
+        // Kembali ke tampilan kartu cukup lewat konfigurasi.
+        config(['reminders.dashboard_entry' => 'card']);
+        $this->actingAs($vendor)->get('/home')->assertOk()
+            ->assertSee('id="vendor-section-reminders"', false)->assertDontSee('class="vendor-reminder-button"', false);
+    }
+
     public function test_each_account_orders_and_hides_its_tables(): void
     {
         DB::table('vehicles')->insert(['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '101']);
