@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ikon Pengaturan Akun (orang + gembok) untuk dashboard SAIND. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<circle cx="256" cy="256" r="256" fill="#D9EDE1"/>
+<path d="M512 256c0-.3 0-.6 0-.9L398 141 120 408l103.4 101.9c10.7 1.4 21.6 2.1 32.6 2.1 141.4 0 256-114.6 256-256z" fill="#BFDDCB"/>
+<circle cx="230" cy="186" r="74" fill="#47765A"/>
+<path d="M230 112c-6 0-11.9.7-17.5 2.1 32.5 7.9 56.5 37.1 56.5 71.9s-24 64-56.5 71.9c5.6 1.4 11.5 2.1 17.5 2.1 40.9 0 74-33.1 74-74s-33.1-74-74-74z" fill="#35574A"/>
+<path d="M230 282c-71.8 0-130 49.5-130 110.5V408h208V282.9c-24.5-.6-51.9-.9-78-.9z" fill="#47765A"/>
+<path d="M308 282.9C290 282.3 260.6 282 230 282c-3.9 0-7.8.1-11.6.3C278 286.4 324 332 324 387.5V408h-16V282.9z" fill="#35574A"/>
+<rect x="290" y="300" width="132" height="108" rx="18" fill="#FFB400"/>
+<rect x="356" y="300" width="66" height="108" rx="18" fill="#F29C00"/>
+<path d="M318 300v-26c0-21 17-38 38-38s38 17 38 38v26" fill="none" stroke="#B36B00" stroke-width="18" stroke-linecap="round"/>
+<circle cx="356" cy="346" r="14" fill="#B36B00"/>
+<rect x="349" y="350" width="14" height="30" rx="7" fill="#B36B00"/>
+<path d="M190 150c8-14 22-24 38-26" fill="none" stroke="#7FA990" stroke-width="12" stroke-linecap="round"/>
+</svg>

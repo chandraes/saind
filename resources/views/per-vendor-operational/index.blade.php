@@ -1,4 +1,4 @@
-@php($sections = $sections ?? \App\Support\VendorDashboardMenu::sections(auth()->user()))
+@php($sections = [...($sections ?? \App\Support\VendorDashboardMenu::sections(auth()->user())), \App\Support\VendorDashboardMenu::accountSection()])
 @php($operasional = auth()->user()->seesAllVendors())
 
 <div class="vendor-dashboard" data-vendor-dashboard>

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Http\Controllers\AccountController;
 use App\Models\User;
 use App\Services\ReminderReader;
 
@@ -37,6 +38,15 @@ class VendorDashboardMenu
         return ['key' => 'reminders', 'title' => 'Pengingat', 'menus' => [[
             'title' => 'Pengingat', 'description' => 'Hal yang perlu ditindaklanjuti hari ini.', 'url' => route('reminders.index'),
             'icon' => 'pengingat.svg', 'badge' => array_sum(app(ReminderReader::class)->counts($user)),
+        ]]];
+    }
+
+    /** Seksi "Akun" (semua dashboard kartu: vendor, operasional, eksekutif, HRD, driver): ganti username/password. */
+    public static function accountSection(): array
+    {
+        return ['key' => 'account', 'title' => 'Akun', 'menus' => [[
+            'title' => 'Pengaturan Akun', 'description' => 'Ganti username dan password login web & mobile.',
+            'url' => route(AccountController::EDIT_ROUTE), 'icon' => 'akun.svg',
         ]]];
     }
 

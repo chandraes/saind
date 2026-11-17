@@ -4,13 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\MobileUserResource;
 use App\Models\User;
+use App\Services\AccountCredentials;
 use App\Services\MobileWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends BaseController
 {
@@ -47,37 +45,10 @@ class AuthController extends BaseController
         return $this->sendResponse(new MobileUserResource($request->user()), 'Informasi akun.');
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(Request $request, AccountCredentials $credentials): JsonResponse
     {
-        $actor = $request->user();
-        $data = $request->validate([
-            'username' => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($actor->id)],
-            'current_password' => ['required', 'string', 'max:1024'],
-            'password' => ['nullable', 'string', 'min:8', 'max:72', 'confirmed'],
-        ], [
-            'username.unique' => 'Username sudah digunakan.',
-            'password.min' => 'Password baru minimal 8 karakter.',
-            'password.confirmed' => 'Konfirmasi password baru tidak cocok.',
-        ]);
-
-        $user = DB::transaction(function () use ($actor, $data): User {
-            $user = User::query()->lockForUpdate()->findOrFail($actor->id);
-            if (! Hash::check($data['current_password'], $user->password)) {
-                throw ValidationException::withMessages(['current_password' => 'Password saat ini tidak sesuai.']);
-            }
-
-            $user->username = $data['username'];
-            if (isset($data['password'])) {
-                if (strlen($data['password']) > 72) {
-                    throw ValidationException::withMessages(['password' => 'Password baru maksimal 72 byte.']);
-                }
-                $user->password = Hash::make($data['password']);
-                $user->tokens()->where('id', '!=', $actor->currentAccessToken()->getKey())->delete();
-            }
-            $user->save();
-
-            return $user;
-        });
+        $current = $request->user()->currentAccessToken()->getKey();
+        $user = $credentials->update($request, fn (User $user) => $user->tokens()->where('id', '!=', $current)->delete());
 
         return $this->sendResponse(new MobileUserResource($user), 'Akun diperbarui.');
     }

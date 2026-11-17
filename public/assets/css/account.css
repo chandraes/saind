@@ -1,0 +1,35 @@
+/* Pengaturan akun — palet mengikuti Dashboard Pengingat / dashboard vendor SAIND (hijau). */
+.account-page { --ac-ink: #24392f; --ac-muted: #64746b; --ac-line: #dbe5df; --ac-brand: #47765a; --ac-soft: #f0f6f2; color: var(--ac-ink); max-width: 760px; }
+.account-hero {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;
+    padding: 22px 26px; margin-bottom: 20px; border-radius: 14px;
+    background: linear-gradient(120deg, #24392f 0%, #35574a 60%, #47765a 100%); color: #fff;
+}
+.account-hero-main { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.account-hero-icon {
+    flex-shrink: 0; width: 60px; height: 60px; border-radius: 14px; background: #fff;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+}
+.account-eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .12em; color: #c9ddd0; margin: 0 0 4px; }
+.account-hero h1 { font-size: 1.55rem; font-weight: 700; margin: 0 0 4px; color: #fff; }
+.account-hero p { margin: 0; color: #dbe8e0; font-size: .875rem; }
+.account-hero .btn-outline-light { font-weight: 600; }
+.account-card { background: #fff; border: 1px solid var(--ac-line); border-radius: 12px; box-shadow: 0 2px 10px rgba(36, 57, 47, .04); margin-bottom: 18px; }
+.account-card-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #edf2ef; }
+.account-card-head i { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--ac-soft); color: var(--ac-brand); }
+.account-card-head h2 { font-size: 1rem; font-weight: 700; margin: 0; }
+.account-card-head p { font-size: .8rem; color: var(--ac-muted); margin: 0; }
+.account-card-body { padding: 18px 20px 20px; }
+.account-page .form-label { font-weight: 600; font-size: .875rem; }
+.account-page .form-text { color: var(--ac-muted); }
+.account-page .form-control:focus { border-color: var(--ac-brand); box-shadow: 0 0 0 .2rem rgba(71, 118, 90, .2); }
+.account-page .btn-toggle-secret { border-color: #ced4da; color: var(--ac-muted); }
+.account-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .82rem; color: var(--ac-muted); margin-bottom: 16px; }
+.account-meta strong { color: var(--ac-ink); }
+.account-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.account-actions .btn-success { background: var(--ac-brand); border-color: var(--ac-brand); font-weight: 600; padding-inline: 22px; }
+@media (max-width: 575.98px) {
+    .account-hero { padding: 18px; }
+    .account-hero-icon { width: 48px; height: 48px; }
+    .account-actions .btn { flex: 1; }
+}

@@ -114,7 +114,13 @@
             </a>
         </div>
         @endif
-
+        {{-- Pengaturan akun (semua role dashboard tile); dashboard kartu memakai seksi "Akun". --}}
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{ route(\App\Http\Controllers\AccountController::EDIT_ROUTE) }}" class="text-decoration-none">
+                <img src="{{ asset('images/akun.svg') }}" alt="" width="70">
+                <h4 class="mt-3">AKUN</h4>
+            </a>
+        </div>
     </div>
     @if (auth()->user()->usesVendorMenus())
     @include('per-vendor-operational.index')

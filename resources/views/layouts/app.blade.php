@@ -84,6 +84,7 @@
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="{{ route(\App\Http\Controllers\AccountController::EDIT_ROUTE) }}">Pengaturan akun</a>
                                 @if (in_array(auth()->user()->role, config('mobile.roles'), true))
                                 <a class="dropdown-item" href="{{ route('mobile.workspace.show') }}">Hubungkan aplikasi mobile</a>
                                 @endif

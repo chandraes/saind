@@ -62,6 +62,15 @@ class DriverAccessTest extends MobileApiTestCase
             ->assertDontSee('vendor-operational/statistics/vehicles', false);
     }
 
+    public function test_driver_can_change_its_own_username_and_password(): void
+    {
+        $this->get(route('home'))->assertSee(route('account.edit'), false);
+        $this->get('/akun')->assertOk();
+        $this->put('/akun', ['username' => 'driver-baru', 'current_password' => 'secret-pass', 'password' => 'new-secret-pass',
+            'password_confirmation' => 'new-secret-pass'])->assertRedirect('/akun');
+        $this->assertSame('driver-baru', $this->driver->fresh()->username);
+    }
+
     /** Setiap rute yang boleh dibuka driver hanya GET dan memang terdaftar. */
     public function test_readable_routes_exist_and_are_get_only(): void
     {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AkiGantiController;
 use App\Http\Controllers\AsistenUserController;
 use App\Http\Controllers\AttendanceIntegrationController;
@@ -53,8 +54,8 @@ use App\Http\Controllers\PersentaseAwalController;
 use App\Http\Controllers\PerVendorController;
 use App\Http\Controllers\PerVendorOperationalController;
 use App\Http\Controllers\RekapController;
-use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\RekeningController;
+use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\RuteController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SpkController;
@@ -141,6 +142,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('pengingat', [ReminderController::class, 'index'])->name('reminders.index');
     Route::get('pengingat/{type}/data', [ReminderController::class, 'data'])->whereIn('type', ReminderRegistry::keys())->name('reminders.data');
     Route::post('pengingat/pengaturan', [ReminderController::class, 'settings'])->middleware('throttle:30,1')->name('reminders.settings');
+
+    // Pengaturan akun (semua role): ganti username/password sendiri, seperti aplikasi mobile.
+    Route::get('akun', [AccountController::class, 'edit'])->name(AccountController::EDIT_ROUTE);
+    Route::put('akun', [AccountController::class, 'update'])->middleware('throttle:6,1')->name(AccountController::UPDATE_ROUTE);
 
     Route::group(['middleware' => 'role:user'], function () {});
 

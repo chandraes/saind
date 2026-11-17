@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\AccountController;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,7 @@ class EnsureDriverWebAccess
         'statistik.ban-luar', 'statistik.ban-luar.histori', 'statistik.ban-luar.histori-data', 'statistik.ban-luar.transaksi-ritase',
         'statistik.aki', 'statistik.aki.histori', 'statistik.aki.histori-data',
         'statistik.filter-oli', 'statistik.filter-oli.histori', 'statistik.filter-oli.transaksi-ritase',
+        AccountController::EDIT_ROUTE,
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -35,7 +37,7 @@ class EnsureDriverWebAccess
                 : redirect()->route('login')->withErrors(['username' => 'Akses driver sudah tidak aktif.']);
         }
 
-        abort_unless($request->routeIs('logout') || ($request->isMethodSafe() && $request->routeIs(...self::READABLE_ROUTES)), 403);
+        abort_unless($request->routeIs('logout', AccountController::UPDATE_ROUTE) || ($request->isMethodSafe() && $request->routeIs(...self::READABLE_ROUTES)), 403);
         $request->attributes->set('driverVehicle', $vehicle);
 
         return $next($request);

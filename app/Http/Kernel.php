@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureApiJson;
 use App\Http\Middleware\EnsureDriverWebAccess;
 use App\Http\Middleware\EnsureExecutiveReadOnly;
 use App\Http\Middleware\EnsureHrdWebAccess;
+use App\Http\Middleware\LogoutStaleSessions;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RoleChecker;
@@ -61,6 +62,8 @@ class Kernel extends HttpKernel
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
+            // Ganti password (Pengaturan akun) mengeluarkan sesi web lain milik akun itu.
+            LogoutStaleSessions::class,
             EnsureDriverWebAccess::class,
             EnsureHrdWebAccess::class,
             EnsureExecutiveReadOnly::class,
