@@ -129,6 +129,8 @@ class ExecutiveCustomerBillTest extends MobileApiTestCase
         $this->assertSame(0, $xpath->query('//table[@id="notaTable"]//input[@type="checkbox"]|//table[@id="notaTable"]//form|//table[@id="notaTable"]//button')->length);
         $headers = array_map(fn ($node): string => trim($node->textContent), iterator_to_array($xpath->query('//table[@id="notaTable"]/thead/tr[1]/th')));
         $this->assertSame('No', $headers[0]);
+        $this->assertNotContains('Profit', $headers);
+        $this->assertNotContains('Profit (%)', $headers);
         $this->assertSame('DO Fisik', end($headers));
         // Setiap baris footer punya jumlah kolom yang sama dengan header.
         $width = fn (\DOMElement $row): int => array_sum(array_map(fn ($cell): int => max(1, (int) $cell->getAttribute('colspan')), iterator_to_array($xpath->query('./td|./th', $row))));

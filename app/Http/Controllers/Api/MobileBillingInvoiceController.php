@@ -17,10 +17,14 @@ class MobileBillingInvoiceController extends Controller
     {
         $rows = collect((new Customer)->tagihanInvoice());
         $bills = $rows->filter(fn (array $row): bool => $row['tanggal_awal'] !== null)->values()
-            ->map(fn (array $row, int $index): array => ['number' => $index + 1, 'customer' => (string) $row['customer'],
+            ->map(fn (array $row, int $index): array => ['number' => $index + 1, 'customer_id' => $row['customer_id'], 'customer' => (string) $row['customer'],
                 'from' => $row['tanggal_awal'], 'to' => $row['tanggal_akhir'], 'amount' => (int) round($row['total_transaksi'])]);
-        $invoices = $rows->flatMap(fn (array $row): array => array_map(fn (array $invoice): array => ['customer' => (string) $row['customer'],
+        $invoices = $rows->flatMap(fn (array $row): array => array_map(fn (array $invoice): array => ['customer_id' => $row['customer_id'], 'customer' => (string) $row['customer'],
             'invoice' => (string) $invoice['periode'], 'payment' => (int) $invoice['total_tagihan'],
+            'submitted_on' => $invoice['tanggal_submit_softcopy'], 'hardcopy_on' => $invoice['tanggal_hardcopy'],
+            'tracking_number' => $invoice['no_resi'], 'validation_number' => $invoice['no_validasi'],
+            'initial_amount' => (int) $invoice['tagihan_awal'], 'adjustment' => (int) $invoice['penyesuaian'],
+            'penalty' => (int) $invoice['penalty'], 'ppn' => (int) $invoice['ppn'], 'pph' => (int) $invoice['pph'],
             'estimated_payment' => $invoice['estimasi_pembayaran'] === '-' ? null : $invoice['estimasi_pembayaran']], $row['invoices']))
             ->values()->map(fn (array $invoice, int $index): array => ['number' => $index + 1] + $invoice);
 

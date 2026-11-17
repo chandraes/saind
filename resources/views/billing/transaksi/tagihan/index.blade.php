@@ -11,10 +11,12 @@
     $total_tagihan = $data ? $data->sum('nominal_tagihan') : 0;
     $ppn = $customer->ppn == 1 && $data ? $data->sum('nominal_tagihan') * 0.11 : 0;
     $pph = $customer->pph == 1 && $data ? $data->sum('nominal_tagihan') * 0.02 : 0;
-    $profit = $data->sum('profit');
-    $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
     // General Manager: baca saja — tanpa kolom pilih, aksi, keranjang, dan lanjut; export tetap.
     $readonly = auth()->user()->isExecutive();
+    if (! $readonly) {
+    $profit = $data->sum('profit');
+    $profit_persen = count($data) > 0 ? ($data->sum('profit') / $data->sum('nominal_bayar')) * 100 : 0;
+    }
     $offset = $readonly ? 1 : 0;
     @endphp
     <div class="row justify-content-center">
@@ -115,8 +117,10 @@
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Selisih (%)</th>
                 @endif
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Tagihan</th>
+                @unless ($readonly)
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit</th>
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Profit (%)</th>
+                @endunless
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">DO Fisik</th>
                 @unless ($readonly)
                 <th @if($customer->gt_muat == 1 | $customer->gt_bongkar == 1) rowspan="2" @endif class="text-center align-middle">Action</th>
@@ -207,6 +211,7 @@
                     {{number_format(($d->nominal_tagihan), 0, ',', '.')}}
                     @endif
                 </td>
+                @unless ($readonly)
                 <td class="text-end align-middle">
                     {{number_format($d->profit, 0, ',', '.')}}
 
@@ -214,6 +219,7 @@
                 <td class="text-center align-middle">
                     {{number_format((($d->profit/$d->nominal_bayar)*100), 2, ',','.')}}%
                 </td>
+                @endunless
                 <td class="text-center align-middle">
                     @if ($readonly)
                     <span class="badge {{ $d->nota_fisik == 1 ? 'bg-success' : 'bg-secondary' }}">{{ $d->nota_fisik == 1 ? 'Ada' : 'Belum' }}</span>
@@ -344,8 +350,10 @@
                 <td class="text-center align-middle"><strong>Total</strong></td>
                 <td class="text-end align-middle">{{number_format($total_tagihan, 0, ',', '.')}}
                 </td>
+                @unless ($readonly)
                 <td class="text-end align-middle">{{number_format($profit, 0, ',', '.')}}</td>
                 <td class="text-end align-middle">{{number_format($profit_persen, 2, ',', '.')}}%</td>
+                @endunless
                 <td></td>
                 @unless ($readonly)<td></td>@endunless
             </tr>
@@ -360,9 +368,7 @@
 
                 </td>
                 <td></td>
-                <td></td>
-                <td></td>
-                @unless ($readonly)<td></td>@endunless
+                @unless ($readonly)<td></td><td></td><td></td>@endunless
             </tr>
             <tr>
                 <td class="align-middle"
@@ -376,9 +382,7 @@
 
                 </td>
                 <td></td>
-                <td></td>
-                <td></td>
-                @unless ($readonly)<td></td>@endunless
+                @unless ($readonly)<td></td><td></td><td></td>@endunless
             </tr>
             <tr>
                 <td class="align-middle"
@@ -390,9 +394,7 @@
                         {{number_format($total_tagihan-$pph+$ppn, 0, ',', '.')}}</strong>
                 </td>
                 <td></td>
-                <td></td>
-                <td></td>
-                @unless ($readonly)<td></td>@endunless
+                @unless ($readonly)<td></td><td></td><td></td>@endunless
             </tr>
         </tfoot>
     </table>

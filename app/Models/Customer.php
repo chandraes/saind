@@ -59,6 +59,7 @@ class Customer extends Model
 
             if ($transaksi || $invoice) {
                 $customerData = [
+                    'customer_id' => (int) $c->id,
                     'customer' => $c->singkatan,
                     'total_transaksi' => 0,
                     'tanggal_awal' => null,

@@ -45,7 +45,7 @@
 @if (auth()->user()->isExecutive())
 @include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::CUSTOMER_PICKER, 'title' => 'Pilih Customer', 'icon' => 'fa-building',
     'action' => url('transaksi/nota-tagihan'), 'pathTemplate' => route('billing.nota-tagihan', ['customer' => '__ID__']), 'name' => 'customer', 'label' => 'Nama Customer', 'placeholder' => '-- Pilih Customer --',
-    'options' => \App\Models\Customer::query()->orderBy('nama')->get(['id', 'nama', 'singkatan'])->mapWithKeys(fn ($c) => [$c->id => $c->nama.($c->singkatan ? ' ('.$c->singkatan.')' : '')])])
+    'options' => \App\Models\Customer::query()->where('status', 1)->orderBy('nama')->get(['id', 'nama', 'singkatan'])->mapWithKeys(fn ($c) => [$c->id => $c->nama.($c->singkatan ? ' ('.$c->singkatan.')' : '')])])
 @endif
 @push('css')
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}">
