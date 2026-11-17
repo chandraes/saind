@@ -305,7 +305,7 @@ class VendorOperationalBilling
             'Gross Muat (ton)' => $transaction->gross_muat,
             'Tare Muat (ton)' => $transaction->tarra_muat,
             'Tonase Muat (ton)' => $loaded,
-            'Tanggal Bongkar' => $transaction->tanggal_bongkar,
+            'Tanggal Bongkar' => Transaksi::dateOnly($transaction->tanggal_bongkar),
             'Nota Bongkar' => $transaction->nota_bongkar,
             'Gross Bongkar (ton)' => $transaction->gross_bongkar,
             'Tare Bongkar (ton)' => $transaction->tarra_bongkar,

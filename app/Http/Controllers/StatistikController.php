@@ -396,7 +396,7 @@ class StatistikController extends Controller
             ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
             ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
             ->where('transaksis.void', 0)
-            ->groupBy('tanggal_bongkar')
+            ->groupByRaw('DATE(transaksis.tanggal_bongkar)')
             ->get()
             ->keyBy('tanggal_bongkar');
 

@@ -196,7 +196,8 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
 
     public function test_completed_data_and_search_match_tickets_units_and_routes(): void
     {
-        $id = $this->journey(1, ['status' => 3, 'nota_bongkar' => 'UNLOAD-88', 'tanggal_bongkar' => '2026-11-04', 'gross_bongkar' => '44.5', 'tarra_bongkar' => '15', 'timbangan_bongkar' => '29.5']);
+        // tanggal_bongkar kini DATETIME; API tetap mengirim tanggal saja.
+        $id = $this->journey(1, ['status' => 3, 'nota_bongkar' => 'UNLOAD-88', 'tanggal_bongkar' => '2026-11-04 14:35:12', 'gross_bongkar' => '44.5', 'tarra_bongkar' => '15', 'timbangan_bongkar' => '29.5']);
         $headers = $this->headers($this->actor());
         foreach (['TICKET', '288', 'Port', 'UNLOAD'] as $search) {
             $this->getJson('/api/v1/unloading-notes?status=completed&search='.$search, $headers)->assertOk()->assertJsonCount(1, 'data')

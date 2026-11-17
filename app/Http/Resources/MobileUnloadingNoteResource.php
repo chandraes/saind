@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,7 +21,7 @@ class MobileUnloadingNoteResource extends JsonResource
             'vehicle_driver_name' => $journey->vehicle && (int) $journey->vehicle->vendor_id === (int) $journey->vendor_id ? $journey->vehicle->driver?->nama : null,
             'route_name' => $journey->rute?->nama, 'mine_name' => $journey->customer?->nama,
             'money_out_number' => 'UJ'.sprintf('%02d', $journey->nomor_uang_jalan), 'ticket_number' => (string) $this->nota_muat,
-            'loaded_on' => $this->tanggal_muat, 'unloaded_on' => $completed ? $this->tanggal_bongkar : null,
+            'loaded_on' => $this->tanggal_muat, 'unloaded_on' => $completed ? Transaksi::dateOnly($this->tanggal_bongkar) : null,
             'unloading_ticket_number' => $completed ? $this->nota_bongkar : null,
             'gross_weight' => number_format((float) $this->gross_muat, 3, '.', ''),
             'tare_weight' => number_format((float) $this->tarra_muat, 3, '.', ''),

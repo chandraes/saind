@@ -74,7 +74,7 @@ class DriverNotesController extends Controller
                 'Nota Muat' => $item->ticket_number ?? $item->nota_muat,
                 'Nota Bongkar' => $journey?->nota_bongkar,
                 'Tanggal Muat' => $item instanceof LoadNoteDraft ? $item->loaded_on?->format('d-m-Y') : $item->tanggal_muat,
-                'Tanggal Bongkar' => $journey?->tanggal_bongkar,
+                'Tanggal Bongkar' => Transaksi::dateOnly($journey?->tanggal_bongkar),
                 'Rute' => $item->rute?->nama ?? $journey?->kas_uang_jalan?->rute?->nama,
                 'Uang Jalan' => $this->rupiah($money['gross_amount'] ?? null),
                 'UJ Ditahan Sparepart' => $this->rupiah($money['sparepart_withheld'] ?? null),

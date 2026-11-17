@@ -42,6 +42,27 @@ class Transaksi extends Model
         return date('d-m-Y', strtotime($this->tanggal_bongkar));
     }
 
+    /**
+     * Nilai tanggal_bongkar (DATETIME) dari tanggal pada form: tanggal yang dipilih + jam saat
+     * disimpan. Bila tanggalnya sama dengan yang sudah tersimpan, jam lama dipertahankan
+     * (edit nota tagihan tidak menggeser waktu bongkar).
+     */
+    public static function unloadingTimestamp(string $date, ?string $current = null): string
+    {
+        $day = Carbon::parse($date)->toDateString();
+        if ($current !== null && Carbon::parse($current)->toDateString() === $day) {
+            return Carbon::parse($current)->toDateTimeString();
+        }
+
+        return $day.' '.now()->format('H:i:s');
+    }
+
+    /** Bagian tanggal (Y-m-d) dari tanggal_bongkar untuk tampilan/API yang sejak awal hanya memuat tanggal. */
+    public static function dateOnly(mixed $value): ?string
+    {
+        return $value ? Carbon::parse($value)->toDateString() : null;
+    }
+
     public static function getTagihanData($customerId, $ruteId = null, $filter = null, $tanggalFilter = null)
     {
         $query = self::with('kas_uang_jalan.vehicle', 'kas_uang_jalan.vendor', 'kas_uang_jalan.customer', 'kas_uang_jalan.rute', 'do_checker')
@@ -328,7 +349,7 @@ class Transaksi extends Model
             ->selectRaw('DATE(transaksis.tanggal_bongkar) as tanggal_bongkar, SUM(transaksis.profit) as total_nominal_profit, SUM(transaksis.nominal_tagihan) as total_nominal_tagihan, SUM(transaksis.nominal_bayar) as total_nominal_bayar, SUM(transaksis.nominal_bonus) as total_nominal_bonus,  SUM(transaksis.nominal_csr) as total_nominal_csr')
             ->whereBetween('transaksis.tanggal_bongkar', [$tanggalAwal, $tanggalAkhir])
             ->where('transaksis.void', 0)
-            ->groupBy('tanggal_bongkar')
+            ->groupByRaw('DATE(transaksis.tanggal_bongkar)')
             ->get()
             ->keyBy('tanggal_bongkar');
 

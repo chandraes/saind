@@ -186,7 +186,7 @@ class TransaksiController extends Controller
         ]);
 
         $data['status'] = 3;
-        $data['tanggal_bongkar'] = date('Y-m-d', strtotime($data['tanggal_bongkar']));
+        $data['tanggal_bongkar'] = Transaksi::unloadingTimestamp($data['tanggal_bongkar']);
 
         $muat = $transaksi->tanggal_muat;
         // change bongkar to unix timestamp
@@ -700,7 +700,7 @@ class TransaksiController extends Controller
 
         $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
 
-        $data['tanggal_bongkar'] = date('Y-m-d', strtotime($data['tanggal_bongkar']));
+        $data['tanggal_bongkar'] = Transaksi::unloadingTimestamp($data['tanggal_bongkar'], $transaksi->tanggal_bongkar);
 
         $penalty = 0;
 

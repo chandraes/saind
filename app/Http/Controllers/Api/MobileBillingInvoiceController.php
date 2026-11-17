@@ -52,7 +52,7 @@ class MobileBillingInvoiceController extends Controller
                 'number' => $page->firstItem() + $index,
                 'id' => (int) $row->id,
                 'reference' => $row->nota_bongkar ?: $row->nota_muat,
-                'date' => $row->tanggal_bongkar,
+                'date' => Transaksi::dateOnly($row->tanggal_bongkar),
                 'vehicle' => $row->kas_uang_jalan?->vehicle?->nomor_lambung,
                 'route' => $row->kas_uang_jalan?->rute?->nama,
                 'weight' => $row->{$weight} === null ? null : (float) $row->{$weight},

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Transaksi;
 use App\Services\VendorOperationalBilling;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,7 +30,7 @@ class MobilePaymentNoteResource extends JsonResource
             'gross_weight' => $journey->gross_muat, 'tare_weight' => $journey->tarra_muat,
             'unloading_gross_weight' => $journey->gross_bongkar, 'unloading_tare_weight' => $journey->tarra_bongkar,
             'route_name' => ($kind === 'utama' ? $cash?->rute?->nama : $this->rute?->nama) ?? $cash?->rute?->nama,
-            'loaded_on' => $journey->tanggal_muat, 'unloaded_on' => $journey->tanggal_bongkar,
+            'loaded_on' => $journey->tanggal_muat, 'unloaded_on' => Transaksi::dateOnly($journey->tanggal_bongkar),
             'net_weight' => $journey->tonase, 'unloading_net_weight' => $journey->timbangan_bongkar,
             'billing_weight_source' => $weightSource,
             'billing_weight' => match ($weightSource) {

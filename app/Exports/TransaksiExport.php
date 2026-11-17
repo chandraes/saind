@@ -24,7 +24,7 @@ class TransaksiExport implements FromQuery, WithHeadings, WithTitle, ShouldAutoS
     public function query()
     {
         return Transaksi::query()->select('kuj.tanggal', DB::raw('CONCAT(kuj.kode_uang_jalan,kuj.nomor_uang_jalan)'), 'v.nomor_lambung', 'r.nama', 'transaksis.tanggal_muat',
-                                        'transaksis.nota_muat', 'transaksis.tonase', 'transaksis.tanggal_bongkar', 'transaksis.nota_bongkar', 'transaksis.timbangan_bongkar', 'transaksis.nominal_tagihan')
+                                        'transaksis.nota_muat', 'transaksis.tonase', DB::raw('DATE(transaksis.tanggal_bongkar)'), 'transaksis.nota_bongkar', 'transaksis.timbangan_bongkar', 'transaksis.nominal_tagihan')
                             ->join('kas_uang_jalans as kuj', 'transaksis.kas_uang_jalan_id', 'kuj.id')->where('transaksis.status', 3)
                             ->join('vehicles as v', 'kuj.vehicle_id', 'v.id')
                             ->join('rutes as r', 'kuj.rute_id', 'r.id')
