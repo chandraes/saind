@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\ReminderReader;
 
 /**
  * Menu dashboard untuk akun milik vendor (vendor dan vendor operational) dan
@@ -20,6 +21,24 @@ class VendorDashboardMenu
 
     /** Id pop-up Sparepart | Ban untuk Kas UJ Ditahan (layouts.uj-ditahan-menu). */
     public const HELD_CASH_PICKER = 'ujDitahanMenu';
+
+    /**
+     * Seksi "Pengingat" (Dashboard Pengingat) dengan lencana jumlah pengingat aktif; null bila
+     * role tidak memiliki tabel pengingat. Dipakai juga dashboard HRD.
+     *
+     * @return array{key: string, title: string, menus: list<array<string, mixed>>}|null
+     */
+    public static function reminderSection(User $user): ?array
+    {
+        if (ReminderRegistry::for($user) === []) {
+            return null;
+        }
+
+        return ['key' => 'reminders', 'title' => 'Pengingat', 'menus' => [[
+            'title' => 'Pengingat', 'description' => 'Hal yang perlu ditindaklanjuti hari ini.', 'url' => route('reminders.index'),
+            'icon' => 'pengingat.svg', 'badge' => array_sum(app(ReminderReader::class)->counts($user)),
+        ]]];
+    }
 
     /** @return list<array{key: string, title: string, menus: list<array{title: string, description: string, url: string, icon: string, modal?: string}>}> */
     public static function sections(User $user): array
@@ -47,6 +66,7 @@ class VendorDashboardMenu
         }
 
         return [
+            ...array_filter([self::reminderSection($user)]),
             ['key' => 'documents', 'title' => 'Nota & Invoice', 'menus' => $documents],
             ['key' => 'statistics', 'title' => 'Performa & Upah Gendong', 'menus' => [
                 $menu('Perform Unit', 'Performa dan aktivitas kendaraan.', route('statistik.perform-unit'), 'perform-unit.svg'),

@@ -1,21 +1,23 @@
 window.vendorStatisticsTable = function (selector, options) {
-    const view = createIncrementalDataTable(selector, {data: [], columns: options.columns});
+    // options.labels (opsional) mengganti teks status bawaan "riwayat".
+    const labels = {loading: 'Memuat riwayat...', done: 'Seluruh riwayat telah ditampilkan.', empty: 'Belum ada riwayat.', failed: 'Riwayat gagal dimuat. ', ...(options.labels || {})};
+    const view = createIncrementalDataTable(selector, {data: [], columns: options.columns, ...(options.labels ? {language: {emptyTable: labels.empty}} : {})});
     const status = $('<div class="text-center py-3" role="status" aria-live="polite"></div>').insertAfter($(selector).closest('.table-responsive'));
     let busy = false, finished = false, failed = false, offset = 0;
     function load() {
         if (busy || finished) return;
         busy = true;
         failed = false;
-        status.text('Memuat riwayat...');
+        status.text(labels.loading);
         $.ajax({url: options.url, dataType: 'json', data: {...options.data, start: offset, length: 25}})
             .done(function (response) {
                 view.add(response.data);
                 offset += response.data.length;
                 finished = offset >= response.recordsFiltered || response.data.length === 0;
-                status.text(finished ? (offset ? 'Seluruh riwayat telah ditampilkan.' : 'Belum ada riwayat.') : '');
+                status.text(finished ? (offset ? labels.done : labels.empty) : '');
             }).fail(function () {
                 failed = true;
-                status.text('Riwayat gagal dimuat. ').append($('<button type="button" class="btn btn-outline-primary btn-sm">Coba lagi</button>').on('click', load));
+                status.text(labels.failed).append($('<button type="button" class="btn btn-outline-primary btn-sm">Coba lagi</button>').on('click', load));
             }).always(function () { busy = false; if (!finished && !failed) check(); });
     }
     function check() {

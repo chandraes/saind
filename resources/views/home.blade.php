@@ -8,6 +8,19 @@
         </div>
     </div>
     <div class="row justify-content-left {{ auth()->user()->usesVendorMenus() ? 'd-none' : 'mt-5' }}">
+        {{-- Dashboard Pengingat (admin, su, user); akun dengan menu vendor memakai seksi Pengingat di VendorDashboardMenu. --}}
+        @if (! auth()->user()->usesVendorMenus() && ($reminders = \App\Support\VendorDashboardMenu::reminderSection(auth()->user())))
+        @php($reminderCount = $reminders['menus'][0]['badge'])
+        <div class="col-md-3 text-center mb-5 mt-3">
+            <a href="{{ route('reminders.index') }}" class="text-decoration-none">
+                <span class="position-relative d-inline-block">
+                    <img src="{{ asset('images/pengingat.svg') }}" alt="" width="70">
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {{ $reminderCount > 0 ? 'bg-danger' : 'bg-secondary' }}" data-reminder-badge>{{ $reminderCount }}<span class="visually-hidden"> pengingat</span></span>
+                </span>
+                <h4 class="mt-3">PENGINGAT</h4>
+            </a>
+        </div>
+        @endif
         @if (auth()->user()->role === 'admin' || auth()->user()->role === 'su')
         <div class="col-md-3 text-center mb-5 mt-3">
             <a href="{{route('database')}}" class="text-decoration-none">

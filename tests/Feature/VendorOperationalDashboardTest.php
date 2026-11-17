@@ -17,6 +17,8 @@ class VendorOperationalDashboardTest extends TestCase
         parent::setUp();
         config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
         DB::purge('sqlite');
+        (require database_path('migrations/2026_11_17_120000_create_reminder_items_table.php'))->up();
+        (require database_path('migrations/2026_11_17_150000_create_user_reminder_settings_table.php'))->up();
         Schema::create('vendors', function (Blueprint $table): void {
             $table->id();
             $table->string('nama')->nullable();

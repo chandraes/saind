@@ -9,7 +9,7 @@
         </div>
     </div>
     @include('per-vendor-operational.index', [
-        'sections' => [[
+        'sections' => [...array_filter([\App\Support\VendorDashboardMenu::reminderSection(auth()->user())]), [
             'key' => 'hrd',
             'title' => 'Kepegawaian',
             'menus' => [[

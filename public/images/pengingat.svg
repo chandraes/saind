@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ikon Pengingat (lonceng) untuk Dashboard Pengingat SAIND. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<circle cx="256" cy="256" r="256" fill="#FFE8B3"/>
+<path d="M512 256c0-.2 0-.3 0-.5L392.5 136 160 392l118.4 118.4C406.3 499.9 512 389.6 512 256z" fill="#FFD27A"/>
+<rect x="238" y="96" width="36" height="40" rx="18" fill="#B36B00"/>
+<path d="M256 120c-66.3 0-112 50.7-112 117v66.6c0 21.6-9.4 42.1-25.8 56.2L108 368.6V392h296v-23.4l-10.2-8.8c-16.4-14.1-25.8-34.6-25.8-56.2V237c0-66.3-45.7-117-112-117z" fill="#FFB400"/>
+<path d="M256 120c-6.7 0-13.1.5-19.3 1.5C291 130.6 330 177.3 330 237v66.6c0 21.6 9.4 42.1 25.8 56.2L366 368.6V392h38v-23.4l-10.2-8.8c-16.4-14.1-25.8-34.6-25.8-56.2V237c0-66.3-45.7-117-112-117z" fill="#F29C00"/>
+<rect x="96" y="380" width="320" height="28" rx="14" fill="#E08A00"/>
+<path d="M214 408h84c0 23.2-18.8 42-42 42s-42-18.8-42-42z" fill="#B36B00"/>
+<path d="M178 236c0-41 26-72 62-80" fill="none" stroke="#FFF3D6" stroke-width="16" stroke-linecap="round"/>
+<circle cx="372" cy="150" r="54" fill="#E64C3C"/>
+<rect x="364" y="116" width="16" height="44" rx="8" fill="#FFFFFF"/>
+<circle cx="372" cy="180" r="9" fill="#FFFFFF"/>
+</svg>

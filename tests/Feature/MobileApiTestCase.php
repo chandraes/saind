@@ -62,5 +62,8 @@ abstract class MobileApiTestCase extends TestCase
             $table->boolean('status')->default(false);
         });
         (require database_path('migrations/2019_12_14_000001_create_personal_access_tokens_table.php'))->up();
+        // Dashboard Pengingat: tile dashboard membaca rekap reminder_items.
+        (require database_path('migrations/2026_11_17_120000_create_reminder_items_table.php'))->up();
+        (require database_path('migrations/2026_11_17_150000_create_user_reminder_settings_table.php'))->up();
     }
 }

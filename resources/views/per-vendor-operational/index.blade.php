@@ -20,7 +20,7 @@
                         <div class="vendor-menu-card bg-light">
                     @endif
                         <span class="vendor-menu-icon"><img src="{{ asset('images/'.$menu['icon']) }}" alt="" width="48" height="48"></span>
-                        <h3>{{ $menu['title'] }}</h3>
+                        <h3>{{ $menu['title'] }}@isset($menu['badge']) <span class="badge rounded-pill {{ $menu['badge'] > 0 ? 'bg-danger' : 'bg-secondary' }} align-middle" data-reminder-badge>{{ $menu['badge'] }}</span>@endisset</h3>
                         <p>{{ $menu['description'] }}</p>
                     @if (isset($menu['url']))
                         <span class="vendor-menu-link">Lihat data <span aria-hidden="true">→</span></span>

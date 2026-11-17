@@ -19,6 +19,9 @@ class Kernel extends ConsoleKernel
         // inspire every minute
         $schedule->command('app:check-konfigurasi')->everyMinute();
         $schedule->command('mobile:trust-sync')->hourly()->withoutOverlapping(10)->when(fn (): bool => (bool) config('mobile.trust_url'));
+        // Dashboard Pengingat: REMINDERS_REFRESH=hourly (sementara) atau daily_0800 (produksi).
+        $reminders = $schedule->command('reminders:refresh')->withoutOverlapping(30);
+        config('reminders.refresh') === 'daily_0800' ? $reminders->dailyAt('08:00') : $reminders->hourly();
     }
 
     /**

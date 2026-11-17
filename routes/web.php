@@ -53,6 +53,7 @@ use App\Http\Controllers\PersentaseAwalController;
 use App\Http\Controllers\PerVendorController;
 use App\Http\Controllers\PerVendorOperationalController;
 use App\Http\Controllers\RekapController;
+use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\RekeningController;
 use App\Http\Controllers\RuteController;
 use App\Http\Controllers\SettingController;
@@ -73,6 +74,7 @@ use App\Http\Controllers\WaController;
 use App\Http\Middleware\EnsureVendorOperationalVehicle;
 use App\Models\LoadNoteDraft;
 use App\Models\TransaksiAdditional;
+use App\Support\ReminderRegistry;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -133,6 +135,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::permanentRedirect('general-manager/gaji', 'eksekutif/gaji');
 
     Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+    // Dashboard Pengingat: akses per tabel diatur ReminderRegistry (role & cakupan vendor), baca saja.
+    // Pengaturan tampilan hanya menyimpan preferensi akun sendiri (dikecualikan dari middleware baca-saja eksekutif & HRD).
+    Route::get('pengingat', [ReminderController::class, 'index'])->name('reminders.index');
+    Route::get('pengingat/{type}/data', [ReminderController::class, 'data'])->whereIn('type', ReminderRegistry::keys())->name('reminders.data');
+    Route::post('pengingat/pengaturan', [ReminderController::class, 'settings'])->middleware('throttle:30,1')->name('reminders.settings');
 
     Route::group(['middleware' => 'role:user'], function () {});
 
