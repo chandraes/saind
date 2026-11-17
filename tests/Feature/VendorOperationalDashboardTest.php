@@ -66,12 +66,14 @@ class VendorOperationalDashboardTest extends TestCase
             $table->id();
             $table->string('nama');
             $table->string('singkatan')->nullable();
+            $table->integer('status')->default(1);
         });
-        DB::table('customers')->insert(['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA']);
+        // Picker Nota Tagihan hanya memuat customer aktif (status 1).
+        DB::table('customers')->insert([['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA', 'status' => 1], ['id' => 2, 'nama' => 'Tambang Lama', 'singkatan' => 'TL', 'status' => 0]]);
         $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => $role, 'vendor_id' => null]));
         $response = $this->get('/home')->assertOk()->assertSee($role === 'direksi' ? 'DIREKSI' : 'GENERAL MANAGER')->assertSee('nilai bayar')
             ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Nota Tagihan', 'Perform Unit', 'Perform Unit All', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
-            ->assertDontSee('Kas Vendor')->assertSee('Tambang A (TA)');
+            ->assertDontSee('Kas Vendor')->assertSee('Tambang A (TA)')->assertDontSee('Tambang Lama');
         $dom = new \DOMDocument;
         @$dom->loadHTML($response->getContent());
         $this->assertSame(1, (new \DOMXPath($dom))->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-target="#operasional-nota-bayar-vendor"]')->length);
