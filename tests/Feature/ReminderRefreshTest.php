@@ -363,7 +363,7 @@ class ReminderRefreshTest extends MobileApiTestCase
         $this->getJson('/api/v1/me', $headers)->assertOk()->assertJsonPath('data.permissions.reminders', true);
         $this->getJson('/api/v1/reminders', $headers)->assertOk()
             ->assertJsonPath('data.*.key', ['standby', 'unloading', 'filter_oil'])
-            ->assertJson(['data' => [1 => ['key' => 'unloading', 'label' => 'Belum Bongkar', 'title' => ReminderRegistry::title('unloading'),
+            ->assertJson(['data' => [1 => ['key' => 'unloading', 'label' => 'On Going', 'title' => ReminderRegistry::title('unloading'),
                 'description' => ReminderRegistry::meta('unloading')['description'], 'icon' => 'fa-hourglass-half', 'enabled' => true, 'count' => 1,
                 'refreshed_at' => '2026-11-17T10:00:00+07:00']]])
             ->assertJsonPath('meta.total', 2);

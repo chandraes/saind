@@ -42,9 +42,9 @@ class ReminderRegistry
     private const DEFINITIONS = [
         self::STANDBY => ['label' => 'RFU / BD', 'title' => 'Unit standby sejak bongkar terakhir', 'icon' => 'fa-truck',
             'description' => 'Nolam aktif yang belum jalan lagi lebih dari 48 jam sejak bongkar terakhir.', 'roles' => self::VEHICLE_ROLES],
-        self::UNLOADING => ['label' => 'Belum Bongkar', 'title' => 'Unit belum bongkar sejak muat', 'icon' => 'fa-hourglass-half',
+        self::UNLOADING => ['label' => 'On Going', 'title' => 'Unit belum bongkar sejak muat', 'icon' => 'fa-hourglass-half',
             'description' => 'Perjalanan yang sudah UJ keluar tetapi belum bongkar lebih dari 24 jam.', 'roles' => self::VEHICLE_ROLES],
-        self::FILTER_OIL => ['label' => 'Filter & Oli', 'title' => 'Filter & oli mesin mendekati limit', 'icon' => 'fa-tint',
+        self::FILTER_OIL => ['label' => 'Maintenance', 'title' => 'Filter & oli mesin mendekati limit', 'icon' => 'fa-tint',
             'description' => 'Sisa ritase kategori yang tinggal 2 rit atau kurang; negatif berarti sudah melewati limit.', 'roles' => [...self::VEHICLE_ROLES, 'user']],
         self::INVOICE_DUE => ['label' => 'Jatuh Tempo', 'title' => 'Invoice mendekati jatuh tempo', 'icon' => 'fa-file-text-o',
             'description' => 'Invoice belum lunas yang jatuh tempo dalam 2 hari atau sudah lewat (sisa hari negatif).', 'roles' => ['su', 'admin', 'user', 'direksi', 'general-manager']],
