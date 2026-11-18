@@ -302,7 +302,7 @@ class MobileApiFoundationTest extends MobileApiTestCase
         DB::table('vendors')->insert(['id' => 1, 'nama' => 'Vendor 1']);
         DB::table('vehicles')->insert(['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '101']);
         $expected = ['database' => true, 'vendor_billing' => true, 'all_vendors' => true, 'vendor_finance' => true, 'held_cash' => true,
-            'customer_bills' => true, 'payroll' => true, 'maintenance_history' => false, 'upah_gendong_settings' => false,
+            'customer_bills' => true, 'payroll' => true, 'maintenance_history' => false, 'maintenance_history_edit' => true, 'upah_gendong_settings' => true,
             'driver' => false, 'attendance_deductions' => false];
         $login = $this->postJson('/api/v1/login', ['username' => 'budi', 'password' => 'secret-pass', 'device_name' => 'HP Admin'],
             ['X-Workspace-ID' => self::WORKSPACE])->assertOk();
@@ -313,9 +313,10 @@ class MobileApiFoundationTest extends MobileApiTestCase
             $login->assertJsonPath('data.user.permissions.'.$permission, $granted);
             $me->assertJsonPath('data.permissions.'.$permission, $granted);
         }
-        // Fase 1 baca saja: penulisan di konteks vendor ditolak.
-        $this->postJson('/api/v1/vehicles/1/upah-gendong-setting', [], $headers)->assertForbidden();
-        $this->deleteJson('/api/v1/vehicles/1/upah-gendong-setting', [], $headers)->assertForbidden();
+        // Penulisan di konteks vendor hanya yang dibuka Fase 2 (riwayat maintenance, Upah Gendong);
+        // catat penggantian langsung tetap khusus akun vendor.
+        $this->postJson('/api/v1/vehicles/1/battery-logs', [], $headers)->assertForbidden();
+        $this->postJson('/api/v1/vehicles/1/tire-logs', [], $headers)->assertForbidden();
         // Di web (tanpa token mobile) admin/su tetap memakai menu admin.
         $this->app['auth']->forgetGuards();
         $web = $user->fresh();

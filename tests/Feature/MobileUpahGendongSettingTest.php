@@ -97,6 +97,55 @@ class MobileUpahGendongSettingTest extends MobileApiTestCase
         $this->assertDatabaseMissing('upah_gendongs', ['vehicle_id' => 1]);
     }
 
+    /** Admin, SU, dan role seluruh vendor lain: tanpa vendor, tanpa header X-Vendor-ID. */
+    private function allVendorHeaders(string $role): array
+    {
+        $user = User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => null]);
+        $this->app['auth']->forgetGuards();
+
+        return ['Accept' => 'application/json', 'X-Workspace-ID' => self::WORKSPACE,
+            'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+    }
+
+    public function test_admin_and_su_manage_every_vendor_vehicle_with_the_confirmation_password(): void
+    {
+        (require database_path('migrations/2023_09_20_145203_create_password_konfirmasis_table.php'))->up();
+        DB::table('password_konfirmasis')->insert(['password' => 'konfirmasi-1']);
+        foreach (['admin', 'su'] as $role) {
+            $headers = $this->allVendorHeaders($role);
+            $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.upah_gendong_settings', true);
+            // Semua vendor (tanpa nonaktif), atau satu vendor lewat filter.
+            $this->getJson('/api/v1/upah-gendong-settings', $headers)->assertOk()->assertJsonCount(3, 'data')
+                ->assertJsonPath('data.2.nomor_lambung', '201')->assertJsonPath('data.2.vendor_name', 'Vendor B')
+                ->assertJsonMissing(['nomor_lambung' => '103']);
+            $this->getJson('/api/v1/upah-gendong-settings?vendor_id=2', $headers)->assertOk()
+                ->assertJsonCount(1, 'data')->assertJsonPath('data.0.nomor_lambung', '201');
+
+            $this->postJson('/api/v1/vehicles/4/upah-gendong-setting', $this->payload(), $headers)->assertCreated()
+                ->assertJsonPath('data.nominal', 25000);
+            $this->patchJson('/api/v1/vehicles/4/upah-gendong-setting', $this->payload(['nominal' => 30000]), $headers)
+                ->assertOk()->assertJsonPath('data.nominal', 30000);
+            $this->postJson('/api/v1/vehicles/3/upah-gendong-setting', $this->payload(), $headers)->assertNotFound();
+            $this->deleteJson('/api/v1/vehicles/4/upah-gendong-setting', [], $headers)
+                ->assertUnprocessable()->assertJsonValidationErrors(['password' => 'Masukkan password konfirmasi.']);
+            $this->deleteJson('/api/v1/vehicles/4/upah-gendong-setting', ['password' => 'secret-pass'], $headers)
+                ->assertUnprocessable()->assertJsonValidationErrors(['password' => 'Password salah.']);
+            $this->deleteJson('/api/v1/vehicles/4/upah-gendong-setting', ['password' => 'konfirmasi-1'], $headers)->assertOk();
+            $this->assertDatabaseMissing('upah_gendongs', ['vehicle_id' => 4]);
+        }
+    }
+
+    public function test_other_all_vendor_roles_only_read(): void
+    {
+        foreach (['operasional', 'general-manager', 'direksi'] as $role) {
+            $headers = $this->allVendorHeaders($role);
+            $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.upah_gendong_settings', false);
+            $this->getJson('/api/v1/upah-gendong-settings', $headers)->assertForbidden();
+            $this->postJson('/api/v1/vehicles/4/upah-gendong-setting', $this->payload(), $headers)->assertForbidden();
+        }
+        $this->assertDatabaseMissing('upah_gendongs', ['vehicle_id' => 4]);
+    }
+
     public function test_admin_database_page_uses_the_same_rules(): void
     {
         $this->withoutMiddleware(VerifyCsrfToken::class);

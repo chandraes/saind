@@ -14,9 +14,15 @@ class MobileDatabaseVehicleResource extends JsonResource
             'nopol' => $this->nopol, 'tipe' => $this->tipe, 'tahun' => $this->tahun, 'status' => $this->status,
             'vendor' => $this->vendor ? ['id' => $this->vendor->id, 'nama' => $this->vendor->nama, 'perusahaan' => $this->vendor->perusahaan] : null];
         if ($request->routeIs('api.v1.database.vehicles.show')) {
-            foreach (['nama_stnk', 'no_rangka', 'no_mesin', 'tanggal_pajak_stnk', 'tanggal_kir', 'tanggal_kimper', 'tanggal_sim'] as $field) {
+            // Rekening transfer uang jalan (transfer_ke, bank, no_rekening) sengaja tidak dikirim ke mobile.
+            foreach (['nama_stnk', 'no_rangka', 'no_mesin', 'no_index', 'no_kartu_gps', 'tanggal_pajak_stnk', 'tanggal_kir',
+                'tanggal_kimper', 'tanggal_sim'] as $field) {
                 $data[$field] = $this->resource->getAttribute($field);
             }
+            foreach (['gps', 'lock_uj', 'uj_ditahan', 'support_operational', 'pembatasan_filter_oli'] as $field) {
+                $data[$field] = (bool) $this->resource->getAttribute($field);
+            }
+            $data['driver'] = $this->driver?->nama;
         }
 
         return $data;

@@ -11,8 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Riwayat ban, aki, dan filter & oli dari aplikasi mobile akun vendor.
- * Aturan isian, kepemilikan nolam, dan konfirmasi password ada di
+ * Riwayat ban, aki, dan filter & oli dari aplikasi mobile. Catat baru: akun vendor.
+ * Ubah tanggal/hapus: akun vendor (nolam sendiri, password akun) serta Admin & SU
+ * (semua nolam, password konfirmasi). Aturan isian, kepemilikan nolam, dan password ada di
  * VendorMaintenanceInput (dipakai bersama halaman web vendor).
  */
 class MobileMaintenanceHistoryController extends Controller

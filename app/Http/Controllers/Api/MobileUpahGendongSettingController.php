@@ -6,31 +6,34 @@ use App\Http\Controllers\Controller;
 use App\Models\UpahGendong;
 use App\Models\Vehicle;
 use App\Support\MaintenanceHistoryGuard;
+use App\Support\MobileVendorScope;
 use App\Support\UpahGendongData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Database Upah Gendong untuk akun vendor di aplikasi mobile: mengaktifkan,
- * mengubah dan menghapus data upah gendong kendaraan miliknya sendiri,
- * dengan aturan isi yang sama dengan menu Database admin.
+ * Database Upah Gendong di aplikasi mobile: mengaktifkan, mengubah dan menghapus
+ * data upah gendong. Akun vendor: kendaraan miliknya sendiri (password akun).
+ * Admin & SU: kendaraan semua vendor, bisa difilter vendor_id (password konfirmasi).
+ * Aturan isi sama dengan menu Database admin.
  */
 class MobileUpahGendongSettingController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $this->authorizeVendor($request);
+        $this->authorizeManager($request);
         $filters = $request->validate(['search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $search = trim($filters['search'] ?? '');
-        $page = Vehicle::query()->where('vendor_id', $request->user()->vendor_id)->where('status', '!=', 'nonaktif')
+        $page = MobileVendorScope::apply(Vehicle::query(), $request)->with('vendor:id,nama,nickname')->where('status', '!=', 'nonaktif')
             ->when($search !== '', fn ($query) => $query->where('nomor_lambung', 'like', '%'.$search.'%'))
-            ->orderBy('nomor_lambung')->orderBy('id')->paginate(20, ['id', 'nomor_lambung', 'nopol', 'status']);
+            ->orderBy('nomor_lambung')->orderBy('id')->paginate(20, ['id', 'vendor_id', 'nomor_lambung', 'nopol', 'status']);
         $settings = UpahGendong::query()->whereIn('vehicle_id', $page->getCollection()->modelKeys())->get()->keyBy('vehicle_id');
 
         return response()->json([
             'data' => $page->getCollection()->map(fn (Vehicle $vehicle): array => [
                 'id' => $vehicle->id, 'nomor_lambung' => $vehicle->nomor_lambung, 'nopol' => $vehicle->nopol, 'status' => $vehicle->status,
+                'vendor_name' => $vehicle->vendor?->nickname ?: $vehicle->vendor?->nama,
                 'setting' => $this->present($settings->get($vehicle->id)),
             ])->values(),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total()],
@@ -60,7 +63,8 @@ class MobileUpahGendongSettingController extends Controller
     public function destroy(Request $request, int $vehicle): JsonResponse
     {
         $setting = $this->setting($request, $vehicle);
-        $request->validate(['password' => ['required', 'string', 'max:1024']], ['password.required' => 'Masukkan password akun Anda.']);
+        $request->validate(['password' => ['required', 'string', 'max:1024']], ['password.required' => $request->user()->isVendorAccount()
+            ? 'Masukkan password akun Anda.' : 'Masukkan password konfirmasi.']);
         if (! MaintenanceHistoryGuard::passwordMatches($request)) {
             throw ValidationException::withMessages(['password' => 'Password salah.']);
         }
@@ -69,16 +73,17 @@ class MobileUpahGendongSettingController extends Controller
         return response()->json(['message' => 'Data upah gendong dihapus.']);
     }
 
-    private function authorizeVendor(Request $request): void
+    /** Akun vendor (dan vendor-induk) untuk kendaraannya sendiri; Admin & SU semua vendor. */
+    private function authorizeManager(Request $request): void
     {
-        abort_unless($request->user()->isVendorAccount() && $request->user()->canManageUpahGendong(), 403);
+        abort_unless($request->user()->canManageUpahGendong(), 403);
     }
 
     private function vehicle(Request $request, int $id): Vehicle
     {
-        $this->authorizeVendor($request);
+        $this->authorizeManager($request);
 
-        return Vehicle::query()->where('vendor_id', $request->user()->vendor_id)->where('status', '!=', 'nonaktif')->findOrFail($id);
+        return MobileVendorScope::apply(Vehicle::query(), $request)->where('status', '!=', 'nonaktif')->findOrFail($id);
     }
 
     private function setting(Request $request, int $vehicle): UpahGendong

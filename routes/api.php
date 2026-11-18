@@ -142,6 +142,13 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::get('vendors/{vendor}', [DatabaseController::class, 'vendor'])->whereNumber('vendor')->name('vendors.show');
                 Route::get('vehicles', [DatabaseController::class, 'vehicles'])->name('vehicles.index');
                 Route::get('vehicles/{vehicle}', [DatabaseController::class, 'vehicle'])->whereNumber('vehicle')->name('vehicles.show');
+                Route::get('drivers', [DatabaseController::class, 'drivers'])->name('drivers.index');
+                Route::get('drivers/{driver}', [DatabaseController::class, 'driver'])->whereNumber('driver')->name('drivers.show');
+                Route::get('drivers/{driver}/sim-photo', [DatabaseController::class, 'driverSimPhoto'])->whereNumber('driver')->name('drivers.sim-photo');
+                Route::get('employees', [DatabaseController::class, 'employees'])->name('employees.index');
+                Route::get('employees/{employee}', [DatabaseController::class, 'employee'])->whereNumber('employee')->name('employees.show');
+                Route::get('employees/{employee}/photos/{document}', [DatabaseController::class, 'employeePhoto'])
+                    ->whereNumber('employee')->whereIn('document', DatabaseController::EMPLOYEE_PHOTOS)->name('employees.photo');
             });
             Route::get('vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
             Route::get('vehicles/{vehicle}', [VehicleController::class, 'show'])->whereNumber('vehicle')->name('vehicles.show');

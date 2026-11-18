@@ -16,7 +16,8 @@ use Illuminate\Validation\ValidationException;
 /**
  * Input langsung riwayat ban, aki, dan filter & oli oleh akun vendor (tanpa Form
  * Maintenance/otorisasi). Satu sumber aturan untuk aplikasi mobile dan web: isian,
- * validasi, kepemilikan nolam, dan konfirmasi password akun sendiri.
+ * validasi, kepemilikan nolam, dan konfirmasi password akun sendiri. Ubah tanggal/hapus
+ * riwayat juga dipakai Admin & SU (semua nolam, password konfirmasi).
  */
 class VendorMaintenanceInput
 {
@@ -99,7 +100,10 @@ class VendorMaintenanceInput
      */
     public function log(string $model, Request $request, int $vehicle, int $id): BanLog|AkiLog|FilterOliLog
     {
-        $unit = Vehicle::query()->where('vendor_id', $request->user()->vendor_id)->findOrFail($vehicle);
+        // Akun vendor hanya nolam vendornya; Admin & SU semua nolam.
+        $unit = Vehicle::query()
+            ->when($request->user()->isVendorAccount(), fn ($query) => $query->where('vendor_id', $request->user()->vendor_id))
+            ->findOrFail($vehicle);
         $log = $model::query()->where('vehicle_id', $unit->id)->findOrFail($id);
         MaintenanceHistoryGuard::authorize($request, $log);
 
@@ -159,7 +163,8 @@ class VendorMaintenanceInput
 
     private function confirmPassword(Request $request): void
     {
-        $request->validate(['password' => ['required', 'string', 'max:1024']], ['password.required' => 'Masukkan password akun Anda.']);
+        $request->validate(['password' => ['required', 'string', 'max:1024']], ['password.required' => $request->user()->isVendorAccount()
+            ? 'Masukkan password akun Anda.' : 'Masukkan password konfirmasi.']);
         if (! MaintenanceHistoryGuard::passwordMatches($request)) {
             throw ValidationException::withMessages(['password' => 'Password salah.']);
         }

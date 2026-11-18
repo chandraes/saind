@@ -173,6 +173,72 @@ class MobileMaintenanceInputTest extends MobileApiTestCase
         $this->assertDatabaseCount('aki_logs', 0);
     }
 
+    /** Admin, SU, dan role seluruh vendor lain: tanpa vendor, tanpa header X-Vendor-ID. */
+    private function allVendorHeaders(string $role): array
+    {
+        $user = User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => null]);
+        $this->app['auth']->forgetGuards();
+
+        return ['Accept' => 'application/json', 'X-Workspace-ID' => self::WORKSPACE,
+            'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+    }
+
+    public function test_admin_and_su_edit_and_delete_any_vendor_history_with_the_confirmation_password(): void
+    {
+        (require database_path('migrations/2023_09_20_145203_create_password_konfirmasis_table.php'))->up();
+        DB::table('password_konfirmasis')->insert(['password' => 'konfirmasi-1']);
+        foreach (['admin', 'su'] as $role) {
+            $tire = DB::table('ban_logs')->insertGetId(['vehicle_id' => 2, 'posisi_ban_id' => 1, 'merk' => 'A', 'kondisi' => 90, 'ritase' => 0, 'created_at' => now()->subDays(2)]);
+            $battery = DB::table('aki_logs')->insertGetId(['vehicle_id' => 2, 'posisi_aki_id' => 1, 'merk' => 'GS', 'kondisi' => 100, 'created_at' => now()->subDays(2)]);
+            $headers = $this->allVendorHeaders($role);
+            $this->assertTrue($this->getJson('/api/v1/me', $headers)->json('data.permissions.maintenance_history_edit'));
+            $this->assertFalse($this->getJson('/api/v1/me', $headers)->json('data.permissions.maintenance_history'));
+
+            $date = now()->subDays(10)->toDateString();
+            $this->patchJson("/api/v1/vehicles/2/tire-logs/{$tire}", ['replaced_on' => $date, 'password' => 'secret-pass'], $headers)
+                ->assertUnprocessable()->assertJsonValidationErrors(['password' => 'Password salah.']);
+            $this->patchJson("/api/v1/vehicles/2/tire-logs/{$tire}", ['replaced_on' => $date], $headers)
+                ->assertUnprocessable()->assertJsonValidationErrors(['password' => 'Masukkan password konfirmasi.']);
+            $this->patchJson("/api/v1/vehicles/2/tire-logs/{$tire}", ['replaced_on' => $date, 'password' => 'konfirmasi-1'], $headers)->assertOk();
+            $this->assertStringStartsWith($date, DB::table('ban_logs')->where('id', $tire)->value('created_at'));
+            $this->patchJson("/api/v1/vehicles/2/battery-logs/{$battery}", ['replaced_on' => $date, 'password' => 'konfirmasi-1'], $headers)->assertOk();
+            $this->assertStringStartsWith($date, DB::table('aki_logs')->where('id', $battery)->value('created_at'));
+
+            // Nolam lain atau log milik nolam lain: tidak ditemukan.
+            $this->deleteJson("/api/v1/vehicles/1/tire-logs/{$tire}", ['password' => 'konfirmasi-1'], $headers)->assertNotFound();
+            $this->deleteJson("/api/v1/vehicles/2/tire-logs/{$tire}", ['password' => 'konfirmasi-1'], $headers)->assertOk();
+            $this->deleteJson("/api/v1/vehicles/2/battery-logs/{$battery}", ['password' => 'konfirmasi-1'], $headers)->assertOk();
+            $this->assertDatabaseMissing('ban_logs', ['id' => $tire]);
+            $this->assertDatabaseMissing('aki_logs', ['id' => $battery]);
+
+            // Filter & oli juga memakai password konfirmasi di mobile dan ritase dihitung ulang.
+            $filter = DB::table('filter_oli_logs')->insertGetId(['vehicle_id' => 1, 'kategori_filter_oli_mesin_id' => 1, 'merk' => 'SHELL', 'kondisi' => 100, 'ritase' => 0, 'created_at' => now()->subDays(5)]);
+            $this->deleteJson("/api/v1/vehicles/1/filter-oil-logs/{$filter}", [], $headers)
+                ->assertUnprocessable()->assertJsonValidationErrors('password');
+            $this->patchJson("/api/v1/vehicles/1/filter-oil-logs/{$filter}", ['replaced_on' => now()->subDays(40)->toDateString(), 'password' => 'konfirmasi-1'], $headers)->assertOk();
+            $this->assertSame(2.5, (float) DB::table('filter_oli_logs')->where('id', $filter)->value('ritase'));
+            $this->deleteJson("/api/v1/vehicles/1/filter-oil-logs/{$filter}", ['password' => 'konfirmasi-1'], $headers)->assertOk();
+            $this->assertDatabaseMissing('filter_oli_logs', ['id' => $filter]);
+
+            // Catat baru tetap hanya akun vendor.
+            $this->postJson('/api/v1/vehicles/2/battery-logs', ['position_id' => 1, 'brand' => 'gs', 'condition' => 100, 'replaced_on' => now()->toDateString()], $headers)
+                ->assertForbidden();
+        }
+    }
+
+    public function test_other_all_vendor_roles_cannot_edit_history(): void
+    {
+        (require database_path('migrations/2023_09_20_145203_create_password_konfirmasis_table.php'))->up();
+        DB::table('password_konfirmasis')->insert(['password' => 'konfirmasi-1']);
+        $tire = DB::table('ban_logs')->insertGetId(['vehicle_id' => 2, 'posisi_ban_id' => 1, 'merk' => 'A', 'kondisi' => 90, 'ritase' => 0, 'created_at' => now()->subDays(2)]);
+        foreach (['operasional', 'general-manager', 'direksi'] as $role) {
+            $headers = $this->allVendorHeaders($role);
+            $this->assertFalse($this->getJson('/api/v1/me', $headers)->json('data.permissions.maintenance_history_edit'));
+            $this->deleteJson("/api/v1/vehicles/2/tire-logs/{$tire}", ['password' => 'konfirmasi-1'], $headers)->assertForbidden();
+        }
+        $this->assertDatabaseHas('ban_logs', ['id' => $tire]);
+    }
+
     private function webUser(string $role = 'vendor'): User
     {
         $user = User::factory()->create(['username' => fake()->unique()->userName(), 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => 1]);

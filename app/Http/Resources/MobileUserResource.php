@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class MobileUserResource extends JsonResource
 {
-    /** @return array{id: int, username: string, name: string, role: string, vendor_id: ?int, permissions: array{database: bool, load_notes: bool, vendor_billing: bool, all_vendors: bool, vendor_finance: bool, maintenance_history: bool, reminders: bool}} */
+    /** @return array{id: int, username: string, name: string, role: string, vendor_id: ?int, permissions: array{database: bool, load_notes: bool, vendor_billing: bool, all_vendors: bool, vendor_finance: bool, maintenance_history: bool, maintenance_history_edit: bool, reminders: bool}} */
     public function toArray(Request $request): array
     {
         return ['id' => $this->id, 'username' => $this->username, 'name' => $this->name,
@@ -23,7 +23,11 @@ class MobileUserResource extends JsonResource
                 'all_vendors' => $this->resource->seesAllVendors(),
                 'vendor_finance' => $this->resource->canViewVendorFinance(),
                 'maintenance_history' => $this->resource->isVendorAccount() && $this->resource->canManageMaintenanceHistory(),
-                'upah_gendong_settings' => $this->resource->isVendorAccount() && $this->resource->canManageUpahGendong(),
+                // Ubah tanggal/hapus riwayat ban, aki, filter & oli: vendor (nolam sendiri), Admin & SU
+                // (semua vendor, password konfirmasi). Catat baru tetap hanya vendor (maintenance_history).
+                'maintenance_history_edit' => $this->resource->canManageMaintenanceHistory(),
+                // Setting Upah Gendong: vendor & vendor-induk (nolam sendiri), Admin & SU (semua vendor).
+                'upah_gendong_settings' => $this->resource->canManageUpahGendong(),
                 // Kas UJ Ditahan per nolam: vendor-induk (nolam vendornya) & operasional (semua nolam).
                 'held_cash' => $this->resource->canViewNolamHeldCash(),
                 // Driver: menu driver, dikunci ke satu nolam (lihat driver_vehicle).

@@ -20,6 +20,16 @@ class EnsureMobileVendorContext
         'api.v1.filter-oil-monitoring.show', 'api.v1.filter-oil-history.index', 'api.v1.filter-oil-trips.index',
     ];
 
+    /**
+     * Seluruh vendor biasanya hanya membaca; Admin & SU boleh ubah tanggal/hapus riwayat
+     * maintenance dan mengatur Upah Gendong. Controller tetap memeriksa izin rinci.
+     */
+    public const ALL_VENDOR_WRITE_ROUTES = [
+        'api.v1.tire-logs.update', 'api.v1.tire-logs.destroy', 'api.v1.battery-logs.update',
+        'api.v1.battery-logs.destroy', 'api.v1.filter-oil-logs.update', 'api.v1.filter-oil-logs.destroy',
+        'api.v1.upah-gendong-settings.store', 'api.v1.upah-gendong-settings.update', 'api.v1.upah-gendong-settings.destroy',
+    ];
+
     /** Driver hanya boleh menulis untuk mengirim nota muat. */
     public const DRIVER_WRITE_ROUTES = ['api.v1.load-notes.inspect', 'api.v1.load-notes.scanned'];
 
@@ -29,8 +39,10 @@ class EnsureMobileVendorContext
             return $this->driver($request, $next);
         }
         if ($request->user()?->seesAllVendors()) {
-            // Operasional: seluruh vendor, hanya membaca (tanpa scan/kirim nota muat).
-            abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 403);
+            // Seluruh vendor: hanya membaca (tanpa scan/kirim nota muat), kecuali Admin & SU
+            // yang mengubah/menghapus riwayat maintenance.
+            abort_unless($request->isMethodSafe() || ($request->routeIs(...self::ALL_VENDOR_WRITE_ROUTES)
+                && in_array($request->user()->role, ['admin', 'su'], true)), 403);
 
             return $next($request);
         }
