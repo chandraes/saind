@@ -222,6 +222,54 @@ class LoadNoteReviewTest extends MobileApiTestCase
         $this->actingAs($user)->postJson('/billing/nota-muat/'.$note->id.'/decision', ['revision' => 1, 'reason' => 'Tidak boleh'])->assertUnprocessable();
     }
 
+    /** @return array<string, string> */
+    private function mobileHeaders(User $user): array
+    {
+        $this->app['auth']->forgetGuards();
+
+        return ['Accept' => 'application/json', 'X-Workspace-ID' => self::WORKSPACE,
+            'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
+    }
+
+    #[DataProvider('paymentEditors')]
+    public function test_mobile_administrator_reviews_corrects_adjusts_and_voids_like_the_web(string $role): void
+    {
+        $note = $this->note();
+        $actor = $this->actor($role);
+        $url = '/api/v1/load-notes/'.$note->id;
+        $this->getJson($url.'/review', $this->mobileHeaders($actor))->assertOk()
+            ->assertJsonPath('data.revision', 0)->assertJsonPath('data.status', 'draft')->assertJsonPath('data.can_adjust_payment', true)
+            ->assertJsonPath('data.options.vehicles', [['id' => 1, 'name' => '288']])->assertJsonPath('data.options.customers.0.name', 'PT Mustika Indah Permai')
+            ->assertJsonPath('data.options.rutes.0.name', 'MIP Selatan - Port')->assertJsonStructure(['data' => ['payment' => ['transfer', 'recipient', 'warnings'], 'payment_fingerprint']]);
+        $this->patchJson($url, $this->correction(), $this->mobileHeaders($actor))->assertOk()->assertJsonPath('message', 'Koreksi nota berhasil disimpan.');
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'ticket_number' => 'SJB-CORRECTED', 'net_kg' => 30220, 'revision' => 1]);
+        // Revisi kedaluwarsa ditolak sama seperti web.
+        $this->patchJson($url, $this->correction(), $this->mobileHeaders($actor))->assertUnprocessable()->assertJsonValidationErrors('revision');
+        $this->patchJson($url.'/payment', ['revision' => 1, 'transfer_amount' => 350000, 'use_system_amount' => false, 'reason' => 'Disetujui'], $this->mobileHeaders($actor))->assertOk();
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'transfer_override' => 350000, 'revision' => 2]);
+        $this->postJson($url.'/decision', ['revision' => 2, 'reason' => ' '], $this->mobileHeaders($actor))->assertUnprocessable()->assertJsonValidationErrors('reason');
+        $this->postJson($url.'/decision', ['revision' => 2, 'reason' => 'Nota tidak sesuai foto'], $this->mobileHeaders($actor))->assertOk();
+        $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'status' => 'void', 'revision' => 3]);
+        $this->assertSame(['updated', 'payment_updated', 'void'], $note->events()->reorder('id')->pluck('action')->all());
+        $this->assertTrue($note->events()->get()->every(fn ($event): bool => $event->actor_id === $actor->id));
+    }
+
+    public function test_mobile_review_actions_are_only_for_administrators_for_now(): void
+    {
+        $note = $this->note();
+        $url = '/api/v1/load-notes/'.$note->id;
+        // `user` juga peninjau di web; aksi mobile untuk role ini menunggu Fase 3.
+        foreach (['user', 'operasional', 'general-manager', 'vendor-operational'] as $role) {
+            $headers = $this->mobileHeaders($this->actor($role));
+            $this->getJson($url.'/review', $headers)->assertForbidden();
+            $this->patchJson($url, $this->correction(), $headers)->assertForbidden();
+            $this->postJson($url.'/decision', ['revision' => 0, 'reason' => 'x'], $headers)->assertForbidden();
+            $this->postJson($url.'/process', [], $headers)->assertForbidden();
+        }
+        $this->assertSame(0, $note->fresh()->revision);
+        $this->getJson($url.'/review', ['X-Workspace-ID' => self::WORKSPACE, 'Accept' => 'application/json'])->assertUnauthorized();
+    }
+
     public function test_processing_is_blocked_when_ticket_was_entered_on_the_web_meanwhile(): void
     {
         $note = $this->note();

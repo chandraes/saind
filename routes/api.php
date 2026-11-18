@@ -26,6 +26,8 @@ use App\Http\Controllers\Api\UnloadingNoteController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\VendorInvoiceController;
 use App\Http\Controllers\Api\WorkspaceController;
+use App\Http\Controllers\FormKasUangJalanController;
+use App\Http\Controllers\LoadNoteInboxController;
 use App\Http\Middleware\EnsureMobileToken;
 use App\Http\Middleware\EnsureMobileVendorContext;
 use App\Http\Middleware\EnsureMobileWorkspace;
@@ -96,6 +98,17 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 // Route::post('load-notes', [LoadNoteDraftController::class, 'store'])->middleware('throttle:30,1')->name('load-notes.store');
                 Route::get('load-notes/{note}', [LoadNoteDraftController::class, 'show'])->whereNumber('note')->name('load-notes.show');
                 Route::get('load-notes/{note}/photo', [LoadNoteDraftController::class, 'photo'])->whereNumber('note')->name('load-notes.photo');
+            });
+            // Admin & SU: peninjauan Nota Muat sama dengan web (koreksi, nominal, void, proses ke Uang Jalan).
+            // Controller, form request, policy dan service yang sama dengan billing.nota-muat.
+            Route::prefix('load-notes/{note}')->whereNumber('note')->name('load-notes.')->middleware('role:admin,su')->group(function (): void {
+                Route::get('review', [LoadNoteInboxController::class, 'review'])->name('review');
+                Route::middleware('throttle:30,1')->group(function (): void {
+                    Route::patch('/', [LoadNoteInboxController::class, 'update'])->name('update');
+                    Route::patch('payment', [LoadNoteInboxController::class, 'updatePayment'])->name('payment.update');
+                    Route::post('decision', [LoadNoteInboxController::class, 'decide'])->name('decide');
+                    Route::post('process', [FormKasUangJalanController::class, 'processNote'])->name('process');
+                });
             });
             // Eksekutif (GM & Direksi): Nota Tagihan per customer & Tagihan & Invoice (baca saja).
             Route::middleware('role:executive')->group(function (): void {

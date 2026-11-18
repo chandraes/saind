@@ -61,36 +61,70 @@ class LoadNoteInboxController extends Controller
     public function show(Request $request, LoadNoteDraft $note, LoadNotePaymentPreview $payments, MobileNotePayment $notePayments): View
     {
         abort_unless($request->user()->can('readInbox', $note), 404);
-        $canReview = $request->user()->can('reviewAny', LoadNoteDraft::class);
-        if ($note->status === 'processed') {
-            $transaction = Transaksi::whereKey($note->transaksi_id)
-                ->whereHas('kas_uang_jalan', fn ($query) => $query->where('vendor_id', $note->vendor_id))->first();
-            $final = $transaction ? $notePayments->finalDetail($transaction) : null;
-            $money = $final['payment'] ?? null;
-            $destination = $final['transfer_destination'] ?? [];
-            $paymentPreview = [
-                'is_final' => true, 'is_custom' => false, 'system_transfer' => null,
-                'held' => ($money['sparepart_withheld'] ?? 0) + ($money['tyre_withheld'] ?? 0) > 0,
-                'transfer' => $money['net_amount'] ?? null, 'gross' => $money['gross_amount'] ?? null,
-                'sparepart' => $money['sparepart_withheld'] ?? null, 'ban' => $money['tyre_withheld'] ?? null,
-                'driver' => $note->driver_name, 'driver_phone' => null, 'account_source' => 'transaction',
-                'recipient' => $destination['recipient_name'] ?? null, 'bank' => $destination['bank'] ?? null,
-                'account' => $destination['account_number'] ?? null,
-                'warnings' => $money === null ? ['Rincian uang jalan transaksi belum tersedia. Hubungi admin untuk pemeriksaan.'] : [],
-            ];
-        } else {
-            $paymentPreview = $payments->forNote($note);
-        }
+        $paymentPreview = $this->paymentPreview($note, $payments, $notePayments);
 
         return view('billing.nota-muat.show', [
             'paymentPreview' => $paymentPreview,
             'paymentFingerprint' => $payments->confirmationHash($note, $paymentPreview),
             'returnFilters' => $request->only(['search', 'vendor_id', 'page']),
             'note' => $note->load(['vendor:id,nama', 'creator:id,name', 'customer:id,nama', 'rute:id,nama', 'events.actor:id,name']),
-            'vehicles' => $canReview ? Vehicle::where('vendor_id', $note->vendor_id)->select(['id', 'nomor_lambung'])->orderBy('nomor_lambung')->get() : collect(),
-            'customers' => $canReview ? Customer::where('status', 1)->select(['id', 'nama'])->orderBy('nama')->get() : collect(),
-            'rutes' => $canReview ? Rute::select(['id', 'nama'])->orderBy('nama')->get() : collect(),
+            ...($request->user()->can('reviewAny', LoadNoteDraft::class) ? $this->reviewOptions($note) : ['vehicles' => collect(), 'customers' => collect(), 'rutes' => collect()]),
         ]);
+    }
+
+    /**
+     * Data peninjauan untuk aplikasi mobile (Admin/SU): sama dengan halaman nota web, yaitu
+     * revisi, pratinjau pembayaran beserta fingerprint konfirmasi, dan pilihan koreksi.
+     */
+    public function review(Request $request, LoadNoteDraft $note, LoadNotePaymentPreview $payments, MobileNotePayment $notePayments): JsonResponse
+    {
+        abort_unless($request->user()->can('readInbox', $note), 404);
+        $this->authorize('review', $note);
+        $preview = $this->paymentPreview($note, $payments, $notePayments);
+        $options = $this->reviewOptions($note);
+        $pick = fn ($rows): array => $rows->map(fn ($row): array => ['id' => $row->id, 'name' => (string) ($row->nomor_lambung ?? $row->nama)])->all();
+
+        return response()->json(['data' => [
+            'id' => $note->id, 'status' => $note->status, 'revision' => $note->revision,
+            'can_adjust_payment' => $request->user()->can('adjustPayment', $note),
+            'payment' => collect($preview)->only(['is_final', 'is_custom', 'system_transfer', 'held', 'transfer', 'gross', 'sparepart', 'ban',
+                'driver', 'recipient', 'bank', 'account', 'warnings'])->all(),
+            'payment_fingerprint' => $payments->confirmationHash($note, $preview),
+            'options' => ['vehicles' => $pick($options['vehicles']), 'customers' => $pick($options['customers']), 'rutes' => $pick($options['rutes'])],
+        ]]);
+    }
+
+    private function paymentPreview(LoadNoteDraft $note, LoadNotePaymentPreview $payments, MobileNotePayment $notePayments): array
+    {
+        if ($note->status !== 'processed') {
+            return $payments->forNote($note);
+        }
+        $transaction = Transaksi::whereKey($note->transaksi_id)
+            ->whereHas('kas_uang_jalan', fn ($query) => $query->where('vendor_id', $note->vendor_id))->first();
+        $final = $transaction ? $notePayments->finalDetail($transaction) : null;
+        $money = $final['payment'] ?? null;
+        $destination = $final['transfer_destination'] ?? [];
+
+        return [
+            'is_final' => true, 'is_custom' => false, 'system_transfer' => null,
+            'held' => ($money['sparepart_withheld'] ?? 0) + ($money['tyre_withheld'] ?? 0) > 0,
+            'transfer' => $money['net_amount'] ?? null, 'gross' => $money['gross_amount'] ?? null,
+            'sparepart' => $money['sparepart_withheld'] ?? null, 'ban' => $money['tyre_withheld'] ?? null,
+            'driver' => $note->driver_name, 'driver_phone' => null, 'account_source' => 'transaction',
+            'recipient' => $destination['recipient_name'] ?? null, 'bank' => $destination['bank'] ?? null,
+            'account' => $destination['account_number'] ?? null,
+            'warnings' => $money === null ? ['Rincian uang jalan transaksi belum tersedia. Hubungi admin untuk pemeriksaan.'] : [],
+        ];
+    }
+
+    /** Pilihan koreksi nota: nolam vendor nota, customer aktif, dan rute. */
+    private function reviewOptions(LoadNoteDraft $note): array
+    {
+        return [
+            'vehicles' => Vehicle::where('vendor_id', $note->vendor_id)->select(['id', 'nomor_lambung'])->orderBy('nomor_lambung')->get(),
+            'customers' => Customer::where('status', 1)->select(['id', 'nama'])->orderBy('nama')->get(),
+            'rutes' => Rute::select(['id', 'nama'])->orderBy('nama')->get(),
+        ];
     }
 
     public function update(UpdateLoadNoteRequest $request, LoadNoteDraft $note, LoadNoteReviewService $service): JsonResponse

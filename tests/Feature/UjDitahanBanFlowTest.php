@@ -15,6 +15,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
+use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
@@ -503,6 +504,34 @@ class UjDitahanBanFlowTest extends TestCase
         $this->assertDatabaseCount('kas_uang_jalans', 1);
         $this->assertDatabaseCount('load_note_events', 0);
         $this->assertDatabaseCount('uj_ditahan_bans', 0);
+    }
+
+    #[TestWith(['admin'])]
+    #[TestWith(['su'])]
+    public function test_mobile_administrator_processes_the_note_through_the_web_flow_with_safe_retry(string $role): void
+    {
+        [$note, $payload] = $this->directNote();
+        $workspace = 'b1bca759-224f-4f48-bbe7-76904c3434fa';
+        config(['mobile.workspace_id' => $workspace, 'mobile.workspace_name' => 'SAIND', 'mobile.company_name' => 'DSGroup']);
+        if (! Schema::hasTable('settings')) {
+            Schema::create('settings', function (Blueprint $table): void {
+                $table->id();
+                $table->string('key')->unique();
+                $table->text('value')->nullable();
+            });
+        }
+        $headers = ['Accept' => 'application/json', 'X-Workspace-ID' => $workspace, 'Authorization' => 'Bearer mobile-test'];
+        Sanctum::actingAs(User::factory()->make(['id' => 1, 'role' => $role, 'password' => 'password']), ['workspace:'.$workspace]);
+        $url = '/api/v1/load-notes/'.$note->id;
+        $this->getJson($url.'/review', $headers)->assertOk()->assertJsonPath('data.payment_fingerprint', $payload['payment_fingerprint'])
+            ->assertJsonPath('data.payment.transfer', 350000)->assertJsonPath('data.payment.account', '123456789');
+        $this->postJson($url.'/process', [...$payload, 'nominal_transaksi' => '1'], $headers)->assertOk();
+        $this->assertDatabaseHas('kas_uang_jalans', ['nominal_transaksi' => 420000, 'no_rekening' => '123456789']);
+        $this->assertSame('processed', $note->fresh()->status);
+        // Ketukan ulang dari aplikasi mengembalikan transaksi yang sama tanpa uang keluar lagi.
+        $this->postJson($url.'/process', $payload, $headers)->assertOk()->assertJsonPath('data.transaction_id', $note->fresh()->transaksi_id);
+        $this->assertDatabaseCount('kas_uang_jalans', 2);
+        $this->assertDatabaseCount('load_note_events', 1);
     }
 
     public function test_direct_processing_keeps_insufficient_balance_and_role_restrictions(): void
