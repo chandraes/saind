@@ -167,6 +167,17 @@ class HrdAttendanceDeductionTest extends MobileApiTestCase
         $this->getJson('/api/v1/attendance-deductions/'.$this->late->id, $this->headers($this->hrd))->assertUnprocessable();
     }
 
+    #[DataProvider('administratorRoles')]
+    public function test_administrator_reads_payroll_on_mobile_but_not_the_hrd_menu(string $role): void
+    {
+        DB::table('bpjs_health_minimums')->insert(['year' => 2026, 'minimum_wage' => 1, 'basis' => 'UMK', 'reference' => 'Fixture pengujian']);
+        $headers = $this->headers(User::factory()->create(['username' => $role.'-test', 'role' => $role, 'password' => 'secret-pass']));
+        $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.payroll', true)->assertJsonPath('data.permissions.attendance_deductions', false);
+        $this->getJson('/api/v1/payroll', $headers)->assertOk()->assertJsonPath('data.1.nama', 'Budi Terlambat')->assertJsonPath('data.1.potongan_absensi', 200000);
+        $this->getJson('/api/v1/attendance-deductions/'.$this->late->id.'?bulan=10&tahun=2026', $headers)->assertOk()->assertJsonPath('data.detail.amount', 200000);
+        $this->getJson('/api/v1/attendance-deductions', $headers)->assertForbidden();
+    }
+
     #[DataProvider('executiveRoles')]
     public function test_executive_reads_the_full_payroll_table_with_deduction_detail(string $role): void
     {

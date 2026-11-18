@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class MobileApiFoundationTest extends MobileApiTestCase
 {
@@ -292,6 +293,36 @@ class MobileApiFoundationTest extends MobileApiTestCase
             $this->getJson('/api/v1/me', $headers)
                 ->assertOk()->assertJsonPath('data.permissions.database', $allowed);
         }
+    }
+
+    #[DataProvider('administratorRoles')]
+    public function test_administrator_reads_the_executive_menus_on_mobile_read_only(string $role): void
+    {
+        $user = $this->user(null, $role);
+        DB::table('vendors')->insert(['id' => 1, 'nama' => 'Vendor 1']);
+        DB::table('vehicles')->insert(['id' => 1, 'vendor_id' => 1, 'nomor_lambung' => '101']);
+        $expected = ['database' => true, 'vendor_billing' => true, 'all_vendors' => true, 'vendor_finance' => true, 'held_cash' => true,
+            'customer_bills' => true, 'payroll' => true, 'maintenance_history' => false, 'upah_gendong_settings' => false,
+            'driver' => false, 'attendance_deductions' => false];
+        $login = $this->postJson('/api/v1/login', ['username' => 'budi', 'password' => 'secret-pass', 'device_name' => 'HP Admin'],
+            ['X-Workspace-ID' => self::WORKSPACE])->assertOk();
+        $this->app['auth']->forgetGuards();
+        $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$login->json('data.token')];
+        $me = $this->getJson('/api/v1/me', $headers)->assertOk();
+        foreach ($expected as $permission => $granted) {
+            $login->assertJsonPath('data.user.permissions.'.$permission, $granted);
+            $me->assertJsonPath('data.permissions.'.$permission, $granted);
+        }
+        // Fase 1 baca saja: penulisan di konteks vendor ditolak.
+        $this->postJson('/api/v1/vehicles/1/upah-gendong-setting', [], $headers)->assertForbidden();
+        $this->deleteJson('/api/v1/vehicles/1/upah-gendong-setting', [], $headers)->assertForbidden();
+        // Di web (tanpa token mobile) admin/su tetap memakai menu admin.
+        $this->app['auth']->forgetGuards();
+        $web = $user->fresh();
+        $this->assertFalse($web->readsExecutiveMenus());
+        $this->assertFalse($web->usesVendorMenus());
+        $this->assertFalse($web->canViewVendorFinance());
+        $this->assertFalse($web->canViewNolamHeldCash());
     }
 
     public function test_database_directory_requires_a_token_and_matching_workspace(): void

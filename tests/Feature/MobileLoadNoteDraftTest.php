@@ -140,13 +140,24 @@ class MobileLoadNoteDraftTest extends MobileApiTestCase
     public function test_other_roles_and_unauthenticated_requests_are_refused(): void
     {
         $this->getJson('/api/v1/load-notes', ['X-Workspace-ID' => self::WORKSPACE])->assertUnauthorized();
-        foreach (['admin', 'su', 'user', 'asisten-user'] as $role) {
+        foreach (['user', 'asisten-user'] as $role) {
             $headers = $this->headers($this->actor(1, $role));
             $this->getJson('/api/v1/load-notes', $headers)->assertForbidden();
             $this->getJson('/api/v1/load-notes/1', $headers)->assertForbidden();
             $this->getJson('/api/v1/load-notes/1/photo', $headers)->assertForbidden();
             $this->postJson('/api/v1/load-notes', [], $headers)->assertForbidden();
             $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.load_notes', false);
+        }
+    }
+
+    public function test_administrator_reads_load_notes_of_every_vendor_without_sending(): void
+    {
+        foreach (['admin', 'su'] as $role) {
+            $headers = $this->headers($this->actor(1, $role));
+            $this->getJson('/api/v1/load-notes', $headers)->assertOk();
+            $this->postJson('/api/v1/load-notes/scanned', [], $headers)->assertForbidden();
+            $this->postJson('/api/v1/load-notes/inspect', [], $headers)->assertForbidden();
+            $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.load_notes', false)->assertJsonPath('data.permissions.all_vendors', true);
         }
     }
 

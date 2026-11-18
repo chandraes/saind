@@ -30,10 +30,10 @@ class MobileUserResource extends JsonResource
                 'driver' => $this->resource->isDriver(),
                 // HRD: hanya menu Potongan Absensi (baca saja).
                 'attendance_deductions' => $this->resource->isHrd(),
-                // Eksekutif (GM & Direksi): Nota Tagihan per customer (baca saja).
-                'customer_bills' => $this->resource->isExecutive(),
-                // Eksekutif (GM & Direksi): Gaji Karyawan (seluruh kolom Form Gaji, baca saja).
-                'payroll' => $this->resource->isExecutive(),
+                // Eksekutif (GM & Direksi) serta Admin/SU: Nota Tagihan per customer (baca saja).
+                'customer_bills' => $this->resource->readsExecutiveMenus(),
+                // Eksekutif (GM & Direksi) serta Admin/SU: Gaji Karyawan (seluruh kolom Form Gaji, baca saja).
+                'payroll' => $this->resource->readsExecutiveMenus(),
                 // Dashboard Pengingat: role yang punya minimal satu tabel pengingat.
                 'reminders' => ReminderRegistry::for($this->resource) !== []],
             'driver_vehicle' => $this->when($this->resource->isDriver(), fn (): ?array => ($vehicle = $this->resource->activeDriverVehicle())

@@ -25,7 +25,9 @@ class RoleChecker
         if (in_array('operasional', $roles, true) || in_array('executive', $roles, true)) {
             array_push($roles, ...User::EXECUTIVE_ROLES);
         }
-        if (! in_array($request->user()->role, $roles)) {
+        // Admin & SU di aplikasi mobile ikut membaca menu eksekutif (lihat User::isMobileAdministrator()).
+        $mobileAdministrator = in_array('executive', $roles, true) && $request->user()->isMobileAdministrator();
+        if (! $mobileAdministrator && ! in_array($request->user()->role, $roles)) {
             abort(403);
         }
 

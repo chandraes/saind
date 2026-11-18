@@ -33,6 +33,8 @@ class AuthController extends BaseController
         $identity = $workspace->identity();
         $expiresAt = now()->addMinutes(max(1, (int) config('mobile.token_expiration_minutes')));
         $token = $user->createToken($data['device_name'], ['workspace:'.$identity['id']], $expiresAt);
+        // Izin di respons login dihitung untuk token mobile ini (lihat User::isMobileAdministrator()).
+        $user->withAccessToken($token->accessToken);
 
         return $this->sendResponse([
             'token' => $token->plainTextToken, 'token_type' => 'Bearer', 'expires_at' => $expiresAt->toIso8601String(),

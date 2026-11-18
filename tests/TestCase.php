@@ -21,6 +21,18 @@ abstract class TestCase extends BaseTestCase
         return ['general manager' => ['general-manager'], 'direksi' => ['direksi']];
     }
 
+    /** Admin & SU: di aplikasi mobile membaca menu eksekutif (lihat User::isMobileAdministrator()). */
+    public static function administratorRoles(): array
+    {
+        return ['admin' => ['admin'], 'su' => ['su']];
+    }
+
+    /** Pembaca menu eksekutif di aplikasi mobile: eksekutif serta Admin & SU. */
+    public static function mobileExecutiveMenuRoles(): array
+    {
+        return [...self::executiveRoles(), ...self::administratorRoles()];
+    }
+
     protected function tearDown(): void
     {
         $this->clearGuardableColumns();

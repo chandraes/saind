@@ -147,6 +147,15 @@ class NolamHeldCashTest extends MobileApiTestCase
         $this->actingAs($user)->get(route('vendor-operational.uj-ditahan-ban'))->assertForbidden();
     }
 
+    #[TestWith(['admin'])]
+    #[TestWith(['su'])]
+    public function test_administrator_reads_every_nolam_held_cash_on_mobile(string $role): void
+    {
+        $headers = $this->headers(User::factory()->create(['username' => $role, 'password' => 'secret-pass', 'role' => $role]));
+        $this->getJson('/api/v1/held-cash/vehicles', $headers)->assertOk()->assertJsonPath('meta.total', 3);
+        $this->getJson('/api/v1/vehicles/3/held-cash/sparepart?month=10&year=2026', $headers)->assertOk()->assertJsonPath('data.0.description', 'Mutasi Nolam Lain');
+    }
+
     public function test_me_grants_held_cash_to_induk_and_operasional(): void
     {
         $this->getJson('/api/v1/me', $this->headers($this->induk))->assertJsonPath('data.permissions.held_cash', true);

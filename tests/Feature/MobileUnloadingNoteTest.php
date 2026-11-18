@@ -313,7 +313,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         foreach (['/api/v1/unloading-notes', '/api/v1/unloading-notes/'.$id] as $url) {
             $this->app['auth']->forgetGuards();
             $this->getJson($url, ['X-Workspace-ID' => self::WORKSPACE])->assertUnauthorized();
-            $this->getJson($url, $this->headers($this->actor(1, 'admin')))->assertForbidden();
+            $this->getJson($url, $this->headers($this->actor(1, 'user')))->assertForbidden();
             $this->app['auth']->forgetGuards();
             $this->getJson($url, array_replace($headers, ['X-Vendor-ID' => '2']))->assertConflict();
             $this->app['auth']->forgetGuards();

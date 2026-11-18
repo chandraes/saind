@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class User extends Authenticatable
 {
@@ -66,6 +67,8 @@ class User extends Authenticatable
      */
     public const EXECUTIVE_ROLES = ['general-manager', 'direksi'];
 
+    public const ADMINISTRATOR_ROLES = ['admin', 'su'];
+
     public function isVendorAccount(): bool
     {
         return in_array($this->role, self::VENDOR_ACCOUNT_ROLES, true);
@@ -102,10 +105,25 @@ class User extends Authenticatable
         return in_array($this->role, self::EXECUTIVE_ROLES, true);
     }
 
-    /** Membaca data seluruh vendor (filter vendor), baca saja: operasional dan eksekutif. */
+    /**
+     * Admin & SU yang memakai aplikasi mobile (token Sanctum): membaca menu eksekutif, baca saja.
+     * Hanya berlaku di API mobile; di web perilaku admin/su tidak berubah.
+     */
+    public function isMobileAdministrator(): bool
+    {
+        return in_array($this->role, self::ADMINISTRATOR_ROLES, true) && $this->currentAccessToken() instanceof PersonalAccessToken;
+    }
+
+    /** Menu eksekutif (seluruh vendor beserta nilai uang, Nota Tagihan, Tagihan & Invoice, Gaji): eksekutif, dan Admin/SU di mobile. */
+    public function readsExecutiveMenus(): bool
+    {
+        return $this->isExecutive() || $this->isMobileAdministrator();
+    }
+
+    /** Membaca data seluruh vendor (filter vendor), baca saja: operasional dan menu eksekutif. */
     public function seesAllVendors(): bool
     {
-        return $this->isOperasional() || $this->isExecutive();
+        return $this->isOperasional() || $this->readsExecutiveMenus();
     }
 
     /** Akun yang memakai menu vendor-operational: akun vendor dan operasional (semua vendor). */
@@ -162,13 +180,13 @@ class User extends Authenticatable
     /** Vendor & vendor-induk melihat keuangannya sendiri, eksekutif seluruh vendor; vendor operational hanya uang jalan. */
     public function canViewVendorFinance(): bool
     {
-        return $this->isVendorOwner() || $this->isExecutive();
+        return $this->isVendorOwner() || $this->readsExecutiveMenus();
     }
 
     /** Kas UJ Ditahan per nolam (baca saja): vendor-induk untuk nolam vendornya, operasional semua nolam. */
     public function canViewNolamHeldCash(): bool
     {
-        return in_array($this->role, ['vendor-induk', 'operasional'], true) || $this->isExecutive();
+        return in_array($this->role, ['vendor-induk', 'operasional'], true) || $this->readsExecutiveMenus();
     }
 
     /**
