@@ -30,17 +30,13 @@ use App\Models\Sponsor;
 use App\Models\Transaksi;
 use App\Models\TransaksiAdditional;
 use App\Models\UjDitahan;
-use App\Models\UjDitahanBan;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
-use App\Services\KasBesarService;
-use App\Services\KasVendorService;
+use App\Services\MaintenanceApproval;
+use App\Services\MaintenanceAuthorizationQueue;
 use App\Services\MaintenanceAuthorizationService;
 use App\Services\MaintenanceBanUjDitahanService;
-use App\Services\MaintenanceKasBesarWhatsAppService;
-use App\Services\MaintenanceLogWriter;
-use App\Services\MaintenanceUjDitahanService;
 use App\Services\PayrollService;
 use App\Services\UjDitahanWhatsAppService;
 use App\Support\HeldCashArea;
@@ -347,118 +343,34 @@ class BillingController extends Controller
         return redirect()->route('billing.form-maintenance.ban-luar')->with('success', 'Penggantian ban berhasil dikirim untuk otorisasi admin.');
     }
 
-    public function otorisasi_maintenance()
+    public function otorisasi_maintenance(MaintenanceAuthorizationQueue $queue)
     {
-        $invoices = BanGantiInvoice::with(['vehicle.vendor', 'details.posisiBan'])
-            ->where('status', BanGantiInvoice::STATUS_PENDING)
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        $banBalances = UjDitahanBan::whereIn('vehicle_id', $invoices->pluck('vehicle_id'))->where('saldo', '>', 0)->groupBy('vehicle_id')->selectRaw('vehicle_id, SUM(saldo) as total')->pluck('total', 'vehicle_id');
-
-        // Cek ritase ban lama yang sedang terpasang untuk tiap invoice
+        $invoices = $queue->pending('tire')->get();
+        $info = $queue->describe('tire', $invoices);
         foreach ($invoices as $invoice) {
-            $invoice->saldo_uj_ditahan_ban = (int) ($banBalances[$invoice->vehicle_id] ?? 0);
-            $lowRitaseWarnings = [];
-            foreach ($invoice->details as $detail) {
-                // Log ban aktif saat ini di posisi tersebut
-                $banAktif = BanLog::where('vehicle_id', $invoice->vehicle_id)
-                    ->where('posisi_ban_id', $detail->posisi_ban_id)
-                    ->orderBy('id', 'desc')
-                    ->first();
-
-                if ($banAktif && $banAktif->ritase < 80) {
-                    $lowRitaseWarnings[] = [
-                        'posisi' => $detail->posisiBan->nama ?? ('Posisi '.$detail->posisi_ban_id),
-                        'merk' => $banAktif->merk ?? '-',
-                        'no_seri' => $banAktif->no_seri ?? '-',
-                        'ritase' => $banAktif->ritase ?? 0,
-                    ];
-                }
-            }
-            // Inject variabel temporer tanpa simpan ke DB
-            $invoice->low_ritase_warnings = $lowRitaseWarnings;
+            $invoice->saldo_uj_ditahan_ban = $info[$invoice->id]['balance'];
+            $invoice->low_ritase_warnings = array_map(fn (array $warning): array => [
+                'posisi' => $warning['label'], 'merk' => $warning['merk'], 'no_seri' => $warning['no_seri'], 'ritase' => $warning['ritase'],
+            ], $info[$invoice->id]['warnings']);
         }
 
         return view('billing.otorisasi-maintenance.index', compact('invoices'));
     }
 
-    public function otorisasi_maintenance_ban_luar_approve(int $id): RedirectResponse
+    public function otorisasi_maintenance_ban_luar_approve(Request $request, int $id): RedirectResponse
     {
-        $kasBesarService = app(KasBesarService::class);
-        $kasVendorService = app(KasVendorService::class);
-
-        abort_unless(in_array(Auth::user()->role, ['admin', 'su'], true), 403);
+        abort_unless(in_array($request->user()->role, ['admin', 'su'], true), 403);
+        $approval = app(MaintenanceApproval::class);
         try {
-            DB::beginTransaction();
-            $invoice = BanGantiInvoice::with(['vehicle', 'details'])->lockForUpdate()->findOrFail($id);
-            if ($invoice->status !== BanGantiInvoice::STATUS_PENDING) {
-                throw ValidationException::withMessages(['invoice' => 'Invoice ini sudah diproses sebelumnya.']);
-            }
-            Vehicle::whereKey($invoice->vehicle_id)->lockForUpdate()->firstOrFail();
-            if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_UJ_DITAHAN_BAN) {
-                app(MaintenanceBanUjDitahanService::class)->debit($invoice);
-            }
-
-            $vehicleId = $invoice->vehicle_id;
-            $vehicleInfo = $invoice->vehicle;
-
-            // Histori ban dicatat lewat writer bersama (dipakai juga input langsung akun vendor).
-            foreach ($invoice->details as $item) {
-                $banLogTujuan = app(MaintenanceLogWriter::class)->tire($vehicleId, $item->posisi_ban_id, $item->sumber_ban,
-                    $item->merk, $item->no_seri, $item->kondisi, $item->created_at, (float) ($item->ritase ?? 0));
-                $item->update(['ban_log_id' => $banLogTujuan->id]);
-            }
-
-            // Eksekusi Pemotongan Kas & Vendor
-            $nominalBersih = intval($invoice->total_nominal);
-            $kb = null;
-
-            if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_KAS_BESAR && $nominalBersih > 0) {
-                $kb = $kasBesarService->potongSaldo([
-                    'nominal_transaksi' => $nominalBersih,
-                    'uraian' => 'Penggantian Ban Luar Unit '.$vehicleInfo->nomor_lambung,
-                    'bank' => $invoice->nama_bank,
-                    'ban_ganti_invoice_id' => $invoice->id,
-                    'no_rekening' => $invoice->nomor_rekening,
-                    'transfer_ke' => $invoice->nama_rekening,
-                ]);
-
-                if ($vehicleInfo->vendor_id) {
-                    $kasVendorService->tambahHutang([
-                        'vendor_id' => $vehicleInfo->vendor_id,
-                        'vehicle_id' => $vehicleId,
-                        'nominal_transaksi' => $nominalBersih,
-                        'ban_ganti_invoice_id' => $invoice->id,
-                        'uraian' => 'Penggantian Ban ('.$invoice->no_invoice.')',
-                    ]);
-                }
-            }
-
-            $invoice->update(['status' => BanGantiInvoice::STATUS_APPROVED]);
-
-            DB::commit();
-
-            if ($invoice->pembayaran === BanGantiInvoice::PEMBAYARAN_UJ_DITAHAN_BAN) {
-                try {
-                    app(MaintenanceBanUjDitahanService::class)->notify($invoice);
-                } catch (\Throwable $notificationError) {
-                    report($notificationError);
-
-                    return back()->with('success', 'Otorisasi berhasil. Saldo Ban dipotong dan log diperbarui.')->with('warning', 'Notifikasi WA belum berhasil dikirim. Jangan ulangi persetujuan.');
-                }
-            }
-            if ($kb) {
-                $this->kirimWaNotifikasi($kb, $invoice->vehicle?->vendor);
-            }
-
-            return redirect()->back()->with('success', 'Otorisasi berhasil. Log Ban diperbarui.');
-
+            [$invoice, $cash] = $approval->approve('tire', $id, $request->user());
         } catch (\Throwable $th) {
-            DB::rollBack();
-
             return redirect()->back()->with('error', 'Gagal memproses otorisasi: '.$th->getMessage());
         }
+        if (! $approval->notify('tire', $invoice, $cash)) {
+            return back()->with('success', 'Otorisasi berhasil. Saldo Ban dipotong dan log diperbarui.')->with('warning', 'Notifikasi WA belum berhasil dikirim. Jangan ulangi persetujuan.');
+        }
+
+        return redirect()->back()->with('success', 'Otorisasi berhasil. Log Ban diperbarui.');
     }
 
     public function update_detail_item(Request $request, $detailId)
@@ -490,36 +402,11 @@ class BillingController extends Controller
         return redirect()->back()->with('success', 'Detail ban baru berhasil diperbarui.');
     }
 
-    private function kirimWaNotifikasiAki($kb, ?Vendor $vendor = null)
+    public function otorisasi_maintenance_ban_luar_reject(Request $request, int $id): RedirectResponse
     {
-        $this->notifyMaintenanceCash($kb, 'AKI', $vendor);
-    }
-
-    private function kirimWaNotifikasi($kb, ?Vendor $vendor = null)
-    {
-        $this->notifyMaintenanceCash($kb, 'BAN', $vendor);
-    }
-
-    private function notifyMaintenanceCash(KasBesar $cash, string $maintenance, ?Vendor $vendor = null): void
-    {
+        abort_unless(in_array($request->user()->role, ['admin', 'su'], true), 403);
         try {
-            app(MaintenanceKasBesarWhatsAppService::class)->notify($cash, $maintenance, $vendor);
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
-    }
-
-    public function otorisasi_maintenance_ban_luar_reject(int $id): RedirectResponse
-    {
-        abort_unless(in_array(Auth::user()->role, ['admin', 'su'], true), 403);
-        try {
-            DB::transaction(function () use ($id): void {
-                $invoice = BanGantiInvoice::whereKey($id)->lockForUpdate()->firstOrFail();
-                if ($invoice->status !== BanGantiInvoice::STATUS_PENDING) {
-                    throw ValidationException::withMessages(['invoice' => 'Invoice ini sudah diproses sebelumnya.']);
-                }
-                $invoice->update(['status' => BanGantiInvoice::STATUS_REJECTED]);
-            });
+            app(MaintenanceApproval::class)->reject('tire', $id, $request->user());
         } catch (ValidationException $exception) {
             return back()->with('error', $exception->getMessage());
         }
@@ -587,40 +474,9 @@ class BillingController extends Controller
     public function otorisasi_maintenance_aki_approve(Request $request, int $id): RedirectResponse
     {
         abort_unless(in_array($request->user()->role, ['admin', 'su'], true), 403);
+        $approval = app(MaintenanceApproval::class);
         try {
-            [$kb, $invoice] = DB::transaction(function () use ($request, $id) {
-                $invoice = AkiGantiInvoice::with(['vehicle', 'details'])->lockForUpdate()->findOrFail($id);
-                if ($invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
-                    throw ValidationException::withMessages(['invoice' => 'Invoice ini sudah diproses sebelumnya.']);
-                }
-                if ($invoice->pembayaran === AkiGantiInvoice::PEMBAYARAN_UJ_DITAHAN) {
-                    app(MaintenanceUjDitahanService::class)->debit($invoice);
-                }
-                foreach ($invoice->details as $item) {
-                    $log = app(MaintenanceLogWriter::class)->battery($invoice->vehicle_id, $item->posisi_aki_id,
-                        $item->merk, $item->no_seri, $item->kondisi, $item->created_at);
-                    $item->update(['aki_log_id' => $log->id]);
-                }
-                $kb = null;
-                if ($invoice->pembayaran === AkiGantiInvoice::PEMBAYARAN_KAS_BESAR) {
-                    $kb = app(KasBesarService::class)->potongSaldo([
-                        'nominal_transaksi' => (int) $invoice->total_nominal,
-                        'uraian' => 'Penggantian Aki Unit '.$invoice->vehicle->nomor_lambung,
-                        'bank' => $invoice->nama_bank, 'aki_ganti_invoice_id' => $invoice->id,
-                        'no_rekening' => $invoice->nomor_rekening, 'transfer_ke' => $invoice->nama_rekening,
-                    ]);
-                    if ($invoice->vehicle->vendor_id) {
-                        app(KasVendorService::class)->tambahHutang([
-                            'vendor_id' => $invoice->vehicle->vendor_id, 'vehicle_id' => $invoice->vehicle_id,
-                            'nominal_transaksi' => (int) $invoice->total_nominal, 'aki_ganti_invoice_id' => $invoice->id,
-                            'uraian' => 'Penggantian Aki ('.$invoice->no_invoice.')',
-                        ]);
-                    }
-                }
-                $invoice->update(['status' => AkiGantiInvoice::STATUS_APPROVED, 'authorized_by' => $request->user()->id, 'authorized_at' => now()]);
-
-                return [$kb, $invoice];
-            }, 3);
+            [$invoice, $cash] = $approval->approve('battery', $id, $request->user());
         } catch (ValidationException $exception) {
             return back()->with('error', $exception->validator->errors()->first());
         } catch (ModelNotFoundException $exception) {
@@ -630,18 +486,9 @@ class BillingController extends Controller
 
             return back()->with('error', 'Otorisasi gagal. Periksa saldo pembayaran dan coba kembali.');
         }
-        if ($invoice->pembayaran === AkiGantiInvoice::PEMBAYARAN_UJ_DITAHAN) {
-            try {
-                app(MaintenanceUjDitahanService::class)->notify($invoice);
-            } catch (\Throwable $exception) {
-                report($exception);
-
-                return back()->with('success', 'Otorisasi berhasil. Histori aki dan pembayaran telah dicatat.')
-                    ->with('warning', 'Sebagian notifikasi WA belum berhasil dikirim. Transaksi sudah tersimpan; jangan ulangi persetujuan.');
-            }
-        }
-        if ($kb) {
-            $this->kirimWaNotifikasiAki($kb, $invoice->vehicle?->vendor);
+        if (! $approval->notify('battery', $invoice, $cash)) {
+            return back()->with('success', 'Otorisasi berhasil. Histori aki dan pembayaran telah dicatat.')
+                ->with('warning', 'Sebagian notifikasi WA belum berhasil dikirim. Transaksi sudah tersimpan; jangan ulangi persetujuan.');
         }
 
         return back()->with('success', 'Otorisasi berhasil. Histori aki dan pembayaran telah dicatat.');
@@ -651,13 +498,7 @@ class BillingController extends Controller
     {
         abort_unless(in_array($request->user()->role, ['admin', 'su'], true), 403);
         try {
-            DB::transaction(function () use ($request, $id): void {
-                $invoice = AkiGantiInvoice::whereKey($id)->lockForUpdate()->firstOrFail();
-                if ($invoice->status !== AkiGantiInvoice::STATUS_PENDING) {
-                    throw ValidationException::withMessages(['invoice' => 'Invoice ini sudah diproses sebelumnya.']);
-                }
-                $invoice->update(['status' => AkiGantiInvoice::STATUS_REJECTED, 'authorized_by' => $request->user()->id, 'authorized_at' => now()]);
-            }, 3);
+            app(MaintenanceApproval::class)->reject('battery', $id, $request->user());
         } catch (ValidationException $exception) {
             return back()->with('error', $exception->validator->errors()->first());
         }

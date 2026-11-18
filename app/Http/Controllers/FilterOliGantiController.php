@@ -13,11 +13,8 @@ use App\Models\UjDitahanDetail;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\FilterOliRitaseService;
-use App\Services\KasBesarService;
-use App\Services\KasVendorService;
+use App\Services\MaintenanceApproval;
 use App\Services\MaintenanceAuthorizationService;
-use App\Services\MaintenanceKasBesarWhatsAppService;
-use App\Services\MaintenanceLogWriter;
 use App\Services\MaintenanceUjDitahanService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -220,45 +217,10 @@ class FilterOliGantiController extends Controller
         return back()->with('success', 'Detail penggantian berhasil diperbarui.');
     }
 
-    public function approve(Request $request, int $id, KasBesarService $kasBesar, KasVendorService $kasVendor): RedirectResponse
+    public function approve(Request $request, int $id, MaintenanceApproval $approval): RedirectResponse
     {
         try {
-            [$invoice, $cash] = DB::transaction(function () use ($request, $id, $kasBesar, $kasVendor): array {
-                $invoice = FilterOliGantiInvoice::with(['vehicle', 'details'])->lockForUpdate()->findOrFail($id);
-                $this->ensurePending($invoice);
-                $cash = null;
-                if ($invoice->pembayaran === 'uj_ditahan') {
-                    app(MaintenanceUjDitahanService::class)->debit($invoice);
-                }
-                $writer = app(MaintenanceLogWriter::class);
-                foreach ($invoice->details as $detail) {
-                    $log = $writer->filterOil($invoice->vehicle_id, $detail->kategori_filter_oli_mesin_id,
-                        $detail->merk, $detail->kondisi, $detail->created_at, (float) $detail->ritase);
-                    $detail->update(['filter_oli_log_id' => $log->id]);
-                }
-                $writer->refreshFilterOil($invoice->vehicle_id);
-                if ($invoice->pembayaran === 'kas_besar') {
-                    $cash = $kasBesar->potongSaldo([
-                        'nominal_transaksi' => (int) $invoice->total_nominal,
-                        'uraian' => 'Penggantian Filter & Oli Mesin Unit '.$invoice->vehicle->nomor_lambung,
-                        'filter_oli_ganti_invoice_id' => $invoice->id,
-                        'bank' => $invoice->nama_bank, 'no_rekening' => $invoice->nomor_rekening,
-                        'transfer_ke' => $invoice->nama_rekening,
-                    ]);
-                    if ($invoice->vehicle->vendor_id) {
-                        $kasVendor->tambahHutang([
-                            'vendor_id' => $invoice->vehicle->vendor_id, 'vehicle_id' => $invoice->vehicle_id,
-                            'nominal_transaksi' => (int) $invoice->total_nominal,
-                            'filter_oli_ganti_invoice_id' => $invoice->id,
-                            'uraian' => 'Penggantian Filter & Oli Mesin ('.$invoice->no_invoice.')',
-                        ]);
-                    }
-                }
-                $invoice->update(['status' => FilterOliGantiInvoice::STATUS_APPROVED,
-                    'authorized_by' => $request->user()->id, 'authorized_at' => now()]);
-
-                return [$invoice, $cash];
-            });
+            [$invoice, $cash] = $approval->approve('filter-oil', $id, $request->user());
         } catch (ValidationException $exception) {
             return back()->with('error', $exception->validator->errors()->first());
         } catch (ModelNotFoundException $exception) {
@@ -268,16 +230,7 @@ class FilterOliGantiController extends Controller
 
             return back()->with('error', 'Otorisasi gagal. Periksa saldo Kas Besar dan coba kembali.');
         }
-
-        try {
-            if ($invoice->pembayaran === 'uj_ditahan') {
-                app(MaintenanceUjDitahanService::class)->notify($invoice);
-            } elseif ($cash) {
-                app(MaintenanceKasBesarWhatsAppService::class)->notify($cash, 'FILTER & OLI MESIN', $invoice->vehicle?->vendor);
-            }
-        } catch (Throwable $exception) {
-            report($exception);
-
+        if (! $approval->notify('filter-oil', $invoice, $cash)) {
             return back()->with('success', 'Otorisasi berhasil. Histori penggantian filter & oli mesin telah dicatat.')
                 ->with('warning', 'Sebagian notifikasi WA belum berhasil dikirim. Transaksi sudah tersimpan; jangan ulangi persetujuan.');
         }
@@ -285,15 +238,10 @@ class FilterOliGantiController extends Controller
         return back()->with('success', 'Otorisasi berhasil. Histori penggantian filter & oli mesin telah dicatat.');
     }
 
-    public function reject(Request $request, int $id): RedirectResponse
+    public function reject(Request $request, int $id, MaintenanceApproval $approval): RedirectResponse
     {
         try {
-            DB::transaction(function () use ($request, $id): void {
-                $invoice = FilterOliGantiInvoice::lockForUpdate()->findOrFail($id);
-                $this->ensurePending($invoice);
-                $invoice->update(['status' => FilterOliGantiInvoice::STATUS_REJECTED,
-                    'authorized_by' => $request->user()->id, 'authorized_at' => now()]);
-            });
+            $approval->reject('filter-oil', $id, $request->user());
         } catch (ValidationException $exception) {
             return back()->with('error', $exception->validator->errors()->first());
         }

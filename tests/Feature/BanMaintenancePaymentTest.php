@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\TestWith;
+use Tests\Feature\Concerns\MobileApiRequests;
 use Tests\TestCase;
 
 class BanMaintenancePaymentTest extends TestCase
 {
+    use MobileApiRequests;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -371,5 +374,55 @@ class BanMaintenancePaymentTest extends TestCase
             $response->assertSessionHasNoErrors()->assertSessionHas('success');
             $this->assertDatabaseHas($invoiceTable, ['pembayaran' => $payment, 'status' => 'pending']);
         }
+    }
+
+    private function mobileAdmin(): User
+    {
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->nullable();
+            $table->string('password');
+            $table->string('role');
+            $table->timestamp('email_verified_at')->nullable();
+            $table->timestamps();
+        });
+
+        return User::forceCreate(['name' => 'Admin', 'email' => 'admin@example.com', 'password' => 'secret', 'role' => 'admin']);
+    }
+
+    public function test_mobile_administrator_sees_low_ritase_warning_and_approves_once(): void
+    {
+        $headers = $this->mobileHeaders($this->mobileAdmin());
+        DB::table('ban_logs')->insert(['vehicle_id' => 1, 'posisi_ban_id' => 1, 'merk' => 'Lama', 'no_seri' => 'L01', 'kondisi' => 90, 'ritase' => 20, 'created_at' => now()->subMonth(), 'updated_at' => now()->subMonth()]);
+        $invoice = $this->invoice();
+        $url = '/api/v1/maintenance-authorizations/tire';
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('data.0.id', $invoice->id)
+            ->assertJsonPath('data.0.payment_label', 'Dibayar Sendiri')->assertJsonPath('data.0.nomor_lambung', 'B01')
+            ->assertJsonPath('data.0.warnings', [['label' => 'Posisi 1', 'description' => 'Lama — 20,0 dari 80 rit']]);
+        $seen = $this->getJson($url.'/'.$invoice->id, $headers)->assertOk()->assertJsonPath('data.items.0.no_seri', 'S01')
+            ->assertJsonPath('data.items.0.previous.merk', 'Lama')->assertJsonPath('data.status_label', 'Menunggu Otorisasi')->json('data.fingerprint');
+        // Admin lain mengganti nomor seri lewat web: persetujuan atas rincian lama ditolak.
+        $invoice->details()->update(['no_seri' => 'S99']);
+        $this->postJson($url.'/'.$invoice->id.'/approve', ['fingerprint' => $seen], $headers)->assertUnprocessable()
+            ->assertJsonPath('message', 'Pengajuan berubah sejak dibuka. Muat ulang dan periksa kembali.');
+        $this->assertDatabaseCount('ban_logs', 1);
+        $seen = $this->getJson($url.'/'.$invoice->id, $headers)->assertJsonPath('data.items.0.no_seri', 'S99')->json('data.fingerprint');
+        $this->postJson($url.'/'.$invoice->id.'/approve', ['fingerprint' => $seen], $headers)->assertOk()->assertJsonPath('message', 'Otorisasi berhasil. Log Ban diperbarui.');
+        $this->postJson($url.'/'.$invoice->id.'/approve', ['fingerprint' => $seen], $headers)->assertUnprocessable();
+        $this->assertDatabaseHas('ban_logs', ['no_seri' => 'S99']);
+        $this->assertSame('approved', $invoice->fresh()->status);
+        $this->assertDatabaseCount('ban_logs', 2);
+    }
+
+    public function test_mobile_kas_besar_shortfall_returns_the_reason_and_keeps_the_invoice_pending(): void
+    {
+        $headers = $this->mobileHeaders($this->mobileAdmin());
+        $invoice = $this->invoice('kas_besar', 150000);
+        $seen = $this->getJson('/api/v1/maintenance-authorizations/tire/'.$invoice->id, $headers)->json('data.fingerprint');
+        $this->postJson('/api/v1/maintenance-authorizations/tire/'.$invoice->id.'/approve', ['fingerprint' => $seen], $headers)->assertUnprocessable()
+            ->assertJsonPath('message', 'Saldo Kas Besar tidak mencukupi! Sisa saldo: Rp 0');
+        $this->assertSame('pending', $invoice->fresh()->status);
+        $this->assertDatabaseCount('ban_logs', 0);
     }
 }

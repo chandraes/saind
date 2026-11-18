@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MobileBillingInvoiceController;
 use App\Http\Controllers\Api\MobileCustomerBillController;
 use App\Http\Controllers\Api\MobileDriverHeldCashController;
 use App\Http\Controllers\Api\MobileFilterOilController;
+use App\Http\Controllers\Api\MobileMaintenanceAuthorizationController;
 use App\Http\Controllers\Api\MobileMaintenanceHistoryController;
 use App\Http\Controllers\Api\MobileMaintenanceVehicleController;
 use App\Http\Controllers\Api\MobilePayrollController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\LoadNoteInboxController;
 use App\Http\Middleware\EnsureMobileToken;
 use App\Http\Middleware\EnsureMobileVendorContext;
 use App\Http\Middleware\EnsureMobileWorkspace;
+use App\Services\MaintenanceApproval;
 use App\Support\ReminderRegistry;
 use Illuminate\Support\Facades\Route;
 
@@ -110,6 +112,16 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                     Route::post('process', [FormKasUangJalanController::class, 'processNote'])->name('process');
                 });
             });
+            // Admin & SU: Otorisasi Maintenance (ban luar, aki, filter & oli mesin), sama dengan web.
+            Route::prefix('maintenance-authorizations/{type}')->whereIn('type', MaintenanceApproval::TYPES)->name('maintenance-authorizations.')
+                ->middleware('role:admin,su')->controller(MobileMaintenanceAuthorizationController::class)->group(function (): void {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('{id}', 'show')->whereNumber('id')->name('show');
+                    Route::middleware('throttle:30,1')->group(function (): void {
+                        Route::post('{id}/approve', 'approve')->whereNumber('id')->name('approve');
+                        Route::post('{id}/reject', 'reject')->whereNumber('id')->name('reject');
+                    });
+                });
             // Eksekutif (GM & Direksi): Nota Tagihan per customer & Tagihan & Invoice (baca saja).
             Route::middleware('role:executive')->group(function (): void {
                 Route::get('customer-options', [MobileCustomerBillController::class, 'customers'])->name('customer-options');

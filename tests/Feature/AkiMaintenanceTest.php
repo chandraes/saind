@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\TestWith;
+use Tests\Feature\Concerns\MobileApiRequests;
 use Tests\TestCase;
 
 class AkiMaintenanceTest extends TestCase
 {
+    use MobileApiRequests;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -583,5 +586,91 @@ class AkiMaintenanceTest extends TestCase
             $response->assertSessionHasNoErrors()->assertSessionHas('success');
             $this->assertDatabaseHas($invoiceTable, ['pembayaran' => $payment, 'status' => 'pending']);
         }
+    }
+
+    #[TestWith(['aki', 'battery', 'admin'])]
+    #[TestWith(['filter-oli', 'filter-oil', 'su'])]
+    public function test_mobile_administrator_authorizes_like_the_web(string $type, string $mobileType, string $role): void
+    {
+        $user = $this->actor($role);
+        $oldest = $this->balance(8, 100000);
+        $this->balance(9, 100000);
+        $this->post(route('billing.form-maintenance.'.$type.'.checkout'), $this->payload($this->cart($user, $type)))->assertSessionHasNoErrors();
+        $headers = $this->mobileHeaders($user);
+        $url = '/api/v1/maintenance-authorizations/'.$mobileType;
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', 1)->assertJsonPath('data.0.payment_label', 'UJ Ditahan Sparepart')
+            ->assertJsonPath('data.0.total', 150000)->assertJsonPath('data.0.held_cash_balance', 200000)
+            ->assertJsonPath('data.0.balance_short', false)->assertJsonPath('data.0.item_count', 1);
+        $this->getJson($url.'?search=TIDAK-ADA', $headers)->assertOk()->assertJsonCount(0, 'data');
+        $seen = $this->getJson($url.'/1', $headers)->assertOk()->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.bank', 'BCA')->assertJsonPath('data.items.0.merk', $type === 'aki' ? 'GS' : 'FILTER')
+            ->assertJsonPath('data.items.0.label', $type === 'aki' ? 'Posisi 1' : 'Filter Oli')->json('data.fingerprint');
+        // Tanpa sidik rincian, persetujuan mobile ditolak sebelum menyentuh saldo.
+        $this->postJson($url.'/1/approve', [], $headers)->assertUnprocessable()->assertJsonValidationErrors('fingerprint');
+        $this->postJson($url.'/1/approve', ['fingerprint' => $seen], $headers)->assertOk()->assertJsonMissingPath('warning');
+        $this->assertDatabaseHas('uj_ditahans', ['id' => $oldest, 'saldo' => 0, 'total_keluar' => 100000]);
+        $this->assertDatabaseHas($type === 'aki' ? 'aki_ganti_invoices' : 'filter_oli_ganti_invoices', ['id' => 1, 'status' => 'approved', 'authorized_by' => $user->id]);
+        $this->assertDatabaseCount($type === 'aki' ? 'aki_logs' : 'filter_oli_logs', 1);
+        // Ketukan ulang tidak memotong saldo dua kali.
+        $this->postJson($url.'/1/approve', ['fingerprint' => $seen], $headers)->assertUnprocessable()->assertJsonPath('message', 'Invoice ini sudah diproses sebelumnya.');
+        $this->postJson($url.'/1/reject', ['fingerprint' => $seen], $headers)->assertUnprocessable();
+        $this->assertDatabaseCount('uj_ditahan_details', 2);
+        $this->getJson($url, $headers)->assertOk()->assertJsonPath('meta.total', 0);
+    }
+
+    public function test_mobile_reject_keeps_balance_and_other_roles_are_forbidden(): void
+    {
+        $user = $this->actor('admin');
+        $this->balance(8, 200000);
+        $this->post(route('billing.form-maintenance.aki.checkout'), $this->payload($this->cart($user)))->assertSessionHasNoErrors();
+        foreach (['user', 'operasional', 'general-manager', 'vendor-operational'] as $role) {
+            $other = User::forceCreate(['name' => 'Lain', 'email' => uniqid().'@example.com', 'password' => 'secret', 'role' => $role]);
+            $headers = $this->mobileHeaders($other);
+            $this->getJson('/api/v1/maintenance-authorizations/battery', $headers)->assertForbidden();
+            $this->postJson('/api/v1/maintenance-authorizations/battery/1/approve', [], $headers)->assertForbidden();
+        }
+        $this->getJson('/api/v1/maintenance-authorizations/oil', $this->mobileHeaders($user))->assertNotFound();
+        $seen = $this->getJson('/api/v1/maintenance-authorizations/battery/1', $this->mobileHeaders($user))->json('data.fingerprint');
+        $this->postJson('/api/v1/maintenance-authorizations/battery/1/reject', ['fingerprint' => $seen], $this->mobileHeaders($user))->assertOk()
+            ->assertJsonPath('message', 'Invoice penggantian aki ditolak. Saldo tidak dipotong.');
+        $this->assertDatabaseHas('aki_ganti_invoices', ['id' => 1, 'status' => 'rejected', 'authorized_by' => $user->id]);
+        $this->assertEquals(200000, DB::table('uj_ditahans')->sum('saldo'));
+        $this->postJson('/api/v1/maintenance-authorizations/battery/1/approve', ['fingerprint' => $seen], $this->mobileHeaders($user))->assertUnprocessable();
+    }
+
+    public function test_mobile_approval_reports_whatsapp_failure_without_undoing_it(): void
+    {
+        $user = $this->actor('admin');
+        $this->balance(8, 200000);
+        $this->post(route('billing.form-maintenance.aki.checkout'), $this->payload($this->cart($user)))->assertSessionHasNoErrors();
+        $seen = $this->getJson('/api/v1/maintenance-authorizations/battery/1', $this->mobileHeaders($user))->json('data.fingerprint');
+        app(GroupWa::class)->fail = true;
+        $this->postJson('/api/v1/maintenance-authorizations/battery/1/approve', ['fingerprint' => $seen], $this->mobileHeaders($user))->assertOk()
+            ->assertJsonPath('warning', 'Sebagian notifikasi WA belum berhasil dikirim. Transaksi sudah tersimpan; jangan ulangi persetujuan.');
+        $this->assertDatabaseHas('aki_ganti_invoices', ['id' => 1, 'status' => 'approved']);
+    }
+
+    #[TestWith(['aki', 'battery'])]
+    #[TestWith(['filter-oli', 'filter-oil'])]
+    public function test_mobile_approval_is_refused_when_the_request_changed_after_it_was_opened(string $type, string $mobileType): void
+    {
+        $user = $this->actor('admin');
+        $this->balance(8, 200000);
+        $this->post(route('billing.form-maintenance.'.$type.'.checkout'), $this->payload($this->cart($user, $type)))->assertSessionHasNoErrors();
+        $url = '/api/v1/maintenance-authorizations/'.$mobileType.'/1';
+        $seen = $this->getJson($url, $this->mobileHeaders($user))->json('data.fingerprint');
+        // Admin lain mengoreksi merk lewat web saat layar mobile masih terbuka.
+        DB::table($type === 'aki' ? 'aki_ganti_invoice_details' : 'filter_oli_ganti_invoice_details')->update(['merk' => 'MERK BARU']);
+        foreach (['approve', 'reject'] as $action) {
+            $this->postJson($url.'/'.$action, ['fingerprint' => $seen], $this->mobileHeaders($user))->assertUnprocessable()
+                ->assertJsonPath('message', 'Pengajuan berubah sejak dibuka. Muat ulang dan periksa kembali.');
+        }
+        $this->assertDatabaseHas($type === 'aki' ? 'aki_ganti_invoices' : 'filter_oli_ganti_invoices', ['id' => 1, 'status' => 'pending']);
+        $this->assertDatabaseCount($type === 'aki' ? 'aki_logs' : 'filter_oli_logs', 0);
+        $this->assertDatabaseCount('uj_ditahan_details', 0);
+        $fresh = $this->getJson($url, $this->mobileHeaders($user))->assertJsonPath('data.items.0.merk', 'MERK BARU')->json('data.fingerprint');
+        $this->postJson($url.'/approve', ['fingerprint' => $fresh], $this->mobileHeaders($user))->assertOk();
+        $this->assertDatabaseHas($type === 'aki' ? 'aki_logs' : 'filter_oli_logs', ['merk' => 'MERK BARU']);
     }
 }
