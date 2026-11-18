@@ -240,7 +240,7 @@ class LoadNoteReviewTest extends MobileApiTestCase
         $this->getJson($url.'/review', $this->mobileHeaders($actor))->assertOk()
             ->assertJsonPath('data.revision', 0)->assertJsonPath('data.status', 'draft')->assertJsonPath('data.can_adjust_payment', true)
             ->assertJsonPath('data.options.vehicles', [['id' => 1, 'name' => '288']])->assertJsonPath('data.options.customers.0.name', 'PT Mustika Indah Permai')
-            ->assertJsonPath('data.options.rutes.0.name', 'MIP Selatan - Port')->assertJsonStructure(['data' => ['payment' => ['transfer', 'recipient', 'warnings'], 'payment_fingerprint']]);
+            ->assertJsonPath('data.options.rutes.0.name', 'MIP Selatan - Port')->assertJsonPath('data.options.customers.0.rute_ids', [1])->assertJsonStructure(['data' => ['payment' => ['transfer', 'recipient', 'warnings'], 'payment_fingerprint']]);
         $this->patchJson($url, $this->correction(), $this->mobileHeaders($actor))->assertOk()->assertJsonPath('message', 'Koreksi nota berhasil disimpan.');
         $this->assertDatabaseHas('load_note_drafts', ['id' => $note->id, 'ticket_number' => 'SJB-CORRECTED', 'net_kg' => 30220, 'revision' => 1]);
         // Revisi kedaluwarsa ditolak sama seperti web.

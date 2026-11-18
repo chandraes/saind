@@ -17,6 +17,7 @@ use App\Services\LoadNoteReviewService;
 use App\Services\MobileNotePayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -82,6 +83,8 @@ class LoadNoteInboxController extends Controller
         $this->authorize('review', $note);
         $preview = $this->paymentPreview($note, $payments, $notePayments);
         $options = $this->reviewOptions($note);
+        $customerRoutes = DB::table('customer_rute')->whereIn('customer_id', $options['customers']->pluck('id'))
+            ->orderBy('rute_id')->get(['customer_id', 'rute_id'])->groupBy('customer_id');
         $pick = fn ($rows): array => $rows->map(fn ($row): array => ['id' => $row->id, 'name' => (string) ($row->nomor_lambung ?? $row->nama)])->all();
 
         return response()->json(['data' => [
@@ -90,7 +93,14 @@ class LoadNoteInboxController extends Controller
             'payment' => collect($preview)->only(['is_final', 'is_custom', 'system_transfer', 'held', 'transfer', 'gross', 'sparepart', 'ban',
                 'driver', 'recipient', 'bank', 'account', 'warnings'])->all(),
             'payment_fingerprint' => $payments->confirmationHash($note, $preview),
-            'options' => ['vehicles' => $pick($options['vehicles']), 'customers' => $pick($options['customers']), 'rutes' => $pick($options['rutes'])],
+            'options' => [
+                'vehicles' => $pick($options['vehicles']),
+                // Rute yang boleh dipilih untuk tiap customer (relasi customer–rute), seperti syarat proses uang jalan.
+                'customers' => collect($pick($options['customers']))->map(fn (array $customer): array => [
+                    ...$customer, 'rute_ids' => $customerRoutes->get($customer['id'], collect())->pluck('rute_id')->map(fn ($id): int => (int) $id)->values()->all(),
+                ])->all(),
+                'rutes' => $pick($options['rutes']),
+            ],
         ]]);
     }
 
