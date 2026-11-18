@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RekapGaji;
 use App\Services\PayrollAttendanceService;
+use App\Services\PayrollGeneration;
 use App\Services\PayrollService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -43,13 +44,10 @@ class PayrollAttendanceController extends Controller
         }
     }
 
-    public function refresh(Request $request): RedirectResponse
+    public function refresh(Request $request, PayrollGeneration $generation): RedirectResponse
     {
         $data = $this->period($request);
-        $this->run(function () use ($data): void {
-            $this->available($data['bulan'], $data['tahun']);
-            $this->attendance->refresh($data['bulan'], $data['tahun'], $this->payroll->employeesForPeriod($data['bulan'], $data['tahun'])->modelKeys());
-        });
+        $generation->refreshAttendance($data['bulan'], $data['tahun']);
 
         return back()->with('success', 'Data absensi diperbarui. Tinjau rincian sebelum menyimpan gaji.');
     }

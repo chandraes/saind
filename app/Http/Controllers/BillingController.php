@@ -38,6 +38,8 @@ use App\Services\MaintenanceAuthorizationQueue;
 use App\Services\MaintenanceAuthorizationService;
 use App\Services\MaintenanceBanUjDitahanService;
 use App\Services\PayrollService;
+use App\Services\UjDitahanCutoff;
+use App\Services\UjDitahanPayout;
 use App\Services\UjDitahanWhatsAppService;
 use App\Support\HeldCashArea;
 use Carbon\Carbon;
@@ -527,102 +529,23 @@ class BillingController extends Controller
     }
 
     // FUNGSI BARU UNTUK CUTOFF
-    public function uj_ditahan_cutoff(Request $request, $id)
+    public function uj_ditahan_cutoff(Request $request, $id, UjDitahanCutoff $cutoff)
     {
-
-        $allowedRoles = ['su', 'admin'];
-
-        if (! in_array(Auth::user()->role, $allowedRoles)) {
+        if (! in_array(Auth::user()->role, ['su', 'admin'])) {
             return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk melakukan cutoff.');
         }
-
+        $master = UjDitahan::findOrFail($id);
         try {
-            DB::beginTransaction();
-
-            // Lock row master
-            $master = UjDitahan::where('id', $id)->lockForUpdate()->firstOrFail();
-
-            if ($master->saldo <= 0) {
-                return redirect()->back()->with('error', 'Fitur cutoff saldo minus sedang dalam pengembangan!.');
-            }
-
-            $nominalCutoff = $master->saldo;
-
-            $driver = $master->vehicle->driver;
-
-            // 1. Buat Detail Keluar (Cutoff)
-            $store = UjDitahanDetail::create([
-                'uj_ditahan_id' => $master->id,
-                'jenis' => 'keluar',
-                'nominal' => $nominalCutoff,
-                'keterangan' => 'Cutoff',
-                'bank' => $driver->bank,
-                'no_rekening' => $driver->no_rek,
-                'nama_rekening' => $driver->nama_rek,
-                // file_pdf dibiarkan null
-            ]);
-
-            // 2. Update Master (Nolkan saldo, tambah total_keluar)
-            $master->decrement('saldo', $nominalCutoff);
-            $master->increment('total_keluar', $nominalCutoff);
-
-            DB::commit();
-
+            $detail = $cutoff->cutoff($master, (string) Str::uuid());
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', collect($exception->errors())->flatten()->first());
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: '.$th->getMessage());
         }
-
-        $dbWa = new GroupWa;
-
-        $totalUjDitahan = UjDitahan::where('saldo', '>', 0)
-            ->sum('saldo');
-
-        $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                   "*Form Pencairan UJ Ditahan*\n".
-                   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                   'Nomor Lambung : '.$master->vehicle->nomor_lambung."\n".
-                   'Uraian : '.$store->keterangan."\n\n".
-                   'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.').",-*\n\n".
-                   "Ditransfer ke rek:\n\n".
-                   'Bank     : '.$store['bank']."\n".
-                   'Nama    : '.$store['nama_rekening']."\n".
-                   'No. Rek : '.$store['no_rekening']."\n\n".
-                   "==========================\n".
-                   // "Sisa Saldo Kas Uang Jalan : \n".
-                   // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                   "Grand Total UJ Ditahan : \n".
-                   'Rp. '.number_format($totalUjDitahan, 0, ',', '.')."\n\n".
-                   // $additionalMessage.
-                   "Terima kasih 🙏🙏🙏\n";
-
-        $dbWa->sendWa($dbWa->where('untuk', 'kas-uj-ditahan')->first()->nama_group, $pesan);
-
-        if ($driver && $driver->no_hp != null && $driver->no_hp != '' && $driver->no_hp != '-' && $driver->no_hp != '0' && strlen($driver->no_hp) >= 10) {
-
-            $pesan = "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n".
-                   "*Form Pencairan UJ Ditahan*\n".
-                   "🔴🔴🔴🔴🔴🔴🔴🔴🔴\n\n".
-                   'Nomor Lambung : '.$master->vehicle->nomor_lambung."\n".
-                   'Uraian : '.$store->keterangan."\n\n".
-                   'Nilai :  *Rp. '.number_format($store->nominal, 0, ',', '.').",-*\n\n".
-                   "Ditransfer ke rek:\n\n".
-                   'Bank     : '.$store['bank']."\n".
-                   'Nama    : '.$store['nama_rekening']."\n".
-                   'No. Rek : '.$store['no_rekening']."\n\n".
-                   "==========================\n".
-                   // "Sisa Saldo Kas Uang Jalan : \n".
-                   // "Rp. ".number_format($store->saldo, 0, ',', '.')."\n\n".
-                   // "Grand Total UJ Ditahan : \n".
-                   // "Rp. ".number_format($totalUjDitahan, 0, ',', '.')."\n\n".
-                   // $additionalMessage.
-                   "Terima kasih 🙏🙏🙏\n";
-
-            $hpDriver = $driver->no_hp = preg_replace('/\D/', '', $driver->no_hp);
-
-            $dbWa->sendWa($hpDriver, $pesan);
-
+        try {
+            app(UjDitahanWhatsAppService::class)->payout($master->refresh(), $detail);
+        } catch (\Throwable $exception) {
+            report($exception);
         }
 
         return redirect()->back()->with('success', 'Cutoff berhasil dieksekusi. Saldo menjadi 0 dan telah dipindahkan.');
@@ -640,15 +563,11 @@ class BillingController extends Controller
         return view('billing.uj-ditahan.show', compact('master', 'details'));
     }
 
-    public function uj_ditahan_cairkan(Request $request)
+    public function uj_ditahan_cairkan(Request $request, UjDitahanPayout $payout)
     {
-
-        $nominalBersih = (int) str_replace('.', '', $request->nominal);
-
-        // Sisipkan nilai bersih ke request agar bisa melewati validasi Laravel jika mau
-        $request->merge(['nominal' => $nominalBersih]);
-
-        $request->validate([
+        // Bersihkan format nominal (titik ribuan) sebelum validasi.
+        $request->merge(['nominal' => (int) str_replace('.', '', $request->nominal)]);
+        $data = $request->validate([
             'uj_ditahan_id' => 'required|exists:uj_ditahans,id',
             'nominal' => 'required|numeric|min:1',
             'keterangan' => 'required|string|max:255',
@@ -658,75 +577,17 @@ class BillingController extends Controller
             'bukti_pdf' => 'required|mimes:pdf|max:5120',
         ]);
 
-        // Bersihkan format nominal (misal jika ada titik/koma dari input form)
-        $nominalCair = $request->nominal;
-
         try {
-            DB::beginTransaction();
-
-            // Lock row master agar tidak ada transaksi ganda bersamaan
-            $master = UjDitahan::where('id', $request->uj_ditahan_id)->lockForUpdate()->first();
-
-            $sumSaldoSebelumnya = UjDitahan::where('vehicle_id', $master->vehicle_id)
-                ->where('saldo', '>', 0)
-                ->where(function ($query) use ($master) {
-                    $query->where('tahun', '<', $master->tahun)
-                        ->orWhere(function ($q) use ($master) {
-                            $q->where('tahun', $master->tahun)
-                                ->where('bulan', '<', $master->bulan);
-                        });
-                })->sum('saldo');
-
-            if ($sumSaldoSebelumnya > 0) {
-                DB::rollBack();
-
-                return redirect()->back()->with('error', 'Silahkan gunakan Saldo UJ Ditahan pada bulan sebelumnya terlebih dahulu.');
-            }
-
-            // Validasi: Nominal tidak boleh melebihi saldo
-            if ($nominalCair > $master->saldo) {
-                DB::rollBack();
-
-                return redirect()->back()->with('error', 'Nominal pencairan melebihi sisa saldo bulan ini!');
-            }
-
-            // --- TAMBAHAN LOGIKA UPLOAD FILE ---
-            $pdfPath = null;
-            if ($request->hasFile('bukti_pdf')) {
-                $file = $request->file('bukti_pdf');
-                $fileName = time().'_'.$file->getClientOriginalName();
-                // Akan tersimpan di folder: storage/app/public/uj_ditahan_pdf/
-                $pdfPath = $file->storeAs('public/uj_ditahan_pdf', $fileName);
-            }
-
-            // 1. Buat Detail Keluar (Pencairan)
-            $store = UjDitahanDetail::create([
-                'uj_ditahan_id' => $master->id,
-                'jenis' => 'keluar',
-                'payout_origin' => 'manual',
-                'driver_id' => $master->vehicle?->driver_id,
-                'nominal' => $nominalCair,
-                'keterangan' => $request->keterangan,
-                'bank' => $request->bank,
-                'no_rekening' => $request->no_rekening,
-                'nama_rekening' => $request->nama_rekening,
-                'file_pdf' => $pdfPath,
-            ]);
-
-            // 2. Update Master (Kurangi saldo, tambah total_keluar)
-            $master->decrement('saldo', $nominalCair);
-            $master->increment('total_keluar', $nominalCair);
-
-            DB::commit();
-
+            $master = UjDitahan::findOrFail($data['uj_ditahan_id']);
+            $store = $payout->withdraw($master, $data, $request->file('bukti_pdf'));
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', collect($exception->errors())->flatten()->first());
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->back()->with('error', 'Terjadi kesalahan sistem: '.$th->getMessage());
         }
 
         try {
-            app(UjDitahanWhatsAppService::class)->payout($master, $store);
+            app(UjDitahanWhatsAppService::class)->payout($master->refresh(), $store);
         } catch (\Throwable $exception) {
             report($exception);
 

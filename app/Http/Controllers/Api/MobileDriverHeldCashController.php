@@ -58,6 +58,9 @@ class MobileDriverHeldCashController extends Controller
         $page = $cash->period($month, $year)->with(['cancellation', 'driver'])->orderBy('created_at')->orderBy('id')->simplePaginate(25);
         $balances = $cash->periodBalances();
         $totals = $cash->totals($month, $year);
+        // Admin & SU: pencairan manual yang bisa dibatalkan dan saldo periode untuk cutoff.
+        $admin = $request->user()->isMobileAdministrator() && ! $request->user()->isDriver();
+        $account = $admin ? $cash->account($month, $year) : null;
 
         return response()->json([
             'data' => $page->getCollection()->map(fn ($detail): array => [
@@ -71,7 +74,7 @@ class MobileDriverHeldCashController extends Controller
                 'cancel_reason' => $detail->cancellation?->reason,
                 'driver' => $detail->driver?->nama,
                 'account' => $detail->bank && $detail->no_rekening ? ['bank' => $detail->bank, 'number' => $detail->no_rekening, 'name' => $detail->nama_rekening] : null,
-            ])->values(),
+            ] + ($admin ? ['cancellable' => $detail->isManualPayout() && $detail->cancellation === null] : []))->values(),
             'meta' => [
                 'fund' => $fund, 'month' => $month, 'year' => $year,
                 'vehicle_id' => (int) $vehicle->id,
@@ -80,6 +83,10 @@ class MobileDriverHeldCashController extends Controller
                 'total_in' => $totals['masuk'], 'total_out' => $totals['keluar'], 'balance' => $totals['saldo'],
                 // Saldo seluruh periode & bulan bersaldo (penanda ❗ seperti web).
                 'total_balance' => (int) $balances->sum('saldo'),
+                ...($admin ? ['account_balance' => $account === null ? null : (int) $account->saldo,
+                    // Rekening driver nolam sebagai isian awal form pencairan.
+                    'driver_account' => ($driver = $vehicle->driver()->first(['id', 'bank', 'no_rek', 'nama_rek'])) === null ? null
+                        : ['bank' => $driver->bank, 'number' => $driver->no_rek, 'name' => $driver->nama_rek]] : []),
                 'months_with_balance' => $balances->filter(fn ($period): bool => (int) $period->saldo !== 0)
                     ->map(fn ($period): array => ['year' => (int) $period->tahun, 'month' => (int) $period->bulan, 'balance' => (int) $period->saldo])->values(),
             ],

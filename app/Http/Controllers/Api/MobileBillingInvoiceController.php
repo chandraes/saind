@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\InvoiceTagihan;
 use App\Models\Transaksi;
+use App\Services\CustomerInvoicePayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,9 +17,11 @@ use Illuminate\Http\Request;
  */
 class MobileBillingInvoiceController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
         $rows = collect((new Customer)->tagihanInvoice());
+        // Admin & SU: sisa tagihan untuk tombol Lunas/Cicil.
+        $admin = $request->user()->isMobileAdministrator();
         $bills = $rows->filter(fn (array $row): bool => $row['tanggal_awal'] !== null)->values()
             ->map(fn (array $row, int $index): array => ['number' => $index + 1, 'customer_id' => $row['customer_id'], 'customer' => (string) $row['customer'],
                 'from' => $row['tanggal_awal'], 'to' => $row['tanggal_akhir'], 'amount' => (int) round($row['total_transaksi'])]);
@@ -28,7 +31,8 @@ class MobileBillingInvoiceController extends Controller
             'tracking_number' => $invoice['no_resi'], 'validation_number' => $invoice['no_validasi'],
             'initial_amount' => (int) $invoice['tagihan_awal'], 'adjustment' => (int) $invoice['penyesuaian'],
             'penalty' => (int) $invoice['penalty'], 'ppn' => (int) $invoice['ppn'], 'pph' => (int) $invoice['pph'],
-            'estimated_payment' => $invoice['estimasi_pembayaran'] === '-' ? null : $invoice['estimasi_pembayaran']], $row['invoices']))
+            'estimated_payment' => $invoice['estimasi_pembayaran'] === '-' ? null : $invoice['estimasi_pembayaran']]
+            + ($admin ? ['remaining' => (int) round((float) $invoice['sisa_tagihan'])] : []), $row['invoices']))
             ->values()->map(fn (array $invoice, int $index): array => ['number' => $index + 1] + $invoice);
 
         return response()->json([
@@ -37,6 +41,19 @@ class MobileBillingInvoiceController extends Controller
             'meta' => ['date' => now()->format('d-m-Y'), 'total_bill' => (int) $bills->sum('amount'), 'total_invoice' => (int) $invoices->sum('payment'),
                 'grand_total' => (int) $bills->sum('amount') + (int) $invoices->sum('payment')],
         ]);
+    }
+
+    /** Admin & SU: lunasi ([installment] kosong) atau cicil Invoice Tagihan, sama dengan web. */
+    public function pay(Request $request, InvoiceTagihan $invoice, CustomerInvoicePayment $payments): JsonResponse
+    {
+        $data = $request->validate(['remaining' => ['required', 'integer', 'min:0'], 'installment' => ['nullable', 'integer', 'min:1']]);
+        $installment = $data['installment'] ?? null;
+        [$invoice, $cash] = $payments->pay($invoice->id, $installment, $data['remaining']);
+
+        return response()->json(['message' => $installment === null ? 'Invoice berhasil dilunasi.' : 'Cicilan berhasil dicatat.']
+            + ($payments->notify($invoice, $cash, $installment !== null) ? [] : [
+                'warning' => 'Notifikasi WA Kas Besar belum berhasil dikirim. Pembayaran sudah tersimpan; jangan ulangi.',
+            ]));
     }
 
     public function transactions(Request $request, InvoiceTagihan $invoice): JsonResponse

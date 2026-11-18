@@ -11,21 +11,20 @@ use App\Models\InvoiceCsr;
 use App\Models\InvoiceTagihan;
 use App\Models\InvoiceTagihanDetail;
 use App\Models\KasBesar;
-use App\Models\KasVendor;
-use App\Models\Pajak\PphPerusahaan;
-use App\Models\Pajak\PphSimpan;
 use App\Models\Pajak\PpnKeluaran;
-use App\Models\Pajak\PpnMasukan;
-use App\Models\Rekening;
 use App\Models\Sponsor;
 use App\Models\Transaksi;
 use App\Models\Vendor;
+use App\Services\CustomerInvoicePayment;
 use App\Services\StarSender;
+use App\Services\VendorInvoicePayment;
 use App\Support\AdditionalInvoiceRecap;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InvoiceController extends Controller
 {
@@ -86,209 +85,31 @@ class InvoiceController extends Controller
         return $pdf->stream('Invoice Tagihan '.$invoice->customer->singkatan.'.pdf');
     }
 
-    public function tagihan_lunas(InvoiceTagihan $invoice)
+    public function tagihan_lunas(InvoiceTagihan $invoice, CustomerInvoicePayment $payments)
     {
-        $total_bayar = $invoice->sisa_tagihan;
-
-        $invoice->update([
-            'total_bayar' => $total_bayar,
-            'sisa_tagihan' => 0,
-            'lunas' => 1,
-        ]);
-
-        $ppn = PpnKeluaran::where('invoice_tagihan_id', $invoice->id)->first();
-
-        if ($ppn) {
-            $ppn->update([
-                'onhold' => 0,
-            ]);
-        }
-
-        $pph = PphPerusahaan::where('invoice_tagihan_id', $invoice->id)->first();
-
-        if ($pph) {
-            $pph->update([
-                'onhold' => 0,
-            ]);
-        }
-
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
-
-        // $last = KasBesar::latest()->first();
-
-        $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
-
-        if ($lastNomor == null) {
-            $data['nomor_kode_tagihan'] = 1;
-        } else {
-            $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
-        }
-
-        // if ($last) {
-
-        $dbKasBesar = new KasBesar;
-
-        $data['uraian'] = $invoice->customer->singkatan.' - '.$invoice->periode;
-        $data['jenis_transaksi_id'] = 1;
-        $data['nominal_transaksi'] = $total_bayar;
-        $data['saldo'] = $dbKasBesar->saldoTerakhir() + $total_bayar;
-        $data['tanggal'] = date('Y-m-d');
-
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
-
-        $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
-        $data['no_rekening'] = $rekening->nomor_rekening;
-        $data['bank'] = $rekening->nama_bank;
-
-        $data['modal_investor_terakhir'] = $dbKasBesar->modalInvestorTerakhir();
-
-        $store = $dbKasBesar->create($data);
-
-        $invoiceSisa = InvoiceTagihan::where('customer_id', $invoice->customer_id)->where('lunas', 0)->get();
-
-        $invoiceSisaString = '';
-
-        if ($invoiceSisa->count() > 0) {
-            foreach ($invoiceSisa as $v) {
-                $invoiceSisaString .= $v->periode.' : Rp. '.number_format($v->sisa_tagihan, 0, ',', '.');
-                $invoiceSisaString .= "\n";
-            }
-        } else {
-            $invoiceSisaString = '0';
-        }
-
-        $t = new Transaksi;
-
-        $totalNotaTagihan = $t->sumNotaTagihan($invoice->customer_id);
-
-        $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-            "*PEMBAYARAN INVOICE*\n".
-             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-             'Tambang : '.$invoice->customer->singkatan."\n".
-            'Periode : '.$invoice->no_invoice."\n\n".
-             'Nilai :  *Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
-             "Ditransfer ke rek:\n\n".
-            'Bank     : '.$data['bank']."\n".
-            'Nama    : '.$data['transfer_ke']."\n".
-            'No. Rek : '.$data['no_rekening']."\n\n".
-            "==========================\n".
-            "Sisa Saldo Kas Besar : \n".
-            'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
-            "Total Modal Investor : \n".
-            'Rp. '.number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-            "Tagihan : \n".
-            'Rp. '.number_format($totalNotaTagihan, 0, ',', '.')."\n\n".
-            "Invoice : \n".
-            $invoiceSisaString."\n\n".
-            "Terima kasih 🙏🙏🙏\n";
-
-        $dbKasBesar->sendWa($group->nama_group, $pesan);
-        // $send = new StarSender($group->nama_group, $pesan);
-        // $res = $send->sendGroup();
-        // }
-
-        return redirect()->back()->with('success', 'Invoice berhasil di lunasi');
+        return $this->customerInvoicePayment($payments, $invoice, null, 'Invoice berhasil di lunasi');
     }
 
-    public function tagihan_cicil(Request $request, InvoiceTagihan $invoice)
+    public function tagihan_cicil(Request $request, InvoiceTagihan $invoice, CustomerInvoicePayment $payments)
     {
         $data = $request->validate([
             'cicilan' => 'required',
         ]);
 
-        $data['cicilan'] = str_replace('.', '', $data['cicilan']);
+        return $this->customerInvoicePayment($payments, $invoice, (int) str_replace('.', '', $data['cicilan']), 'Invoice berhasil di cicil');
+    }
 
-        if ($data['cicilan'] > $invoice->sisa_tagihan) {
-            return redirect()->back()->with('error', 'Cicilan tidak boleh lebih besar dari sisa tagihan');
+    /** Lunas/cicil Invoice Tagihan lewat CustomerInvoicePayment, lalu WA ke grup Kas Besar. */
+    private function customerInvoicePayment(CustomerInvoicePayment $payments, InvoiceTagihan $invoice, ?int $installment, string $success): RedirectResponse
+    {
+        try {
+            [$invoice, $cash] = $payments->pay($invoice->id, $installment);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', collect($exception->errors())->flatten()->first());
         }
+        $payments->notify($invoice, $cash, $installment !== null);
 
-        if ($data['cicilan'] == $invoice->sisa_tagihan) {
-            $data['lunas'] = 1;
-
-            PpnKeluaran::where('invoice_tagihan_id', $invoice->id)->update([
-                'onhold' => 0,
-            ]);
-
-            $lastNomor = KasBesar::whereNotNull('nomor_kode_tagihan')->latest()->first();
-
-            if ($lastNomor == null) {
-                $data['nomor_kode_tagihan'] = 1;
-            } else {
-                $data['nomor_kode_tagihan'] = $lastNomor->nomor_kode_tagihan + 1;
-            }
-
-        } else {
-            $data['lunas'] = 0;
-            $data['nomor_kode_tagihan'] = null;
-        }
-
-        $data['total_bayar'] = $data['cicilan'] + $invoice->total_bayar;
-
-        $data['sisa_tagihan'] = $invoice->sisa_tagihan - $data['cicilan'];
-
-        $invoice->update([
-            'total_bayar' => $data['total_bayar'],
-            'sisa_tagihan' => $data['sisa_tagihan'],
-            'lunas' => $data['lunas'],
-        ]);
-
-        $group = GroupWa::where('untuk', 'kas-besar')->first();
-
-        // $last = KasBesar::latest()->first();
-
-        // if ($last) {
-        $dbKas = new KasBesar;
-
-        $data['uraian'] = 'Cicil '.$invoice->customer->singkatan.' - '.$invoice->periode;
-        $data['jenis_transaksi_id'] = 1;
-        $data['nominal_transaksi'] = $data['cicilan'];
-        $data['saldo'] = $dbKas->saldoTerakhir() + $data['cicilan'];
-        $data['tanggal'] = date('Y-m-d');
-
-        $rekening = Rekening::where('untuk', 'kas-besar')->first();
-
-        $data['transfer_ke'] = substr($rekening->nama_rekening, 0, 15);
-        $data['no_rekening'] = $rekening->nomor_rekening;
-        $data['bank'] = $rekening->nama_bank;
-
-        $data['modal_investor_terakhir'] = $dbKas->modalInvestorTerakhir();
-
-        $store = $dbKas->create([
-            'uraian' => $data['uraian'],
-            'jenis_transaksi_id' => $data['jenis_transaksi_id'],
-            'nominal_transaksi' => $data['nominal_transaksi'],
-            'nomor_kode_tagihan' => $data['nomor_kode_tagihan'],
-            'saldo' => $data['saldo'],
-            'tanggal' => $data['tanggal'],
-            'transfer_ke' => $data['transfer_ke'],
-            'no_rekening' => $data['no_rekening'],
-            'bank' => $data['bank'],
-            'modal_investor_terakhir' => $data['modal_investor_terakhir'],
-        ]);
-
-        $pesan = "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n".
-            "*CICILAN INVOICE*\n".
-             "🔵🔵🔵🔵🔵🔵🔵🔵🔵\n\n".
-             'Customer : '.$invoice->customer->singkatan."\n".
-            'Periode : '.$invoice->periode."\n\n".
-             'Nilai :  *Rp. '.number_format($data['nominal_transaksi'], 0, ',', '.')."*\n\n".
-             "Ditransfer ke rek:\n\n".
-            'Bank     : '.$data['bank']."\n".
-            'Nama    : '.$data['transfer_ke']."\n".
-            'No. Rek : '.$data['no_rekening']."\n\n".
-            "==========================\n".
-            "Sisa Saldo Kas Besar : \n".
-            'Rp. '.number_format($store->saldo, 0, ',', '.')."\n\n".
-            "Total Modal Investor : \n".
-            'Rp. '.number_format($store->modal_investor_terakhir, 0, ',', '.')."\n\n".
-            "Terima kasih 🙏🙏🙏\n";
-
-        $dbKas->sendWa($group->nama_group, $pesan);
-        // $send = new StarSender($group->nama_group, $pesan);
-        // $res = $send->sendGroup();
-        // }
-
-        return redirect()->back()->with('success', 'Invoice berhasil di cicil');
+        return redirect()->back()->with('success', $success);
     }
 
     public function invoice_bayar(Request $request)
@@ -377,115 +198,34 @@ class InvoiceController extends Controller
         return view('billing.transaksi.invoice.invoice-bayar-detail-add', AdditionalInvoiceRecap::data($invoice));
     }
 
-    public function invoice_bayar_lunas(InvoiceBayar $invoice)
+    public function invoice_bayar_lunas(InvoiceBayar $invoice, VendorInvoicePayment $payments)
     {
-
-        $roleAllowed = ['admin', 'su'];
-
-        if (! in_array(Auth::user()->role, $roleAllowed)) {
+        if (! in_array(Auth::user()->role, ['admin', 'su'])) {
             return redirect()->back()->with('error', 'Anda Tidak Mempunyai Wewenang untuk Mengeksekusi Perintah Ini!!');
         }
 
-        $total_bayar = $invoice->sisa_bayar;
-
-        $invoice->update([
-            'bayar' => $total_bayar,
-            'sisa_bayar' => 0,
-            'lunas' => 1,
-        ]);
-
-        $last = KasVendor::where('vendor_id', $invoice->vendor_id)->latest()->orderBy('id', 'desc')->first();
-
-        $data['tanggal'] = now();
-        $data['uraian'] = 'Pembayaran '.' - '.$invoice->periode;
-        $data['bayar'] = $total_bayar;
-        $data['vendor_id'] = $invoice->vendor_id;
-        $data['invoice_bayar_id'] = $invoice->id;
-
-        if ($last) {
-            $data['sisa'] = $last->sisa - $total_bayar;
-        } else {
-            $data['sisa'] = -$total_bayar;
-        }
-
-        $ppn = PpnMasukan::where('invoice_bayar_id', $invoice->id)->first();
-
-        if ($ppn) {
-            $ppn->update([
-                'onhold' => 0,
-            ]);
-        }
-
-        $pph = PphSimpan::where('invoice_bayar_id', $invoice->id)->first();
-
-        if ($pph) {
-            $pph->update([
-                'onhold' => 0,
-            ]);
-        }
-
-        KasVendor::create($data);
-
-        return redirect()->back()->with('success', 'Invoice berhasil di lunasi');
-
+        return $this->vendorInvoiceAction(fn () => $payments->settle('utama', $invoice->id), 'Invoice berhasil di lunasi');
     }
 
-    public function invoice_bayar_jenis_lunas(InvoiceAddVendor $invoice)
+    public function invoice_bayar_jenis_lunas(InvoiceAddVendor $invoice, VendorInvoicePayment $payments)
     {
-        $invoice = $invoice->load(['vendor']);
+        return $this->vendorInvoiceAction(fn () => $payments->settle($invoice->jenis, $invoice->id), 'Invoice berhasil dilunasi', 'Terjadi kesalahan saat memproses pembayaran');
+    }
+
+    /** Jalankan aksi Invoice Vendor bersama (lihat VendorInvoicePayment) dan kembalikan pesan seperti sebelumnya. */
+    private function vendorInvoiceAction(callable $action, string $success, ?string $failure = null): RedirectResponse
+    {
         try {
-            return DB::transaction(function () use ($invoice) {
-                $uraianUmum = "{$invoice->vendor->nama} {$invoice->periode_invoice}";
+            $action();
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', collect($exception->errors())->flatten()->first());
+        } catch (\Throwable $exception) {
+            report($exception);
 
-                // 1. Catat PPN Masukan jika ada
-                if ($invoice->ppn > 0) {
-                    PpnMasukan::create([
-                        'invoice_add_vendor_id' => $invoice->id,
-                        'uraian' => $uraianUmum,
-                        'nominal' => $invoice->ppn,
-                        'onhold' => 0,
-                    ]);
-                }
-
-                // 2. Catat PPH Simpan jika ada
-                if ($invoice->pph > 0) {
-                    PphSimpan::create([
-                        'invoice_add_vendor_id' => $invoice->id,
-                        'uraian' => $uraianUmum,
-                        'nominal' => $invoice->pph,
-                        'onhold' => 0,
-                    ]);
-                }
-
-                // 3. Hitung Sisa Saldo di Kas Vendor
-                $lastKas = KasVendor::where('vendor_id', $invoice->vendor_id)
-                    ->orderBy('id', 'desc')
-                    ->first();
-
-                $sisaSebelumnya = $lastKas ? $lastKas->sisa : 0;
-
-                // 4. Catat ke Kas Vendor
-                KasVendor::create([
-                    'tanggal' => now(),
-                    'uraian' => "Pembayaran - {$invoice->periode_invoice}",
-                    'bayar' => $invoice->total,
-                    'vendor_id' => $invoice->vendor_id,
-                    'invoice_add_vendor_id' => $invoice->id,
-                    'sisa' => $sisaSebelumnya - $invoice->total,
-                ]);
-
-                $invoice->update(['is_finished' => true]);
-
-                return redirect()
-                    ->back()
-                    ->with('success', 'Invoice berhasil dilunasi');
-            });
-        } catch (\Exception $e) {
-
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan saat memproses pembayaran');
+            return redirect()->back()->with('error', $failure ?? 'Terjadi kesalahan saat memproses invoice');
         }
+
+        return redirect()->back()->with('success', $success);
     }
 
     public function invoice_bonus()
@@ -674,36 +414,13 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', 'Invoice berhasil di batalkan');
     }
 
-    public function invoice_bayar_back(InvoiceBayar $invoice)
+    public function invoice_bayar_back(InvoiceBayar $invoice, VendorInvoicePayment $payments)
     {
-        $roleApprove = ['su', 'admin'];
-
-        if (! in_array(Auth::user()->role, $roleApprove)) {
+        if (! in_array(Auth::user()->role, ['su', 'admin'])) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk membatalkan invoice ini');
         }
 
-        if ($invoice->lunas != 0) {
-            return redirect()->back()->with('error', 'Invoice sudah ada pembayaran');
-        }
-
-        DB::beginTransaction();
-
-        $transaksi = $invoice->transaksi;
-        // update tagihan in each transaksi
-        foreach ($transaksi as $v) {
-            $v->update([
-                'bayar' => 0,
-            ]);
-        }
-
-        PpnMasukan::where('invoice_bayar_id', $invoice->id)->delete();
-
-        $invoice->delete();
-
-        DB::commit();
-
-        return redirect()->back()->with('success', 'Invoice berhasil di batalkan');
-
+        return $this->vendorInvoiceAction(fn () => $payments->cancel($invoice->id), 'Invoice berhasil di batalkan');
     }
 
     public function invoice_csr_back(InvoiceCsr $invoice)

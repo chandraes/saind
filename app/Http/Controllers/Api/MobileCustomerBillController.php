@@ -33,6 +33,8 @@ class MobileCustomerBillController extends Controller
         $categories = $this->categories($customer);
         $filters = $request->validate(['kind' => ['sometimes', Rule::in(array_keys($categories))], 'search' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $kind = $filters['kind'] ?? 'utama';
+        // Admin & SU: isian form Ubah Nota dan jumlah nota di keranjang tagihan.
+        $admin = $request->user()->isMobileAdministrator();
         $weightColumn = (int) $customer->tagihan_dari === 2 ? 'timbangan_bongkar' : 'tonase';
         $notes = $kind === 'utama' ? Transaksi::getTagihanData($customer->id) : $this->additionalNotes($customer, $kind);
         $rows = $notes->sortBy([['tanggal', 'asc'], ['kas_uang_jalan_id', 'asc']])->values()
@@ -54,7 +56,7 @@ class MobileCustomerBillController extends Controller
                 'weight' => $note->{$weightColumn} === null ? null : (float) $note->{$weightColumn},
                 'price' => (int) $note->harga_customer,
                 'bill' => (int) $note->nominal_tagihan,
-            ]);
+            ] + ($admin ? ['edit' => $this->editable($note)] : []));
         $search = mb_strtolower(trim($filters['search'] ?? ''));
         if ($search !== '') {
             $rows = $rows->filter(fn (array $row): bool => collect([$row['vehicle_number'], $row['money_out_number'], $row['route_name'], $row['vendor_name']])
@@ -77,12 +79,24 @@ class MobileCustomerBillController extends Controller
 
         return response()->json([
             'data' => $data,
-            'meta' => $meta + [
+            'meta' => $meta + ($admin ? ['cart_count' => Transaksi::getKeranjangTagihanData($customer->id)->count()] : []) + [
                 'weight_basis' => $weightColumn === 'tonase' ? 'muat' : 'bongkar',
                 'total_weight' => round((float) $rows->sum('weight'), 2),
                 'total_bill' => $total, 'ppn' => $ppn, 'pph' => $pph, 'final_bill' => $total + $ppn - $pph,
             ],
         ]);
+    }
+
+    /** Data nota untuk form Ubah Nota (Admin & SU), sama dengan form Edit Nota Tagihan web. */
+    private function editable(Transaksi $note): array
+    {
+        $number = fn ($value): ?float => $value === null || $value === '' ? null : (float) $value;
+
+        return ['nota_muat' => (string) $note->nota_muat, 'nota_bongkar' => (string) $note->nota_bongkar,
+            'tanggal_muat' => Transaksi::dateOnly($note->tanggal_muat), 'tanggal_bongkar' => Transaksi::dateOnly($note->tanggal_bongkar),
+            'tonase' => $number($note->tonase), 'gross_muat' => $number($note->gross_muat), 'tarra_muat' => $number($note->tarra_muat),
+            'timbangan_bongkar' => $number($note->timbangan_bongkar), 'gross_bongkar' => $number($note->gross_bongkar), 'tarra_bongkar' => $number($note->tarra_bongkar),
+            'physical_note' => (int) $note->nota_fisik === 1];
     }
 
     /** HPP selalu ada; kategori lain sesuai setting customer, seperti menu admin. */

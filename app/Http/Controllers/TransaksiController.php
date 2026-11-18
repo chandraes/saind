@@ -6,7 +6,6 @@ use App\Models\BanLog;
 use App\Models\Customer;
 use App\Models\GroupWa;
 use App\Models\InvoiceAdditional;
-use App\Models\InvoiceAdditionalDetail;
 use App\Models\InvoiceBayar;
 use App\Models\InvoiceBayarDetail;
 use App\Models\InvoiceBonus;
@@ -14,13 +13,10 @@ use App\Models\InvoiceBonusDetail;
 use App\Models\InvoiceCsr;
 use App\Models\InvoiceCsrDetail;
 use App\Models\InvoiceTagihan;
-use App\Models\InvoiceTagihanDetail;
 use App\Models\KasUangJalan;
 use App\Models\KeranjangNotaBayar;
 use App\Models\Konfigurasi;
-use App\Models\Pajak\PphPerusahaan;
 use App\Models\Pajak\PphSimpan;
-use App\Models\Pajak\PpnKeluaran;
 use App\Models\Pajak\PpnMasukan;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Rekening;
@@ -30,8 +26,10 @@ use App\Models\TransaksiAdditional;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\CustomerBilling;
 use App\Services\FilterOliRitaseService;
 use App\Services\UjDitahanBanService;
+use App\Services\UnloadingNoteCompletion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -41,6 +39,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class TransaksiController extends Controller
 {
@@ -174,9 +173,8 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function nota_bongkar_update(Request $request, Transaksi $transaksi)
+    public function nota_bongkar_update(Request $request, Transaksi $transaksi, UnloadingNoteCompletion $completion)
     {
-        // dd($request->all());
         $data = $request->validate([
             'nota_bongkar' => 'required',
             'timbangan_bongkar' => 'required|numeric',
@@ -185,76 +183,12 @@ class TransaksiController extends Controller
             'tarra_bongkar' => 'nullable|numeric',
         ]);
 
-        $data['status'] = 3;
-        $data['tanggal_bongkar'] = Transaksi::unloadingTimestamp($data['tanggal_bongkar']);
-
-        $muat = $transaksi->tanggal_muat;
-        // change bongkar to unix timestamp
-        $muat = strtotime($muat);
-        $bongkar = strtotime($data['tanggal_bongkar']);
-
-        if ($bongkar < $muat) {
-            return redirect()->back()->with('error', 'Tanggal bongkar tidak boleh lebih kecil dari tanggal muat!!');
-        }
-
-        $penalty = 0;
-
-        if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
-            $data['nominal_tagihan'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
-            $data['nominal_bayar'] = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
-            $penalty = $transaksi->tonase * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
-
-        } elseif ($transaksi->kas_uang_jalan->customer->tagihan_dari == 2) {
-            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
-            $data['nominal_bayar'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
-            $penalty = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
-
-        }
-
-        if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
-
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
-
-        } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
-
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
-        } else {
-
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
-        }
-
-        $data['nominal_csr'] = 0;
-
-        if ($transaksi->kas_uang_jalan->customer->csr == 1) {
-            $data['nominal_csr'] = $data['timbangan_bongkar'] * $transaksi->harga_csr;
-        }
-
-        $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
-
-        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'] - $penalty;
-
-        $vehicle = $transaksi->kas_uang_jalan->vehicle;
-
-        DB::beginTransaction();
-
         try {
-
-            $transaksi->update($data);
-
-            $vehicle->update([
-                'do_count' => $vehicle->do_count + 1,
-                'status' => 'aktif',
-            ]);
-
-            DB::commit();
-
+            $completion->complete($transaksi->id, $data);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', collect($exception->errors())->flatten()->first());
         } catch (\Throwable $th) {
-
-            DB::rollBack();
-
-            $message = $th->getMessage();
-
-            return redirect()->back()->with('error', $message);
+            return redirect()->back()->with('error', $th->getMessage());
         }
 
         return redirect()->back()->with('success', 'Berhasil menyimpan data!!');
@@ -687,9 +621,8 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function nota_tagihan_update(Request $request, Transaksi $transaksi)
+    public function nota_tagihan_update(Request $request, Transaksi $transaksi, CustomerBilling $billing)
     {
-
         $data = $request->validate([
             'tonase' => 'required|numeric',
             'gross_muat' => 'nullable|numeric',
@@ -703,144 +636,34 @@ class TransaksiController extends Controller
             'tanggal_bongkar' => 'required',
         ]);
 
-        $data['tanggal_muat'] = date('Y-m-d', strtotime($data['tanggal_muat']));
-
-        $data['tanggal_bongkar'] = Transaksi::unloadingTimestamp($data['tanggal_bongkar'], $transaksi->tanggal_bongkar);
-
-        $penalty = 0;
-
-        if ($transaksi->kas_uang_jalan->customer->tagihan_dari == 1) {
-            $data['nominal_tagihan'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
-            $data['nominal_bayar'] = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
-            $penalty = $data['tonase'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
-        } elseif ($transaksi->kas_uang_jalan->customer->tagihan_dari == 2) {
-            $data['nominal_tagihan'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_customer;
-            $data['nominal_bayar'] = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->harga_vendor;
-            $penalty = $data['timbangan_bongkar'] * $transaksi->kas_uang_jalan->rute->jarak * $transaksi->kas_uang_jalan->customer->nominal_penalty;
-        }
-
-        if ($transaksi->kas_uang_jalan->vendor->pembayaran == 'opname') {
-
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
-
-        } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan') {
-
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
-
-        } elseif ($transaksi->kas_uang_jalan->vendor->pembayaran == 'titipan_khusus') {
-
-            $harga = $transaksi->kas_uang_jalan->rute->jarak > 50 ? 1000 : 500;
-        }
-
-        $data['nominal_csr'] = 0;
-
-        if ($transaksi->kas_uang_jalan->customer->csr == 1) {
-            $data['nominal_csr'] = $data['timbangan_bongkar'] * $transaksi->harga_csr;
-        }
-
-        $data['nominal_bonus'] = $data['timbangan_bongkar'] * $harga;
-
-        $data['profit'] = ($data['nominal_tagihan'] * 0.98) - $data['nominal_bayar'] - $data['nominal_bonus'] - $data['nominal_csr'] - $penalty;
-
         try {
-            $transaksi->update($data);
+            $billing->updateNote($transaksi->id, $data);
         } catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'Terdapat nota yang sama!!');
+            return redirect()->back()->with('error', $th instanceof ValidationException ? collect($th->errors())->flatten()->first() : 'Terdapat nota yang sama!!');
         }
-
-        $previousUrl = session('previous_url');
-        // dd($previousUrl);
 
         // Redirect to previous URL
-        return redirect()->to($previousUrl)->with('success', 'Berhasil menyimpan data!!');
-
+        return redirect()->to(session('previous_url'))->with('success', 'Berhasil menyimpan data!!');
     }
 
-    public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer)
+    public function nota_tagihan_lanjut_pilih(Request $request, Customer $customer, CustomerBilling $billing)
     {
-        // 1. Validasi
         $data = $request->validate([
             'selectedData' => 'required|string',
         ]);
-
-        // 2. Membersihkan string dan mengubahnya menjadi array, filter data kosong
-        $selectedIds = array_filter(explode(',', trim($data['selectedData'], ',')));
-
+        $selectedIds = array_map('intval', array_filter(explode(',', trim($data['selectedData'], ','))));
         if (empty($selectedIds)) {
             return back()->with('error', 'Tidak ada data yang dipilih.');
         }
 
-        // 3. Gunakan DB Transaction untuk keamanan data
-        DB::beginTransaction();
-
         try {
-            // 4. Update status keranjang
-            Transaksi::whereIn('id', $selectedIds)->update([
-                'keranjang' => 1,
-            ]);
-
-            // 5. Eager Loading relasi untuk menghindari N+1 Query problem
-            $selectedData = Transaksi::with('kas_uang_jalan.rute')
-                ->whereIn('id', $selectedIds)
-                ->get();
-
-            $dataAdd = [];
-
-            // 6. Evaluasi kondisi customer SEKALI di luar loop (Lebih efisien)
-            $activeJenis = [];
-            if ($customer->is_kompensasi_jr) {
-                $activeJenis[] = 'kompensasi_jr';
-            }
-            if ($customer->is_penyesuaian_bbm) {
-                $activeJenis[] = 'penyesuaian_bbm';
-            }
-            if ($customer->is_achievement) {
-                $activeJenis[] = 'achievement';
-            }
-
-            // 7. Bentuk array untuk insert jika ada jenis yang aktif
-            if (! empty($activeJenis)) {
-                foreach ($selectedData as $d) {
-                    $kasUangJalan = $d->kas_uang_jalan;
-
-                    // Proteksi jika relasi kosong agar tidak error "Trying to get property of non-object"
-                    if (! $kasUangJalan || ! $kasUangJalan->rute) {
-                        continue;
-                    }
-
-                    foreach ($activeJenis as $jenis) {
-                        $dataAdd[] = [ // Perhatikan penggunaan [] untuk append data
-                            'customer_id' => $customer->id,
-                            'transaksi_id' => $d->id,
-                            'jenis' => $jenis,
-                            'vendor_id' => $kasUangJalan->vendor_id,
-                            'rute_id' => $kasUangJalan->rute_id,
-                            'jarak' => $kasUangJalan->rute->jarak,
-                        ];
-                    }
-                }
-            }
-
-            // 8. Eksekusi Upsert jika ada data
-            if (! empty($dataAdd)) {
-                TransaksiAdditional::upsert(
-                    $dataAdd,
-                    ['transaksi_id', 'jenis'], // Array kolom kombinasi yg bersifat Unique di DB
-                    ['vendor_id', 'rute_id', 'jarak'] // Kolom yang diupdate jika record sudah ada
-                );
-            }
-
-            DB::commit();
-
-            return redirect()->route('transaksi.nota-tagihan', $customer)
-                ->with('success', 'Berhasil memindahkan data ke Keranjang. Silahkan cek keranjang untuk validasi lanjutan!!');
-
+            $billing->addToCart($customer, $selectedIds);
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            // Kembalikan error agar mudah di-debug jika terjadi masalah
             return back()->with('error', 'Terjadi kesalahan saat memproses data: '.$e->getMessage());
         }
+
+        return redirect()->route('transaksi.nota-tagihan', $customer)
+            ->with('success', 'Berhasil memindahkan data ke Keranjang. Silahkan cek keranjang untuk validasi lanjutan!!');
     }
 
     public function keranjang_tagihan(Request $request, Customer $customer)
@@ -892,7 +715,7 @@ class TransaksiController extends Controller
 
     }
 
-    public function keranjang_tagihan_lanjut(Request $request, Customer $customer)
+    public function keranjang_tagihan_lanjut(Request $request, Customer $customer, CustomerBilling $billing)
     {
         $data = $request->validate([
             'penyesuaian' => 'required',
@@ -904,156 +727,22 @@ class TransaksiController extends Controller
             'no_validasi' => 'required',
             'ppn_dipungut' => 'required',
         ]);
-
-        // Parsing dan Cleaning Input (Lebih rapi menggunakan helper Carbon now)
         $data['tanggal_hardcopy'] = Carbon::createFromFormat('d-m-Y', $data['tanggal_hardcopy'])->format('Y-m-d');
         $data['estimasi_pembayaran'] = Carbon::createFromFormat('d-m-Y', $data['estimasi_pembayaran'])->format('Y-m-d');
-        $data['penyesuaian'] = str_replace('.', '', $data['penyesuaian']);
-        $data['penalty'] = str_replace('.', '', $data['penalty']);
-        $data['penalty_akhir'] = str_replace('.', '', $data['penalty_akhir']);
-        $data['lunas'] = 0;
-        $data['tanggal'] = now()->toDateString(); // Helper lebih singkat
-
-        $dipungut = (int) $data['ppn_dipungut'];
-
-        // Ambil Data Relasi
-        $tagihan = Transaksi::getKeranjangTagihanData($customer->id);
-
-        $additionalsData = InvoiceAdditional::with('details')
-            ->where('customer_id', $customer->id)
-            ->where('status', 1)
-            ->where('is_finished', 0)
-            ->whereIn('jenis', ['kompensasi_jr', 'penyesuaian_bbm', 'achievement'])
-            ->get()
-            ->keyBy('jenis');
-
-        $additionals = [
-            'kompensasi_jr' => $additionalsData->get('kompensasi_jr'),
-            'penyesuaian_bbm' => $additionalsData->get('penyesuaian_bbm'),
-            'achievement' => $additionalsData->get('achievement'),
-        ];
-
-        // Kalkulasi Total
-        $total_awal = $tagihan->sum('nominal_tagihan');
-        $total = $total_awal
-            + ($additionals['kompensasi_jr']?->nominal ?? 0)
-            + ($additionals['penyesuaian_bbm']?->nominal ?? 0)
-            + ($additionals['achievement']?->nominal ?? 0)
-            + ($data['penyesuaian'] ?? 0)
-            - ($data['penalty'] ?? 0);
-
-        // Nilai persentase sebaiknya disetting dinamis ke depannya
-        $ppnRate = 0.11;
-        $pphRate = 0.02;
-
-        $ppn = $customer->ppn == 1 ? $total * $ppnRate : 0;
-        $pph = $customer->pph == 1 ? $total * $pphRate : 0;
-
-        $total_tagihan = $dipungut == 1
-            ? ($total + $ppn - $pph) - $data['penalty_akhir']
-            : ($total - $pph) - $data['penalty_akhir'];
-
-        // Menyiapkan Data Invoice Utama
-        $data['total_awal'] = $total_awal;
-        $data['kompensasi_jr'] = $additionals['kompensasi_jr']?->nominal ?? 0;
-        $data['invoice_kompensasi_jr_id'] = $additionals['kompensasi_jr']?->id ?? null;
-        $data['penyesuaian_bbm'] = $additionals['penyesuaian_bbm']?->nominal ?? 0;
-        $data['invoice_penyesuaian_bbm_id'] = $additionals['penyesuaian_bbm']?->id ?? null;
-        $data['achievement'] = $additionals['achievement']?->nominal ?? 0;
-        $data['invoice_achievement_id'] = $additionals['achievement']?->id ?? null;
-
-        $data['ppn'] = $ppn;
-        $data['pph'] = $pph;
-        $data['customer_id'] = $customer->id;
-        $data['total_bayar'] = 0;
-        $data['sisa_tagihan'] = $total_tagihan;
-        $data['total_tagihan'] = $total_tagihan;
+        foreach (['penyesuaian', 'penalty', 'penalty_akhir'] as $field) {
+            $data[$field] = str_replace('.', '', $data[$field]);
+        }
+        $data['ppn_dipungut'] = (int) $data['ppn_dipungut'];
 
         try {
-            DB::beginTransaction();
-
-            // Pindah perhitungan no_invoice ke dalam try agar aman dari Race Condition
-            $data['no_invoice'] = InvoiceTagihan::where('customer_id', $customer->id)->lockForUpdate()->max('no_invoice') + 1;
-            $data['periode'] = 'Periode '.$data['no_invoice'];
-
-            // 1. Buat Invoice
-            $invoice = InvoiceTagihan::create($data);
-
-            $allTransaksiAdditionalIds = []; // Array penampung semua ID
-
-            $jenisAdditionals = ['kompensasi_jr', 'penyesuaian_bbm', 'achievement'];
-
-            foreach ($jenisAdditionals as $jenis) {
-                if (! empty($additionals[$jenis])) {
-                    // Kumpulkan semua ID transaksi_additional dari relasi details
-                    $ids = $additionals[$jenis]->details->pluck('transaksi_additional_id')->toArray();
-                    $allTransaksiAdditionalIds = array_merge($allTransaksiAdditionalIds, $ids);
-
-                    // Update is_finished pada InvoiceAdditional
-                    $additionals[$jenis]->update(['is_finished' => true]);
-                }
-            }
-
-            // Lakukan 1x Update saja untuk semua status TransaksiAdditional
-            if (! empty($allTransaksiAdditionalIds)) {
-                TransaksiAdditional::whereIn('id', $allTransaksiAdditionalIds)->update(['status' => 3]);
-            }
-
-            // 3. Catat PPN & PPh jika ada
-            if ($ppn > 0) {
-                PpnKeluaran::create([
-                    'invoice_tagihan_id' => $invoice->id,
-                    'uraian' => 'PPN '.$invoice->periode,
-                    'nominal' => $ppn,
-                    'dipungut' => $dipungut,
-                ]);
-            }
-
-            if ($pph > 0) {
-                PphPerusahaan::create([
-                    'invoice_tagihan_id' => $invoice->id,
-                    'uraian' => 'PPh '.$invoice->periode,
-                    'nominal' => $pph,
-                ]);
-            }
-
-            // 4. OPTIMASI: Bulk Update & Bulk Insert untuk Detail Tagihan
-            $tagihanIds = $tagihan->pluck('id')->toArray();
-
-            if (! empty($tagihanIds)) {
-                // Bulk Update Transaksi (1 Query saja)
-                Transaksi::whereIn('id', $tagihanIds)->update([
-                    'tagihan' => 1,
-                    'keranjang' => 0,
-                ]);
-
-                // Persiapan Bulk Insert
-                $now = now();
-                $detailData = [];
-                foreach ($tagihanIds as $id) {
-                    $detailData[] = [
-                        'invoice_tagihan_id' => $invoice->id,
-                        'transaksi_id' => $id,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
-                }
-
-                // Bulk Insert InvoiceTagihanDetail (1 Query saja)
-                InvoiceTagihanDetail::insert($detailData);
-            }
-
-            DB::commit();
-
-            return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
-
+            $billing->checkout($customer, $data);
         } catch (\Throwable $th) {
-            DB::rollBack();
-
             return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)
                 ->withInput()
-                ->with('error', 'Terdapat kesalahan!! '.$th->getMessage());
+                ->with('error', 'Terdapat kesalahan!! '.($th instanceof ValidationException ? collect($th->errors())->flatten()->first() : $th->getMessage()));
         }
+
+        return redirect()->route('transaksi.nota-tagihan', $customer)->with('success', 'Berhasil menyimpan data!!');
     }
 
     public function keranjang_tagihan_export(Customer $customer, Request $request)
@@ -1087,50 +776,16 @@ class TransaksiController extends Controller
         return $pdf->stream('Nota Tagihan '.$customer->singkatan.'.pdf');
     }
 
-    public function keranjang_tagihan_delete(Customer $customer, Transaksi $transaksi)
+    public function keranjang_tagihan_delete(Customer $customer, Transaksi $transaksi, CustomerBilling $billing)
     {
-        DB::beginTransaction();
-
         try {
-            // 1. Keluarkan dari keranjang
-            $transaksi->update([
-                'keranjang' => 0,
-            ]);
-
-            TransaksiAdditional::where('transaksi_id', $transaksi->id)->delete();
-
-            $check = InvoiceAdditionalDetail::where('transaksi_id', $transaksi->id)->get();
-            // dd($check);
-
-            if ($check->count() > 0) {
-                foreach ($check as $c) {
-                    $transactionIds = InvoiceAdditionalDetail::where('invoice_additional_id', $c->invoice_additional_id)->get()->pluck('transaksi_id')->toArray();
-
-                    if (count($transactionIds) > 0) {
-                        TransaksiAdditional::whereIn('transaksi_id', $transactionIds)->update(
-                            [
-                                'status' => 0,
-                            ]
-                        );
-                    }
-
-                    InvoiceAdditionalDetail::where('invoice_additional_id', $c->invoice_additional_id)->delete();
-                    InvoiceAdditional::where('id', $c->invoice_additional_id)->delete();
-
-                }
-            }
-
-            DB::commit();
-
-            return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)
-                ->with('success', 'Berhasil mengeluarkan data dari keranjang!!');
-
+            $billing->removeFromCart($customer, $transaksi->id);
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            // Mengembalikan pesan error jika terjadi kegagalan sistem
             return back()->with('error', 'Terjadi kesalahan saat menghapus data: '.$e->getMessage());
         }
+
+        return redirect()->route('transaksi.nota-tagihan.keranjang', $customer)
+            ->with('success', 'Berhasil mengeluarkan data dari keranjang!!');
     }
 
     public function keranjang_tagihan_detail(Customer $customer, InvoiceAdditional $invoiceAdditional)

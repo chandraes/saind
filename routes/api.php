@@ -7,8 +7,10 @@ use App\Http\Controllers\Api\MobileAttendanceDeductionController;
 use App\Http\Controllers\Api\MobileBatteryController;
 use App\Http\Controllers\Api\MobileBillingInvoiceController;
 use App\Http\Controllers\Api\MobileCustomerBillController;
+use App\Http\Controllers\Api\MobileCustomerBillingController;
 use App\Http\Controllers\Api\MobileDriverHeldCashController;
 use App\Http\Controllers\Api\MobileFilterOilController;
+use App\Http\Controllers\Api\MobileHeldCashActionController;
 use App\Http\Controllers\Api\MobileMaintenanceAuthorizationController;
 use App\Http\Controllers\Api\MobileMaintenanceHistoryController;
 use App\Http\Controllers\Api\MobileMaintenanceVehicleController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\Api\MobileTireMonitoringController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
 use App\Http\Controllers\Api\MobileUpahGendongController;
 use App\Http\Controllers\Api\MobileUpahGendongSettingController;
+use App\Http\Controllers\Api\MobileVendorBillingActionController;
 use App\Http\Controllers\Api\MobileVendorCashController;
 use App\Http\Controllers\Api\MobileVendorOptionController;
 use App\Http\Controllers\Api\PaymentNoteController;
@@ -122,10 +125,34 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                         Route::post('{id}/reject', 'reject')->whereNumber('id')->name('reject');
                     });
                 });
+            // Admin & SU: isi Nota Bongkar, lunasi & batalkan Invoice Vendor (sama dengan web).
+            Route::middleware(['role:admin,su', 'throttle:30,1'])->controller(MobileVendorBillingActionController::class)->group(function (): void {
+                Route::post('unloading-notes/{transaction}/complete', 'completeUnloading')->whereNumber('transaction')->name('unloading-notes.complete');
+                Route::post('vendor-invoices/{kind}/{record}/settle', 'settleInvoice')->whereNumber('record')->name('vendor-invoices.settle');
+                Route::post('vendor-invoices/utama/{record}/cancel', 'cancelInvoice')->whereNumber('record')->name('vendor-invoices.cancel');
+            });
+            // Admin & SU: Nota Tagihan → Invoice Tagihan (centang nota fisik, ubah nota, keranjang, buat invoice).
+            Route::prefix('customers/{customer}')->whereNumber('customer')->middleware(['role:admin,su', 'throttle:60,1'])
+                ->controller(MobileCustomerBillingController::class)->name('customer-billing.')->group(function (): void {
+                    Route::post('bills/{transaction}/physical-note', 'physicalNote')->whereNumber('transaction')->name('physical-note');
+                    Route::patch('bills/{transaction}', 'update')->whereNumber('transaction')->name('update');
+                    Route::get('bill-cart', 'cart')->name('cart');
+                    Route::post('bill-cart', 'add')->name('cart.add');
+                    Route::delete('bill-cart/{transaction}', 'remove')->whereNumber('transaction')->name('cart.remove');
+                    Route::post('bill-cart/checkout', 'checkout')->name('cart.checkout');
+                });
+            // Admin & SU: cutoff UJ Ditahan per periode dan batalkan pencairan manual (sama dengan web).
+            Route::middleware(['role:admin,su', 'throttle:30,1'])->controller(MobileHeldCashActionController::class)->group(function (): void {
+                Route::post('vehicles/{vehicle}/held-cash/{fund}/cutoff', 'cutoff')->whereNumber('vehicle')->whereIn('fund', ['sparepart', 'ban'])->name('held-cash.cutoff');
+                Route::post('vehicles/{vehicle}/held-cash/{fund}/withdraw', 'withdraw')->whereNumber('vehicle')->whereIn('fund', ['sparepart', 'ban'])->name('held-cash.withdraw');
+                Route::post('held-cash/{fund}/details/{detail}/cancel', 'cancel')->whereIn('fund', ['sparepart', 'ban'])->whereNumber('detail')->name('held-cash.cancel');
+            });
             // Eksekutif (GM & Direksi): Nota Tagihan per customer & Tagihan & Invoice (baca saja).
             Route::middleware('role:executive')->group(function (): void {
                 Route::get('customer-options', [MobileCustomerBillController::class, 'customers'])->name('customer-options');
                 Route::get('billing-invoices', MobileBillingInvoiceController::class)->name('billing-invoices.index');
+                Route::post('billing-invoices/{invoice}/pay', [MobileBillingInvoiceController::class, 'pay'])->whereNumber('invoice')
+                    ->middleware(['role:admin,su', 'throttle:30,1'])->name('billing-invoices.pay');
                 Route::get('billing-invoices/{invoice}/transactions', [MobileBillingInvoiceController::class, 'transactions'])->whereNumber('invoice')->name('billing-invoices.transactions');
                 Route::get('customers/{customer}/bills', [MobileCustomerBillController::class, 'index'])->whereNumber('customer')->name('customer-bills.index');
             });
@@ -133,6 +160,11 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
             // Rincian potongan absensi: HRD dan eksekutif (dari Gaji Karyawan).
             Route::get('attendance-deductions/{key}', [MobileAttendanceDeductionController::class, 'show'])->whereNumber('key')->middleware('role:hrd,executive')->name('attendance-deductions.show');
             Route::get('payroll', [MobilePayrollController::class, 'index'])->middleware('role:executive')->name('payroll.index');
+            // Admin & SU: simpan gaji periode dan perbarui absensinya (sama dengan Form Gaji web).
+            Route::middleware(['role:admin,su', 'throttle:10,1'])->group(function (): void {
+                Route::post('payroll/refresh-attendance', [MobilePayrollController::class, 'refresh'])->name('payroll.refresh-attendance');
+                Route::post('payroll', [MobilePayrollController::class, 'store'])->name('payroll.store');
+            });
             // Dashboard Pengingat: akses per tabel & cakupan vendor diatur ReminderRegistry (sama dengan web).
             Route::get('reminders', [MobileReminderController::class, 'index'])->name('reminders.index');
             Route::post('reminders/settings', [MobileReminderController::class, 'settings'])->middleware('throttle:30,1')->name('reminders.settings');

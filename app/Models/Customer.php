@@ -108,6 +108,7 @@ class Customer extends Model
                             'pph' => $i->pph,
                             'tagihan_awal' => $i->total_awal + $i->kompensasi_jr + $i->penyesuaian_bbm + $i->achievement,
                             'total_tagihan' => $i->total_tagihan,
+                            'sisa_tagihan' => $i->sisa_tagihan,
                             'no_resi' => $i->no_resi,
                             'no_validasi' => $i->no_validasi,
                         ];

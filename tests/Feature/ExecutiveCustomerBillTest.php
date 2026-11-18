@@ -160,7 +160,9 @@ class ExecutiveCustomerBillTest extends MobileApiTestCase
             ->assertJsonPath('meta.total_bill', 9000000)->assertJsonPath('meta.ppn', 990000)->assertJsonPath('meta.pph', 180000)->assertJsonPath('meta.final_bill', 9810000)
             ->assertJsonPath('data.0.money_out_number', 'UJ07')->assertJsonPath('data.0.vendor_name', 'VA')->assertJsonPath('data.0.weight', 30)
             ->assertJsonPath('data.1.vendor_name', 'Vendor B')->assertJsonPath('data.1.bill', 6000000);
-        $this->assertSame(['number', 'id', 'vehicle_number', 'money_out_number', 'route_name', 'vendor_name', 'weight', 'price', 'bill'], array_keys($response->json('data.0')));
+        // Admin & SU juga menerima isian form Ubah Nota (Modul 5); eksekutif tidak.
+        $this->assertSame(['number', 'id', 'vehicle_number', 'money_out_number', 'route_name', 'vendor_name', 'weight', 'price', 'bill',
+            ...(in_array($role, ['admin', 'su'], true) ? ['edit'] : [])], array_keys($response->json('data.0')));
         $this->assertStringNotContainsString('777777', $response->getContent());
         $this->getJson('/api/v1/customers/2/bills', $headers)->assertOk()->assertJsonPath('meta.weight_basis', 'muat')->assertJsonPath('data.0.weight', 30.5)->assertJsonPath('meta.ppn', 0);
         $this->getJson('/api/v1/customers/1/bills?search=512', $headers)->assertOk()->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.vehicle_number', '512');

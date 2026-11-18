@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\UjDitahan;
 use App\Models\UjDitahanBan;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -35,6 +36,12 @@ class DriverHeldCash
     {
         return (clone $this->mutations)->whereIn($this->relation->getForeignKeyName(),
             (clone $this->accounts)->where('tahun', $year)->where('bulan', $month)->select('id'));
+    }
+
+    /** Rekening UJ Ditahan nolam ini pada satu bulan & tahun (untuk cutoff Admin & SU). */
+    public function account(int $month, int $year): ?Model
+    {
+        return (clone $this->accounts)->where('tahun', $year)->where('bulan', $month)->first();
     }
 
     /** @return array{masuk: int, keluar: int, saldo: int} */

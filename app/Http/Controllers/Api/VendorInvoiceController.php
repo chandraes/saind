@@ -53,6 +53,12 @@ class VendorInvoiceController extends Controller
         if ($request->user()->canViewVendorFinance()) {
             $summary['finance'] = $this->billing->invoiceFinance($invoice);
         }
+        // Admin & SU: nominal untuk dialog Lunasi/Batalkan (dikirim balik sebagai pengaman).
+        if ($request->user()->isMobileAdministrator() && ! $summary['paid']) {
+            $summary['actions'] = $kind === 'utama'
+                ? ['settle_amount' => (int) $invoice->sisa_bayar, 'cancel_amount' => (int) $invoice->total_bayar]
+                : ['settle_amount' => (int) $invoice->total, 'cancel_amount' => null];
+        }
 
         return MobilePaymentNoteResource::collection($items)->additional(['invoice' => $summary]);
     }
