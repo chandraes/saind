@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Sesi web menyimpan [id user, sidik password]. Bila password akun diganti (Pengaturan akun), sesi lain milik
  * user yang sama tidak cocok lagi dan dikeluarkan; sesi yang mengganti password diperbarui setelah respons.
+ * Versi akun juga berubah saat dinonaktifkan agar sesi lama tetap ditolak setelah aktivasi ulang.
  * Berbeda dengan AuthenticateSession bawaan, sesi yang berganti user (actingAs/login baru) cukup dicatat ulang.
  */
 class LogoutStaleSessions
@@ -23,11 +24,19 @@ class LogoutStaleSessions
         // User yang tidak tersimpan (mis. factory()->make() di tes) tidak punya password yang bisa diganti.
         if ($user?->exists && $request->hasSession()) {
             [$id, $fingerprint] = $request->session()->get(self::SESSION_KEY) ?? [null, null];
-            if ((string) $id === (string) $user->getAuthIdentifier() && ! hash_equals((string) $fingerprint, self::fingerprint($user))) {
-                Auth::guard('web')->logoutCurrentDevice();
+            $guard = Auth::guard('web');
+            $sameUser = (string) $id === (string) $user->getAuthIdentifier();
+            $stale = $sameUser
+                ? ! hash_equals((string) $fingerprint, self::fingerprint($user))
+                : (int) $user->account_session_version > 0 && ! $guard->viaRemember();
+            if (! $user->isActive() || $stale) {
+                $guard->logoutCurrentDevice();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                $message = 'Password akun telah diganti. Silakan login kembali.';
+                $message = match (true) {
+                    ! $user->isActive() => 'Akun telah dinonaktifkan.',
+                    default => 'Sesi akun tidak berlaku lagi. Silakan login kembali.',
+                };
 
                 return $request->expectsJson()
                     ? response()->json(['message' => $message], 401)
@@ -46,6 +55,9 @@ class LogoutStaleSessions
 
     private static function fingerprint(User $user): string
     {
-        return hash_hmac('sha256', (string) $user->getAuthPassword(), (string) config('app.key'));
+        $password = (string) $user->getAuthPassword();
+        $version = (int) $user->account_session_version;
+
+        return hash_hmac('sha256', $version === 0 ? $password : $password.':'.$version, (string) config('app.key'));
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\LogoutStaleSessions;
+use App\Models\Transaksi;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +35,9 @@ class UserManagementTest extends TestCase
             $table->unsignedBigInteger('customer_id')->nullable();
             $table->unsignedBigInteger('driver_id')->nullable()->unique();
         });
+        (require database_path('migrations/2026_11_19_195846_add_deactivated_at_to_users_table.php'))->up();
+        (require database_path('migrations/2026_11_19_200803_add_account_session_version_to_users_table.php'))->up();
+        (require database_path('migrations/2019_12_14_000001_create_personal_access_tokens_table.php'))->up();
         foreach (['vendors', 'customers', 'drivers'] as $name) {
             Schema::create($name, function (Blueprint $table): void {
                 $table->id();
@@ -298,6 +303,77 @@ class UserManagementTest extends TestCase
         $this->putJson(route('pengguna.update', $actor), $this->payload(['username' => $actor->username, 'email' => $actor->email, 'role' => 'admin', 'password' => '']))->assertOk();
     }
 
+    public function test_admin_disables_account_without_losing_do_checker_history(): void
+    {
+        $admin = $this->user();
+        $checker = $this->user('user');
+        $token = $checker->createToken('test')->accessToken;
+        Schema::create('transaksis', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('do_checker_id')->constrained('users');
+        });
+        $transaction = DB::table('transaksis')->insertGetId(['do_checker_id' => $checker->id]);
+
+        $this->actingAs($admin);
+        $this->get(route('pengguna.index'))->assertOk()->assertDontSee('Akun Nonaktif');
+        $active = $this->listing(['search' => ['value' => $checker->username]])->assertOk();
+        $this->assertStringContainsString('Nonaktifkan', $active->json('data.0.action'));
+        $this->assertStringNotContainsString('user-delete', $active->json('data.0.action'));
+        $this->deleteJson(route('pengguna.destroy', $checker))->assertForbidden();
+        $this->patchJson('/pengguna/'.$checker->id.'/nonaktif')->assertOk();
+        $this->assertNotNull($checker->fresh()->deactivated_at);
+        $this->assertDatabaseMissing('personal_access_tokens', ['id' => $token->id]);
+        $this->assertSame($checker->name, Transaksi::findOrFail($transaction)->do_checker->name);
+        $this->getJson(route('pengguna.show', $checker))->assertNotFound();
+        $this->listing()->assertJsonMissing(['id' => $checker->id]);
+        $this->listing(['account_scope' => 'inactive'])->assertForbidden();
+        $this->patchJson('/pengguna/'.$admin->id.'/nonaktif')->assertUnprocessable();
+
+        $this->actingAs($checker->fresh());
+        $this->getJson(route('home'))->assertUnauthorized();
+        $this->assertGuest();
+        $this->post(route('login'), ['username' => $checker->username, 'password' => 'secret123'])
+            ->assertSessionHasErrors('username');
+        $this->assertGuest();
+
+        $this->actingAs($this->user('su'));
+        $this->get(route('pengguna.index'))->assertOk()->assertSee('Akun Nonaktif');
+        $this->listing()->assertJsonMissing(['id' => $checker->id]);
+        $inactive = $this->listing(['account_scope' => 'inactive'])->assertOk()
+            ->assertJsonPath('data.0.id', $checker->id);
+        $this->assertStringContainsString('user-delete', $inactive->json('data.0.action'));
+        $this->deleteJson(route('pengguna.destroy', $checker))->assertUnprocessable()->assertJsonValidationErrors('user');
+        $this->assertDatabaseHas('transaksis', ['id' => $transaction, 'do_checker_id' => $checker->id]);
+    }
+
+    public function test_only_su_can_reactivate_an_inactive_account(): void
+    {
+        $target = $this->user('user');
+        $oldSession = hash_hmac('sha256', $target->getAuthPassword(), (string) config('app.key'));
+        $url = '/pengguna/'.$target->id.'/aktifkan';
+
+        $this->actingAs($this->user());
+        $this->patchJson(route('pengguna.deactivate', $target))->assertOk();
+        $this->patchJson($url)->assertForbidden();
+        $this->assertNotNull($target->fresh()->deactivated_at);
+
+        $this->actingAs($this->user('su'));
+        $this->listing(['account_scope' => 'inactive'])->assertOk()->assertSee('Aktifkan Kembali');
+        $this->patchJson($url)->assertOk();
+        $this->assertNull($target->fresh()->deactivated_at);
+        $this->listing()->assertJsonFragment(['id' => $target->id]);
+        $this->listing(['account_scope' => 'inactive'])->assertJsonMissing(['id' => $target->id]);
+
+        $this->actingAs($target->fresh())->withSession([LogoutStaleSessions::SESSION_KEY => [$target->id, $oldSession]]);
+        $this->getJson(route('home'))->assertUnauthorized();
+        $this->assertGuest();
+
+        $this->post(route('login'), ['username' => $target->username, 'password' => 'secret123'])
+            ->assertRedirect();
+        $this->assertAuthenticatedAs($target);
+        $this->get(route('pengguna.index'))->assertForbidden();
+    }
+
     public function test_last_admin_protection_does_not_block_deleting_other_users(): void
     {
         $this->actingAs($this->user('su'));
@@ -306,6 +382,7 @@ class UserManagementTest extends TestCase
         $this->deleteJson(route('pengguna.destroy', $other))->assertOk();
         $this->assertDatabaseMissing('users', ['id' => $other->id]);
         $this->deleteJson(route('pengguna.destroy', $admin))->assertUnprocessable()->assertJsonValidationErrors('user');
+        $this->patchJson(route('pengguna.deactivate', $admin))->assertUnprocessable()->assertJsonValidationErrors('user');
         $this->putJson(route('pengguna.update', $admin), $this->payload())->assertUnprocessable()->assertJsonValidationErrors('role');
         $this->assertDatabaseHas('users', ['id' => $admin->id, 'role' => 'admin']);
         $this->user();
@@ -318,9 +395,10 @@ class UserManagementTest extends TestCase
         $actor = $this->user();
         $this->actingAs($actor);
         $superuser = $this->user('su');
-        $this->deleteJson(route('pengguna.destroy', $actor))->assertUnprocessable();
+        $this->deleteJson(route('pengguna.destroy', $actor))->assertForbidden();
         $this->getJson(route('pengguna.show', $superuser))->assertNotFound();
         $this->putJson(route('pengguna.update', $superuser), $this->payload())->assertNotFound();
+        $this->actingAs($superuser);
         $this->deleteJson(route('pengguna.destroy', $superuser))->assertNotFound();
         $this->postJson(route('pengguna.store'), $this->payload(['role' => 'su']))->assertUnprocessable()->assertJsonValidationErrors('role');
         $this->assertDatabaseHas('users', ['id' => $superuser->id, 'role' => 'su']);

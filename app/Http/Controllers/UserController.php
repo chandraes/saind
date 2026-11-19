@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,9 +27,13 @@ class UserController extends Controller
 
     public function index(Request $request): View|JsonResponse
     {
+        $isSu = $request->user()->role === 'su';
         if (! $request->ajax()) {
-            return view('pengguna.index', ['roles' => self::ROLES]);
+            return view('pengguna.index', ['roles' => self::ROLES, 'isSu' => $isSu]);
         }
+
+        $inactive = $request->input('account_scope') === 'inactive';
+        abort_if($inactive && ! $isSu, 403);
 
         $request->merge(['length' => min(100, max(1, $request->integer('length', 10))), 'start' => max(0, $request->integer('start')), 'columns' => []]);
         $query = DB::table('users')
@@ -36,6 +41,7 @@ class UserController extends Controller
             ->leftJoin('customers', 'users.customer_id', '=', 'customers.id')
             ->leftJoin('drivers', 'users.driver_id', '=', 'drivers.id')
             ->where('users.role', '!=', 'su')
+            ->whereNull('users.deactivated_at', not: $inactive)
             ->select('users.id', 'users.username', 'users.name', 'users.role', 'vendors.nama as vendor_name', 'customers.nama as customer_name', 'drivers.nama as driver_name');
 
         return DataTables::of($query)
@@ -59,7 +65,7 @@ class UserController extends Controller
                 $query->orderBy($column, $direction)->orderBy('users.id');
             })
             ->addIndexColumn()
-            ->addColumn('action', fn (object $user): string => view('pengguna.actions', compact('user'))->render())
+            ->addColumn('action', fn (object $user): string => view('pengguna.actions', ['user' => $user, 'inactive' => $inactive, 'isSu' => $isSu])->render())
             ->escapeColumns([])
             ->rawColumns(['action'])
             ->toJson();
@@ -92,9 +98,9 @@ class UserController extends Controller
         return $this->success($request, 'Pengguna berhasil ditambahkan.');
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
-        $user = User::where('role', '!=', 'su')->select('id', 'name', 'username', 'role', 'email', 'vendor_id', 'customer_id', 'driver_id')
+        $user = User::where('role', '!=', 'su')->when($request->user()->role !== 'su', fn ($query) => $query->whereNull('deactivated_at'))->select('id', 'name', 'username', 'role', 'email', 'vendor_id', 'customer_id', 'driver_id')
             ->with(['vendor:id,nama', 'customer:id,nama', 'driver:id,nama'])->findOrFail($id);
 
         return response()->json(['data' => $user]);
@@ -108,10 +114,10 @@ class UserController extends Controller
     public function update(Request $request, string $id): JsonResponse|RedirectResponse
     {
         DB::transaction(function () use ($request, $id): void {
-            $admins = User::where('role', 'admin')->orderBy('id')->lockForUpdate()->get(['id']);
-            $user = User::where('role', '!=', 'su')->lockForUpdate()->findOrFail($id);
+            $activeAdmins = $this->lockActiveAdmins();
+            $user = User::where('role', '!=', 'su')->whereNull('deactivated_at')->lockForUpdate()->findOrFail($id);
             $data = $this->validatedData($request, $user);
-            if ($user->role === 'admin' && $data['role'] !== 'admin' && $admins->count() <= 1) {
+            if ($user->role === 'admin' && $data['role'] !== 'admin' && $activeAdmins <= 1) {
                 throw ValidationException::withMessages(['role' => 'Minimal satu pengguna dengan role Admin harus tetap tersedia.']);
             }
             $user->update($data);
@@ -120,21 +126,72 @@ class UserController extends Controller
         return $this->success($request, 'Pengguna berhasil diperbarui.');
     }
 
-    public function destroy(Request $request, string $id): JsonResponse|RedirectResponse
+    public function deactivate(Request $request, string $id): JsonResponse|RedirectResponse
     {
         DB::transaction(function () use ($request, $id): void {
-            $admins = User::where('role', 'admin')->orderBy('id')->lockForUpdate()->get(['id']);
-            $user = User::where('role', '!=', 'su')->lockForUpdate()->findOrFail($id);
-            if ($user->is($request->user())) {
-                throw ValidationException::withMessages(['user' => 'Akun yang sedang digunakan tidak dapat dihapus.']);
-            }
-            if ($user->role === 'admin' && $admins->count() <= 1) {
-                throw ValidationException::withMessages(['user' => 'Admin terakhir tidak dapat dihapus.']);
-            }
-            $user->delete();
+            $activeAdmins = $this->lockActiveAdmins();
+            $user = User::where('role', '!=', 'su')->whereNull('deactivated_at')->lockForUpdate()->findOrFail($id);
+            $this->ensureRemovalAllowed($request->user(), $user, $activeAdmins);
+
+            $user->forceFill([
+                'deactivated_at' => now(),
+                'remember_token' => null,
+                'account_session_version' => (int) $user->account_session_version + 1,
+            ])->save();
+            $user->tokens()->delete();
         });
 
+        return $this->success($request, 'Pengguna berhasil dinonaktifkan.');
+    }
+
+    public function reactivate(Request $request, string $id): JsonResponse|RedirectResponse
+    {
+        DB::transaction(function () use ($id): void {
+            $user = User::where('role', '!=', 'su')->whereNotNull('deactivated_at')->lockForUpdate()->findOrFail($id);
+            $user->forceFill(['deactivated_at' => null])->save();
+        });
+
+        return $this->success($request, 'Pengguna berhasil diaktifkan kembali.');
+    }
+
+    public function destroy(Request $request, string $id): JsonResponse|RedirectResponse
+    {
+        try {
+            DB::transaction(function () use ($request, $id): void {
+                $activeAdmins = $this->lockActiveAdmins();
+                $user = User::where('role', '!=', 'su')->lockForUpdate()->findOrFail($id);
+                $this->ensureRemovalAllowed($request->user(), $user, $activeAdmins);
+
+                $user->delete();
+                $user->tokens()->delete();
+            });
+        } catch (QueryException $exception) {
+            [$state, $code, $detail] = ($exception->errorInfo ?? []) + [null, null, ''];
+            $blockedByReference = $state === '23000' && ((int) $code === 1451
+                || ((int) $code === 19 && str_contains($detail, 'FOREIGN KEY constraint failed')));
+            if (! $blockedByReference) {
+                throw $exception;
+            }
+
+            throw ValidationException::withMessages(['user' => 'Akun masih terhubung ke riwayat atau data lain. Gunakan Nonaktifkan untuk menghentikan akses dan menyimpan riwayat.']);
+        }
+
         return $this->success($request, 'Pengguna berhasil dihapus.');
+    }
+
+    private function lockActiveAdmins(): int
+    {
+        return User::where('role', 'admin')->whereNull('deactivated_at')->orderBy('id')->lockForUpdate()->get(['id'])->count();
+    }
+
+    private function ensureRemovalAllowed(User $actor, User $target, int $activeAdmins): void
+    {
+        if ($target->is($actor)) {
+            throw ValidationException::withMessages(['user' => 'Akun yang sedang digunakan tidak dapat dinonaktifkan atau dihapus.']);
+        }
+        if ($target->role === 'admin' && $target->isActive() && $activeAdmins <= 1) {
+            throw ValidationException::withMessages(['user' => 'Admin aktif terakhir tidak dapat dinonaktifkan atau dihapus.']);
+        }
     }
 
     /** @return array<string, mixed> */

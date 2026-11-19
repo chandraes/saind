@@ -73,6 +73,23 @@ class MobileApiFoundationTest extends MobileApiTestCase
         $this->assertArrayNotHasKey('remember_token', $response->json('data'));
     }
 
+    public function test_inactive_user_cannot_log_in_or_use_an_existing_token(): void
+    {
+        $migration = require database_path('migrations/2026_11_19_195846_add_deactivated_at_to_users_table.php');
+        $migration->up();
+        $user = $this->user();
+        $token = $this->login();
+        $user->forceFill(['deactivated_at' => now()])->save();
+        $this->app['auth']->forgetGuards();
+
+        $this->getJson('/api/v1/me', ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$token])
+            ->assertUnauthorized()->assertJsonPath('message', 'Akun telah dinonaktifkan.');
+        $this->app['auth']->forgetGuards();
+        $this->postJson('/api/v1/login', ['username' => 'budi', 'password' => 'secret-pass', 'device_name' => 'iPhone Budi'],
+            ['X-Workspace-ID' => self::WORKSPACE])->assertUnauthorized();
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+    }
+
     public function test_wrong_credentials_are_unauthorized_without_creating_tokens(): void
     {
         $this->user();

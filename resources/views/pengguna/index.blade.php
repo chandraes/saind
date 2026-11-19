@@ -16,7 +16,16 @@
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-3 p-md-4">
             <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                <div><h5 class="fw-bold mb-1">Daftar Pengguna</h5><span class="text-muted small">Cari akun atau saring berdasarkan role.</span></div>
+                <div class="user-role-filter">
+                    <label for="user-search" class="form-label small fw-bold">Cari pengguna</label>
+                    <input type="search" id="user-search" class="form-control" maxlength="100" placeholder="Nama atau username…">
+                </div>
+                @if ($isSu)
+                    <div class="btn-group" role="group" aria-label="Kelompok akun">
+                        <button type="button" class="btn btn-outline-success active" data-user-scope="active" aria-pressed="true">Akun Aktif</button>
+                        <button type="button" class="btn btn-outline-success" data-user-scope="inactive" aria-pressed="false">Akun Nonaktif</button>
+                    </div>
+                @endif
                 <div class="user-role-filter">
                     <label for="user-role-filter" class="form-label small fw-bold">Filter role</label>
                     <select id="user-role-filter" class="form-select">
@@ -31,6 +40,7 @@
                     <tbody></tbody>
                 </table>
             </div>
+            <div id="user-list-feedback" class="text-center small py-2" role="status" aria-live="polite"></div>
         </div>
     </div>
     @include('swal')
@@ -58,6 +68,7 @@
 
 @push('js')
 <script src="{{ asset('assets/js/dt5.min.js') }}"></script>
+<script src="{{ asset('assets/js/incremental-data-table.js') }}?v={{ filemtime(public_path('assets/js/incremental-data-table.js')) }}"></script>
 <script src="{{ asset('assets/plugins/select2/js/select2.min.js') }}"></script>
 <script>
 $(function () {
@@ -73,22 +84,93 @@ $(function () {
     const escapeText = value => $('<span>').text(value == null ? '' : value).html();
     const showError = xhr => Swal.fire({icon: 'error', title: 'Tidak berhasil', text: xhr.status === 419 ? 'Sesi telah berakhir. Muat ulang halaman lalu coba kembali.' : xhr.status >= 500 ? 'Terjadi gangguan server. Silakan coba kembali.' : (xhr.responseJSON && xhr.responseJSON.message) || 'Data tidak dapat dimuat. Periksa koneksi lalu coba kembali.'});
 
-    const table = $('#user').DataTable({
-        processing: true, serverSide: true, deferRender: true, searchDelay: 500,
-        pageLength: 10, lengthMenu: [10, 25, 50, 100], order: [[3, 'asc']],
-        ajax: {url: @json(route('pengguna.index')), data: data => { data.role_filter = $('#user-role-filter').val(); }, error: showError},
+    const tableView = createIncrementalDataTable('#user', {
+        data: [], ordering: true, order: [[3, 'asc']],
         columns: [
             {data: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center'},
             {data: 'username', render: textRenderer},
             {data: 'name', render: textRenderer},
-            {data: 'role', render: value => '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">' + escapeText(roles[value] || value) + '</span>'},
+            {data: 'role', render: (value, type) => type === 'display' ? '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2">' + escapeText(roles[value] || value) + '</span>' : value},
             {data: null, orderable: false, render: (value, type, row) => escapeText(row.vendor_name || row.customer_name || row.driver_name || '—')},
             {data: 'action', orderable: false, searchable: false}
         ],
-        language: {processing: 'Memuat pengguna…', search: 'Cari:', searchPlaceholder: 'Nama atau username…', lengthMenu: 'Tampilkan _MENU_ pengguna', info: 'Menampilkan _START_–_END_ dari _TOTAL_ pengguna', infoEmpty: 'Belum ada pengguna', infoFiltered: '(disaring dari _MAX_ pengguna)', emptyTable: 'Belum ada pengguna. Tambahkan akun pertama Anda.', zeroRecords: 'Tidak ada pengguna yang sesuai pencarian.', paginate: {first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya'}}
+        language: {emptyTable: 'Tidak ada pengguna yang sesuai.'}
     });
-    $('#user-role-filter').select2({width: '100%'}).on('change', () => table.ajax.reload());
-    $('#user_length select').select2({width: 'auto', minimumResultsForSearch: Infinity});
+    const table = tableView.grid;
+    const listFeedback = $('#user-list-feedback');
+    let accountScope = 'active';
+    let listRequest = null;
+    let offset = 0, exhausted = false, failed = false, listRevision = 0;
+    let restore = null;
+    let sortKey = JSON.stringify(table.order());
+    function loadUsers() {
+        if (listRequest || exhausted) return;
+        failed = false;
+        listFeedback.text('Memuat pengguna…');
+        const revision = listRevision;
+        listRequest = $.ajax({
+            url: @json(route('pengguna.index')), dataType: 'json',
+            data: {start: offset, length: 25, order: table.order().map(([column, dir]) => ({column, dir})),
+                role_filter: $('#user-role-filter').val(), account_scope: accountScope, search: {value: $('#user-search').val()}}
+        }).done(response => {
+            if (revision !== listRevision) return;
+            tableView.add(response.data);
+            offset += response.data.length;
+            exhausted = response.data.length === 0 || offset >= response.recordsFiltered;
+            if (restore && (exhausted || offset >= restore.rows)) {
+                tableView.body.scrollTop = restore.top;
+                tableView.body.scrollLeft = restore.left;
+                restore = null;
+            }
+            listFeedback.empty();
+        }).fail((xhr, status) => {
+            if (revision !== listRevision || status === 'abort') return;
+            failed = true;
+            listFeedback.text('Daftar pengguna gagal dimuat. ').append(
+                $('<button type="button" class="btn btn-outline-primary btn-sm">Coba lagi</button>').on('click', loadUsers)
+            );
+        }).always(() => {
+            if (revision !== listRevision) return;
+            listRequest = null;
+            checkUsers();
+        });
+    }
+    function checkUsers() {
+        if (!failed && (restore || tableView.nearEnd())) loadUsers();
+    }
+    function reloadUsers(keepPosition = false) {
+        restore = keepPosition ? {rows: offset, top: tableView.body.scrollTop, left: tableView.body.scrollLeft} : null;
+        listRevision++;
+        listRequest?.abort();
+        listRequest = null;
+        offset = 0;
+        exhausted = false;
+        table.clear().draw(false);
+        tableView.body.scrollTop = 0;
+        loadUsers();
+    }
+
+    let searchTimer;
+    $('#user-search').on('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => reloadUsers(), 350);
+    });
+    $('#user-role-filter').select2({width: '100%'}).on('change', () => reloadUsers());
+    table.on('order.dt', () => {
+        const next = JSON.stringify(table.order());
+        if (next === sortKey) return;
+        sortKey = next;
+        queueMicrotask(() => reloadUsers());
+    });
+    $('[data-user-scope]').on('click', function () {
+        if (accountScope === this.dataset.userScope) return;
+        accountScope = this.dataset.userScope;
+        $('[data-user-scope]').removeClass('active').attr('aria-pressed', 'false');
+        $(this).addClass('active').attr('aria-pressed', 'true');
+        reloadUsers();
+    });
+    tableView.watch(checkUsers);
+    loadUsers();
     $('#user-role').select2({width: '100%', dropdownParent: $('#user-modal')}).on('change', toggleRelations);
     ['vendor', 'customer', 'driver'].forEach(type => {
         $('#user-' + type).select2({
@@ -171,7 +253,7 @@ $(function () {
             .done(response => {
                 saving = false;
                 $('#user-modal').modal('hide');
-                table.ajax.reload(null, !editing);
+                reloadUsers(editing);
                 Swal.fire({icon: 'success', title: 'Berhasil', text: response.message});
             }).fail(xhr => {
                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
@@ -184,21 +266,38 @@ $(function () {
                 } else showError(xhr);
             }).always(() => { saving = false; $('#user-save').prop('disabled', false).html('<i class="fa fa-check me-1"></i> Simpan'); });
     });
-    $('#user').on('click', '.user-delete', async function () {
+    let changingAccess = false;
+    $('#user').on('click', '.user-access-action', async function () {
+        if (changingAccess || saving) return;
+        changingAccess = true;
         const button = $(this);
-        const confirmation = await Swal.fire({icon: 'warning', title: 'Hapus pengguna?', text: 'Akun "' + button.data('name') + '" akan dihapus. Tindakan ini tidak dapat dibatalkan.', showCancelButton: true, confirmButtonText: 'Ya, hapus', cancelButtonText: 'Batal', confirmButtonColor: '#dc3545'});
-        if (!confirmation.isConfirmed) return;
+        const remove = button.hasClass('user-delete');
+        const reactivate = button.hasClass('user-reactivate');
+        const username = button.data('name');
+        const verb = remove ? 'Hapus' : reactivate ? 'Aktifkan kembali' : 'Nonaktifkan';
+        const description = remove ? ' akan dihapus permanen.'
+            : reactivate ? ' dapat login kembali setelah diaktifkan.'
+                : ' akan kehilangan akses. Riwayat akun tetap tersimpan.';
+        const confirmation = await Swal.fire({
+            icon: 'warning', title: verb + ' pengguna?',
+            text: 'Akun "' + username + '"' + description,
+            showCancelButton: true, confirmButtonText: 'Ya, ' + verb.toLowerCase(),
+            cancelButtonText: 'Batal', confirmButtonColor: remove ? '#dc3545' : '#198754',
+        });
+        if (!confirmation.isConfirmed) {
+            changingAccess = false;
+            return;
+        }
         button.prop('disabled', true);
-        $.ajax({url: button.data('url'), method: 'DELETE', headers: {'X-CSRF-TOKEN': csrf, Accept: 'application/json'}})
+        Swal.fire({title: 'Memproses…', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading()});
+        $.ajax({url: button.data('url'), method: remove ? 'DELETE' : 'PATCH', headers: {'X-CSRF-TOKEN': csrf, Accept: 'application/json'}})
             .done(response => {
-                const info = table.page.info();
-                if (info.end - info.start === 1 && info.page > 0) table.page(info.page - 1);
-                table.ajax.reload(null, false);
+                reloadUsers(true);
                 Swal.fire({icon: 'success', title: 'Berhasil', text: response.message});
             }).fail(xhr => {
-                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) Swal.fire({icon: 'error', title: 'Tidak dapat dihapus', text: Object.values(xhr.responseJSON.errors).flat().join('\n')});
+                if (xhr.status === 422 && xhr.responseJSON?.errors) Swal.fire({icon: 'error', title: 'Tidak berhasil', text: Object.values(xhr.responseJSON.errors).flat().join('\n')});
                 else showError(xhr);
-            }).always(() => button.prop('disabled', false));
+            }).always(() => { changingAccess = false; button.prop('disabled', false); });
     });
 });
 </script>
