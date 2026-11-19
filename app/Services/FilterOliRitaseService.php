@@ -17,6 +17,8 @@ use Illuminate\Validation\ValidationException;
 
 class FilterOliRitaseService
 {
+    private const EXECUTION_GRACE_RITASE = 2;
+
     /** @return Collection<int, Transaksi> */
     public function transactions(int $vehicleId, CarbonInterface $from, ?CarbonInterface $until = null): Collection
     {
@@ -58,12 +60,14 @@ class FilterOliRitaseService
         $messages = [];
         foreach ($categories as $category) {
             $log = $latestLogs->get($category->id);
+            $executionLimit = $category->limit_ritase + self::EXECUTION_GRACE_RITASE;
             if (! $log) {
                 $messages[] = $category->nama.': log penggantian belum tersedia';
                 $issues[] = ['category' => $category->nama, 'ritase' => null, 'limit' => (int) $category->limit_ritase, 'reason' => 'Belum ada data'];
-            } elseif ((float) $log->ritase > $category->limit_ritase) {
-                $messages[] = $category->nama.': ritase '.number_format((float) $log->ritase, 1, ',', '.').' melebihi limit '.$category->limit_ritase.' rit';
-                $issues[] = ['category' => $category->nama, 'ritase' => (float) $log->ritase, 'limit' => (int) $category->limit_ritase, 'reason' => 'Melebihi limit'];
+            } elseif ((float) $log->ritase > $executionLimit) {
+                $reason = 'Melebihi batas eksekusi '.$executionLimit.' rit';
+                $messages[] = $category->nama.': ritase '.number_format((float) $log->ritase, 1, ',', '.').' '.strtolower($reason);
+                $issues[] = ['category' => $category->nama, 'ritase' => (float) $log->ritase, 'limit' => (int) $category->limit_ritase, 'reason' => $reason];
             }
         }
         if ($issues !== []) {
