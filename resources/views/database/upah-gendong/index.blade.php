@@ -1,29 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row ">
-        <div class="col-md-12 text-center">
-            <h1><u>UPAH GENDONG</u></h1>
-        </div>
-    </div>
+<div class="container-fluid py-4 upah-workspace">
     @include('swal')
-    <div class="flex-row justify-content-between mt-3">
-        <div class="col-md-6">
-            <table class="table">
-                <tr class="">
-                    <td><a href="{{route('home')}}"><img src="{{asset('images/dashboard.svg')}}" alt="dashboard"
-                                width="30"> Dashboard</a></td>
-                    <td><a href="{{route('database')}}"><img src="{{asset('images/database.svg')}}" alt="dokumen"
-                                width="30"> Database</a></td>
-                    <td>
-                        @include('database.upah-gendong.create')
-                    </td>
-                </tr>
-            </table>
+    <header class="upah-heading">
+        <div>
+            <nav class="d-flex flex-wrap gap-3 mb-3" aria-label="Navigasi Upah Gendong">
+                <a href="{{ route('home') }}"><i class="fa fa-home me-1" aria-hidden="true"></i> Dashboard</a>
+                @if (in_array(auth()->user()->role, ['admin', 'su'], true))
+                    <a href="{{ route('database') }}">Database</a>
+                @else
+                    <a href="{{ route($vendorId !== null ? 'statistik.upah-gendong' : 'statisik.index') }}">Hasil Upah Gendong</a>
+                @endif
+            </nav>
+            <h1>Pengaturan Upah Gendong</h1>
+            <p class="mb-0 text-muted">Kelola tarif, batas tonase, dan rekening pembayaran per kendaraan.</p>
         </div>
-    </div>
-</div>
+        @include('database.upah-gendong.create')
+    </header>
 @if ($errors->any())
 <div class="container">
     <div class="alert alert-danger">
@@ -36,79 +30,58 @@
 </div>
 @endif
 @include('database.upah-gendong.edit')
-<div class="container-fluid mt-5 table-responsive ">
-    <table class="table table-hover table-bordered" id="karyawan-data">
+<section class="upah-panel" aria-labelledby="upah-list-title">
+    <div class="upah-panel-heading">
+        <h2 id="upah-list-title" class="h5 fw-bold mb-1">Kendaraan terdaftar</h2>
+        <span class="text-muted">{{ $data->count() }} pengaturan aktif</span>
+    </div>
+    <div class="p-3">
+    <table class="table table-hover table-bordered align-middle w-100" id="karyawan-data">
         <thead class="table-success">
             <tr>
-                <th class="text-center align-middle">No</th>
-                <th class="text-center align-middle">Nominal Upah Gendong</th>
-                <th class="text-center align-middle">Minimal Tonase</th>
-                <th class="text-center align-middle">NOLAM</th>
-                <th class="text-center align-middle">Nama Driver</th>
-                <th class="text-center align-middle">Tanggal Masuk Driver</th>
-                <th class="text-center align-middle">Pengurus</th>
-                <th class="text-center align-middle">Tanggal Masuk Pengurus</th>
-                <th class="text-center align-middle">Bank</th>
-                <th class="text-center align-middle">Nama Rekening</th>
-                <th class="text-center align-middle">Nomor Rekening</th>
-                <th class="text-center align-middle">Action</th>
+                <th scope="col">No.</th>
+                <th scope="col">No. Lambung</th>
+                <th scope="col" class="text-end">Tarif</th>
+                <th scope="col" class="text-end">Min. Tonase</th>
+                <th scope="col">Driver</th>
+                <th scope="col">Pengurus</th>
+                <th scope="col">Rekening</th>
+                <th scope="col">Aksi</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($data as $d)
             <tr>
-                <td class="text-center align-middle">{{$loop->iteration}}</td>
-                <td class="text-end align-middle">Rp. {{number_format($d->nominal,0,',','.')}}</td>
-                <td class="text-center align-middle">{{$d->tonase_min}}</td>
+                <td class="text-muted">{{ $loop->iteration }}</td>
+                <td class="fw-semibold text-nowrap">{{ $d->vehicle?->nomor_lambung ?? '–' }}</td>
+                <td class="text-end text-nowrap fw-semibold">Rp {{ number_format($d->nominal, 0, ',', '.') }}</td>
+                <td class="text-end text-nowrap">{{ $d->tonase_min }} ton</td>
+                <td>{{ $d->nama_driver }}<small class="d-block text-muted">Masuk {{ $d->id_tanggal_masuk_driver }}</small></td>
+                <td>{{ $d->nama_pengurus }}<small class="d-block text-muted">Masuk {{ $d->id_tanggal_masuk_pengurus }}</small></td>
+                <td>{{ $d->bank }} <span class="text-nowrap">{{ $d->no_rek }}</span><small class="d-block text-muted">{{ $d->nama_rek }}</small></td>
                 <td class="text-center align-middle">
-                    {{$d->vehicle->nomor_lambung}}
-                </td>
-                <td class="text-center align-middle">{{$d->nama_driver}}</td>
-                <td class="text-center align-middle">{{$d->id_tanggal_masuk_driver}}</td>
-                <td class="text-center align-middle">{{$d->nama_pengurus}}</td>
-                <td class="text-center align-middle">{{$d->id_tanggal_masuk_pengurus}}</td>
-                <td class="text-center align-middle">{{$d->bank}}</td>
-                <td class="text-center align-middle">{{$d->nama_rek}}</td>
-                <td class="text-center align-middle">{{$d->no_rek}}</td>
-                <td class="text-center align-middle">
-                    <div class="d-flex justify-content-center">
-                        <button type="button" class="btn btn-primary m-2" data-bs-toggle="modal"
-                            data-bs-target="#editUg" onclick="editUg({{$d}}, {{$d->id}})"><i
-                                class="fa fa-edit"></i> Edit</button>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary text-nowrap" data-bs-toggle="modal"
+                            data-bs-target="#editUg" onclick="editUg(@js($d), @js(route('database.upah-gendong.update', $d)))"><i
+                                class="fa fa-edit me-1" aria-hidden="true"></i> Ubah</button>
                         <form action="{{route('database.upah-gendong.destroy', ['ug' => $d])}}" method="post"
-                            id="deleteForm-{{$d->id}}">
+                            data-upah-delete="{{ $d->vehicle?->nomor_lambung }}" @if ($vendorId !== null) data-upah-password @endif>
                             @csrf
                             @method('delete')
-                            <button type="submit" class="btn btn-danger m-2"><i class="fa fa-trash"></i> Delete</button>
+                            @if ($vendorId !== null)<input type="hidden" name="password">@endif
+                            <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap"><i class="fa fa-trash me-1" aria-hidden="true"></i> Hapus</button>
                         </form>
                     </div>
-                    {{-- button delete with sweetalert confirmation --}}
-
                 </td>
             </tr>
-            <script>
-                $('#deleteForm-{{$d->id}}').submit(function(e){
-                        e.preventDefault();
-                        Swal.fire({
-                            title: 'Apakah anda yakin?',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Ya, simpan!'
-                            }).then((result) => {
-                            if (result.isConfirmed) {
-                                $('#spinner').show();
-                                this.submit();
-                            }
-                        })
-                    });
-            </script>
             @endforeach
         </tbody>
     </table>
+    </div>
+</section>
 </div>
 @endsection
+@include('database.upah-gendong.styles')
 @push('css')
 <link href="{{asset('assets/css/dt.min.css')}}" rel="stylesheet">
 <link rel="stylesheet" href="{{asset('assets/js/flatpickr/flatpickr.min.css')}}">
@@ -120,10 +93,10 @@
 <script src="{{asset('assets/plugins/select2/select2.full.min.js')}}"></script>
 <script src="{{asset('assets/plugins/datatable/datatables.min.js')}}"></script>
 <script>
-      function editUg(data, id) {
+      function editUg(data, url) {
             $('#edit_vehicle_id').val(data.vehicle_id).trigger('change');
             document.getElementById('edit_nama_driver').value = data.nama_driver;
-            document.getElementById('edit_nominal').value = data.nf_nominal;
+            $('#edit_nominal').data('cleave').setRawValue(data.nominal);
             document.getElementById('edit_tonase_min').value = data.tonase_min;
             document.getElementById('edit_nama_pengurus').value = data.nama_pengurus;
             document.getElementById('edit_tanggal_masuk_pengurus').value = data.id_tanggal_masuk_pengurus;
@@ -131,8 +104,7 @@
             document.getElementById('edit_nama_rek').value = data.nama_rek;
             document.getElementById('edit_no_rek').value = data.no_rek;
             document.getElementById('edit_bank').value = data.bank;
-            // Populate other fields...
-            document.getElementById('editForm').action = '/database/upah-gendong/update/' + id;
+            document.getElementById('editForm').action = url;
         }
 
     $(document).ready(function() {
@@ -149,20 +121,25 @@
             dateFormat: "d-m-Y",
         });
 
-        $('#karyawan-data').DataTable();
-
-        var nominal = new Cleave('#nominal', {
-            numeral: true,
-            numeralThousandsGroupStyle: 'thousand',
-            numeralDecimalMark: ',',
-            delimiter: '.'
+        $('#karyawan-data').DataTable({
+            paging: false,
+            scrollX: true,
+            scrollY: '52vh',
+            scrollCollapse: true,
+            order: [],
+            columnDefs: [{targets: -1, orderable: false}],
+            language: {search: 'Cari', emptyTable: 'Belum ada pengaturan Upah Gendong.', zeroRecords: 'Kendaraan yang cocok tidak ditemukan.', info: '_TOTAL_ pengaturan', infoEmpty: '0 pengaturan', infoFiltered: ''}
         });
 
-        var nominal = new Cleave('#edit_nominal', {
-            numeral: true,
-            numeralThousandsGroupStyle: 'thousand',
-            numeralDecimalMark: ',',
-            delimiter: '.'
+        $('[data-upah-money]').each(function () {
+            $(this).data('cleave', new Cleave(this, {
+                numeral: true,
+                numeralDecimalScale: 0,
+                numeralPositiveOnly: true,
+                numeralThousandsGroupStyle: 'thousand',
+                numeralDecimalMark: ',',
+                delimiter: '.'
+            }));
         });
 
         $('#vehicle_id').select2({
@@ -180,40 +157,42 @@
             dropdownParent: $('#editUg')
         });
 
-        $('#editForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah data sudah benar?',
-                text: "Pastikan data sudah benar sebelum disimpan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    this.submit();
-                }
-            })
-        });
+        $('#masukForm, #editForm, [data-upah-delete]').on('submit', async function (event) {
+            event.preventDefault();
+            if (this.dataset.confirming) return;
+            this.dataset.confirming = 'true';
 
-        $('#masukForm').submit(function(e){
-            e.preventDefault();
-            Swal.fire({
-                title: 'Apakah data sudah benar?',
-                text: "Pastikan data sudah benar sebelum disimpan!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, simpan!'
-                }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#spinner').show();
-                    this.submit();
-                }
-            })
+            const deleting = this.hasAttribute('data-upah-delete');
+            const needsPassword = this.hasAttribute('data-upah-password');
+            const nolam = deleting ? this.dataset.upahDelete : $(this).find('select option:selected').text();
+            const action = deleting ? 'Hapus' : this.id === 'editForm' ? 'Ubah' : 'Aktifkan';
+            let submitted = false;
+            try {
+                const result = await Swal.fire({
+                    title: action + ' Upah Gendong?',
+                    text: 'Kendaraan: ' + nolam,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: action,
+                    cancelButtonText: 'Batal',
+                    ...(needsPassword ? {
+                        input: 'password',
+                        inputLabel: 'Password akun',
+                        inputValidator: value => value ? undefined : 'Masukkan password akun Anda.'
+                    } : {})
+                });
+                if (!result.isConfirmed) return;
+
+                if (needsPassword) this.elements.password.value = result.value;
+                const money = this.querySelector('[data-upah-money]');
+                if (money) this.querySelector('[data-upah-canonical]').value = $(money).data('cleave').getRawValue();
+
+                Swal.fire({title: 'Memproses pengaturan Upah Gendong', allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, didOpen: () => Swal.showLoading()});
+                HTMLFormElement.prototype.submit.call(this);
+                submitted = true;
+            } finally {
+                if (!submitted) delete this.dataset.confirming;
+            }
         });
     } );
 

@@ -87,6 +87,9 @@
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
+                        @if (auth()->user()->role === 'user')
+                            <a href="{{ route('database.upah-gendong') }}" class="btn btn-outline-primary mb-3"><i class="fa fa-cog me-2" aria-hidden="true"></i>Pengaturan Upah Gendong</a>
+                        @endif
                         <form action="{{route('statistik.upah-gendong')}}" method="get">
                             <div class="modal-body">
                                 <div class="col-md-12 mb-3">

@@ -169,7 +169,7 @@
                     <th class="text-center align-middle">Tonase < 50 KM</th>
                     <th class="text-center align-middle">Tonase ≥ 50 KM</th>
                     <th class="text-center align-middle">Kelebihan Tonase</th>
-                    <th class="text-center align-middle">Total Upah Gendong</th>
+                    <th class="text-end align-middle">Upah Gendong (Rp)</th>
                 </tr>
             </thead>
             <tbody>
@@ -212,7 +212,7 @@
                     </td>
                     <td class="text-center">
 
-                                @if ($kelebihan_tonase < 0) 0 @else {{$kelebihan_tonase}}
+                                @if ($kelebihan_tonase < 0) 0,00 @else {{ number_format($kelebihan_tonase, 2, ',', '.') }}
                               @php $upah_gendong=$kelebihan_tonase * $ug->nominal;
 
                                 $total += $upah_gendong;
@@ -236,7 +236,7 @@
                     <th class="text-center align-middle">{{$data->sum('jarak')}}</th>
                     <th class="text-center align-middle">{{$total_under_50}}</th>
                     <th class="text-center align-middle">{{$total_over_50}}</th>
-                    <th class="text-center align-middle">{{$total_kelebihan_tonase}}</th>
+                    <th class="text-center align-middle">{{ number_format($total_kelebihan_tonase, 2, ',', '.') }}</th>
                     <th class="text-end align-middle">{{number_format($total, 0, ',','.')}}</th>
                 </tr>
             </tfoot>

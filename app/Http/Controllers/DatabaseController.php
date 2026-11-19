@@ -9,10 +9,14 @@ use App\Models\db\Kreditor;
 use App\Models\Driver;
 use App\Models\KategoriBarangMaintenance;
 use App\Models\UpahGendong;
-use App\Support\UpahGendongData;
 use App\Models\Vehicle;
+use App\Support\MaintenanceHistoryGuard;
+use App\Support\UpahGendongData;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Yajra\DataTables\DataTables;
 
 class DatabaseController extends Controller
@@ -22,41 +26,74 @@ class DatabaseController extends Controller
         return view('database.index');
     }
 
-    public function upah_gendong()
+    public function upah_gendong(Request $request): View
     {
-        $data = UpahGendong::all();
-        $vehicleId = $data->pluck('vehicle_id')->toArray();
-        $vehicles = Vehicle::whereNot('status', 'nonaktif')->whereNotIn('id', $vehicleId)->get();
-        $editVehicles = Vehicle::whereNot('status', 'nonaktif')->get();
+        $vendorId = $this->upahGendongVendorId($request);
+        $data = UpahGendong::with('vehicle')
+            ->when($vendorId !== null, fn ($query) => $query->whereHas('vehicle', fn ($vehicle) => $vehicle->where('vendor_id', $vendorId)->where('status', '!=', 'nonaktif')))
+            ->get();
+        $editVehicles = Vehicle::where('status', '!=', 'nonaktif')
+            ->when($vendorId !== null, fn ($query) => $query->where('vendor_id', $vendorId))->get();
+        $vehicles = $editVehicles->whereNotIn('id', $data->pluck('vehicle_id'));
 
-        return view('database.upah-gendong.index', [
-            'data' => $data,
-            'vehicles' => $vehicles,
-            'editVehicles' => $editVehicles,
-        ]);
+        return view('database.upah-gendong.index', compact('data', 'vehicles', 'editVehicles', 'vendorId'));
     }
 
-    public function upah_gendong_store(Request $request)
+    public function upah_gendong_store(Request $request): RedirectResponse
     {
+        $this->authorizeUpahGendongVehicle($request, $request->input('vehicle_id'));
         $data = $request->validate(UpahGendongData::rules(withVehicle: true), UpahGendongData::messages());
         UpahGendongData::write(fn () => UpahGendong::create(UpahGendongData::normalize($data)));
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil ditambahkan');
     }
 
-    public function upah_gendong_update(UpahGendong $ug, Request $request)
+    public function upah_gendong_update(UpahGendong $ug, Request $request): RedirectResponse
     {
+        $this->authorizeUpahGendongVehicle($request, $ug->vehicle_id);
+        if ($request->user()->role === 'vendor') {
+            $request->merge(['vehicle_id' => $ug->vehicle_id]);
+        }
         $data = $request->validate(UpahGendongData::rules($ug, withVehicle: true), UpahGendongData::messages());
         UpahGendongData::write(fn () => $ug->update(UpahGendongData::normalize($data)));
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil diubah');
     }
 
-    public function upah_gendong_destroy(UpahGendong $ug)
+    public function upah_gendong_destroy(UpahGendong $ug, Request $request): RedirectResponse
     {
+        $this->authorizeUpahGendongVehicle($request, $ug->vehicle_id);
+        if ($request->user()->role === 'vendor') {
+            $request->validate(['password' => ['required', 'string', 'max:1024']]);
+            if (! MaintenanceHistoryGuard::passwordMatches($request)) {
+                throw ValidationException::withMessages(['password' => 'Password salah.']);
+            }
+        }
         $ug->delete();
 
         return redirect()->route('database.upah-gendong')->with('success', 'Data berhasil dihapus');
+    }
+
+    private function upahGendongVendorId(Request $request): ?int
+    {
+        $user = $request->user();
+        abort_unless(in_array($user->role, ['admin', 'user', 'su', 'vendor'], true), 403);
+        if ($user->role !== 'vendor') {
+            return null;
+        }
+
+        abort_unless($user->vendor_id && $user->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');
+
+        return (int) $user->vendor_id;
+    }
+
+    private function authorizeUpahGendongVehicle(Request $request, mixed $vehicleId): void
+    {
+        $vendorId = $this->upahGendongVendorId($request);
+        if ($vendorId !== null) {
+            abort_unless(is_scalar($vehicleId) && ctype_digit((string) $vehicleId)
+                && Vehicle::whereKey($vehicleId)->where('vendor_id', $vendorId)->where('status', '!=', 'nonaktif')->exists(), 404);
+        }
     }
 
     public function barang_maintenance()

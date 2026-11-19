@@ -15,7 +15,7 @@
             <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Tampilkan</button></div>
         </form>
     </div></div>
-    <div class="table-responsive"><table id="vendorUpahTable" class="table table-bordered align-middle"><thead class="table-success"><tr><th>No</th><th>Hari</th><th>Tanggal</th><th>Rute</th><th>Jarak (km)</th><th>Tonase &lt;50 km</th><th>Tonase ≥50 km</th><th>Kelebihan tonase</th><th>Upah gendong</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand Total</th><th>{{ number_format($summary->jarak, 1, ',', '.') }}</th><th>{{ number_format($summary->under_50, 2, ',', '.') }}</th><th>{{ number_format($summary->over_50, 2, ',', '.') }}</th><th>{{ number_format($summary->kelebihan, 2, ',', '.') }}</th><th>Rp{{ number_format($summary->nominal, 0, ',', '.') }}</th></tr></tfoot></table></div>
+    <div class="table-responsive"><table id="vendorUpahTable" class="table table-bordered align-middle"><thead class="table-success"><tr><th>No</th><th>Hari</th><th>Tanggal</th><th>Rute</th><th>Jarak (km)</th><th>Tonase &lt;50 km</th><th>Tonase ≥50 km</th><th>Kelebihan tonase</th><th class="text-end">Upah Gendong (Rp)</th></tr></thead><tbody></tbody><tfoot><tr><th colspan="4">Grand Total</th><th>{{ number_format($summary->jarak, 1, ',', '.') }}</th><th>{{ number_format($summary->under_50, 2, ',', '.') }}</th><th>{{ number_format($summary->over_50, 2, ',', '.') }}</th><th>{{ number_format($summary->kelebihan, 2, ',', '.') }}</th><th class="text-end">{{ number_format($summary->nominal, 0, ',', '.') }}</th></tr></tfoot></table></div>
 </div>
 @endsection
 @push('css')
@@ -36,11 +36,13 @@ $(function () {
     $('#vendorMonth, #vendorYear').select2({width: '100%'});
     flatpickr('#vendorRange', {mode: 'range', dateFormat: 'd-m-Y'});
     const text = $.fn.dataTable.render.text();
+    const excess = $.fn.dataTable.render.number('.', ',', 2);
+    const rupiah = $.fn.dataTable.render.number('.', ',', 0);
     vendorStatisticsTable('#vendorUpahTable', {url: @json(request()->fullUrl()), data: {}, columns: [
         {data: null, render: (data, type, row, meta) => meta.row + 1},
         {data: 'hari', render: text}, {data: 'id_tanggal', render: text}, {data: 'rute', render: text}, {data: 'jarak', render: text},
-        {data: 'under_50', render: text}, {data: 'over_50', render: text}, {data: 'kelebihan', render: text},
-        {data: 'nominal', render: value => 'Rp' + Number(value).toLocaleString('id-ID')}
+        {data: 'under_50', render: text}, {data: 'over_50', render: text}, {data: 'kelebihan', render: excess},
+        {data: 'nominal', className: 'text-end', render: rupiah}
     ]});
 });
 </script>

@@ -250,6 +250,61 @@ class VendorOperationalStatisticsAccessTest extends TestCase
     }
 
     /** Operasional tidak punya akses Rekap/Statistik, jadi navigasinya tidak ditampilkan. */
+    public function test_unconfigured_owned_vehicle_has_a_readable_status(): void
+    {
+        Schema::create('upah_gendongs', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('vehicle_id')->unique();
+        });
+
+        $this->get(route('statistik.upah-gendong', ['vehicle_id' => 1]))
+            ->assertOk()->assertSee('Upah Gendong belum diaktifkan')->assertDontSee('Pengaturan Upah Gendong');
+    }
+
+    #[TestWith(['vendor-induk'])]
+    #[TestWith(['vendor-operational'])]
+    public function test_read_only_vendor_roles_cannot_access_web_upah_gendong_settings(string $role): void
+    {
+        auth()->user()->role = $role;
+        $this->get(route('database.upah-gendong'))->assertForbidden();
+        $this->post(route('database.upah-gendong.store'), ['vehicle_id' => 1])->assertForbidden();
+    }
+
+    public function test_vendor_cannot_activate_another_vendors_vehicle(): void
+    {
+        auth()->user()->role = 'vendor';
+        $this->post(route('database.upah-gendong.store'), ['vehicle_id' => 2])->assertNotFound();
+    }
+
+    public function test_vendor_can_manage_only_its_own_upah_gendong_setting(): void
+    {
+        foreach (['2024_03_26_113831_create_upah_gendongs_table.php', '2024_03_29_150713_add_column_to_upah_gendongs_table.php', '2024_04_22_175126_add_column_to_upah_gendongs_table.php'] as $migration) {
+            (require database_path('migrations/'.$migration))->up();
+        }
+        DB::table('vehicles')->where('id', 1)->update(['nomor_lambung' => 'NOLAM SENDIRI']);
+        DB::table('vehicles')->where('id', 2)->update(['nomor_lambung' => 'NOLAM LUAR']);
+        auth()->user()->role = 'vendor';
+        $payload = [
+            'vehicle_id' => 1, 'nominal' => 15000, 'tonase_min' => 30, 'nama_driver' => 'Driver',
+            'tanggal_masuk_driver' => '2025-01-01', 'nama_pengurus' => 'Pengurus',
+            'tanggal_masuk_pengurus' => '2025-01-01', 'bank' => 'Bank', 'nama_rek' => 'Pemilik', 'no_rek' => '001',
+        ];
+
+        $this->get(route('database.upah-gendong'))->assertOk()->assertSee('NOLAM SENDIRI')->assertDontSee('NOLAM LUAR');
+        $this->post(route('database.upah-gendong.store'), $payload)->assertRedirect(route('database.upah-gendong'));
+        $id = DB::table('upah_gendongs')->where('vehicle_id', 1)->value('id');
+        $this->patch(route('database.upah-gendong.update', $id), ['vehicle_id' => 2, 'nominal' => 20000] + $payload)->assertRedirect(route('database.upah-gendong'));
+        $this->assertDatabaseHas('upah_gendongs', ['id' => $id, 'vehicle_id' => 1, 'nominal' => 20000]);
+        $this->get(route('database.upah-gendong'))->assertOk()->assertSee('20.000');
+
+        $foreignId = DB::table('upah_gendongs')->insertGetId(['vehicle_id' => 2] + $payload);
+        $this->patch(route('database.upah-gendong.update', $foreignId), $payload)->assertNotFound();
+        $this->delete(route('database.upah-gendong.destroy', $foreignId), ['password' => 'test-password'])->assertNotFound();
+        $this->delete(route('database.upah-gendong.destroy', $id), ['password' => 'wrong'])->assertSessionHasErrors('password');
+        $this->delete(route('database.upah-gendong.destroy', $id), ['password' => 'test-password'])->assertRedirect(route('database.upah-gendong'));
+        $this->assertDatabaseMissing('upah_gendongs', ['id' => $id]);
+    }
+
     public function test_operasional_upah_gendong_hides_rekap_and_statistik_navigation(): void
     {
         $this->createTransactionFixtures();

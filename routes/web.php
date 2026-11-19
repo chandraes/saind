@@ -116,6 +116,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
     });
 
+    Route::prefix('database/upah-gendong')->middleware('role:admin,user,su,vendor')->controller(DatabaseController::class)->group(function (): void {
+        Route::get('/', 'upah_gendong')->name('database.upah-gendong');
+        Route::post('/store', 'upah_gendong_store')->name('database.upah-gendong.store');
+        Route::patch('/update/{ug}', 'upah_gendong_update')->name('database.upah-gendong.update');
+        Route::delete('/destroy/{ug}', 'upah_gendong_destroy')->name('database.upah-gendong.destroy');
+    });
+
     Route::prefix('statistik/tonase-tambang')->middleware('role:admin,su,operasional')->group(function (): void {
         Route::get('/{customer}', [StatistikController::class, 'tonase_tambang'])->name('statistik.tonase-tambang');
         Route::get('/{customer}/pdf', [StatistikController::class, 'tonase_tambang_download'])->name('statistik.tonase-tambang.pdf');
@@ -335,13 +342,6 @@ Route::group(['middleware' => ['auth']], function () {
                 Route::post('/store-kategori', [DatabaseController::class, 'kategori_store'])->name('database.barang-maintenance.kategori.store');
                 Route::patch('/update-kategori/{kategori}', [DatabaseController::class, 'kategori_update'])->name('database.barang-maintenance.kategori.update');
                 Route::delete('/destroy-kategori/{kategori}', [DatabaseController::class, 'kategori_destroy'])->name('database.barang-maintenance.kategori.destroy');
-            });
-
-            Route::prefix('upah-gendong')->group(function () {
-                Route::get('/', [DatabaseController::class, 'upah_gendong'])->name('database.upah-gendong');
-                Route::post('/store', [DatabaseController::class, 'upah_gendong_store'])->name('database.upah-gendong.store');
-                Route::patch('/update/{ug}', [DatabaseController::class, 'upah_gendong_update'])->name('database.upah-gendong.update');
-                Route::delete('/destroy/{ug}', [DatabaseController::class, 'upah_gendong_destroy'])->name('database.upah-gendong.destroy');
             });
 
             Route::prefix('cost-operational')->group(function () {

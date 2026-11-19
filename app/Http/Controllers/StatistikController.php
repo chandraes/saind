@@ -91,6 +91,13 @@ class StatistikController extends Controller
         if ($request->user()->isDriver() && ! UpahGendong::where('vehicle_id', $check->id)->exists()) {
             return redirect()->route('home')->with('error', 'Upah gendong belum diaktifkan untuk Nolam '.$check->nomor_lambung.'.');
         }
+        if ($request->user()->usesVendorMenus() && ! UpahGendong::where('vehicle_id', $check->id)->exists()) {
+            if ($request->ajax()) {
+                return response()->json(['data' => [], 'recordsFiltered' => 0]);
+            }
+
+            return view('rekap.statistik.upah-gendong.unconfigured', ['vehicle' => $check]);
+        }
         if ($isVendorOperational) {
             $request->validate(['bulan' => 'nullable|integer|between:1,12', 'tahun' => 'nullable|integer|between:2000,2100', 'tanggal_filter' => ['nullable', 'regex:/^\d{2}-\d{2}-\d{4}( to \d{2}-\d{2}-\d{4})?$/'], 'start' => 'nullable|integer|min:0']);
         }
