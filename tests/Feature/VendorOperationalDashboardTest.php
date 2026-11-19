@@ -25,6 +25,14 @@ class VendorOperationalDashboardTest extends TestCase
             $table->string('nickname')->nullable();
         });
         DB::table('vendors')->insert([['id' => 1, 'nama' => 'Vendor A', 'nickname' => 'VA'], ['id' => 2, 'nama' => 'Vendor B', 'nickname' => null]]);
+        Schema::create('customers', function (Blueprint $table): void {
+            $table->id();
+            $table->string('nama');
+            $table->string('singkatan')->nullable();
+            $table->integer('status')->default(1);
+        });
+        // Picker Nota Tagihan hanya memuat customer aktif (status 1).
+        DB::table('customers')->insert([['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA', 'status' => 1], ['id' => 2, 'nama' => 'Tambang Lama', 'singkatan' => 'TL', 'status' => 0]]);
         $this->withoutVite();
         View::share(['global_app_name' => 'SAIND', 'global_app_favicon' => '', 'global_app_nav_bg' => '#212529', 'global_app_logo' => '']);
     }
@@ -45,7 +53,7 @@ class VendorOperationalDashboardTest extends TestCase
         $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => 'operasional', 'vendor_id' => null]));
         $response = $this->get('/home')->assertOk()->assertSee('seluruh vendor')
             ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Perform Unit', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
-            ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('STATISTIK TONASE')->assertDontSee('Kas Vendor');
+            ->assertDontSee('MAINTENANCE VEHICLE')->assertSee('Tonase Tambang')->assertSee(route('statistik.tonase-tambang', '__ID__'), false)->assertDontSee('Kas Vendor');
         $dom = new \DOMDocument;
         @$dom->loadHTML($response->getContent());
         $xpath = new \DOMXPath($dom);
@@ -62,21 +70,25 @@ class VendorOperationalDashboardTest extends TestCase
     #[DataProvider('executiveRoles')]
     public function test_executive_gets_the_operasional_menus_without_kas_vendor(string $role): void
     {
-        Schema::create('customers', function (Blueprint $table): void {
-            $table->id();
-            $table->string('nama');
-            $table->string('singkatan')->nullable();
-            $table->integer('status')->default(1);
-        });
-        // Picker Nota Tagihan hanya memuat customer aktif (status 1).
-        DB::table('customers')->insert([['id' => 1, 'nama' => 'Tambang A', 'singkatan' => 'TA', 'status' => 1], ['id' => 2, 'nama' => 'Tambang Lama', 'singkatan' => 'TL', 'status' => 0]]);
         $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => $role, 'vendor_id' => null]));
         $response = $this->get('/home')->assertOk()->assertSee($role === 'direksi' ? 'DIREKSI' : 'GENERAL MANAGER')->assertSee('nilai bayar')
             ->assertSeeInOrder(['Nota Muat Masuk', 'Nota Bongkar', 'Nota Bayar Vendor', 'Invoice Vendor', 'Kas UJ Ditahan', 'Nota Tagihan', 'Perform Unit', 'Perform Unit All', 'Upah Gendong', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
-            ->assertDontSee('Kas Vendor')->assertSee('Tambang A (TA)')->assertDontSee('Tambang Lama');
+            ->assertDontSee('Kas Vendor')->assertSee('Tonase Tambang')->assertSee(route('statistik.tonase-tambang', '__ID__'), false)->assertSee('Tambang A (TA)')->assertDontSee('Tambang Lama');
         $dom = new \DOMDocument;
         @$dom->loadHTML($response->getContent());
         $this->assertSame(1, (new \DOMXPath($dom))->query('//*[@data-vendor-menu-row="documents"]/a[@data-bs-target="#operasional-nota-bayar-vendor"]')->length);
+    }
+
+    public function test_tonase_routes_allow_report_roles_and_reject_vendor_accounts(): void
+    {
+        foreach (['admin', 'su', 'operasional', ...User::EXECUTIVE_ROLES, 'vendor', 'vendor-induk', 'vendor-operational'] as $role) {
+            $this->actingAs(User::factory()->make(['id' => 1, 'password' => 'test-password', 'role' => $role, 'vendor_id' => 1]));
+            $status = in_array($role, ['admin', 'su', 'operasional', ...User::EXECUTIVE_ROLES], true) ? 404 : 403;
+
+            foreach (['statistik.tonase-tambang', 'statistik.tonase-tambang.pdf'] as $name) {
+                $this->get(route($name, ['customer' => $status === 404 ? 999 : 1, 'bulan' => 10, 'tahun' => 2026]))->assertStatus($status);
+            }
+        }
     }
 
     #[DataProvider('vendorAccounts')]
@@ -87,7 +99,7 @@ class VendorOperationalDashboardTest extends TestCase
         $response->assertSeeInOrder(['Nota &amp; Invoice', ...$documents, 'Performa &amp; Upah Gendong', 'Perform Unit', 'Perform Unit All', 'Upah Gendong',
             'Maintenance', 'Ban Luar', 'Aki', 'Filter &amp; Oli Mesin'], false)
             ->assertDontSee('MAINTENANCE VEHICLE')->assertDontSee('maintenaceModal')->assertDontSee('Statistik Vendor')
-            ->assertDontSee('INVOICE BAYAR VENDOR');
+            ->assertDontSee('INVOICE BAYAR VENDOR')->assertDontSee('Tonase Tambang');
         $dom = new \DOMDocument;
         @$dom->loadHTML($response->getContent());
         $xpath = new \DOMXPath($dom);

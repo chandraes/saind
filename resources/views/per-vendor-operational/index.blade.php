@@ -47,10 +47,14 @@
 @include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::VENDOR_PICKER, 'title' => 'Pilih Vendor', 'icon' => 'fa-truck',
     'action' => route('vendor-operational.nota-bayar'), 'name' => 'vendor_id', 'label' => 'Nama Vendor', 'placeholder' => '-- Pilih Vendor --',
     'options' => \App\Models\Vendor::query()->orderBy('nama')->get(['id', 'nama', 'nickname'])->mapWithKeys(fn ($v) => [$v->id => $v->nama.($v->nickname ? ' ('.$v->nickname.')' : '')])])
+@php($customerOptions = \App\Models\Customer::query()->where('status', 1)->orderBy('nama')->get(['id', 'nama', 'singkatan'])->mapWithKeys(fn ($c) => [$c->id => $c->nama.($c->singkatan ? ' ('.$c->singkatan.')' : '')]))
+@include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::TONASE_PICKER, 'title' => 'Pilih Customer untuk Tonase Tambang', 'icon' => 'fa-building',
+    'action' => route('home'), 'pathTemplate' => route('statistik.tonase-tambang', ['customer' => '__ID__']), 'name' => 'customer', 'label' => 'Nama Customer', 'placeholder' => '-- Pilih Customer --',
+    'options' => $customerOptions])
 @if (auth()->user()->isExecutive())
 @include('per-vendor-operational.picker-modal', ['id' => \App\Support\VendorDashboardMenu::CUSTOMER_PICKER, 'title' => 'Pilih Customer', 'icon' => 'fa-building',
     'action' => url('transaksi/nota-tagihan'), 'pathTemplate' => route('billing.nota-tagihan', ['customer' => '__ID__']), 'name' => 'customer', 'label' => 'Nama Customer', 'placeholder' => '-- Pilih Customer --',
-    'options' => \App\Models\Customer::query()->where('status', 1)->orderBy('nama')->get(['id', 'nama', 'singkatan'])->mapWithKeys(fn ($c) => [$c->id => $c->nama.($c->singkatan ? ' ('.$c->singkatan.')' : '')])])
+    'options' => $customerOptions])
 @endif
 @push('css')
 <link rel="stylesheet" href="{{ asset('assets/plugins/select2/select2.min.css') }}">
@@ -63,7 +67,6 @@
         $('.dashboard-picker-select').each(function () {
             $(this).select2({theme: 'bootstrap-5', width: '100%', placeholder: this.dataset.placeholder, dropdownParent: $(this).closest('.modal')});
         });
-        // Customer menjadi bagian path (/transaksi/nota-tagihan/{customer}).
         $('form[data-path-template]').on('submit', function (event) {
             event.preventDefault();
             window.location.href = this.dataset.pathTemplate.replace('__ID__', encodeURIComponent($(this).find('select').val()));

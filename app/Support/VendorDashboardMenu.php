@@ -20,6 +20,8 @@ class VendorDashboardMenu
     /** Id pop-up "Pilih Customer" untuk Nota Tagihan General Manager. */
     public const CUSTOMER_PICKER = 'gm-nota-tagihan-customer';
 
+    public const TONASE_PICKER = 'tonase-tambang-customer';
+
     /** Id pop-up Sparepart | Ban untuk Kas UJ Ditahan (layouts.uj-ditahan-menu). */
     public const HELD_CASH_PICKER = 'ujDitahanMenu';
 
@@ -82,6 +84,9 @@ class VendorDashboardMenu
                 $menu('Perform Unit', 'Performa dan aktivitas kendaraan.', route('statistik.perform-unit'), 'perform-unit.svg'),
                 $menu('Perform Unit All', 'Rekap ritase bulanan seluruh unit vendor Anda.', route('statistik.perform-unit.all-vendor'), 'all-vendor.svg'),
                 $menu('Upah Gendong', 'Riwayat upah gendong per unit.', route('statistik.upah-gendong'), 'statistik-ug.svg'),
+                ...($user->seesAllVendors() ? [
+                    $menu('Tonase Tambang', 'Lihat ritase dan tonase harian per rute.', '#'.self::TONASE_PICKER, 'tonase-tambang.svg') + ['modal' => self::TONASE_PICKER],
+                ] : []),
             ]],
             ['key' => 'maintenance', 'title' => 'Maintenance', 'menus' => [
                 $menu('Ban Luar', 'Pemakaian dan histori ban per posisi.', route('statistik.ban-luar'), 'db-ban.svg'),

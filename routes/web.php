@@ -116,6 +116,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('{key}/pdf', 'pdf')->whereNumber('key')->name('.pdf');
     });
 
+    Route::prefix('statistik/tonase-tambang')->middleware('role:admin,su,operasional')->group(function (): void {
+        Route::get('/{customer}', [StatistikController::class, 'tonase_tambang'])->name('statistik.tonase-tambang');
+        Route::get('/{customer}/pdf', [StatistikController::class, 'tonase_tambang_download'])->name('statistik.tonase-tambang.pdf');
+    });
+
     // Rekap Tagihan & Invoice (tampilan saja): admin dan eksekutif (GM & Direksi).
     Route::get('rekap/tagihan-invoice', [RekapController::class, 'tagihan_invoice'])->middleware('role:admin,user,su,executive')->name('rekap.tagihan-invoice');
 
@@ -492,11 +497,6 @@ Route::group(['middleware' => ['auth']], function () {
             Route::get('/profit-tahunan/print', [StatistikController::class, 'profit_tahunan_print'])->name('statistik.profit-tahunan.print');
 
             Route::get('/perform-vendor/print', [StatistikController::class, 'perform_vendor_print'])->name('statistik.perform-vendor.print');
-
-            Route::prefix('tonase-tambang')->group(function () {
-                Route::get('/{customer}', [StatistikController::class, 'tonase_tambang'])->name('statistik.tonase-tambang');
-                Route::get('/{customer}/pdf', [StatistikController::class, 'tonase_tambang_download'])->name('statistik.tonase-tambang.pdf');
-            });
         });
 
         Route::prefix('billing')->group(function () {

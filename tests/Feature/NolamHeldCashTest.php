@@ -203,6 +203,13 @@ class NolamHeldCashTest extends MobileApiTestCase
 
     public function test_dashboard_links_held_cash_for_induk_and_operasional(): void
     {
+        Schema::create('customers', function (Blueprint $table): void {
+            $table->id();
+            $table->string('nama');
+            $table->string('singkatan')->nullable();
+            $table->integer('status')->default(1);
+        });
+
         foreach ([$this->induk, $this->operasional] as $user) {
             $this->actingAs($user)->get(route('home'))->assertOk()->assertSee('Kas UJ Ditahan')
                 ->assertSee(route('vendor-operational.uj-ditahan'), false)->assertSee(route('vendor-operational.uj-ditahan-ban'), false);
