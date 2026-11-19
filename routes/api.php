@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\MobilePayrollController;
 use App\Http\Controllers\Api\MobileReminderController;
 use App\Http\Controllers\Api\MobileTireHistoryController;
 use App\Http\Controllers\Api\MobileTireMonitoringController;
+use App\Http\Controllers\Api\MobileTonnageReportController;
 use App\Http\Controllers\Api\MobileUnitPerformanceController;
 use App\Http\Controllers\Api\MobileUpahGendongController;
 use App\Http\Controllers\Api\MobileUpahGendongSettingController;
@@ -166,6 +167,12 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('payroll', [MobilePayrollController::class, 'store'])->name('payroll.store');
             });
             // Dashboard Pengingat: akses per tabel & cakupan vendor diatur ReminderRegistry (sama dengan web).
+            Route::prefix('tonnage-report/customers')->name('tonnage-report.')->middleware('role:admin,su,operasional')
+                ->controller(MobileTonnageReportController::class)->group(function (): void {
+                    Route::get('/', 'customers')->name('customers');
+                    Route::get('{customer}', 'show')->whereNumber('customer')->name('show');
+                });
+
             Route::get('reminders', [MobileReminderController::class, 'index'])->name('reminders.index');
             Route::post('reminders/settings', [MobileReminderController::class, 'settings'])->middleware('throttle:30,1')->name('reminders.settings');
             Route::get('reminders/{type}', [MobileReminderController::class, 'show'])->whereIn('type', ReminderRegistry::keys())->name('reminders.show');
