@@ -8,6 +8,7 @@ use App\Services\AccountCredentials;
 use App\Services\MobileWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends BaseController
@@ -20,7 +21,7 @@ class AuthController extends BaseController
             'device_name' => ['required', 'string', 'max:100'],
         ]);
         $user = User::where('username', $data['username'])->first();
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->isActive()) {
             return $this->sendError('Username atau password tidak sesuai.', [], 401);
         }
         abort_unless(in_array($user->role, config('mobile.roles'), true), 403, 'Akun tidak diizinkan menggunakan API mobile.');
@@ -32,7 +33,12 @@ class AuthController extends BaseController
         }
         $identity = $workspace->identity();
         $expiresAt = now()->addMinutes(max(1, (int) config('mobile.token_expiration_minutes')));
-        $token = $user->createToken($data['device_name'], ['workspace:'.$identity['id']], $expiresAt);
+        $token = DB::transaction(function () use ($user, $data, $identity, $expiresAt) {
+            $current = User::query()->lockForUpdate()->find($user->id);
+            abort_unless($current?->isActive(), 401, 'Akun tidak dapat login.');
+
+            return $current->createToken($data['device_name'], ['workspace:'.$identity['id']], $expiresAt);
+        });
         // Izin di respons login dihitung untuk token mobile ini (lihat User::isMobileAdministrator()).
         $user->withAccessToken($token->accessToken);
 

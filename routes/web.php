@@ -434,7 +434,10 @@ Route::group(['middleware' => ['auth']], function () {
         });
 
         Route::get('pengguna/pilihan', [UserController::class, 'options'])->name('pengguna.options');
-        Route::resource('pengguna', UserController::class);
+        Route::patch('pengguna/{pengguna}/nonaktif', [UserController::class, 'deactivate'])->whereNumber('pengguna')->name('pengguna.deactivate');
+        Route::patch('pengguna/{pengguna}/aktifkan', [UserController::class, 'reactivate'])->whereNumber('pengguna')->middleware('role:su')->name('pengguna.reactivate');
+        Route::resource('pengguna', UserController::class)->except('destroy');
+        Route::delete('pengguna/{pengguna}', [UserController::class, 'destroy'])->whereNumber('pengguna')->middleware('role:su')->name('pengguna.destroy');
 
         Route::resource('sponsor', SponsorController::class)->only([
             'index', 'store', 'update', 'destroy',

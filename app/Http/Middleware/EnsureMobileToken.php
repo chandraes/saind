@@ -18,6 +18,7 @@ class EnsureMobileToken
         $token = $user?->currentAccessToken();
         abort_unless($request->bearerToken() && $token instanceof PersonalAccessToken
             && $token->can('workspace:'.$this->workspace->identity()['id']), 401, 'Token mobile tidak valid.');
+        abort_unless($user->isActive(), 401, 'Akun telah dinonaktifkan.');
         abort_unless(in_array($user->role, config('mobile.roles'), true), 403, 'Akun tidak diizinkan menggunakan API mobile.');
         if ($user->isVendorAccount()) {
             abort_unless($user->vendor_id && $user->vendor()->exists(), 403, 'Akun belum terhubung dengan vendor.');

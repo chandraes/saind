@@ -49,7 +49,13 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'deactivated_at' => 'datetime',
     ];
+
+    public function isActive(): bool
+    {
+        return $this->deactivated_at === null;
+    }
 
     /** Akun milik vendor: hanya boleh menyentuh data vendornya sendiri. */
     public const VENDOR_ACCOUNT_ROLES = ['vendor', 'vendor-induk', 'vendor-operational'];
