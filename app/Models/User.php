@@ -111,13 +111,18 @@ class User extends Authenticatable
         return in_array($this->role, self::EXECUTIVE_ROLES, true);
     }
 
+    public function isAdministrator(): bool
+    {
+        return in_array($this->role, self::ADMINISTRATOR_ROLES, true);
+    }
+
     /**
      * Admin & SU yang memakai aplikasi mobile (token Sanctum): membaca menu eksekutif, baca saja.
      * Hanya berlaku di API mobile; di web perilaku admin/su tidak berubah.
      */
     public function isMobileAdministrator(): bool
     {
-        return in_array($this->role, self::ADMINISTRATOR_ROLES, true) && $this->currentAccessToken() instanceof PersonalAccessToken;
+        return $this->isAdministrator() && $this->currentAccessToken() instanceof PersonalAccessToken;
     }
 
     /** Menu eksekutif (seluruh vendor beserta nilai uang, Nota Tagihan, Tagihan & Invoice, Gaji): eksekutif, dan Admin/SU di mobile. */

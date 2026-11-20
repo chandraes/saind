@@ -33,6 +33,7 @@ use App\Models\UjDitahan;
 use App\Models\UjDitahanDetail;
 use App\Models\Vehicle;
 use App\Models\Vendor;
+use App\Services\AdditionalVendorPaymentCart;
 use App\Services\MaintenanceApproval;
 use App\Services\MaintenanceAuthorizationQueue;
 use App\Services\MaintenanceAuthorizationService;
@@ -1244,205 +1245,53 @@ class BillingController extends Controller
         ]);
     }
 
-    public function nota_bayar_detail_by_jenis_lanjut(Request $request, Vendor $vendor, $jenis)
+    public function nota_bayar_detail_by_jenis_lanjut(Request $request, Vendor $vendor, string $jenis, AdditionalVendorPaymentCart $cart): RedirectResponse
     {
-        if (! in_array(Auth::user()->role, ['su', 'admin'])) {
+        if (! $request->user()->isAdministrator()) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk aksi ini!!');
         }
 
-        // Validasi input DPP dan Checkbox transaksi yang dipilih
-        $req = $request->validate([
-            'dpp' => 'required',
-            'transaksi_additional_ids' => 'required|array|min:1',
-        ], [
-            'transaksi_additional_ids.required' => 'Pilih setidaknya satu transaksi terlebih dahulu.',
+        $data = $request->validate([
+            'dpp' => ['required', 'string', 'regex:/^[0-9.]+(?:,[0-9]+)?$/'],
+            'transaksi_additional_ids' => ['required', 'array'],
+            'transaksi_additional_ids.*' => ['required', 'integer', 'distinct'],
         ]);
 
-        // 1. Sanitasi input DPP
-        $dpp = (float) str_replace(['.', ','], ['', '.'], $req['dpp']);
-
-        // 2. Ambil hanya ID transaksi yang dicentang oleh user
-        $selectedIds = $req['transaksi_additional_ids'];
-
-        $rekapJenis = TransaksiAdditional::with(['transaksi', 'customer'])
-            ->where('jenis', $jenis)
-            ->where('vendor_id', $vendor->id)
-            ->where('status', 3)
-            ->whereIn('id', $selectedIds) // Filter hanya transaksi terpilih
-            ->get();
-
-        if ($rekapJenis->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada data transaksi terpilih yang dapat diproses.');
-        }
-
-        $rekapIds = $rekapJenis->pluck('id');
-
-        $maxDpp = null;
-        if ($rekapIds->isNotEmpty()) {
-            $maxDpp = InvoiceAdditional::whereHas('details', function ($query) use ($rekapIds) {
-                $query->whereIn('transaksi_additional_id', $rekapIds);
-            })->max('dpp');
-        }
-
-        // Validasi DPP Input terhadap Max DPP dari Database
-        if (! is_null($maxDpp)) {
-            if ($dpp > (float) $maxDpp) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'DPP vendor (Rp '.number_format($dpp, 0, ',', '.').') tidak boleh lebih besar dari DPP tagihan (Rp '.number_format($maxDpp, 0, ',', '.').')!');
-            }
-        }
-
-        DB::beginTransaction();
-
         try {
-            $existingInvoice = InvoiceAddVendor::where('vendor_id', $vendor->id)
-                ->where('jenis', $jenis)
-                ->where('status', 0)
-                ->lockForUpdate()
-                ->first();
-
-            // Validasi duplikasi
-            $existingDetailIds = DB::table('invoice_add_vendor_details')
-                ->whereIn('transaksi_additional_id', $rekapIds)
-                ->pluck('transaksi_additional_id')
-                ->toArray();
-
-            if (! empty($existingDetailIds)) {
-                DB::rollBack();
-
-                return redirect()->back()->with('error', 'Beberapa transaksi yang dipilih sudah ada di keranjang/invoice lain.');
-            }
-
-            // Kalkulasi Total DPP khusus item terpilih
-            $totalKeseluruhan = $rekapJenis->sum(function ($item) use ($dpp) {
-                if (! $item->customer || ! $item->transaksi) {
-                    return 0;
-                }
-
-                $tagihan_dari = $item->customer->tagihan_dari == 1 ? 'tonase' : 'timbangan_bongkar';
-                if (empty($tagihan_dari)) {
-                    return 0;
-                }
-
-                $jarak = (float) ($item->jarak ?? 0);
-                $muatan = (float) ($item->transaksi->$tagihan_dari ?? 0);
-
-                return $jarak * $muatan * $dpp;
-            });
-            $totalKeseluruhan = (int) round($totalKeseluruhan);
-
-            // Perhitungan Pajak
-            $ppn = $vendor->ppn == 1 ? (int) round($totalKeseluruhan * 0.11) : 0;
-            $pph = $vendor->pph == 1 ? (int) round($totalKeseluruhan * ($vendor->pph_val / 100)) : 0;
-            $totalAkhir = $totalKeseluruhan + $ppn - $pph;
-
-            // Proses Invoice
-            if ($existingInvoice) {
-                if (bccomp((string) $existingInvoice->dpp, (string) $dpp, 4) !== 0) {
-                    throw new \Exception('DPP berbeda dengan yang sudah ada di keranjang. Silahkan gunakan DPP yang sama.');
-                }
-
-                $existingInvoice->increment('nominal', $totalKeseluruhan);
-                $existingInvoice->increment('ppn', $ppn);
-                $existingInvoice->increment('pph', $pph);
-
-                $existingInvoice->update([
-                    'total' => $existingInvoice->nominal + $existingInvoice->ppn - $existingInvoice->pph,
-                ]);
-
-                $invoice = $existingInvoice;
-            } else {
-                $invoice = InvoiceAddVendor::create([
-                    'vendor_id' => $vendor->id,
-                    'jenis' => $jenis,
-                    'nominal' => $totalKeseluruhan,
-                    'dpp' => $dpp,
-                    'ppn' => $ppn,
-                    'pph' => $pph,
-                    'total' => $totalAkhir,
-                    'status' => 0,
-                    'is_finished' => false,
-                ]);
-            }
-
-            // Insert Detail
-            $detailData = $rekapJenis->map(fn ($item) => [
-                'invoice_add_vendor_id' => $invoice->id,
-                'transaksi_additional_id' => $item->id,
-                'transaksi_id' => $item->transaksi_id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ])->toArray();
-
-            DB::table('invoice_add_vendor_details')->insert($detailData);
-
-            // Update Status HANYA transaksi yang dicentang
-            TransaksiAdditional::whereIn('id', $rekapIds)->update(['status' => 4]);
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Transaksi terpilih berhasil dimasukkan ke keranjang.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->back()->with('error', $e->getMessage());
+            $cart->add($vendor, $jenis, $data['transaksi_additional_ids'], (float) str_replace(['.', ','], ['', '.'], $data['dpp']));
+        } catch (ValidationException $exception) {
+            return redirect()->back()->withInput()->with('error', $exception->validator->errors()->first());
         }
+
+        return redirect()->back()->with('success', 'Transaksi terpilih berhasil dimasukkan ke keranjang.');
     }
 
-    public function nota_bayar_detail_by_jenis_keranjang_back(Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
+    public function nota_bayar_detail_by_jenis_keranjang_back(Vendor $vendor, string $jenis, InvoiceAddVendor $invoice, AdditionalVendorPaymentCart $cart): RedirectResponse
     {
-        if (! in_array(Auth::user()->role, ['su', 'admin'])) {
+        if (! Auth::user()->isAdministrator()) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk aksi ini!!');
         }
-        $detailsId = $invoice->details()->pluck('transaksi_additional_id')->toArray();
-
-        TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 3]);
-
-        $invoice->delete();
-
-        return redirect()->route('billing.nota-bayar.detail-jenis', ['vendor' => $vendor->id, 'jenis' => $jenis])->with('success', 'Transaksi berhasil dikembalikan ke tahap sebelumnya.');
-    }
-
-    public function nota_bayar_detail_by_jenis_keranjang_lanjut(Request $request, Vendor $vendor, $jenis, InvoiceAddVendor $invoice)
-    {
-        if ($invoice->vendor_id !== $vendor->id || $invoice->jenis !== $jenis || $invoice->status !== 0) {
-            return redirect()->back()->with('error', 'Invoice tidak valid untuk keranjang ini.');
-        }
-
-        $req = $request->validate([
-            'tempo' => 'required|date',
-        ], [
-            'tempo.required' => 'Tanggal jatuh tempo wajib diisi.',
-        ]);
 
         try {
-            DB::beginTransaction();
-
-            $detailsId = $invoice->details()->pluck('transaksi_additional_id');
-
-            // Simpan tanggal tempo final dan selesaikan invoice
-            $invoice->update([
-                'tempo' => $req['tempo'],
-                'status' => 1,
-            ]);
-
-            if ($detailsId->isNotEmpty()) {
-                TransaksiAdditional::whereIn('id', $detailsId)->update(['status' => 5]);
-            }
-
-            DB::commit();
-
-            return redirect()
-                ->route('billing.nota-bayar.detail-jenis', ['vendor' => $vendor->id, 'jenis' => $jenis])
-                ->with('success', 'Transaksi berhasil diselesaikan menjadi invoice.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: '.$e->getMessage());
+            $cart->finish($vendor, $jenis, $invoice, null);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', $exception->validator->errors()->first());
         }
+
+        return redirect()->route('billing.nota-bayar.detail-jenis', [$vendor, $jenis])->with('success', 'Transaksi berhasil dikembalikan ke tahap sebelumnya.');
+    }
+
+    public function nota_bayar_detail_by_jenis_keranjang_lanjut(Request $request, Vendor $vendor, string $jenis, InvoiceAddVendor $invoice, AdditionalVendorPaymentCart $cart): RedirectResponse
+    {
+        $data = $request->validate(['tempo' => ['required', 'date']]);
+
+        try {
+            $cart->finish($vendor, $jenis, $invoice, $data['tempo']);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', $exception->validator->errors()->first());
+        }
+
+        return redirect()->route('billing.nota-bayar.detail-jenis', [$vendor, $jenis])->with('success', 'Transaksi berhasil diselesaikan menjadi invoice.');
     }
 
     public function form_achievement_masuk()

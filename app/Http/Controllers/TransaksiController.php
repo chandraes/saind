@@ -7,7 +7,6 @@ use App\Models\Customer;
 use App\Models\GroupWa;
 use App\Models\InvoiceAdditional;
 use App\Models\InvoiceBayar;
-use App\Models\InvoiceBayarDetail;
 use App\Models\InvoiceBonus;
 use App\Models\InvoiceBonusDetail;
 use App\Models\InvoiceCsr;
@@ -16,8 +15,6 @@ use App\Models\InvoiceTagihan;
 use App\Models\KasUangJalan;
 use App\Models\KeranjangNotaBayar;
 use App\Models\Konfigurasi;
-use App\Models\Pajak\PphSimpan;
-use App\Models\Pajak\PpnMasukan;
 use App\Models\PasswordKonfirmasi;
 use App\Models\Rekening;
 use App\Models\Sponsor;
@@ -30,6 +27,7 @@ use App\Services\CustomerBilling;
 use App\Services\FilterOliRitaseService;
 use App\Services\UjDitahanBanService;
 use App\Services\UnloadingNoteCompletion;
+use App\Services\VendorPaymentCart;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -894,7 +892,7 @@ class TransaksiController extends Controller
     }
 
     // Halaman Khusus Keranjang Nota Bayar
-    public function nota_bayar_keranjang(Vendor $vendor)
+    public function nota_bayar_keranjang(Vendor $vendor, VendorPaymentCart $paymentCart)
     {
         if (Auth::user()->isVendorOwner() && ($vendor->id !== Auth::user()->vendor_id)) {
             return redirect()->back()->with('error', 'Anda tidak punya wewenang untuk melihat vendor ini!!');
@@ -911,183 +909,76 @@ class TransaksiController extends Controller
                 ->with('error', 'Keranjang masih kosong! Silakan pilih transaksi terlebih dahulu.');
         }
 
-        $dataKeranjang = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-            ->select('transaksis.*')
-            ->where('transaksis.status', 3)
-            ->where('transaksis.void', 0)
-            ->where('transaksis.bayar', 0)
-            ->where('kuj.vendor_id', $vendor->id)
-            ->whereIn('transaksis.id', $cartTransaksiIds)
-            ->get();
+        $dataKeranjang = $paymentCart->notes(Auth::user(), $vendor);
 
         $hariJatuhTempo = $vendor->jatuh_tempo_hari ?? 0;
         $defaultJatuhTempo = Carbon::now()->addDays($hariJatuhTempo)->format('Y-m-d');
 
         return view('billing.transaksi.bayar.keranjang', [
             'data' => $dataKeranjang,
+            'quote' => $paymentCart->quote($vendor, $dataKeranjang),
             'vendor' => $vendor,
             'defaultJatuhTempo' => $defaultJatuhTempo,
             'hariJatuhTempo' => $hariJatuhTempo,
         ]);
     }
 
-    public function nota_bayar_masuk_keranjang(Request $request, Vendor $vendor)
+    public function nota_bayar_masuk_keranjang(Request $request, Vendor $vendor, VendorPaymentCart $paymentCart): RedirectResponse
     {
-        $request->validate([
-            'transaksi_ids' => 'required|array',
-            'transaksi_ids.*' => 'exists:transaksis,id',
+        $data = $request->validate([
+            'transaksi_ids' => ['required', 'array'],
+            'transaksi_ids.*' => ['required', 'integer'],
         ]);
 
-        $userId = Auth::id();
-        foreach ($request->transaksi_ids as $transaksiId) {
-            KeranjangNotaBayar::firstOrCreate([
-                'user_id' => $userId,
-                'vendor_id' => $vendor->id,
-                'transaksi_id' => $transaksiId,
-            ]);
+        try {
+            $count = $paymentCart->add($request->user(), $vendor, $data['transaksi_ids']);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', $exception->validator->errors()->first());
         }
 
-        return redirect()->route('transaksi.nota-bayar', $vendor)->with('success', count($request->transaksi_ids).' transaksi berhasil dimasukkan ke keranjang.');
+        return redirect()->route('transaksi.nota-bayar', $vendor)->with('success', $count.' transaksi berhasil dimasukkan ke keranjang.');
     }
 
-    // 4. Masukkan SEMUA transaksi ke keranjang
-    public function nota_bayar_keranjang_semua(Vendor $vendor)
+    public function nota_bayar_keranjang_semua(Vendor $vendor, VendorPaymentCart $paymentCart): RedirectResponse
     {
-        $transaksis = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-            ->select('transaksis.id')
-            ->where('transaksis.status', 3)
-            ->where('transaksis.void', 0)
-            ->where('transaksis.bayar', 0)
-            ->where('kuj.vendor_id', $vendor->id)
-            ->get();
-
-        $userId = Auth::id();
-        foreach ($transaksis as $t) {
-            KeranjangNotaBayar::firstOrCreate([
-                'user_id' => $userId,
-                'vendor_id' => $vendor->id,
-                'transaksi_id' => $t->id,
-            ]);
-        }
+        $paymentCart->add(Auth::user(), $vendor);
 
         return redirect()->route('transaksi.nota-bayar.keranjang', $vendor)->with('success', 'Semua transaksi berhasil dimasukkan ke keranjang.');
     }
 
-    // 5. Keluarkan item dari keranjang
-    public function nota_bayar_keluar_keranjang(Request $request, Vendor $vendor)
+    public function nota_bayar_keluar_keranjang(Request $request, Vendor $vendor, VendorPaymentCart $paymentCart): RedirectResponse
     {
-        $request->validate([
-            'transaksi_ids' => 'required|array',
-            'transaksi_ids.*' => 'exists:transaksis,id',
+        $data = $request->validate([
+            'transaksi_ids' => ['required', 'array'],
+            'transaksi_ids.*' => ['required', 'integer'],
         ]);
 
-        KeranjangNotaBayar::where('user_id', Auth::id())
-            ->where('vendor_id', $vendor->id)
-            ->whereIn('transaksi_id', $request->transaksi_ids)
-            ->delete();
+        $paymentCart->remove($request->user(), $vendor, $data['transaksi_ids']);
 
         return redirect()->back()->with('success', 'Transaksi berhasil dikeluarkan dari keranjang.');
     }
 
-    // 6. Kosongkan keranjang
-    public function nota_bayar_kosongkan_keranjang(Vendor $vendor)
+    public function nota_bayar_kosongkan_keranjang(Vendor $vendor, VendorPaymentCart $paymentCart): RedirectResponse
     {
-        KeranjangNotaBayar::where('user_id', Auth::id())
-            ->where('vendor_id', $vendor->id)
-            ->delete();
+        $paymentCart->remove(Auth::user(), $vendor);
 
         return redirect()->route('transaksi.nota-bayar', $vendor)->with('success', 'Keranjang berhasil dikosongkan.');
     }
 
-    // 7. Proses pembayaran nota
-    public function nota_bayar_lanjut(Request $request, Vendor $vendor)
+    public function nota_bayar_lanjut(Request $request, Vendor $vendor, VendorPaymentCart $paymentCart): RedirectResponse
     {
-        // return redirect()->back()->with('error', 'Fitur ini sedang dalam pengembangan. Silakan hubungi admin untuk sementara.');
-
-        $request->validate([
-            'total_bayar' => 'required|numeric',
-            'ppn' => 'required|numeric',
-            'pph' => 'required|numeric',
-            'tempo' => 'required|date',
+        $data = $request->validate([
+            'tempo' => ['required', 'date'],
+            'fingerprint' => ['required', 'string', 'size:64'],
         ]);
 
-        $cartTransaksiIds = KeranjangNotaBayar::where('user_id', Auth::id())
-            ->where('vendor_id', $vendor->id)
-            ->pluck('transaksi_id')
-            ->toArray();
-
-        if (empty($cartTransaksiIds)) {
-            return redirect()->back()->with('error', 'Keranjang masih kosong! Pilih transaksi terlebih dahulu.');
-        }
-
-        $bayar = Transaksi::join('kas_uang_jalans as kuj', 'kuj.id', 'transaksis.kas_uang_jalan_id')
-            ->select('transaksis.*')
-            ->where('transaksis.status', 3)
-            ->where('transaksis.void', 0)
-            ->where('transaksis.bayar', 0)
-            ->whereIn('transaksis.id', $cartTransaksiIds)
-            ->where('kuj.vendor_id', $vendor->id)
-            ->get();
-
-        $userRole = Auth::user()->role;
-        $hariJatuhTempo = $vendor->jatuh_tempo_hari ?? 0;
-        $defaultTempo = Carbon::now()->addDays($hariJatuhTempo)->format('Y-m-d');
-
-        $tempoVal = in_array($userRole, ['admin', 'su']) ? $request->tempo : $defaultTempo;
-
         try {
-            DB::beginTransaction();
-
-            $invoice = InvoiceBayar::create([
-                'tanggal' => date('Y-m-d'),
-                'tempo' => $tempoVal,
-                'no_invoice' => InvoiceBayar::where('vendor_id', $vendor->id)->max('no_invoice') + 1,
-                'vendor_id' => $vendor->id,
-                'total_bayar' => $request->total_bayar,
-                'sisa_bayar' => $request->total_bayar,
-                'bayar' => 0,
-                'lunas' => 0,
-                'periode' => 'Periode '.(InvoiceBayar::where('vendor_id', $vendor->id)->max('no_invoice') + 1),
-            ]);
-
-            if ($request->ppn > 0) {
-                PpnMasukan::create([
-                    'invoice_bayar_id' => $invoice->id,
-                    'uraian' => $vendor->nickname.' PPN '.$invoice->periode,
-                    'nominal' => $request->ppn,
-                ]);
-            }
-
-            if ($request->pph > 0) {
-                PphSimpan::create([
-                    'invoice_bayar_id' => $invoice->id,
-                    'uraian' => $vendor->nickname.' PPh '.$invoice->periode,
-                    'nominal' => $request->pph,
-                ]);
-            }
-
-            foreach ($bayar as $value) {
-                $value->update(['bayar' => 1]);
-
-                InvoiceBayarDetail::create([
-                    'invoice_bayar_id' => $invoice->id,
-                    'transaksi_id' => $value->id,
-                ]);
-            }
-
-            KeranjangNotaBayar::where('user_id', Auth::id())
-                ->where('vendor_id', $vendor->id)
-                ->delete();
-
-            DB::commit();
-
-        } catch (\Throwable $th) {
-            DB::rollBack();
-
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data!!');
+            $paymentCart->checkout($request->user(), $vendor, $data['tempo'], $data['fingerprint']);
+        } catch (ValidationException $exception) {
+            return redirect()->back()->with('error', $exception->validator->errors()->first());
         }
 
-        return redirect()->route('transaksi.nota-bayar', ['vendor' => $vendor->id])->with('success', 'Berhasil menyimpan data!!');
+        return redirect()->route('transaksi.nota-bayar', $vendor)->with('success', 'Berhasil menyimpan data!!');
     }
 
     public function nota_bonus(Request $request)

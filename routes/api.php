@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\MobileUpahGendongSettingController;
 use App\Http\Controllers\Api\MobileVendorBillingActionController;
 use App\Http\Controllers\Api\MobileVendorCashController;
 use App\Http\Controllers\Api\MobileVendorOptionController;
+use App\Http\Controllers\Api\MobileVendorPaymentCartController;
 use App\Http\Controllers\Api\PaymentNoteController;
 use App\Http\Controllers\Api\TrustController;
 use App\Http\Controllers\Api\UnloadingNoteController;
@@ -46,6 +47,18 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
     Route::middleware(EnsureMobileWorkspace::class)->group(function (): void {
         Route::post('login', [AuthController::class, 'store'])->middleware('throttle:mobile-login')->name('login');
         Route::middleware(['auth:sanctum', EnsureMobileToken::class])->group(function (): void {
+            Route::prefix('vendors/{vendor}/payment-cart')->whereNumber('vendor')
+                ->middleware(['role:admin,su', 'throttle:30,1'])
+                ->controller(MobileVendorPaymentCartController::class)->group(function (): void {
+                    Route::get('/', 'show')->name('payment-cart.show');
+                    Route::post('/', 'store')->name('payment-cart.store');
+                    Route::delete('/', 'destroy')->name('payment-cart.destroy');
+                    Route::post('checkout', 'checkout')->name('payment-cart.checkout');
+                    Route::get('additional/{kind}', 'showAdditional')->name('payment-cart.additional.show');
+                    Route::post('additional/{kind}', 'storeAdditional')->name('payment-cart.additional.store');
+                    Route::delete('additional/{kind}/{invoice}', 'returnAdditional')->whereNumber('invoice')->name('payment-cart.additional.return');
+                    Route::post('additional/{kind}/{invoice}/checkout', 'checkoutAdditional')->whereNumber('invoice')->name('payment-cart.additional.checkout');
+                });
             Route::get('me', [AuthController::class, 'show'])->name('me');
             Route::patch('me', [AuthController::class, 'update'])->middleware('throttle:6,1')->name('me.update');
             Route::post('logout', [AuthController::class, 'destroy'])->name('logout');

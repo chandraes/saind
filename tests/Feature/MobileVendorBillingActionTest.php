@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Transaksi;
 use App\Models\User;
+use App\Models\Vendor;
+use App\Services\VendorPaymentCart;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -39,11 +43,17 @@ class MobileVendorBillingActionTest extends MobileApiTestCase
             $table->unsignedBigInteger('transaksi_id');
             $table->unsignedBigInteger('vendor_id');
             $table->string('jenis');
+            $table->unsignedBigInteger('customer_id')->default(1);
+            $table->unsignedInteger('status')->default(3);
+            $table->unsignedInteger('jarak')->default(1);
+            $table->timestamps();
         });
         Schema::create('invoice_add_vendor_details', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('invoice_add_vendor_id');
             $table->unsignedBigInteger('transaksi_additional_id');
+            $table->unsignedBigInteger('transaksi_id')->nullable();
+            $table->timestamps();
         });
         Schema::create('transaksis', function (Blueprint $table): void {
             $table->id();
@@ -64,12 +74,20 @@ class MobileVendorBillingActionTest extends MobileApiTestCase
             $table->id();
             $table->unsignedBigInteger('vendor_id');
             $table->string('periode');
+            $table->unsignedInteger('no_invoice')->default(0);
             $table->date('tanggal')->nullable();
             $table->date('tempo')->nullable();
             $table->bigInteger('total_bayar');
             $table->bigInteger('sisa_bayar');
             $table->bigInteger('bayar')->default(0);
             $table->boolean('lunas')->default(false);
+            $table->timestamps();
+        });
+        Schema::create('keranjang_nota_bayars', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('vendor_id');
+            $table->unsignedBigInteger('transaksi_id');
             $table->timestamps();
         });
         Schema::create('invoice_bayar_details', function (Blueprint $table): void {
@@ -119,6 +137,89 @@ class MobileVendorBillingActionTest extends MobileApiTestCase
         DB::table('rutes')->insert(['id' => 1, 'nama' => 'Mine - Port', 'jarak' => 60]);
         DB::table('kas_uang_jalans')->insert(['id' => 1, 'vendor_id' => 1, 'vehicle_id' => 1, 'customer_id' => 1, 'rute_id' => 1]);
         DB::table('kas_vendors')->insert(['vendor_id' => 1, 'tanggal' => '2026-11-01', 'uraian' => 'Awal', 'sisa' => 500000, 'created_at' => '2026-11-01']);
+    }
+
+    public function test_vendor_payment_summary_preserves_web_rounding_and_fingerprints_records(): void
+    {
+        $service = app(VendorPaymentCart::class);
+        $vendor = new Vendor;
+        $vendor->forceFill(['ppn' => 1, 'pph' => 1, 'pph_val' => 2]);
+        $note = new Transaksi;
+        $note->forceFill(['id' => 1, 'nominal_bayar' => 1019]);
+        $note->setRelation('kas_uang_jalan', (object) ['nominal_transaksi' => 100]);
+        $notes = new Collection([$note]);
+
+        $quote = $service->quote($vendor, $notes);
+        $this->assertSame(112, $quote['ppn']);
+        $this->assertSame(20, $quote['pph']);
+        $this->assertEquals(1011, $quote['total']);
+        $note->id = 2;
+        $this->assertNotSame($quote['fingerprint'], $service->quote($vendor, $notes)['fingerprint']);
+    }
+
+    public function test_primary_cart_is_shared_and_checkout_requires_a_current_quote(): void
+    {
+        $headers = $this->headers('admin');
+        $user = User::query()->latest('id')->firstOrFail();
+        $vendor = Vendor::query()->findOrFail(1);
+        $note = $this->journey(['status' => 3, 'nominal_bayar' => 1000]);
+        $path = '/api/v1/vendors/1/payment-cart';
+        $this->postJson($path, ['transaksi_ids' => [$note]], $headers)->assertOk();
+        $this->assertSame([$note], app(VendorPaymentCart::class)->notes($user, $vendor)->modelKeys());
+
+        $quote = $this->getJson($path, $headers)->assertOk()
+            ->assertJsonPath('data.0.id', $note)->json('quote');
+        DB::table('transaksis')->where('id', $note)->update(['nominal_bayar' => 1200]);
+
+        $this->postJson($path.'/checkout', ['tempo' => '2026-12-01', 'fingerprint' => $quote['fingerprint']], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('fingerprint');
+        $this->assertDatabaseCount('invoice_bayars', 0);
+
+        $quote = $this->getJson($path, $headers)->assertOk()->json('quote');
+        $this->postJson($path.'/checkout', [
+            'tempo' => '2026-12-01', 'fingerprint' => $quote['fingerprint'], 'total_bayar' => 1,
+        ], $headers)->assertCreated();
+        $this->assertDatabaseHas('invoice_bayars', ['vendor_id' => 1, 'total_bayar' => 1200]);
+        $this->assertDatabaseHas('transaksis', ['id' => $note, 'bayar' => 1]);
+        $this->assertDatabaseHas('invoice_bayars', ['vendor_id' => 1, 'tempo' => '2026-12-01']);
+        $this->assertDatabaseCount('keranjang_nota_bayars', 0);
+        $this->getJson($path, $this->headers('vendor'))->assertForbidden();
+
+    }
+
+    public function test_additional_cart_can_be_returned_or_issued_but_cannot_return_an_issued_invoice(): void
+    {
+        $headers = $this->headers('su');
+        $note = $this->journey(['status' => 3, 'timbangan_bongkar' => 25, 'nota_bongkar' => 'NB-ADDITIONAL']);
+        $id = DB::table('transaksi_additionals')->insertGetId([
+            'transaksi_id' => $note, 'vendor_id' => 1, 'jenis' => 'kompensasi_jr', 'jarak' => 2,
+        ]);
+        Schema::create('invoice_additionals', function (Blueprint $table): void {
+            $table->id();
+            $table->decimal('dpp', 12, 4);
+        });
+        Schema::create('invoice_additional_details', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('invoice_additional_id');
+            $table->unsignedBigInteger('transaksi_additional_id');
+        });
+
+        $path = '/api/v1/vendors/1/payment-cart/additional/kompensasi_jr';
+        $input = ['dpp' => 10, 'transaksi_ids' => [$id]];
+        $this->postJson($path, $input, $headers)->assertOk();
+        $cart = $this->getJson($path, $headers)->assertOk()
+            ->assertJsonPath('data.total', 500)->assertJsonPath('data.notes.0.nota_bongkar', 'NB-ADDITIONAL')->json('data');
+        $this->deleteJson($path.'/'.$cart['id'], ['fingerprint' => $cart['fingerprint']], $headers)->assertOk();
+        $this->assertDatabaseHas('transaksi_additionals', ['id' => $id, 'status' => 3]);
+
+        $this->postJson($path, $input, $headers)->assertOk();
+        $cart = $this->getJson($path, $headers)->assertOk()->json('data');
+        $this->postJson($path.'/'.$cart['id'].'/checkout', [
+            'tempo' => '2026-12-01', 'fingerprint' => $cart['fingerprint'],
+        ], $headers)->assertCreated();
+        $this->deleteJson($path.'/'.$cart['id'], ['fingerprint' => $cart['fingerprint']], $headers)
+            ->assertUnprocessable()->assertJsonValidationErrors('invoice');
+        $this->assertDatabaseHas('transaksi_additionals', ['id' => $id, 'status' => 5]);
     }
 
     private function headers(string $role): array
