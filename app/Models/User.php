@@ -75,6 +75,9 @@ class User extends Authenticatable
 
     public const ADMINISTRATOR_ROLES = ['admin', 'su'];
 
+    /** Role kantor (user & asisten-user): di aplikasi mobile membaca menu seluruh vendor, baca saja. */
+    public const BACK_OFFICE_ROLES = ['user', 'asisten-user'];
+
     public function isVendorAccount(): bool
     {
         return in_array($this->role, self::VENDOR_ACCOUNT_ROLES, true);
@@ -122,7 +125,51 @@ class User extends Authenticatable
      */
     public function isMobileAdministrator(): bool
     {
-        return $this->isAdministrator() && $this->currentAccessToken() instanceof PersonalAccessToken;
+        return $this->isAdministrator() && $this->usesMobileToken();
+    }
+
+    /**
+     * User & asisten-user di aplikasi mobile (token Sanctum): menu seluruh vendor beserta nilai uang,
+     * baca saja. Hanya berlaku di API mobile; menu dan akses web kedua role tidak berubah.
+     */
+    public function isMobileBackOffice(): bool
+    {
+        return in_array($this->role, self::BACK_OFFICE_ROLES, true) && $this->usesMobileToken();
+    }
+
+    /** Role user di aplikasi mobile: menu back office ditambah Kas Vendor, Tagihan & Invoice, Statistik Tonase. */
+    public function isMobileUser(): bool
+    {
+        return $this->role === 'user' && $this->isMobileBackOffice();
+    }
+
+    private function usesMobileToken(): bool
+    {
+        return $this->currentAccessToken() instanceof PersonalAccessToken;
+    }
+
+    /** Nota Tagihan per customer (baca saja): eksekutif, Admin/SU, user & asisten-user di mobile. */
+    public function readsCustomerBills(): bool
+    {
+        return $this->readsExecutiveMenus() || $this->isMobileBackOffice();
+    }
+
+    /** Tagihan & Invoice customer (baca saja): eksekutif, Admin/SU, dan user di mobile. */
+    public function readsBillingInvoices(): bool
+    {
+        return $this->readsExecutiveMenus() || $this->isMobileUser();
+    }
+
+    /** Kas Vendor: vendor pemilik (vendornya sendiri); Admin/SU dan user di mobile memilih vendor. */
+    public function canViewVendorCash(): bool
+    {
+        return $this->isVendorOwner() || $this->isMobileAdministrator() || $this->isMobileUser();
+    }
+
+    /** Statistik Tonase di API mobile: admin, su, operasional, eksekutif, dan user. */
+    public function canViewTonnageReport(): bool
+    {
+        return $this->isAdministrator() || $this->isOperasional() || $this->isExecutive() || $this->isMobileUser();
     }
 
     /** Menu eksekutif (seluruh vendor beserta nilai uang, Nota Tagihan, Tagihan & Invoice, Gaji): eksekutif, dan Admin/SU di mobile. */
@@ -131,10 +178,10 @@ class User extends Authenticatable
         return $this->isExecutive() || $this->isMobileAdministrator();
     }
 
-    /** Membaca data seluruh vendor (filter vendor), baca saja: operasional dan menu eksekutif. */
+    /** Membaca data seluruh vendor (filter vendor), baca saja: operasional, menu eksekutif, dan back office mobile. */
     public function seesAllVendors(): bool
     {
-        return $this->isOperasional() || $this->readsExecutiveMenus();
+        return $this->isOperasional() || $this->readsExecutiveMenus() || $this->isMobileBackOffice();
     }
 
     /** Akun yang memakai menu vendor-operational: akun vendor dan operasional (semua vendor). */
@@ -188,16 +235,16 @@ class User extends Authenticatable
         return $this->role !== 'vendor';
     }
 
-    /** Vendor & vendor-induk melihat keuangannya sendiri, eksekutif seluruh vendor; vendor operational hanya uang jalan. */
+    /** Vendor & vendor-induk melihat keuangannya sendiri, eksekutif & back office mobile seluruh vendor; vendor operational hanya uang jalan. */
     public function canViewVendorFinance(): bool
     {
-        return $this->isVendorOwner() || $this->readsExecutiveMenus();
+        return $this->isVendorOwner() || $this->readsExecutiveMenus() || $this->isMobileBackOffice();
     }
 
-    /** Kas UJ Ditahan per nolam (baca saja): vendor-induk untuk nolam vendornya, operasional semua nolam. */
+    /** Kas UJ Ditahan per nolam (baca saja): vendor-induk untuk nolam vendornya; operasional, eksekutif, dan back office mobile semua nolam. */
     public function canViewNolamHeldCash(): bool
     {
-        return in_array($this->role, ['vendor-induk', 'operasional'], true) || $this->readsExecutiveMenus();
+        return in_array($this->role, ['vendor-induk', 'operasional'], true) || $this->readsExecutiveMenus() || $this->isMobileBackOffice();
     }
 
     /**

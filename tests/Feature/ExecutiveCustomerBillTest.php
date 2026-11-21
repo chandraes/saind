@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 
 /**
  * Nota Tagihan untuk eksekutif (General Manager & Direksi): halaman admin tanpa aksi (web) dan
@@ -149,6 +150,7 @@ class ExecutiveCustomerBillTest extends MobileApiTestCase
     }
 
     #[DataProvider('mobileExecutiveMenuRoles')]
+    #[DataProvider('backOfficeRoles')]
     public function test_mobile_lists_bills_per_customer_with_the_billing_weight_and_no_profit(string $role): void
     {
         $executive = $this->executive($role);
@@ -186,6 +188,7 @@ class ExecutiveCustomerBillTest extends MobileApiTestCase
     }
 
     #[DataProvider('mobileExecutiveMenuRoles')]
+    #[DataProvider('backOfficeRoles')]
     public function test_mobile_additional_category_lists_tonnage_and_physical_note_without_money(string $role): void
     {
         $executive = $this->executive($role);
@@ -229,11 +232,21 @@ class ExecutiveCustomerBillTest extends MobileApiTestCase
     }
 
     #[DataProvider('administratorRoles')]
+    #[TestWith(['user'])]
     public function test_administrator_reads_tagihan_and_invoice_on_mobile(string $role): void
     {
         DB::table('invoice_tagihans')->insert(['customer_id' => 2, 'no_invoice' => 'INV-01', 'tanggal' => '2026-11-01', 'total_tagihan' => 1500000, 'lunas' => 0]);
         $this->getJson('/api/v1/billing-invoices', $this->headers($this->executive($role)))->assertOk()
             ->assertJsonPath('bills.0.customer', 'TA')->assertJsonPath('invoices.0.invoice', 'INV-01')->assertJsonPath('meta.total_invoice', 1500000);
+    }
+
+    public function test_asisten_user_reads_bills_but_not_tagihan_and_invoice_on_mobile(): void
+    {
+        $headers = $this->headers($this->executive('asisten-user'));
+        $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.customer_bills', true)
+            ->assertJsonPath('data.permissions.billing_invoices', false);
+        $this->getJson('/api/v1/billing-invoices', $headers)->assertForbidden();
+        $this->getJson('/api/v1/customer-options', $headers)->assertOk();
     }
 
     public function test_invoice_transactions_are_scoped_to_the_selected_unpaid_invoice(): void

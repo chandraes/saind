@@ -28,6 +28,12 @@ abstract class TestCase extends BaseTestCase
     }
 
     /** Pembaca menu eksekutif di aplikasi mobile: eksekutif serta Admin & SU. */
+    /** Role kantor yang membaca menu seluruh vendor di mobile (User::isMobileBackOffice()). */
+    public static function backOfficeRoles(): array
+    {
+        return ['user' => ['user'], 'asisten-user' => ['asisten-user']];
+    }
+
     public static function mobileExecutiveMenuRoles(): array
     {
         return [...self::executiveRoles(), ...self::administratorRoles()];

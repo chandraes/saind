@@ -5,21 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\InvoiceAddVendor;
 use App\Models\KasVendor;
+use App\Support\MobileVendorScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/** Kas Vendor versi mobile: mutasi kas vendor akun per bulan, hanya untuk akun vendor. */
+/**
+ * Kas Vendor versi mobile: mutasi kas vendor per bulan. Vendor pemilik melihat vendornya sendiri;
+ * Admin/SU dan user (lihat User::canViewVendorCash()) wajib memilih vendor lewat `vendor_id`.
+ */
 class MobileVendorCashController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->canViewVendorFinance(), 403);
+        abort_unless($request->user()->canViewVendorCash(), 403);
         $filters = $request->validate([
             'month' => ['nullable', 'integer', 'between:1,12', 'required_with:year'],
             'year' => ['nullable', 'integer', 'between:2000,2100', 'required_with:month'],
         ]);
-        $vendorId = (int) $request->user()->vendor_id;
+        $vendorId = MobileVendorScope::required($request);
         $start = CarbonImmutable::create((int) ($filters['year'] ?? now()->year), (int) ($filters['month'] ?? now()->month), 1);
         $rows = KasVendor::query()->with('vehicle:id,nomor_lambung')->where('vendor_id', $vendorId)
             ->whereBetween('tanggal', [$start->toDateString(), $start->endOfMonth()->toDateString()])

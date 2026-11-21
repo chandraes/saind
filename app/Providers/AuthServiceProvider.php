@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,9 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Menu API mobile yang aksesnya ditentukan helper User (bukan daftar role rute web).
+        Gate::define('mobile-customer-bills', fn (User $user): bool => $user->readsCustomerBills());
+        Gate::define('mobile-billing-invoices', fn (User $user): bool => $user->readsBillingInvoices());
+        Gate::define('mobile-tonnage-report', fn (User $user): bool => $user->canViewTonnageReport());
     }
 }

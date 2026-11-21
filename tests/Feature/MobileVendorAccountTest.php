@@ -106,6 +106,29 @@ class MobileVendorAccountTest extends MobileApiTestCase
         $this->getJson('/api/v1/vendor-cash', $this->headers('vendor-operational'))->assertForbidden();
     }
 
+    #[DataProvider('allVendorCashRoles')]
+    public function test_admin_su_and_user_pick_a_vendor_for_vendor_cash(string $role, bool $allowed): void
+    {
+        $headers = $this->headers($role);
+        if (! $allowed) {
+            $this->getJson('/api/v1/vendor-cash?vendor_id=2', $headers)->assertForbidden();
+            $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.vendor_cash', false);
+
+            return;
+        }
+        $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.vendor_cash', true);
+        $this->getJson('/api/v1/vendor-cash?month=11&year=2026', $headers)->assertUnprocessable()->assertJsonValidationErrors('vendor_id');
+        $this->getJson('/api/v1/vendor-cash?month=11&year=2026&vendor_id=2', $headers)->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.description', 'Vendor lain');
+    }
+
+    /** @return array<string, array{string, bool}> */
+    public static function allVendorCashRoles(): array
+    {
+        return ['admin' => ['admin', true], 'su' => ['su', true], 'user' => ['user', true],
+            'asisten-user' => ['asisten-user', false], 'operasional' => ['operasional', false], 'direksi' => ['direksi', false]];
+    }
+
     /** @return array<string, array{string, string}> */
     public static function histories(): array
     {

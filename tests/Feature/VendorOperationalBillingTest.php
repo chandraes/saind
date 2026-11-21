@@ -552,6 +552,7 @@ class VendorOperationalBillingTest extends MobileApiTestCase
     }
 
     #[DataProvider('administratorRoles')]
+    #[DataProvider('backOfficeRoles')]
     public function test_administrator_reads_every_vendor_with_finance_on_mobile_only(string $role): void
     {
         $this->withFinance();
@@ -560,6 +561,17 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->app['auth']->forgetGuards();
         $this->getJson('/api/v1/payment-notes?kind=utama&vendor_id=1', $headers)->assertOk()->assertJsonPath('meta.total_gross_amount', fn ($value): bool => $value > 0);
         $this->getJson('/api/v1/vendor-invoices?status=all', $headers)->assertOk()->assertSee('FOREIGN VENDOR');
+        if (in_array($role, User::BACK_OFFICE_ROLES, true)) {
+            // User & asisten-user: baca saja, aksi Admin & SU tertolak.
+            $this->getJson('/api/v1/me', $headers)->assertJsonPath('data.permissions.all_vendors', true)
+                ->assertJsonPath('data.permissions.vendor_finance', true)->assertJsonPath('data.permissions.held_cash', true)
+                ->assertJsonPath('data.permissions.maintenance_history_edit', false)->assertJsonPath('data.permissions.upah_gendong_settings', false)
+                ->assertJsonPath('data.permissions.payroll', false)->assertJsonPath('data.permissions.database', false);
+            $this->postJson('/api/v1/vendor-invoices/utama/1/settle', ['amount' => 1], $headers)->assertForbidden();
+            $this->postJson('/api/v1/vehicles/1/held-cash/sparepart/cutoff', [], $headers)->assertForbidden();
+            $this->postJson('/api/v1/payroll', [], $headers)->assertForbidden();
+            $this->deleteJson('/api/v1/vehicles/1/upah-gendong-setting', [], $headers)->assertForbidden();
+        }
         // Web admin tidak berubah: tanpa token mobile, admin/su tidak memakai menu vendor-operational.
         $this->app['auth']->forgetGuards();
         $this->actingAs($admin);
@@ -713,7 +725,7 @@ class VendorOperationalBillingTest extends MobileApiTestCase
         $this->getJson('/api/v1/payment-notes', array_diff_key($headers, ['Authorization' => true]))->assertUnauthorized();
         $this->getJson('/api/v1/payment-notes', array_replace($headers, ['X-Vendor-ID' => '2']))->assertStatus(409);
         $this->getJson('/api/v1/payment-notes', array_replace($headers, ['X-Workspace-ID' => '413236a8-76eb-483e-bbf4-df091aa8b67e']))->assertStatus(409);
-        $wrong = User::factory()->create(['username' => 'mobile-user', 'password' => 'secret-pass', 'role' => 'user', 'vendor_id' => 1]);
+        $wrong = User::factory()->create(['username' => 'mobile-user', 'password' => 'secret-pass', 'role' => 'hrd', 'vendor_id' => 1]);
         $this->getJson('/api/v1/payment-notes', $this->mobileHeaders($wrong))->assertForbidden();
         config(['mobile.load_note_roles' => []]);
         $this->getJson('/api/v1/payment-notes', $this->mobileHeaders($actor))->assertOk();
@@ -799,7 +811,7 @@ class VendorOperationalBillingTest extends MobileApiTestCase
             $this->{$method.'Json'}('/api/v1/vendor-invoices/utama/1', [], $headers)->assertStatus(405);
         }
         $this->getJson('/api/v1/vendor-invoices', array_replace($headers, ['X-Vendor-ID' => '2']))->assertStatus(409);
-        $user = User::factory()->create(['username' => 'invoice-mobile-user', 'password' => 'secret-pass', 'role' => 'user', 'vendor_id' => 1]);
+        $user = User::factory()->create(['username' => 'invoice-mobile-user', 'password' => 'secret-pass', 'role' => 'hrd', 'vendor_id' => 1]);
         $this->getJson('/api/v1/vendor-invoices', $this->mobileHeaders($user))->assertForbidden();
     }
 }

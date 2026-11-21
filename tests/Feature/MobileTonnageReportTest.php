@@ -74,6 +74,7 @@ class MobileTonnageReportTest extends MobileApiTestCase
     #[TestWith(['operasional'])]
     #[TestWith(['general-manager'])]
     #[TestWith(['direksi'])]
+    #[TestWith(['user'])]
     public function test_report_roles_can_read_monthly_tonnage(string $role): void
     {
         $headers = $this->headers($role);
@@ -91,6 +92,12 @@ class MobileTonnageReportTest extends MobileApiTestCase
     public function test_api_rejects_other_roles_invalid_filters_and_inactive_customers(): void
     {
         $this->getJson('/api/v1/tonnage-report/customers', $this->headers('hrd'))->assertForbidden();
+        $asisten = $this->headers('asisten-user');
+        $this->getJson('/api/v1/me', $asisten)->assertJsonPath('data.permissions.tonnage_report', false);
+        $this->getJson('/api/v1/tonnage-report/customers', $asisten)->assertForbidden();
+        // Web tetap: user tidak mendapat Statistik Tonase di halaman web.
+        $this->app['auth']->forgetGuards();
+        $this->actingAs(User::factory()->create(['username' => 'user-web', 'role' => 'user', 'password' => 'test-password']))->get('/statistik/tonase-tambang/1')->assertForbidden();
         $headers = $this->headers('operasional');
         $this->getJson('/api/v1/tonnage-report/customers/1?month=13&year=2028', $headers)->assertUnprocessable();
         $this->getJson('/api/v1/tonnage-report/customers/1?month=2&year=2028&route_id=999', $headers)->assertUnprocessable();

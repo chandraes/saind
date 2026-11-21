@@ -10,6 +10,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\TestWith;
 
 class MobileUnloadingNoteTest extends MobileApiTestCase
 {
@@ -219,17 +220,20 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
             ->assertJsonPath('data.unloading_gross_weight', null)->assertJsonPath('data.unloading_tare_weight', null)->assertJsonPath('data.unloading_net_weight', null);
     }
 
-    public function test_operasional_reads_every_vendor_with_a_vendor_filter_and_cannot_write(): void
+    #[TestWith(['operasional', false])]
+    #[TestWith(['user', true])]
+    #[TestWith(['asisten-user', true])]
+    public function test_operasional_reads_every_vendor_with_a_vendor_filter_and_cannot_write(string $role, bool $finance): void
     {
         $this->journey(1, ['nota_muat' => 'VENDOR-A-TICKET']);
         $foreign = $this->journey(2, ['nota_muat' => 'VENDOR-B-TICKET']);
-        $user = User::factory()->create(['username' => Str::uuid()->toString(), 'password' => 'secret-pass', 'role' => 'operasional', 'vendor_id' => null]);
+        $user = User::factory()->create(['username' => Str::uuid()->toString(), 'password' => 'secret-pass', 'role' => $role, 'vendor_id' => null]);
         $this->app['auth']->forgetGuards();
         $headers = ['X-Workspace-ID' => self::WORKSPACE, 'Authorization' => 'Bearer '.$user->createToken('test', ['workspace:'.self::WORKSPACE])->plainTextToken];
 
         $this->getJson('/api/v1/me', $headers)->assertOk()->assertJsonPath('data.permissions.all_vendors', true)
             ->assertJsonPath('data.permissions.vendor_billing', true)->assertJsonPath('data.permissions.load_notes', false)
-            ->assertJsonPath('data.permissions.vendor_finance', false);
+            ->assertJsonPath('data.permissions.vendor_finance', $finance);
         $this->getJson('/api/v1/unloading-notes', $headers)->assertOk()->assertJsonCount(2, 'data')
             ->assertJsonPath('data.0.vendor_name', 'Vendor B')->assertJsonPath('data.1.vendor_name', 'Vendor A');
         $this->getJson('/api/v1/unloading-notes?vendor_id=1', $headers)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.ticket_number', 'VENDOR-A-TICKET');
@@ -313,7 +317,7 @@ class MobileUnloadingNoteTest extends MobileApiTestCase
         foreach (['/api/v1/unloading-notes', '/api/v1/unloading-notes/'.$id] as $url) {
             $this->app['auth']->forgetGuards();
             $this->getJson($url, ['X-Workspace-ID' => self::WORKSPACE])->assertUnauthorized();
-            $this->getJson($url, $this->headers($this->actor(1, 'user')))->assertForbidden();
+            $this->getJson($url, $this->headers($this->actor(1, 'hrd')))->assertForbidden();
             $this->app['auth']->forgetGuards();
             $this->getJson($url, array_replace($headers, ['X-Vendor-ID' => '2']))->assertConflict();
             $this->app['auth']->forgetGuards();

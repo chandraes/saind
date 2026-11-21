@@ -397,10 +397,11 @@ class ReminderRefreshTest extends MobileApiTestCase
         $gm = $this->api($this->user('general-manager'));
         $this->getJson('/api/v1/reminders', $gm)->assertOk()->assertJsonCount(5, 'data');
 
+        // Asisten-user di mobile memakai tabel pengingat user (web tetap tanpa Pengingat, lihat tes web).
         $assistant = $this->api($this->user('asisten-user'));
-        $this->getJson('/api/v1/me', $assistant)->assertOk()->assertJsonPath('data.permissions.reminders', false);
-        $this->getJson('/api/v1/reminders', $assistant)->assertForbidden();
-        $this->postJson('/api/v1/reminders/settings', ['order' => [], 'enabled' => []], $assistant)->assertForbidden();
+        $this->getJson('/api/v1/me', $assistant)->assertOk()->assertJsonPath('data.permissions.reminders', true);
+        $this->getJson('/api/v1/reminders', $assistant)->assertOk()->assertJsonPath('data.*.key', ['filter_oil', 'invoice_due', 'attendance']);
+        $this->getJson('/api/v1/reminders/standby', $assistant)->assertForbidden();
         $this->getJson('/api/v1/reminders/unknown', $assistant)->assertNotFound();
     }
 }

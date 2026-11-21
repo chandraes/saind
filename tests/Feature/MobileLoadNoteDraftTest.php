@@ -140,7 +140,8 @@ class MobileLoadNoteDraftTest extends MobileApiTestCase
     public function test_other_roles_and_unauthenticated_requests_are_refused(): void
     {
         $this->getJson('/api/v1/load-notes', ['X-Workspace-ID' => self::WORKSPACE])->assertUnauthorized();
-        foreach (['user', 'asisten-user'] as $role) {
+        // User & asisten-user membaca Nota Muat lewat menu seluruh vendor (User::isMobileBackOffice()).
+        foreach (['hrd'] as $role) {
             $headers = $this->headers($this->actor(1, $role));
             $this->getJson('/api/v1/load-notes', $headers)->assertForbidden();
             $this->getJson('/api/v1/load-notes/1', $headers)->assertForbidden();

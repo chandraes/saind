@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class MobileUserResource extends JsonResource
 {
-    /** @return array{id: int, username: string, name: string, role: string, vendor_id: ?int, permissions: array{database: bool, load_notes: bool, vendor_billing: bool, all_vendors: bool, vendor_finance: bool, maintenance_history: bool, maintenance_history_edit: bool, reminders: bool}} */
+    /** @return array{id: int, username: string, name: string, role: string, vendor_id: ?int, permissions: array{database: bool, load_notes: bool, vendor_billing: bool, all_vendors: bool, vendor_finance: bool, maintenance_history: bool, maintenance_history_edit: bool, reminders: bool, vendor_cash: bool, customer_bills: bool, billing_invoices: bool, tonnage_report: bool}} */
     public function toArray(Request $request): array
     {
         return ['id' => $this->id, 'username' => $this->username, 'name' => $this->name,
@@ -34,8 +34,13 @@ class MobileUserResource extends JsonResource
                 'driver' => $this->resource->isDriver(),
                 // HRD: hanya menu Potongan Absensi (baca saja).
                 'attendance_deductions' => $this->resource->isHrd(),
-                // Eksekutif (GM & Direksi) serta Admin/SU: Nota Tagihan per customer (baca saja).
-                'customer_bills' => $this->resource->readsExecutiveMenus(),
+                // Kas Vendor: vendor pemilik (vendornya), Admin/SU & user (pilih vendor).
+                'vendor_cash' => $this->resource->canViewVendorCash(),
+                // Nota Tagihan per customer (baca saja): eksekutif, Admin/SU, user & asisten-user.
+                'customer_bills' => $this->resource->readsCustomerBills(),
+                // Tagihan & Invoice (baca saja): eksekutif, Admin/SU, dan user.
+                'billing_invoices' => $this->resource->readsBillingInvoices(),
+                'tonnage_report' => $this->resource->canViewTonnageReport(),
                 // Eksekutif (GM & Direksi) serta Admin/SU: Gaji Karyawan (seluruh kolom Form Gaji, baca saja).
                 'payroll' => $this->resource->readsExecutiveMenus(),
                 // Dashboard Pengingat: role yang punya minimal satu tabel pengingat.

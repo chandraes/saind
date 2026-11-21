@@ -161,14 +161,17 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('vehicles/{vehicle}/held-cash/{fund}/withdraw', 'withdraw')->whereNumber('vehicle')->whereIn('fund', ['sparepart', 'ban'])->name('held-cash.withdraw');
                 Route::post('held-cash/{fund}/details/{detail}/cancel', 'cancel')->whereIn('fund', ['sparepart', 'ban'])->whereNumber('detail')->name('held-cash.cancel');
             });
-            // Eksekutif (GM & Direksi): Nota Tagihan per customer & Tagihan & Invoice (baca saja).
-            Route::middleware('role:executive')->group(function (): void {
+            // Nota Tagihan per customer (baca saja): eksekutif, Admin/SU, user & asisten-user (User::readsCustomerBills()).
+            Route::middleware('can:mobile-customer-bills')->group(function (): void {
                 Route::get('customer-options', [MobileCustomerBillController::class, 'customers'])->name('customer-options');
+                Route::get('customers/{customer}/bills', [MobileCustomerBillController::class, 'index'])->whereNumber('customer')->name('customer-bills.index');
+            });
+            // Tagihan & Invoice (baca saja): eksekutif, Admin/SU, dan user (User::readsBillingInvoices()).
+            Route::middleware('can:mobile-billing-invoices')->group(function (): void {
                 Route::get('billing-invoices', MobileBillingInvoiceController::class)->name('billing-invoices.index');
                 Route::post('billing-invoices/{invoice}/pay', [MobileBillingInvoiceController::class, 'pay'])->whereNumber('invoice')
                     ->middleware(['role:admin,su', 'throttle:30,1'])->name('billing-invoices.pay');
                 Route::get('billing-invoices/{invoice}/transactions', [MobileBillingInvoiceController::class, 'transactions'])->whereNumber('invoice')->name('billing-invoices.transactions');
-                Route::get('customers/{customer}/bills', [MobileCustomerBillController::class, 'index'])->whereNumber('customer')->name('customer-bills.index');
             });
             Route::get('attendance-deductions', [MobileAttendanceDeductionController::class, 'index'])->middleware('role:hrd')->name('attendance-deductions.index');
             // Rincian potongan absensi: HRD dan eksekutif (dari Gaji Karyawan).
@@ -180,7 +183,7 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
                 Route::post('payroll', [MobilePayrollController::class, 'store'])->name('payroll.store');
             });
             // Dashboard Pengingat: akses per tabel & cakupan vendor diatur ReminderRegistry (sama dengan web).
-            Route::prefix('tonnage-report/customers')->name('tonnage-report.')->middleware('role:admin,su,operasional')
+            Route::prefix('tonnage-report/customers')->name('tonnage-report.')->middleware('can:mobile-tonnage-report')
                 ->controller(MobileTonnageReportController::class)->group(function (): void {
                     Route::get('/', 'customers')->name('customers');
                     Route::get('{customer}', 'show')->whereNumber('customer')->name('show');

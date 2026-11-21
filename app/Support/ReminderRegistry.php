@@ -71,7 +71,10 @@ class ReminderRegistry
 
     public static function allows(User $user, string $key): bool
     {
-        return isset(self::DEFINITIONS[$key]) && in_array($user->role, self::DEFINITIONS[$key]['roles'], true);
+        // Asisten-user di aplikasi mobile memakai tabel pengingat user; di web tidak berubah.
+        $role = $user->isMobileBackOffice() ? 'user' : $user->role;
+
+        return isset(self::DEFINITIONS[$key]) && in_array($role, self::DEFINITIONS[$key]['roles'], true);
     }
 
     /** @return list<string> tabel yang boleh dilihat akun, urutan bawaan */

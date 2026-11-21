@@ -149,6 +149,8 @@ class NolamHeldCashTest extends MobileApiTestCase
 
     #[TestWith(['admin'])]
     #[TestWith(['su'])]
+    #[TestWith(['user'])]
+    #[TestWith(['asisten-user'])]
     public function test_administrator_reads_every_nolam_held_cash_on_mobile(string $role): void
     {
         $headers = $this->headers(User::factory()->create(['username' => $role, 'password' => 'secret-pass', 'role' => $role]));
